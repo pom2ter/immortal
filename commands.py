@@ -22,6 +22,8 @@ def handle_keys():
 			player_move_or_attack(-1, 0)
 		elif key.vk == libtcod.KEY_RIGHT:
 			player_move_or_attack(1, 0)
+		elif key.vk == libtcod.KEY_SPACE:
+			player_move_or_attack(0, 0)
 		else:
 			#test for other keys
 			key_char = chr(key.c)
@@ -74,7 +76,7 @@ def player_move_or_attack(dx, dy):
 
 
 def open_door():
-	util.message('Open door in which direction?')
+	game.message.new('Open door in which direction?')
 	util.render_all()
 	libtcod.console_flush()
 	dx = 0
@@ -92,21 +94,21 @@ def open_door():
 
 	if game.current_map.tiles[game.char.x + dx][game.char.y + dy].name == 'door':
 		game.current_map.tiles[game.char.x + dx][game.char.y + dy].icon = '/'
-		game.current_map.tiles[game.char.x + dx][game.char.y + dy].name = 'opened_door'
+		game.current_map.tiles[game.char.x + dx][game.char.y + dy].name = 'opened door'
 		game.current_map.tiles[game.char.x + dx][game.char.y + dy].color = libtcod.dark_orange
 		game.current_map.tiles[game.char.x + dx][game.char.y + dy].dark_color = libtcod.darkest_orange
 		game.current_map.tiles[game.char.x + dx][game.char.y + dy].blocked = False
 		game.current_map.tiles[game.char.x + dx][game.char.y + dy].block_sight = False
-		util.message('You open the door.')
+		game.message.new('You open the door.')
 		game.fov_recompute = True
 		util.initialize_fov()
 		util.render_all()
 	elif dx != 0 or dy != 0:
-		util.message('There is no door in that direction!', libtcod.red)
+		game.message.new('There is no door in that direction!', libtcod.red)
 
 
 def close_door():
-	util.message('Close door in which direction?')
+	game.message.new('Close door in which direction?')
 	util.render_all()
 	libtcod.console_flush()
 	dx = 0
@@ -122,16 +124,16 @@ def close_door():
 	elif key.vk == libtcod.KEY_RIGHT:
 		dx = 1
 
-	if game.current_map.tiles[game.char.x + dx][game.char.y + dy].name == 'opened_door':
+	if game.current_map.tiles[game.char.x + dx][game.char.y + dy].name == 'opened door':
 		game.current_map.tiles[game.char.x + dx][game.char.y + dy].icon = '+'
 		game.current_map.tiles[game.char.x + dx][game.char.y + dy].name = 'door'
 		game.current_map.tiles[game.char.x + dx][game.char.y + dy].color = libtcod.dark_orange
 		game.current_map.tiles[game.char.x + dx][game.char.y + dy].dark_color = libtcod.darkest_orange
 		game.current_map.tiles[game.char.x + dx][game.char.y + dy].blocked = True
 		game.current_map.tiles[game.char.x + dx][game.char.y + dy].block_sight = True
-		util.message('You close the door.')
+		game.message.new('You close the door.')
 		game.fov_recompute = True
 		util.initialize_fov()
 		util.render_all()
 	elif dx != 0 or dy != 0:
-		util.message('There is no door in that direction!', libtcod.red)
+		game.message.new('There is no door in that direction!', libtcod.red)

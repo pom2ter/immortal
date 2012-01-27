@@ -1,6 +1,5 @@
 import libtcodpy as libtcod
 import math
-import util
 import game
 
 
@@ -203,8 +202,11 @@ class Object(object):
 		if not map.is_blocked(self.x + dx, self.y + dy):
 			self.x += dx
 			self.y += dy
+			game.path_recalculate = True
 		elif map.tiles[self.x + dx][self.y + dy].name == 'door':
-			util.message('You bump into a door!')
+			game.message.new('You bump into a door!')
+		elif map.tiles[self.x + dx][self.y + dy].name == 'wall':
+			game.message.new('The wall laughs at your attempt to pass through it.')
 
 	def move_towards(self, target_x, target_y):
 		#vector from this object to the target, and distance

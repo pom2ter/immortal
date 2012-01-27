@@ -1,6 +1,7 @@
 import libtcodpy as libtcod
 import shelve
 from players import *
+from messages import *
 import map
 import commands
 import util
@@ -49,8 +50,13 @@ fov_map = None
 fov_noise = None
 current_map = None
 char = None
-messages = None
 fov_torchx = 0.0
+
+path_dijk = None
+path_recalculate = False
+path_dx = 0
+path_dy = 0
+mouse_move = False
 
 
 class Game(object):
@@ -59,14 +65,14 @@ class Game(object):
 		#img = libtcod.image_load('title_screen2.png')
 		libtcod.console_set_custom_font('ph_font.png', libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_ASCII_INROW)
 		libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, 'Immortal ' + VERSION, False)
-		libtcod.sys_set_fps(30)
+		#libtcod.sys_set_fps(30)
 		con = libtcod.console_new(MAP_WIDTH, MAP_HEIGHT)
 		panel = libtcod.console_new(MAP_WIDTH, PANEL_HEIGHT)
 		ps = libtcod.console_new(PLAYER_STATS_WIDTH, PLAYER_STATS_HEIGHT)
 		self.main_menu()
 
 	def new_game(self):
-		global player, char, messages, game_state, current_map
+		global player, char, message, game_state, current_map
 		player = Player()
 		char = map.Object(0, 0, player.icon, 'player', player.icon_color, blocks=True)
 		#status = create_character()
@@ -77,7 +83,7 @@ class Game(object):
 			current_map = map.Map(0, 1)
 			util.initialize_fov()
 			game_state = 'playing'
-			messages = []
+			message = Message()
 			self.play_game()
 
 	def play_game(self):
@@ -111,19 +117,19 @@ class Game(object):
 		file['objects'] = current_map.objects
 		file['player_index'] = current_map.objects.index(char)  # index of player in objects list
 #		file['inventory'] = inventory
-		file['messages'] = messages
+		file['messages'] = message
 		file['game_state'] = game_state
 		file.close()
 
 	def load_game(self):
 		#open the previously saved shelve and load the game data
-		global char, inventory, messages, game_state, current_map
+		global char, inventory, message, game_state, current_map
 		file = shelve.open('savegame', 'r')
 		current_map = file['map']
 		current_map.objects = file['objects']
 		char = current_map.objects[file['player_index']]  # get index of player in objects list and access it
 #		inventory = file['inventory']
-		messages = file['messages']
+		message = file['messages']
 		game_state = file['game_state']
 		file.close()
 		util.initialize_fov()
@@ -137,7 +143,7 @@ class Game(object):
 			libtcod.console_print_ex(0, SCREEN_WIDTH / 2, SCREEN_HEIGHT - 2, libtcod.BKGND_NONE, libtcod.CENTER, 'By Potatoman')
 
 			#show options and wait for the player's choice
-			choice = menu('', ['Start a new game', 'Load a saved game', 'Manual', 'Options', 'Quit'], 24)
+			choice = util.menu('', ['Start a new game', 'Load a saved game', 'Manual', 'Options', 'Quit'], 24)
 
 			if choice == 0:  # new game
 				self.new_game()
