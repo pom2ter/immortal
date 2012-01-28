@@ -8,7 +8,7 @@ class Message(object):
 		self.log = []
 		self.history = []
 
-	def new(self, new_msg, color=libtcod.white):
+	def new(self, new_msg, turn, color=libtcod.white):
 		#split the message if necessary, among multiple lines
 		new_msg_lines = textwrap.wrap(new_msg, game.MSG_WIDTH)
 
@@ -18,7 +18,7 @@ class Message(object):
 				del self.log[0]
 
 			#add the new line as a tuple, with the text and the color
-			self.log.append((line, color))
+			self.log.append((line, color, turn))
 
 	def input(self, con, posx, posy):
 		command = ''
@@ -47,3 +47,9 @@ class Message(object):
 			key = libtcod.console_check_for_keypress(libtcod.KEY_PRESSED)
 
 		return command
+
+	def delete(self):
+		#remove old messages if needed
+		for (line, color, turn) in reversed(self.log):
+			if game.player.turns - turn > 10:
+				self.log.remove((line, color, turn))

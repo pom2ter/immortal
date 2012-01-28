@@ -158,3 +158,4 @@ class Player(object):
 		self.mana = 2
 		self.max_mana = 2
 		self.inventory = []
+		self.turns = 0

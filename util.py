@@ -20,50 +20,48 @@ def render_bar(con, x, y, total_width, name, value, maximum, bar_color, back_col
 	libtcod.console_print_ex(con, x + total_width / 2, y, libtcod.BKGND_NONE, libtcod.CENTER, name + ': ' + str(value) + '/' + str(maximum))
 
 
-def menu(header, options, width):
-	if len(options) > 26:
-		raise ValueError('Cannot have a menu with more than 26 options.')
+def menu(header, options):
+	choice = False
+	current = 0
+	width = 0
+	height = len(options) + 2
 
-	#calculate total height for the header (after auto-wrap) and one line per option
-	header_height = libtcod.console_get_height_rect(game.con, 0, 0, width, game.SCREEN_HEIGHT, header)
-	if header == '':
-		header_height = 0
-	height = len(options) + header_height
+	for option_text in options:
+		if len(option_text) > width:
+			width = len(option_text) + 5
 
 	#create an off-screen console that represents the menu's window
 	window = libtcod.console_new(width, height)
-
-	#print the header, with auto-wrap
 	libtcod.console_set_default_foreground(window, libtcod.white)
-	libtcod.console_print(window, 0, 0, header)
+	libtcod.console_set_default_background(window, libtcod.black)
+	libtcod.console_print_frame(window, 0, 0, width, height, True, libtcod.BKGND_NONE, header)
 
-	#print all the options
-	y = header_height
-	letter_index = ord('a')
-	for option_text in options:
-		text = '(' + chr(letter_index) + ') ' + option_text
-		libtcod.console_print(window, 0, y, text)
-		y += 1
-		letter_index += 1
+	while not choice:
+		key = libtcod.console_check_for_keypress(libtcod.KEY_PRESSED)
+		#print all the options
+		for y in range(0, len(options)):
+			if y == current:
+				libtcod.console_set_default_foreground(window, libtcod.white)
+				libtcod.console_set_default_background(window, libtcod.light_blue)
+			else:
+				libtcod.console_set_default_foreground(window, libtcod.grey)
+				libtcod.console_set_default_background(window, libtcod.black)
+			libtcod.console_rect(window, 1, y + 1, width - 2, 1, False, libtcod.BKGND_SET)
+			libtcod.console_print_ex(window, 2, y + 1, libtcod.BKGND_SET, libtcod.LEFT, options[y])
 
-	#blit the contents of "window" to the root console
-	x = game.SCREEN_WIDTH / 2 - width / 2
-	y = game.SCREEN_HEIGHT / 2 - height / 2
-	libtcod.console_blit(window, 0, 0, width, height, 0, x, y, 1.0, 0.7)
+		#blit the contents of "window" to the root console
+		x = game.SCREEN_WIDTH / 2 - width / 2
+		y = game.SCREEN_HEIGHT / 2 - height / 2
+		libtcod.console_blit(window, 0, 0, width, height, 0, x, y, 1.0, 0.7)
+		libtcod.console_flush()
 
-	#present the root console to the player and wait for a key-press
-	libtcod.console_flush()
-	key = libtcod.console_wait_for_keypress(True)
-
-	# (special case) Alt+Enter: toggle fullscreen
-	if key.vk == libtcod.KEY_ENTER and key.lalt:
-		libtcod.console_set_fullscreen(not libtcod.console_is_fullscreen())
-
-	#convert the ASCII code to an index; if it corresponds to an option, return it
-	index = key.c - ord('a')
-	if index >= 0 and index < len(options):
-		return index
-	return None
+		if key.vk == libtcod.KEY_DOWN:
+			current = (current + 1) % len(options)
+		elif key.vk == libtcod.KEY_UP:
+			current = (current - 1) % len(options)
+		elif key.vk == libtcod.KEY_ENTER:
+			choice = True
+	return current
 
 
 def get_names_under_mouse():
@@ -98,11 +96,13 @@ def render_message_panel():
 	#prepare to render the message panel
 	libtcod.console_set_default_background(game.panel, libtcod.black)
 	libtcod.console_clear(game.panel)
+	game.message.delete()
 
 	#print the game messages, one line at a time
 	y = 0
-	for (line, color) in game.message.log:
-		libtcod.console_set_default_foreground(game.panel, color)
+	for (line, color, turn) in game.message.log:
+		new_color = libtcod.color_lerp(libtcod.darkest_grey, color, 1 - ((game.player.turns - turn) * 0.1))
+		libtcod.console_set_default_foreground(game.panel, new_color)
 		libtcod.console_print(game.panel, game.MSG_X, y, line)
 		y += 1
 
@@ -153,6 +153,28 @@ def render_all():
 		game.path_recalculate = False
 
 	# go through all tiles, and set their background color according to the FOV
+	for y in range(game.MAP_HEIGHT):
+		for x in range(game.MAP_WIDTH):
+			visible = libtcod.map_is_in_fov(game.fov_map, x, y)
+			if not visible:
+				if game.current_map.tiles[x][y].explored:
+					libtcod.console_put_char_ex(game.con, x, y, game.current_map.tiles[x][y].icon, game.current_map.tiles[x][y].dark_color, libtcod.black)
+			else:
+				if not game.fov_torch:
+					libtcod.console_put_char_ex(game.con, x, y, game.current_map.tiles[x][y].icon, game.current_map.tiles[x][y].color, libtcod.black)
+				else:
+					base = libtcod.black
+					light = libtcod.gold
+					r = float(x - game.char.x + dx) * (x - game.char.x + dx) + (y - game.char.y + dy) * (y - game.char.y + dy)
+					if r < game.SQUARED_TORCH_RADIUS:
+						l = (game.SQUARED_TORCH_RADIUS - r) / game.SQUARED_TORCH_RADIUS + di
+						if l < 0.0:
+							l = 0.0
+						elif l > 1.0:
+							l = 1.0
+						base = libtcod.color_lerp(base, light, l)
+					libtcod.console_put_char_ex(game.con, x, y, game.current_map.tiles[x][y].icon, game.current_map.tiles[x][y].color, base)
+				game.current_map.tiles[x][y].explored = True
 
 	# draw a line between the player and the mouse cursor
 	if game.current_map.tiles[game.path_dx][game.path_dy].explored:
@@ -168,6 +190,7 @@ def render_all():
 			libtcod.console_put_char(game.con, game.char.x, game.char.y, '@', libtcod.BKGND_NONE)
 			game.path_recalculate = True
 			game.fov_recompute = True
+			game.player.turns += 1
 		else:
 			game.mouse_move = False
 

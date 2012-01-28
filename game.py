@@ -63,7 +63,7 @@ class Game(object):
 	def __init__(self):
 		global con, panel, ps
 		#img = libtcod.image_load('title_screen2.png')
-		libtcod.console_set_custom_font('ph_font.png', libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_ASCII_INROW)
+		libtcod.console_set_custom_font('data/fonts/ph_font.png', libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_ASCII_INROW)
 		libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, 'Immortal ' + VERSION, False)
 		#libtcod.sys_set_fps(30)
 		con = libtcod.console_new(MAP_WIDTH, MAP_HEIGHT)
@@ -135,15 +135,17 @@ class Game(object):
 		util.initialize_fov()
 
 	def main_menu(self):
+		libtcod.console_credits()
 		while not libtcod.console_is_window_closed():
-			libtcod.console_clear(0)
 			#libtcod.image_blit_2x(img, 0, 0, 0)
 			libtcod.console_set_default_foreground(0, libtcod.light_yellow)
-			libtcod.console_print_ex(0, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 4, libtcod.BKGND_NONE, libtcod.CENTER, 'Immortal ' + VERSION)
-			libtcod.console_print_ex(0, SCREEN_WIDTH / 2, SCREEN_HEIGHT - 2, libtcod.BKGND_NONE, libtcod.CENTER, 'By Potatoman')
+			libtcod.console_set_default_background(0, libtcod.black)
+			libtcod.console_clear(0)
+			libtcod.console_print_ex(0, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 5, libtcod.BKGND_SET, libtcod.CENTER, 'Immortal ' + VERSION)
+			libtcod.console_print_ex(0, SCREEN_WIDTH / 2, SCREEN_HEIGHT - 2, libtcod.BKGND_SET, libtcod.CENTER, 'By Potatoman')
 
 			#show options and wait for the player's choice
-			choice = util.menu('', ['Start a new game', 'Load a saved game', 'Manual', 'Options', 'Quit'], 24)
+			choice = util.menu('Main menu', ['Start a new game', 'Load a saved game', 'Manual', 'Options', 'Quit'])
 
 			if choice == 0:  # new game
 				self.new_game()

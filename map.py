@@ -100,7 +100,6 @@ class Map(object):
 
 			if not failed:
 				#this means there are no intersections, so this room is valid
-
 				#"paint" it to the map's tiles
 				self.create_room(new_room)
 
@@ -203,10 +202,11 @@ class Object(object):
 			self.x += dx
 			self.y += dy
 			game.path_recalculate = True
+			game.player.turns += 1
 		elif map.tiles[self.x + dx][self.y + dy].name == 'door':
-			game.message.new('You bump into a door!')
+			game.message.new('You bump into a door!', game.player.turns)
 		elif map.tiles[self.x + dx][self.y + dy].name == 'wall':
-			game.message.new('The wall laughs at your attempt to pass through it.')
+			game.message.new('The wall laughs at your attempt to pass through it.', game.player.turns)
 
 	def move_towards(self, target_x, target_y):
 		#vector from this object to the target, and distance

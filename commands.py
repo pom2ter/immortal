@@ -76,7 +76,7 @@ def player_move_or_attack(dx, dy):
 
 
 def open_door():
-	game.message.new('Open door in which direction?')
+	game.message.new('Open door in which direction?', game.player.turns)
 	util.render_all()
 	libtcod.console_flush()
 	dx = 0
@@ -99,16 +99,19 @@ def open_door():
 		game.current_map.tiles[game.char.x + dx][game.char.y + dy].dark_color = libtcod.darkest_orange
 		game.current_map.tiles[game.char.x + dx][game.char.y + dy].blocked = False
 		game.current_map.tiles[game.char.x + dx][game.char.y + dy].block_sight = False
-		game.message.new('You open the door.')
+		game.player.turns += 1
+		game.message.new('You open the door.', game.player.turns)
 		game.fov_recompute = True
 		util.initialize_fov()
 		util.render_all()
+	elif game.current_map.tiles[game.char.x + dx][game.char.y + dy].name == 'opened door':
+		game.message.new('That door is already opened!', game.player.turns, libtcod.red)
 	elif dx != 0 or dy != 0:
-		game.message.new('There is no door in that direction!', libtcod.red)
+		game.message.new('There is no door in that direction!', game.player.turns, libtcod.red)
 
 
 def close_door():
-	game.message.new('Close door in which direction?')
+	game.message.new('Close door in which direction?', game.player.turns)
 	util.render_all()
 	libtcod.console_flush()
 	dx = 0
@@ -131,9 +134,12 @@ def close_door():
 		game.current_map.tiles[game.char.x + dx][game.char.y + dy].dark_color = libtcod.darkest_orange
 		game.current_map.tiles[game.char.x + dx][game.char.y + dy].blocked = True
 		game.current_map.tiles[game.char.x + dx][game.char.y + dy].block_sight = True
-		game.message.new('You close the door.')
+		game.player.turns += 1
+		game.message.new('You close the door.', game.player.turns)
 		game.fov_recompute = True
 		util.initialize_fov()
 		util.render_all()
+	elif game.current_map.tiles[game.char.x + dx][game.char.y + dy].name == 'door':
+		game.message.new('That door is already closed!', game.player.turns, libtcod.red)
 	elif dx != 0 or dy != 0:
-		game.message.new('There is no door in that direction!', libtcod.red)
+		game.message.new('There is no door in that direction!', game.player.turns, libtcod.red)
