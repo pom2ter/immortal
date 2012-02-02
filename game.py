@@ -6,7 +6,7 @@ import map
 import commands
 import util
 
-VERSION = 'v0.0.0'
+VERSION = 'v0.0.1.3'
 
 #actual size of the window
 SCREEN_WIDTH = 100
