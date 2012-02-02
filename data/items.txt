@@ -1,0 +1,17 @@
+item_type "potion of healing" {
+	icon = ")"
+	icon_color = "red"
+	type = "potion"
+}
+
+item_type "gold" {
+	icon = "$"
+	icon_color = "gold"
+	type = "money"
+}
+
+item_type "sword" {
+	icon = "!"
+	icon_color = "white"
+	type = "weapon"
+}

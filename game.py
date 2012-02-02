@@ -6,7 +6,7 @@ import map
 import commands
 import util
 
-VERSION = 'v0.0.0'
+VERSION = 'v0.0.1.4'
 
 #actual size of the window
 SCREEN_WIDTH = 100
@@ -63,13 +63,22 @@ class Game(object):
 	def __init__(self):
 		global con, panel, ps
 		#img = libtcod.image_load('title_screen2.png')
-		libtcod.console_set_custom_font('data/fonts/ph_font.png', libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_ASCII_INROW)
+		libtcod.console_set_custom_font('fonts/ph_font.png', libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_ASCII_INROW)
 		libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, 'Immortal ' + VERSION, False)
 		#libtcod.sys_set_fps(30)
 		con = libtcod.console_new(MAP_WIDTH, MAP_HEIGHT)
 		panel = libtcod.console_new(MAP_WIDTH, PANEL_HEIGHT)
 		ps = libtcod.console_new(PLAYER_STATS_WIDTH, PLAYER_STATS_HEIGHT)
 		self.main_menu()
+
+	def init_items(self):
+		global items
+		parser = libtcod.parser_new()
+		struct = libtcod.parser_new_struct(parser, 'item_type')
+		libtcod.struct_add_property(struct, 'icon', libtcod.TYPE_STRING, True)
+		libtcod.struct_add_property(struct, 'icon_color', libtcod.TYPE_STRING, True)
+		libtcod.struct_add_property(struct, 'type', libtcod.TYPE_STRING, True)
+		libtcod.parser_run(parser, "data/items.txt", MyListener())
 
 	def new_game(self):
 		global player, char, message, game_state, current_map
@@ -78,9 +87,10 @@ class Game(object):
 		#status = create_character()
 		player.name = 'Ben'
 		status = 'play'
+		self.init_items()
 		if status == 'play':
 			libtcod.console_clear(0)
-			current_map = map.Map(0, 1)
+			current_map = map.Map('Starter Dungeon', 1, 1)
 			util.initialize_fov()
 			game_state = 'playing'
 			message = Message()
@@ -159,3 +169,31 @@ class Game(object):
 #				play_game()
 			if choice == 4:  # quit
 				break
+
+
+class MyListener(object):
+	def new_struct(self, struct, name):
+		print 'new structure type', libtcod.struct_get_name(struct), ' named ', name
+		return True
+
+	def new_flag(self, name):
+		print 'new flag named ', name
+		return True
+
+	def new_property(self, name, typ, value):
+		type_names = ['NONE', 'BOOL', 'CHAR', 'INT', 'FLOAT', 'STRING', 'COLOR', 'DICE']
+		if name == 'color_field':
+			print 'new property named ', name, ' type ', type_names[typ], ' value ', value.r, value.g, value.b
+		elif name == 'dice_field':
+			print 'new property named ', name, ' type ', type_names[typ], ' value ', value.nb_dices, value.nb_faces, value.multiplier, value.addsub
+		else:
+			print 'new property named ', name, ' type ', type_names[typ], ' value ', value
+			return True
+
+	def end_struct(self, struct, name):
+		print 'end structure type', libtcod.struct_get_name(struct), ' named ', name
+		return True
+
+	def error(self, msg):
+		print 'error : ', msg
+		return True

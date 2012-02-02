@@ -4,9 +4,10 @@ import game
 
 
 class Map(object):
-	def __init__(self, location, level):
-		self.location = location
-		self.level = level
+	def __init__(self, name, id, level):
+		self.location_name = name
+		self.location_id = id
+		self.location_level = level
 		self.tiles = None
 		self.objects = None
 		self.generate_map()
