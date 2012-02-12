@@ -55,7 +55,7 @@ class Map(object):
 			self.tiles[x][y].blocked = False
 			self.tiles[x][y].block_sight = False
 
-	def place_door(self):
+	def place_doors(self):
 		for y in range(1, game.MAP_HEIGHT - 1):
 			for x in range(1, game.MAP_WIDTH - 1):
 				if (self.tiles[x + 1][y].name == 'floor' and self.tiles[x - 1][y].name == 'floor' and self.tiles[x][y - 1].name == 'wall' and self.tiles[x][y + 1].name == 'wall') or (self.tiles[x + 1][y].name == 'wall' and self.tiles[x - 1][y].name == 'wall' and self.tiles[x][y - 1].name == 'floor' and self.tiles[x][y + 1].name == 'floor'):
@@ -66,6 +66,33 @@ class Map(object):
 						self.tiles[x][y].dark_color = libtcod.darkest_orange
 						self.tiles[x][y].blocked = True
 						self.tiles[x][y].block_sight = True
+
+	def place_objects(self):
+		#choose random number of items
+		num_items = libtcod.random_get_int(0, 1, game.MAX_ITEMS_PER_LEVEL)
+
+		for i in range(num_items):
+			#choose random spot for this item
+			x, y = 0, 0
+			while (self.is_blocked(x, y)):
+				x = libtcod.random_get_int(0, 0, game.MAP_WIDTH - 1)
+				y = libtcod.random_get_int(0, 0, game.MAP_HEIGHT - 1)
+
+			#only place it if the tile is not blocked
+			dice = libtcod.random_get_int(0, 0, 100)
+			if dice < 70:
+				#create a healing potion (70% chance)
+				d = game.items.getitem('gold')
+			elif dice < 90:
+				#create a lightning bolt scroll (10% chance)
+				d = game.items.getitem('potion of healing')
+			else:
+				#create a fireball scroll (10% chance)
+				d = game.items.getitem('sword')
+			item = Object(x, y, d.icon, d.name, d.color, True, item=d)
+
+			self.objects.append(item)
+			#item.send_to_back()  # items appear below other objects
 
 	def generate_map(self):
 		#the list of objects with just the player
@@ -104,9 +131,6 @@ class Map(object):
 				#"paint" it to the map's tiles
 				self.create_room(new_room)
 
-				#add some contents to this room, such as monsters
-	#			self.place_objects(new_room)
-
 				#center coordinates of new room, will be useful later
 				(new_x, new_y) = new_room.center()
 
@@ -135,7 +159,8 @@ class Map(object):
 				rooms.append(new_room)
 				num_rooms += 1
 
-		self.place_door()
+		self.place_doors()
+		self.place_objects()
 
 
 class Tile(object):
@@ -178,12 +203,13 @@ class Rect(object):
 class Object(object):
 	#this is a generic object: the player, a monster, an item, the stairs...
 	#it's always represented by a character on screen.
-	def __init__(self, x, y, char, name, color, blocks=False, fighter=None, ai=None, item=None):
+	def __init__(self, x, y, char, name, color, pickup=False, blocks=False, fighter=None, ai=None, item=None):
 		self.x = x
 		self.y = y
 		self.char = char
 		self.name = name
 		self.color = color
+		self.can_be_pickup = pickup
 		self.blocks = blocks
 		self.fighter = fighter
 		if self.fighter:  # let the fighter component know who owns it
@@ -241,6 +267,9 @@ class Object(object):
 		if libtcod.map_is_in_fov(game.fov_map, self.x, self.y):
 			#set the color and then draw the character that represents this object at its position
 			libtcod.console_set_default_foreground(con, self.color)
+			libtcod.console_put_char(con, self.x, self.y, self.char, libtcod.BKGND_NONE)
+		elif game.current_map.tiles[self.x][self.y].explored and self.can_be_pickup:
+			libtcod.console_set_default_foreground(con, self.item.dark_color)
 			libtcod.console_put_char(con, self.x, self.y, self.char, libtcod.BKGND_NONE)
 
 	def clear(self, con):

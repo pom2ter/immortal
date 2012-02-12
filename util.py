@@ -106,8 +106,6 @@ def render_message_panel():
 		libtcod.console_print(game.panel, game.MSG_X, y, line)
 		y += 1
 
-	libtcod.console_set_default_foreground(game.panel, libtcod.light_gray)
-	libtcod.console_print(game.panel, 1, 0, get_names_under_mouse())
 	libtcod.console_blit(game.panel, 0, 0, game.SCREEN_WIDTH, game.PANEL_HEIGHT, 0, 0, game.PANEL_Y)
 
 
@@ -217,7 +215,7 @@ def render_all():
 	#always appear over all other objects! so it's drawn later.
 	for object in game.current_map.objects:
 		if object != game.char:
-			object.draw()
+			object.draw(game.con)
 	game.char.draw(game.con)
 
 	libtcod.console_print(game.con, 1, 0, get_names_under_mouse())

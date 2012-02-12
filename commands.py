@@ -32,13 +32,8 @@ def handle_keys():
 				close_door()
 			if key_char == 'o':
 				open_door()
-
-#			if key_char == 'g':
-#				#pick up an item
-#				for object in objects:  # look for an item in the player's tile
-#					if object.x == char.x and object.y == char.y and object.item:
-#						object.item.pick_up()
-#						break
+			if key_char == ',':
+				pickup_item()
 
 #			if key_char == 'i':
 #				#show the inventory; if an item is selected, use it
@@ -143,3 +138,16 @@ def close_door():
 		game.message.new('That door is already closed!', game.player.turns, libtcod.red)
 	elif dx != 0 or dy != 0:
 		game.message.new('There is no door in that direction!', game.player.turns, libtcod.red)
+
+
+def pickup_item():
+	#pick up an item
+	pickup = False
+	for object in game.current_map.objects:  # look for an item in the player's tile
+		if object.x == game.char.x and object.y == game.char.y and object.can_be_pickup:
+			object.item.pick_up()
+			game.current_map.objects.remove(object)
+			pickup = True
+			break
+	if not pickup:
+		game.message.new('There is nothing to pick up.', game.player.turns, libtcod.white)

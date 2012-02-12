@@ -1,17 +1,23 @@
 item_type "potion of healing" {
+	unidentified_name = "potion"
 	icon = ")"
-	icon_color = "red"
-	type = "potion"
+	icon_color = "255,0,0"
+	dark_color = "85,0,0"
+	weight = 4
 }
 
 item_type "gold" {
+	unidentified_name = "gold"
 	icon = "$"
-	icon_color = "gold"
-	type = "money"
+	icon_color = "229,191,0"
+	dark_color = "76,64,0"
+	weight = 0
 }
 
-item_type "sword" {
+item_type "short sword" {
+	unidentified_name = "short sword"
 	icon = "!"
-	icon_color = "white"
-	type = "weapon"
+	icon_color = "255,255,255"
+	dark_color = "85,85,85"
+	weight = 30
 }

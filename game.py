@@ -2,15 +2,12 @@ import libtcodpy as libtcod
 import shelve
 from players import *
 from messages import *
+from item import *
 import map
 import commands
 import util
 
-<<<<<<< HEAD
-VERSION = 'v0.0.1.4'
-=======
-VERSION = 'v0.0.1.3'
->>>>>>> update
+VERSION = 'v0.0.1.6'
 
 #actual size of the window
 SCREEN_WIDTH = 100
@@ -38,8 +35,9 @@ MAX_ROOMS = 30
 MAX_MONSTERS_PER_LEVEL = 8
 MAX_ITEMS_PER_LEVEL = 10
 
-FOV_ALGO = 0  # default FOV algorithm
-FOV_LIGHT_WALLS = True  # light walls or not
+#fov
+FOV_ALGO = 0
+FOV_LIGHT_WALLS = True
 TORCH_RADIUS = 6
 FOV_RADIUS = 6
 SQUARED_TORCH_RADIUS = TORCH_RADIUS * TORCH_RADIUS
@@ -52,9 +50,9 @@ fov_recompute = True
 fov_torch = True
 fov_map = None
 fov_noise = None
+fov_torchx = 0.0
 current_map = None
 char = None
-fov_torchx = 0.0
 
 path_dijk = None
 path_recalculate = False
@@ -77,12 +75,15 @@ class Game(object):
 
 	def init_items(self):
 		global items
+		items = ItemList()
 		parser = libtcod.parser_new()
-		struct = libtcod.parser_new_struct(parser, 'item_type')
-		libtcod.struct_add_property(struct, 'icon', libtcod.TYPE_STRING, True)
-		libtcod.struct_add_property(struct, 'icon_color', libtcod.TYPE_STRING, True)
-		libtcod.struct_add_property(struct, 'type', libtcod.TYPE_STRING, True)
-		libtcod.parser_run(parser, "data/items.txt", MyListener())
+		item_type_struct = libtcod.parser_new_struct(parser, 'item_type')
+		libtcod.struct_add_property(item_type_struct, 'unidentified_name', libtcod.TYPE_STRING, True)
+		libtcod.struct_add_property(item_type_struct, 'icon', libtcod.TYPE_STRING, True)
+		libtcod.struct_add_property(item_type_struct, 'icon_color', libtcod.TYPE_COLOR, True)
+		libtcod.struct_add_property(item_type_struct, 'dark_color', libtcod.TYPE_COLOR, True)
+		libtcod.struct_add_property(item_type_struct, 'weight', libtcod.TYPE_INT, True)
+		libtcod.parser_run(parser, "data/items.txt", ItemListener())
 
 	def new_game(self):
 		global player, char, message, game_state, current_map
@@ -173,31 +174,3 @@ class Game(object):
 #				play_game()
 			if choice == 4:  # quit
 				break
-
-
-class MyListener(object):
-	def new_struct(self, struct, name):
-		print 'new structure type', libtcod.struct_get_name(struct), ' named ', name
-		return True
-
-	def new_flag(self, name):
-		print 'new flag named ', name
-		return True
-
-	def new_property(self, name, typ, value):
-		type_names = ['NONE', 'BOOL', 'CHAR', 'INT', 'FLOAT', 'STRING', 'COLOR', 'DICE']
-		if name == 'color_field':
-			print 'new property named ', name, ' type ', type_names[typ], ' value ', value.r, value.g, value.b
-		elif name == 'dice_field':
-			print 'new property named ', name, ' type ', type_names[typ], ' value ', value.nb_dices, value.nb_faces, value.multiplier, value.addsub
-		else:
-			print 'new property named ', name, ' type ', type_names[typ], ' value ', value
-			return True
-
-	def end_struct(self, struct, name):
-		print 'end structure type', libtcod.struct_get_name(struct), ' named ', name
-		return True
-
-	def error(self, msg):
-		print 'error : ', msg
-		return True
