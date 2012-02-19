@@ -2,22 +2,76 @@ import libtcodpy as libtcod
 import game
 
 
-def render_bar(con, x, y, total_width, name, value, maximum, bar_color, back_color):
-	#render a bar (HP, experience, etc). first calculate the width of the bar
-	bar_width = int(float(value) / maximum * total_width)
+def choices(con, width, height, options, typ):
+	choice = False
+	current = 0
+	up = 0
+	down = height - 4
+	while not choice and choice != -1:
+		key = libtcod.console_check_for_keypress(libtcod.KEY_PRESSED)
+		libtcod.console_set_default_foreground(con, libtcod.grey)
+		libtcod.console_set_default_background(con, libtcod.black)
+		libtcod.console_rect(con, width - 2, 3, 1, height - 4, True, libtcod.BKGND_SET)
+		if up != 0:
+			libtcod.console_print_ex(con, width - 2, 3, libtcod.BKGND_SET, libtcod.LEFT, chr(136))
+		if down < len(options):
+			libtcod.console_print_ex(con, width - 2, height - 2, libtcod.BKGND_SET, libtcod.LEFT, chr(142))
+		for y in range(up, down):
+			if y < len(options):
+				if y == current:
+					libtcod.console_set_default_foreground(con, libtcod.white)
+					libtcod.console_set_default_background(con, libtcod.light_blue)
+				else:
+					libtcod.console_set_default_foreground(con, libtcod.grey)
+					libtcod.console_set_default_background(con, libtcod.black)
+				if typ == 'inventory':
+					#text = '(' + chr((y - up) + 97) + ') ' + options[y].unidentified_name
+					textl = options[y].unidentified_name
+					textr = str(options[y].weight) + ' lbs'
+				else:
+					#text = '(' + chr((y - up) + 97) + ') ' + options[y]
+					textl = options[y]
+					textr = ''
+				libtcod.console_rect(con, 1, (y - up) + 3, width - 3, 1, True, libtcod.BKGND_SET)
+				libtcod.console_print_ex(con, 2, (y - up) + 3, libtcod.BKGND_SET, libtcod.LEFT, textl)
+				libtcod.console_print_ex(con, width - 4, (y - up) + 3, libtcod.BKGND_SET, libtcod.RIGHT, textr)
 
-	#render the background first
-	libtcod.console_set_default_background(con, back_color)
-	libtcod.console_rect(con, x, y, total_width, 1, False, libtcod.BKGND_SET)
+		libtcod.console_blit(con, 0, 0, width, height, 0, (game.SCREEN_WIDTH - width) / 2, (game.SCREEN_HEIGHT - height) / 2, 1.0, 0.7)
+		libtcod.console_flush()
+		if key.vk == libtcod.KEY_DOWN:
+			current = (current + 1) % len(options)
+			if current == down:
+				down += 1
+				up += 1
+			if current == 0:
+				down = height - 4
+				up = 0
+		elif key.vk == libtcod.KEY_UP:
+			current = (current - 1) % len(options)
+			if current < up:
+				up -= 1
+				down -= 1
+			if current == len(options) - 1:
+				if current > height - 4:
+					up = len(options) - (height - 4)
+					down = len(options)
+		elif key.vk == libtcod.KEY_ESCAPE:
+			choice = -1
+		elif key.vk == libtcod.KEY_ENTER:
+			choice = True
+	return current
 
-	#now render the bar on top
-	libtcod.console_set_default_background(con, bar_color)
-	if bar_width > 0:
-		libtcod.console_rect(con, x, y, bar_width, 1, False, libtcod.BKGND_SET)
 
-	#finally, some centered text with the values
-	libtcod.console_set_default_foreground(con, libtcod.white)
-	libtcod.console_print_ex(con, x + total_width / 2, y, libtcod.BKGND_NONE, libtcod.CENTER, name + ': ' + str(value) + '/' + str(maximum))
+def msg_box(typ, header=None):
+	width = 42
+	height = min(14, len(game.player.inventory) + 4)
+	box = libtcod.console_new(width, height)
+	libtcod.console_set_default_foreground(box, libtcod.white)
+	libtcod.console_set_default_background(box, libtcod.black)
+	libtcod.console_print_frame(box, 0, 0, width, height, True, libtcod.BKGND_NONE)
+
+	if typ == 'inv':
+		choices(box, width, height, game.player.inventory, 'inventory')
 
 
 def menu(header, options):
@@ -62,6 +116,24 @@ def menu(header, options):
 		elif key.vk == libtcod.KEY_ENTER:
 			choice = True
 	return current
+
+
+def render_bar(con, x, y, total_width, name, value, maximum, bar_color, back_color):
+	#render a bar (HP, experience, etc). first calculate the width of the bar
+	bar_width = int(float(value) / maximum * total_width)
+
+	#render the background first
+	libtcod.console_set_default_background(con, back_color)
+	libtcod.console_rect(con, x, y, total_width, 1, False, libtcod.BKGND_SET)
+
+	#now render the bar on top
+	libtcod.console_set_default_background(con, bar_color)
+	if bar_width > 0:
+		libtcod.console_rect(con, x, y, bar_width, 1, False, libtcod.BKGND_SET)
+
+	#finally, some centered text with the values
+	libtcod.console_set_default_foreground(con, libtcod.white)
+	libtcod.console_print_ex(con, x + total_width / 2, y, libtcod.BKGND_NONE, libtcod.CENTER, name + ': ' + str(value) + '/' + str(maximum))
 
 
 def get_names_under_mouse():

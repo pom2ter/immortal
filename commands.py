@@ -30,6 +30,8 @@ def handle_keys():
 
 			if key_char == 'c':
 				close_door()
+			if key_char == 'i':
+				inventory()
 			if key_char == 'o':
 				open_door()
 			if key_char == ',':
@@ -151,3 +153,10 @@ def pickup_item():
 			break
 	if not pickup:
 		game.message.new('There is nothing to pick up.', game.player.turns, libtcod.white)
+
+
+def inventory():
+	if len(game.player.inventory) == 0:
+		game.message.new('Your inventory is empty.', game.player.turns, libtcod.white)
+	else:
+		util.msg_box('inv')

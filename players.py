@@ -13,91 +13,92 @@ BASE_STATS = [[9, 9, 8, 9, 9], [12, 9, 6, 11, 8], [10, 12, 7, 8, 9], [9, 8, 10, 
 
 
 def create_character():
-	show_stats("")
-	cs = libtcod.console_new(game.SCREEN_WIDTH - 40, game.SCREEN_HEIGHT)
-	libtcod.console_print(cs, 0, 0, 'CHARACTER GENERATION')
-	libtcod.console_print(cs, 0, 2, 'Enter a name for your character: ' + game.player.name)
-	libtcod.console_blit(cs, 0, 0, game.SCREEN_WIDTH - 40, game.SCREEN_HEIGHT, 0, 0, 0)
-	libtcod.console_flush()
+	cancel = False
+	while not cancel:
+		show_stats("")
+		cs = libtcod.console_new(game.SCREEN_WIDTH - 40, game.SCREEN_HEIGHT)
+		libtcod.console_print(cs, 0, 0, 'CHARACTER GENERATION')
+		libtcod.console_print(cs, 0, 2, 'Enter a name for your character: ' + game.player.name)
+		libtcod.console_blit(cs, 0, 0, game.SCREEN_WIDTH - 40, game.SCREEN_HEIGHT, 0, 0, 0)
+		libtcod.console_flush()
 
-	game.player.name = text_input(cs, 33, 2)
-	show_stats("")
-	libtcod.console_print_frame(cs, 0, 2, game.SCREEN_WIDTH - 40, game.SCREEN_HEIGHT)
-	libtcod.console_print(cs, 0, 2, 'Select a gender:')
-	libtcod.console_print(cs, 0, 4, '1) Male')
-	libtcod.console_print(cs, 0, 5, '2) Female')
-	libtcod.console_blit(cs, 0, 0, game.SCREEN_WIDTH - 40, game.SCREEN_HEIGHT, 0, 0, 0)
-	libtcod.console_flush()
+		game.player.name = game.message.input(cs, 33, 2)
+		show_stats("")
+		libtcod.console_rect(cs, 0, 2, game.SCREEN_WIDTH - 40, game.SCREEN_HEIGHT, True, libtcod.BKGND_SET)
+		libtcod.console_print(cs, 0, 2, 'Select a gender:')
+		libtcod.console_print(cs, 0, 4, '1) Male')
+		libtcod.console_print(cs, 0, 5, '2) Female')
+		libtcod.console_blit(cs, 0, 0, game.SCREEN_WIDTH - 40, game.SCREEN_HEIGHT, 0, 0, 0)
+		libtcod.console_flush()
 
-	choices = False
-	while not choices:
-		key = libtcod.console_wait_for_keypress(True)
-		index = key.c - ord('1')
-		if index >= 0 and index < len(GENDER):
-			game.player.gender = GENDER[index]
-			choices = True
+		gender_choice = False
+		while not gender_choice:
+			key = libtcod.console_wait_for_keypress(True)
+			index = key.c - ord('1')
+			if index >= 0 and index < len(GENDER):
+				game.player.gender = GENDER[index]
+				gender_choice = True
 
-	show_stats(game.player.gender, 0)
-	libtcod.console_print_frame(cs, 0, 2, game.SCREEN_WIDTH - 40, game.SCREEN_HEIGHT)
-	libtcod.console_print(cs, 0, 2, 'Select a race:')
-	libtcod.console_print(cs, 15, 3, 'Modifiers')
-	libtcod.console_print(cs, 0, 4, '1) Human       None')
-	libtcod.console_print(cs, 0, 5, '2) Elf         +2 Int, +1 Luck, -2 Str, -1 End')
-	libtcod.console_print(cs, 0, 6, '3) Dwarf       +2 Str, +3 End, -2 Int, -2 Dex, -1 Luck')
-	libtcod.console_print(cs, 0, 7, '4) Halfling    +1 Dex, +1 Luck, -1 Int, -1 Str')
-	libtcod.console_blit(cs, 0, 0, game.SCREEN_WIDTH - 40, game.SCREEN_HEIGHT, 0, 0, 0)
-	libtcod.console_flush()
+		show_stats(game.player.gender, 0)
+		libtcod.console_rect(cs, 0, 2, game.SCREEN_WIDTH - 40, game.SCREEN_HEIGHT, True, libtcod.BKGND_SET)
+		libtcod.console_print(cs, 0, 2, 'Select a race:')
+		libtcod.console_print(cs, 15, 3, 'Modifiers')
+		libtcod.console_print(cs, 0, 4, '1) Human       None')
+		libtcod.console_print(cs, 0, 5, '2) Elf         +2 Int, +1 Luck, -2 Str, -1 End')
+		libtcod.console_print(cs, 0, 6, '3) Dwarf       +2 Str, +3 End, -2 Int, -2 Dex, -1 Luck')
+		libtcod.console_print(cs, 0, 7, '4) Halfling    +1 Dex, +1 Luck, -1 Int, -1 Str')
+		libtcod.console_blit(cs, 0, 0, game.SCREEN_WIDTH - 40, game.SCREEN_HEIGHT, 0, 0, 0)
+		libtcod.console_flush()
 
-	choices = False
-	while not choices:
-		key = libtcod.console_wait_for_keypress(True)
-		index = key.c - ord('1')
-		if index >= 0 and index < len(RACES):
-			game.player.race = RACES[index]
-			choices = True
+		race_choice = False
+		while not race_choice:
+			key = libtcod.console_wait_for_keypress(True)
+			index = key.c - ord('1')
+			if index >= 0 and index < len(RACES):
+				game.player.race = RACES[index]
+				race_choice = True
 
-	show_stats(game.player.gender + " " + game.player.race, index * 5)
-	libtcod.console_print_frame(cs, 0, 2, game.SCREEN_WIDTH - 40, game.SCREEN_HEIGHT)
-	libtcod.console_print(cs, 0, 2, 'Select a class:')
-	libtcod.console_print(cs, 15, 3, 'Modifiers')
-	libtcod.console_print(cs, 0, 4, '1) Fighter     +3 Str, +2 End, -2 Int, -1 Luck')
-	libtcod.console_print(cs, 0, 5, '2) Rogue       +3 Dex, +1 Str, -1 Int, -1 End')
-	libtcod.console_print(cs, 0, 6, '3) Priest      +2 Int, +1 End, -1 Dex')
-	libtcod.console_print(cs, 0, 7, '4) Mage        +4 Int, +1 Dex, -2 Str, -1 End')
-	libtcod.console_blit(cs, 0, 0, game.SCREEN_WIDTH - 40, game.SCREEN_HEIGHT, 0, 0, 0)
-	libtcod.console_flush()
+		show_stats(game.player.gender + " " + game.player.race, index * 5)
+		libtcod.console_rect(cs, 0, 2, game.SCREEN_WIDTH - 40, game.SCREEN_HEIGHT, True, libtcod.BKGND_SET)
+		libtcod.console_print(cs, 0, 2, 'Select a class:')
+		libtcod.console_print(cs, 15, 3, 'Modifiers')
+		libtcod.console_print(cs, 0, 4, '1) Fighter     +3 Str, +2 End, -2 Int, -1 Luck')
+		libtcod.console_print(cs, 0, 5, '2) Rogue       +3 Dex, +1 Str, -1 Int, -1 End')
+		libtcod.console_print(cs, 0, 6, '3) Priest      +2 Int, +1 End, -1 Dex')
+		libtcod.console_print(cs, 0, 7, '4) Mage        +4 Int, +1 Dex, -2 Str, -1 End')
+		libtcod.console_blit(cs, 0, 0, game.SCREEN_WIDTH - 40, game.SCREEN_HEIGHT, 0, 0, 0)
+		libtcod.console_flush()
 
-	choices = False
-	while not choices:
-		key = libtcod.console_wait_for_keypress(True)
-		indexr = key.c - ord('1')
-		if indexr >= 0 and indexr < len(CLASSES):
-			game.player.profession = CLASSES[indexr]
-			choices = True
+		class_choice = False
+		while not class_choice:
+			key = libtcod.console_wait_for_keypress(True)
+			indexr = key.c - ord('1')
+			if indexr >= 0 and indexr < len(CLASSES):
+				game.player.profession = CLASSES[indexr]
+				class_choice = True
 
-	show_stats(game.player.gender + " " + game.player.race + " " + game.player.profession, (index * 5) + indexr + 1, 0)
-	libtcod.console_print(cs, 0, 11, '(r)eroll')
-	libtcod.console_print(cs, 0, 12, '(k)eep character and start game')
-	libtcod.console_print(cs, 0, 13, '(c)ancel and restart')
-	libtcod.console_print(cs, 0, 14, '<ESC> Return to main menu')
-	libtcod.console_blit(cs, 0, 0, game.SCREEN_WIDTH - 40, game.SCREEN_HEIGHT, 0, 0, 0)
-	libtcod.console_flush()
+		show_stats(game.player.gender + " " + game.player.race + " " + game.player.profession, (index * 5) + indexr + 1, 0)
+		libtcod.console_print(cs, 0, 11, '(r)eroll')
+		libtcod.console_print(cs, 0, 12, '(k)eep character and start game')
+		libtcod.console_print(cs, 0, 13, '(c)ancel and restart')
+		libtcod.console_print(cs, 0, 14, '<ESC> Return to main menu')
+		libtcod.console_blit(cs, 0, 0, game.SCREEN_WIDTH - 40, game.SCREEN_HEIGHT, 0, 0, 0)
+		libtcod.console_flush()
 
-	choices = False
-	while not choices:
-		key = libtcod.console_wait_for_keypress(True)
-		if key.vk == libtcod.KEY_ESCAPE:
-			choices = True
-			return "quit"
-		if chr(key.c) == 'r':
-			show_stats(game.player.gender + " " + game.player.race + " " + game.player.profession, (index * 5) + indexr + 1, 0)
-		if chr(key.c) == 'k':
-			choices = True
-			return "play"
-		if chr(key.c) == 'c':
-			game.player.name = ""
-			create_character()
-			break
+		final_choice = False
+		while not final_choice:
+			key = libtcod.console_wait_for_keypress(True)
+			if key.vk == libtcod.KEY_ESCAPE:
+				final_choice = True
+				return "quit"
+			if chr(key.c) == 'r':
+				show_stats(game.player.gender + " " + game.player.race + " " + game.player.profession, (index * 5) + indexr + 1, 0)
+			if chr(key.c) == 'k':
+				final_choice = True
+				return "play"
+			if chr(key.c) == 'c':
+				game.player.name = ""
+				final_choice = True
 
 
 def show_stats(text, attr=-1, roll=-1):
@@ -131,9 +132,15 @@ def show_stats(text, attr=-1, roll=-1):
 		for i in range(0, 5):
 			libtcod.console_print(stats, 25, i + 5, str(stat[i]))
 			libtcod.console_print(stats, 31, i + 5, str(BASE_STATS[attr][i] + stat[i]))
+		game.player.strength = BASE_STATS[attr][0] + stat[0]
+		game.player.dexterity = BASE_STATS[attr][1] + stat[1]
+		game.player.intelligence = BASE_STATS[attr][2] + stat[2]
+		game.player.endurance = BASE_STATS[attr][3] + stat[3]
+		game.player.luck = BASE_STATS[attr][4] + stat[4]
+		game.player.gold = libtcod.random_get_int(0, 1, 50)
 
 	for i in range(0, game.SCREEN_HEIGHT):
-		libtcod.console_print(stats, 0, i, '|')
+		libtcod.console_print(stats, 0, i, chr(179))
 	libtcod.console_blit(stats, 0, 0, 40, game.SCREEN_HEIGHT, 0, game.SCREEN_WIDTH - 40, 0)
 	libtcod.console_flush()
 

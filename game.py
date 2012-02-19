@@ -7,7 +7,7 @@ import map
 import commands
 import util
 
-VERSION = 'v0.0.1.6'
+VERSION = 'v0.0.2.7'
 
 #actual size of the window
 SCREEN_WIDTH = 100
@@ -73,6 +73,7 @@ class Game(object):
 		ps = libtcod.console_new(PLAYER_STATS_WIDTH, PLAYER_STATS_HEIGHT)
 		self.main_menu()
 
+	# setup the items structure and run parser
 	def init_items(self):
 		global items
 		items = ItemList()
@@ -85,35 +86,33 @@ class Game(object):
 		libtcod.struct_add_property(item_type_struct, 'weight', libtcod.TYPE_INT, True)
 		libtcod.parser_run(parser, "data/items.txt", ItemListener())
 
+	# new game setup
 	def new_game(self):
 		global player, char, message, game_state, current_map
+		message = Message()
 		player = Player()
 		char = map.Object(0, 0, player.icon, 'player', player.icon_color, blocks=True)
-		#status = create_character()
-		player.name = 'Ben'
-		status = 'play'
+		status = create_character()
+		#player.name = 'Ben'
+		#status = 'play'
 		self.init_items()
 		if status == 'play':
 			libtcod.console_clear(0)
 			current_map = map.Map('Starter Dungeon', 1, 1)
 			util.initialize_fov()
 			game_state = 'playing'
-			message = Message()
 			self.play_game()
 
+	# main game loop
 	def play_game(self):
-		player_action = None
-
+		global player_action
 		while not libtcod.console_is_window_closed():
-			#render the screen
 			util.render_all()
 			libtcod.console_flush()
 
-			#erase all objects at their old locations, before they move
 			for object in current_map.objects:
 				object.clear(con)
 
-			#handle keys and exit game if needed
 			player_action = commands.handle_keys()
 			if player_action == 'exit':
 				self.save_game()
@@ -125,8 +124,8 @@ class Game(object):
 #					if object.ai:
 #						object.ai.take_turn()
 
+	# save game using the shelve module
 	def save_game(self):
-		#open a new empty shelve (possibly overwriting an old one) to write the game data
 		file = shelve.open('savegame', 'n')
 		file['map'] = current_map
 		file['objects'] = current_map.objects
@@ -136,8 +135,8 @@ class Game(object):
 		file['game_state'] = game_state
 		file.close()
 
+	# load game using the shelve module
 	def load_game(self):
-		#open the previously saved shelve and load the game data
 		global char, inventory, message, game_state, current_map
 		file = shelve.open('savegame', 'r')
 		current_map = file['map']
@@ -149,7 +148,11 @@ class Game(object):
 		file.close()
 		util.initialize_fov()
 
+	# brings up the main menu
 	def main_menu(self):
+		global player_action
+		player_action = None
+
 		libtcod.console_credits()
 		while not libtcod.console_is_window_closed():
 			#libtcod.image_blit_2x(img, 0, 0, 0)
@@ -158,13 +161,13 @@ class Game(object):
 			libtcod.console_clear(0)
 			libtcod.console_print_ex(0, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 5, libtcod.BKGND_SET, libtcod.CENTER, 'Immortal ' + VERSION)
 			libtcod.console_print_ex(0, SCREEN_WIDTH / 2, SCREEN_HEIGHT - 2, libtcod.BKGND_SET, libtcod.CENTER, 'By Potatoman')
-
-			#show options and wait for the player's choice
 			choice = util.menu('Main menu', ['Start a new game', 'Load a saved game', 'Manual', 'Options', 'Quit'])
+			#choice = 0
 
 			if choice == 0:  # new game
 				self.new_game()
-				break
+				if player_action == 'exit':
+					break
 #			if choice == 1:  # load last game
 #				try:
 #					self.load_game()
