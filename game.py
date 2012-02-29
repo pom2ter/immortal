@@ -7,23 +7,22 @@ import map
 import commands
 import util
 
-VERSION = 'v0.0.2.7'
-
-#actual size of the window
-SCREEN_WIDTH = 100
-SCREEN_HEIGHT = 32
+VERSION = 'v0.0.2.8'
 
 #size of the map
-MAP_WIDTH = 80
+MAP_WIDTH = 75
 MAP_HEIGHT = 28
 
-#sizes and coordinates relevant for the GUI
-BAR_WIDTH = 20
+#actual size of the window
 PLAYER_STATS_WIDTH = 20
 PLAYER_STATS_HEIGHT = 32
 PANEL_HEIGHT = 4
+SCREEN_WIDTH = MAP_WIDTH + PLAYER_STATS_WIDTH
+SCREEN_HEIGHT = MAP_HEIGHT + PANEL_HEIGHT
+
+#sizes and coordinates relevant for the GUI
 PANEL_Y = SCREEN_HEIGHT - PANEL_HEIGHT
-MSG_X = BAR_WIDTH + 2
+MSG_X = PLAYER_STATS_WIDTH + 2
 MSG_WIDTH = SCREEN_WIDTH - PLAYER_STATS_WIDTH - 2
 MSG_HEIGHT = PANEL_HEIGHT
 INVENTORY_WIDTH = 50
@@ -65,7 +64,7 @@ class Game(object):
 	def __init__(self):
 		global con, panel, ps
 		#img = libtcod.image_load('title_screen2.png')
-		libtcod.console_set_custom_font('fonts/ph_font.png', libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_ASCII_INROW)
+		libtcod.console_set_custom_font('fonts/formal.png', libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_ASCII_INROW)
 		libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, 'Immortal ' + VERSION, False)
 		#libtcod.sys_set_fps(30)
 		con = libtcod.console_new(MAP_WIDTH, MAP_HEIGHT)
@@ -92,9 +91,9 @@ class Game(object):
 		message = Message()
 		player = Player()
 		char = map.Object(0, 0, player.icon, 'player', player.icon_color, blocks=True)
-		status = create_character()
-		#player.name = 'Ben'
-		#status = 'play'
+		#status = create_character()
+		player.name = 'Ben'
+		status = 'play'
 		self.init_items()
 		if status == 'play':
 			libtcod.console_clear(0)
@@ -153,7 +152,7 @@ class Game(object):
 		global player_action
 		player_action = None
 
-		libtcod.console_credits()
+		#libtcod.console_credits()
 		while not libtcod.console_is_window_closed():
 			#libtcod.image_blit_2x(img, 0, 0, 0)
 			libtcod.console_set_default_foreground(0, libtcod.light_yellow)
@@ -161,8 +160,8 @@ class Game(object):
 			libtcod.console_clear(0)
 			libtcod.console_print_ex(0, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 5, libtcod.BKGND_SET, libtcod.CENTER, 'Immortal ' + VERSION)
 			libtcod.console_print_ex(0, SCREEN_WIDTH / 2, SCREEN_HEIGHT - 2, libtcod.BKGND_SET, libtcod.CENTER, 'By Potatoman')
-			choice = util.menu('Main menu', ['Start a new game', 'Load a saved game', 'Manual', 'Options', 'Quit'])
-			#choice = 0
+			#choice = util.menu('Main menu', ['Start a new game', 'Load a saved game', 'Manual', 'Options', 'Quit'])
+			choice = 0
 
 			if choice == 0:  # new game
 				self.new_game()

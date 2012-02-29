@@ -109,11 +109,16 @@ def menu(header, options):
 		libtcod.console_blit(window, 0, 0, width, height, 0, x, y, 1.0, 0.7)
 		libtcod.console_flush()
 
+		mouse = libtcod.mouse_get_status()
+		(mx, my) = (mouse.cx, mouse.cy)
+		if my in range(y + 1, len(options) + (y + 1)) and mx in range(x + 1, x + width - 1):
+			current = my - (y + 1)
+
 		if key.vk == libtcod.KEY_DOWN:
 			current = (current + 1) % len(options)
 		elif key.vk == libtcod.KEY_UP:
 			current = (current - 1) % len(options)
-		elif key.vk == libtcod.KEY_ENTER:
+		elif key.vk == libtcod.KEY_ENTER or (mouse.lbutton_pressed and my in range(y + 1, len(options) + (y + 1)) and mx in range(x + 1, x + width - 1)):
 			choice = True
 	return current
 
@@ -182,8 +187,8 @@ def render_message_panel():
 
 
 def render_player_stats_panel():
-	render_bar(game.ps, 0, 5, game.BAR_WIDTH, 'HP', game.player.health, game.player.max_health, libtcod.red, libtcod.darker_red)
-	render_bar(game.ps, 0, 6, game.BAR_WIDTH, 'MP', game.player.mana, game.player.max_mana, libtcod.blue, libtcod.darker_blue)
+	render_bar(game.ps, 0, 5, game.PLAYER_STATS_WIDTH, 'HP', game.player.health, game.player.max_health, libtcod.red, libtcod.darker_red)
+	render_bar(game.ps, 0, 6, game.PLAYER_STATS_WIDTH, 'MP', game.player.mana, game.player.max_mana, libtcod.blue, libtcod.darker_blue)
 	libtcod.console_print(game.ps, 0, 0, game.player.name)
 	libtcod.console_print(game.ps, 0, 1, game.player.race + " " + game.player.profession)
 	libtcod.console_set_default_foreground(game.ps, libtcod.dark_green)
@@ -291,8 +296,7 @@ def render_all():
 	game.char.draw(game.con)
 
 	libtcod.console_print(game.con, 1, 0, get_names_under_mouse())
-	libtcod.console_set_default_foreground(game.ps, libtcod.grey)
-	libtcod.console_print(game.con, 70, 0, '(%3d fps)' % libtcod.sys_get_fps())
+	libtcod.console_print(game.con, game.MAP_WIDTH - 9, 0, '(%3d fps)' % libtcod.sys_get_fps())
 	libtcod.console_blit(game.con, 0, 0, game.MAP_WIDTH, game.MAP_HEIGHT, 0, 20, 0)
 
 	render_message_panel()
