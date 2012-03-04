@@ -1,5 +1,6 @@
 import libtcodpy as libtcod
 import util
+import map
 import game
 
 
@@ -11,7 +12,6 @@ def handle_keys():
 		return 'exit'
 
 	if game.game_state == 'playing':
-		#movement keys
 		if key.vk == libtcod.KEY_UP:
 			player_move_or_attack(0, -1)
 		elif key.vk == libtcod.KEY_DOWN:
@@ -27,26 +27,16 @@ def handle_keys():
 
 			if key_char == 'c':
 				close_door()
+			if key_char == 'd':
+				drop_item()
+			if key_char == 'g':
+				pickup_item()
 			if key_char == 'i':
 				inventory()
 			if key_char == 'l':
 				look()
 			if key_char == 'o':
 				open_door()
-			if key_char == ',':
-				pickup_item()
-
-#			if key_char == 'i':
-#				#show the inventory; if an item is selected, use it
-#				chosen_item = inventory_menu('Press the key next to an item to use it, or any other to cancel.\n')
-#				if chosen_item is not None:
-#					chosen_item.use()
-
-#			if key_char == 'd':
-#				#show the inventory; if an item is selected, drop it
-#				chosen_item = inventory_menu('Press the key next to an item to drop it, or any other to cancel.\n')
-#				if chosen_item is not None:
-#					chosen_item.drop()
 
 			return 'didnt-take-turn'
 
@@ -107,12 +97,26 @@ def close_door():
 		game.message.new('There is no door in that direction!', game.player.turns, libtcod.red)
 
 
+# drop an item
+def drop_item():
+	if len(game.player.inventory) == 0:
+		game.message.new('Your inventory is empty.', game.player.turns, libtcod.white)
+	else:
+		choice = util.msg_box('drop', 'Drop an item', 'Up/down to select, ENTER to drop, ESC to exit')
+		if choice != -1:
+			print choice
+			obj = map.Object(game.char.x, game.char.y, game.player.inventory[choice].icon, game.player.inventory[choice].name, game.player.inventory[choice].color, True, item=game.player.inventory[choice])
+			game.current_map.objects.append(obj)
+			obj.send_to_back()
+			game.player.inventory.pop(choice)
+
+
 # see inventory
 def inventory():
 	if len(game.player.inventory) == 0:
 		game.message.new('Your inventory is empty.', game.player.turns, libtcod.white)
 	else:
-		util.msg_box('inv')
+		util.msg_box('inv', 'Inventory', 'Up/down to select, ENTER-Use, BSPACE-Drop, ESC-Exit')
 
 
 # look (with keyboard)

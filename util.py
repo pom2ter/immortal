@@ -1,21 +1,21 @@
 import libtcodpy as libtcod
+import map
 import game
 
 
-def choices(con, width, height, options, typ):
+def choices(con, width, height, options, typ, bspace=False):
 	choice = False
-	current = 0
-	up = 0
-	down = height - 4
+	current, up, empty = 0, 0, 3
+	down = height - empty
 	while not choice and choice != -1:
 		key = libtcod.console_check_for_keypress(libtcod.KEY_PRESSED)
 		libtcod.console_set_default_foreground(con, libtcod.grey)
 		libtcod.console_set_default_background(con, libtcod.black)
-		libtcod.console_rect(con, width - 2, 3, 1, height - 4, True, libtcod.BKGND_SET)
+		libtcod.console_rect(con, 1, 2, width - 2, height - 4, True, libtcod.BKGND_SET)
 		if up != 0:
-			libtcod.console_print_ex(con, width - 2, 3, libtcod.BKGND_SET, libtcod.LEFT, chr(136))
+			libtcod.console_print_ex(con, width - 2, 2, libtcod.BKGND_SET, libtcod.LEFT, chr(136))
 		if down < len(options):
-			libtcod.console_print_ex(con, width - 2, height - 2, libtcod.BKGND_SET, libtcod.LEFT, chr(142))
+			libtcod.console_print_ex(con, width - 2, height - 4, libtcod.BKGND_SET, libtcod.LEFT, chr(142))
 		for y in range(up, down):
 			if y < len(options):
 				if y == current:
@@ -32,11 +32,11 @@ def choices(con, width, height, options, typ):
 					#text = '(' + chr((y - up) + 97) + ') ' + options[y]
 					textl = options[y]
 					textr = ''
-				libtcod.console_rect(con, 1, (y - up) + 3, width - 3, 1, True, libtcod.BKGND_SET)
-				libtcod.console_print_ex(con, 2, (y - up) + 3, libtcod.BKGND_SET, libtcod.LEFT, textl)
-				libtcod.console_print_ex(con, width - 4, (y - up) + 3, libtcod.BKGND_SET, libtcod.RIGHT, textr)
+				libtcod.console_rect(con, 2, (y - up) + 2, width - 4, 1, True, libtcod.BKGND_SET)
+				libtcod.console_print_ex(con, 3, (y - up) + 2, libtcod.BKGND_SET, libtcod.LEFT, textl)
+				libtcod.console_print_ex(con, width - 4, (y - up) + 2, libtcod.BKGND_SET, libtcod.RIGHT, textr)
 
-		libtcod.console_blit(con, 0, 0, width, height, 0, (game.SCREEN_WIDTH - width) / 2, (game.SCREEN_HEIGHT - height) / 2, 1.0, 0.7)
+		libtcod.console_blit(con, 0, 0, width, height, 0, (game.SCREEN_WIDTH - width) / 2, (game.SCREEN_HEIGHT - height) / 2, 1.0, 0.75)
 		libtcod.console_flush()
 		if key.vk == libtcod.KEY_DOWN:
 			current = (current + 1) % len(options)
@@ -44,7 +44,7 @@ def choices(con, width, height, options, typ):
 				down += 1
 				up += 1
 			if current == 0:
-				down = height - 4
+				down = height - empty
 				up = 0
 		elif key.vk == libtcod.KEY_UP:
 			current = (current - 1) % len(options)
@@ -52,26 +52,41 @@ def choices(con, width, height, options, typ):
 				up -= 1
 				down -= 1
 			if current == len(options) - 1:
-				if current > height - 4:
-					up = len(options) - (height - 4)
+				if current > height - empty:
+					up = len(options) - (height - empty)
 					down = len(options)
+		elif key.vk == libtcod.KEY_BACKSPACE and bspace:
+			obj = map.Object(game.char.x, game.char.y, options[current].icon, options[current].name, options[current].color, True, item=options[current])
+			game.current_map.objects.append(obj)
+			obj.send_to_back()
+			game.player.inventory.pop(current)
+			if current == len(options):
+				current -= 1
+			if len(options) == 0:
+				choice = -1
 		elif key.vk == libtcod.KEY_ESCAPE:
+			current = -1
 			choice = -1
 		elif key.vk == libtcod.KEY_ENTER:
 			choice = True
 	return current
 
 
-def msg_box(typ, header=None):
-	width = 42
-	height = min(14, len(game.player.inventory) + 4)
+def msg_box(typ, header=None, footer=None):
+	width = 60
+	height = max(16, len(game.player.inventory) + 4)
 	box = libtcod.console_new(width, height)
 	libtcod.console_set_default_foreground(box, libtcod.white)
 	libtcod.console_set_default_background(box, libtcod.black)
-	libtcod.console_print_frame(box, 0, 0, width, height, True, libtcod.BKGND_NONE)
+	libtcod.console_print_frame(box, 0, 0, width, height, True, libtcod.BKGND_NONE, header)
+	if footer != None:
+		libtcod.console_print_ex(box, width / 2, height - 1, libtcod.BKGND_SET, libtcod.CENTER, '[ ' + footer + ' ]')
 
 	if typ == 'inv':
-		choices(box, width, height, game.player.inventory, 'inventory')
+		choice = choices(box, width, height, game.player.inventory, 'inventory', bspace=True)
+	if typ == 'drop':
+		choice = choices(box, width, height, game.player.inventory, 'inventory')
+	return choice
 
 
 def menu(header, options):
@@ -106,7 +121,7 @@ def menu(header, options):
 		#blit the contents of "window" to the root console
 		x = game.SCREEN_WIDTH / 2 - width / 2
 		y = game.SCREEN_HEIGHT / 2 - height / 2
-		libtcod.console_blit(window, 0, 0, width, height, 0, x, y, 1.0, 0.7)
+		libtcod.console_blit(window, 0, 0, width, height, 0, x, y, 1.0, 0.75)
 		libtcod.console_flush()
 
 		mouse = libtcod.mouse_get_status()
@@ -290,7 +305,7 @@ def render_all():
 
 	#draw all objects in the list, except the player. we want it to
 	#always appear over all other objects! so it's drawn later.
-	for object in game.current_map.objects:
+	for object in reversed(game.current_map.objects):
 		if object != game.char:
 			object.draw(game.con)
 	game.char.draw(game.con)

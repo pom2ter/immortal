@@ -7,7 +7,7 @@ import map
 import commands
 import util
 
-VERSION = 'v0.0.2.8'
+VERSION = 'v0.0.2.9'
 
 #size of the map
 MAP_WIDTH = 75
@@ -64,7 +64,7 @@ class Game(object):
 	def __init__(self):
 		global con, panel, ps
 		#img = libtcod.image_load('title_screen2.png')
-		libtcod.console_set_custom_font('fonts/formal.png', libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_ASCII_INROW)
+		libtcod.console_set_custom_font('fonts/immortal.png', libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_ASCII_INROW)
 		libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, 'Immortal ' + VERSION, False)
 		#libtcod.sys_set_fps(30)
 		con = libtcod.console_new(MAP_WIDTH, MAP_HEIGHT)
@@ -84,6 +84,11 @@ class Game(object):
 		libtcod.struct_add_property(item_type_struct, 'dark_color', libtcod.TYPE_COLOR, True)
 		libtcod.struct_add_property(item_type_struct, 'weight', libtcod.TYPE_INT, True)
 		libtcod.parser_run(parser, "data/items.txt", ItemListener())
+		game.player.inventory.append(items.list[1])
+		game.player.inventory.append(items.list[2])
+		game.player.inventory.append(items.list[0])
+		game.player.inventory.append(items.list[2])
+		game.player.inventory.append(items.list[2])
 
 	# new game setup
 	def new_game(self):
