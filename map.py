@@ -85,7 +85,7 @@ class Map(object):
 				d = game.items.getitem('gold')
 			elif dice < 90:
 				#create a lightning bolt scroll (10% chance)
-				d = game.items.getitem('potion of healing')
+				d = game.items.getitem('potion of minor healing')
 			else:
 				#create a fireball scroll (10% chance)
 				d = game.items.getitem('sword')
@@ -229,7 +229,7 @@ class Object(object):
 			self.x += dx
 			self.y += dy
 			game.path_recalculate = True
-			game.player.turns += 1
+			game.player.add_turn()
 		elif map.tiles[self.x + dx][self.y + dy].name == 'door':
 			game.message.new('You bump into a door!', game.player.turns)
 		elif map.tiles[self.x + dx][self.y + dy].name == 'wall':

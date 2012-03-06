@@ -86,6 +86,8 @@ def msg_box(typ, header=None, footer=None):
 		choice = choices(box, width, height, game.player.inventory, 'inventory', bspace=True)
 	if typ == 'drop':
 		choice = choices(box, width, height, game.player.inventory, 'inventory')
+	if typ == 'use':
+		choice = choices(box, width, height, game.player.inventory, 'inventory')
 	return choice
 
 
@@ -283,7 +285,7 @@ def render_all():
 			libtcod.console_put_char(game.con, game.char.x, game.char.y, '@', libtcod.BKGND_NONE)
 			game.path_recalculate = True
 			game.fov_recompute = True
-			game.player.turns += 1
+			game.player.add_turn()
 		else:
 			game.mouse_move = False
 

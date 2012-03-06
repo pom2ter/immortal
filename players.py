@@ -160,10 +160,13 @@ class Player(object):
 		self.icon_color = libtcod.white
 		self.level = 1
 		self.xp = 0
-		self.health = 12
+		self.health = 2
 		self.max_health = 12
 		self.mana = 2
 		self.max_mana = 2
 		self.inventory = []
 		self.turns = 0
 		self.gold = 0
+
+	def add_turn(self):
+		self.turns += 1

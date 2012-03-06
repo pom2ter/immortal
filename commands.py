@@ -37,6 +37,8 @@ def handle_keys():
 				look()
 			if key_char == 'o':
 				open_door()
+			if key_char == 'u':
+				use_item()
 
 			return 'didnt-take-turn'
 
@@ -86,7 +88,7 @@ def close_door():
 		game.current_map.tiles[game.char.x + dx][game.char.y + dy].dark_color = libtcod.darkest_orange
 		game.current_map.tiles[game.char.x + dx][game.char.y + dy].blocked = True
 		game.current_map.tiles[game.char.x + dx][game.char.y + dy].block_sight = True
-		game.player.turns += 1
+		game.player.add_turn()
 		game.message.new('You close the door.', game.player.turns)
 		game.fov_recompute = True
 		util.initialize_fov()
@@ -104,7 +106,6 @@ def drop_item():
 	else:
 		choice = util.msg_box('drop', 'Drop an item', 'Up/down to select, ENTER to drop, ESC to exit')
 		if choice != -1:
-			print choice
 			obj = map.Object(game.char.x, game.char.y, game.player.inventory[choice].icon, game.player.inventory[choice].name, game.player.inventory[choice].color, True, item=game.player.inventory[choice])
 			game.current_map.objects.append(obj)
 			obj.send_to_back()
@@ -116,7 +117,9 @@ def inventory():
 	if len(game.player.inventory) == 0:
 		game.message.new('Your inventory is empty.', game.player.turns, libtcod.white)
 	else:
-		util.msg_box('inv', 'Inventory', 'Up/down to select, ENTER-Use, BSPACE-Drop, ESC-Exit')
+		choice = util.msg_box('inv', 'Inventory', 'Up/down to select, ENTER-Use, BSPACE-Drop, ESC-Exit')
+		if choice != -1:
+			game.player.inventory[choice].use(choice)
 
 
 # look (with keyboard)
@@ -196,7 +199,7 @@ def open_door():
 		game.current_map.tiles[game.char.x + dx][game.char.y + dy].dark_color = libtcod.darkest_orange
 		game.current_map.tiles[game.char.x + dx][game.char.y + dy].blocked = False
 		game.current_map.tiles[game.char.x + dx][game.char.y + dy].block_sight = False
-		game.player.turns += 1
+		game.player.add_turn()
 		game.message.new('You open the door.', game.player.turns)
 		game.fov_recompute = True
 		util.initialize_fov()
@@ -218,3 +221,13 @@ def pickup_item():
 			break
 	if not pickup:
 		game.message.new('There is nothing to pick up.', game.player.turns, libtcod.white)
+
+
+# use an item
+def use_item():
+	if len(game.player.inventory) == 0:
+		game.message.new('Your inventory is empty.', game.player.turns, libtcod.white)
+	else:
+		choice = util.msg_box('use', 'Use an item', 'Up/down to select, ENTER to use, ESC to exit')
+		if choice != -1:
+			game.player.inventory[choice].use(choice)

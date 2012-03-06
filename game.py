@@ -7,7 +7,8 @@ import map
 import commands
 import util
 
-VERSION = 'v0.0.2.9'
+VERSION = 'v0.0.2'
+BUILD = '10'
 
 #size of the map
 MAP_WIDTH = 75
@@ -78,11 +79,16 @@ class Game(object):
 		items = ItemList()
 		parser = libtcod.parser_new()
 		item_type_struct = libtcod.parser_new_struct(parser, 'item_type')
+		libtcod.struct_add_property(item_type_struct, 'type', libtcod.TYPE_STRING, True)
 		libtcod.struct_add_property(item_type_struct, 'unidentified_name', libtcod.TYPE_STRING, True)
 		libtcod.struct_add_property(item_type_struct, 'icon', libtcod.TYPE_STRING, True)
 		libtcod.struct_add_property(item_type_struct, 'icon_color', libtcod.TYPE_COLOR, True)
 		libtcod.struct_add_property(item_type_struct, 'dark_color', libtcod.TYPE_COLOR, True)
-		libtcod.struct_add_property(item_type_struct, 'weight', libtcod.TYPE_INT, True)
+		libtcod.struct_add_property(item_type_struct, 'weight', libtcod.TYPE_FLOAT, False)
+		libtcod.struct_add_property(item_type_struct, 'cost', libtcod.TYPE_INT, False)
+		libtcod.struct_add_property(item_type_struct, 'dices', libtcod.TYPE_DICE, False)
+		libtcod.struct_add_flag(item_type_struct, 'healing')
+		libtcod.struct_add_flag(item_type_struct, 'usable')
 		libtcod.parser_run(parser, "data/items.txt", ItemListener())
 		game.player.inventory.append(items.list[1])
 		game.player.inventory.append(items.list[2])
