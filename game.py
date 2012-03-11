@@ -7,8 +7,8 @@ import map
 import commands
 import util
 
-VERSION = 'v0.0.2'
-BUILD = '10'
+VERSION = 'v0.0.3'
+BUILD = '11'
 
 #size of the map
 MAP_WIDTH = 75
@@ -89,12 +89,13 @@ class Game(object):
 		libtcod.struct_add_property(item_type_struct, 'dices', libtcod.TYPE_DICE, False)
 		libtcod.struct_add_flag(item_type_struct, 'healing')
 		libtcod.struct_add_flag(item_type_struct, 'usable')
+		libtcod.struct_add_flag(item_type_struct, 'equippable')
 		libtcod.parser_run(parser, "data/items.txt", ItemListener())
-		game.player.inventory.append(items.list[1])
-		game.player.inventory.append(items.list[2])
-		game.player.inventory.append(items.list[0])
-		game.player.inventory.append(items.list[2])
-		game.player.inventory.append(items.list[2])
+		#game.player.inventory.append(items.list[1])
+		#game.player.inventory.append(items.list[2])
+		#game.player.inventory.append(items.list[0])
+		#game.player.inventory.append(items.list[3])
+		#game.player.inventory.append(items.list[2])
 
 	# new game setup
 	def new_game(self):
@@ -102,9 +103,9 @@ class Game(object):
 		message = Message()
 		player = Player()
 		char = map.Object(0, 0, player.icon, 'player', player.icon_color, blocks=True)
-		#status = create_character()
-		player.name = 'Ben'
-		status = 'play'
+		status = create_character()
+		#player.name = 'Ben'
+		#status = 'play'
 		self.init_items()
 		if status == 'play':
 			libtcod.console_clear(0)
@@ -163,7 +164,7 @@ class Game(object):
 		global player_action
 		player_action = None
 
-		#libtcod.console_credits()
+		libtcod.console_credits()
 		while not libtcod.console_is_window_closed():
 			#libtcod.image_blit_2x(img, 0, 0, 0)
 			libtcod.console_set_default_foreground(0, libtcod.light_yellow)
@@ -171,8 +172,8 @@ class Game(object):
 			libtcod.console_clear(0)
 			libtcod.console_print_ex(0, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 5, libtcod.BKGND_SET, libtcod.CENTER, 'Immortal ' + VERSION)
 			libtcod.console_print_ex(0, SCREEN_WIDTH / 2, SCREEN_HEIGHT - 2, libtcod.BKGND_SET, libtcod.CENTER, 'By Potatoman')
-			#choice = util.menu('Main menu', ['Start a new game', 'Load a saved game', 'Manual', 'Options', 'Quit'])
-			choice = 0
+			choice = util.menu('Main menu', ['Start a new game', 'Load a saved game', 'Manual', 'Options', 'Quit'])
+			#choice = 0
 
 			if choice == 0:  # new game
 				self.new_game()

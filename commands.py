@@ -29,6 +29,8 @@ def handle_keys():
 				close_door()
 			if key_char == 'd':
 				drop_item()
+			if key_char == 'e':
+				equip_item()
 			if key_char == 'g':
 				pickup_item()
 			if key_char == 'i':
@@ -37,6 +39,8 @@ def handle_keys():
 				look()
 			if key_char == 'o':
 				open_door()
+			if key_char == 'r':
+				remove_item()
 			if key_char == 'u':
 				use_item()
 
@@ -110,6 +114,26 @@ def drop_item():
 			game.current_map.objects.append(obj)
 			obj.send_to_back()
 			game.player.inventory.pop(choice)
+
+
+# equip an item
+def equip_item():
+	equippable = False
+	for item in game.player.inventory:
+		if item.is_equippable():
+			equippable = True
+	if not equippable:
+		game.message.new("You don't have any equippable items.", game.player.turns, libtcod.white)
+	else:
+		choice = util.msg_box('equip', 'Wear/Equip an item', 'Up/down to select, ENTER to equip, ESC to exit')
+		if choice != -1:
+			filter = -1
+			for i in range(0, len(game.player.inventory)):
+				if game.player.inventory[i].is_equippable():
+					filter += 1
+					if filter == choice:
+						game.player.equip(i)
+						break
 
 
 # see inventory
@@ -221,6 +245,16 @@ def pickup_item():
 			break
 	if not pickup:
 		game.message.new('There is nothing to pick up.', game.player.turns, libtcod.white)
+
+
+# remove/unequip an item
+def remove_item():
+	if len(game.player.equipment) == 0:
+		game.message.new("You don't have any equipped items.", game.player.turns, libtcod.white)
+	else:
+		choice = util.msg_box('remove', 'Remove/Unequip an item', 'Up/down to select, ENTER to remove, ESC to exit')
+		if choice != -1:
+			game.player.unequip(choice)
 
 
 # use an item

@@ -41,6 +41,11 @@ class Item(object):
 		else:
 			game.message.new("You can't use that item.", game.player.turns, libtcod.white)
 
+	def is_equippable(self):
+		if "equippable" in self.flags:
+			return True
+		return False
+
 
 class ItemList(object):
 	def __init__(self):

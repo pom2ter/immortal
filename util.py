@@ -86,6 +86,16 @@ def msg_box(typ, header=None, footer=None):
 		choice = choices(box, width, height, game.player.inventory, 'inventory', bspace=True)
 	if typ == 'drop':
 		choice = choices(box, width, height, game.player.inventory, 'inventory')
+	if typ == 'equip':
+		filter = []
+		for i in range(0, len(game.player.inventory)):
+			if game.player.inventory[i].is_equippable():
+				filter.append(game.player.inventory[i])
+		height = max(16, len(filter) + 4)
+		choice = choices(box, width, height, filter, 'inventory')
+	if typ == 'remove':
+		height = max(16, len(game.player.equipment) + 4)
+		choice = choices(box, width, height, game.player.equipment, 'inventory')
 	if typ == 'use':
 		choice = choices(box, width, height, game.player.inventory, 'inventory')
 	return choice

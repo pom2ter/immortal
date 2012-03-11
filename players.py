@@ -165,8 +165,19 @@ class Player(object):
 		self.mana = 2
 		self.max_mana = 2
 		self.inventory = []
+		self.equipment = []
 		self.turns = 0
 		self.gold = 0
 
 	def add_turn(self):
 		self.turns += 1
+
+	def equip(self, item):
+		self.equipment.append(self.inventory[item])
+		self.inventory.pop(item)
+		self.add_turn()
+
+	def unequip(self, item):
+		self.inventory.append(self.equipment[item])
+		self.equipment.pop(item)
+		self.add_turn()
