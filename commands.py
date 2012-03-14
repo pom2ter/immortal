@@ -43,6 +43,10 @@ def handle_keys():
 				remove_item()
 			if key_char == 'u':
 				use_item()
+			if key_char == '<':
+				climb_stairs('up')
+			if key_char == '>':
+				climb_stairs('down')
 
 			return 'didnt-take-turn'
 
@@ -65,6 +69,37 @@ def player_move_or_attack(dx, dy):
 	else:
 		game.char.move(dx, dy, game.current_map)
 		game.fov_recompute = True
+
+
+#climb up/down stairs
+def climb_stairs(direction):
+	if (direction == 'up' and game.current_map.tiles[game.char.x][game.char.y].icon != "<") or (direction == 'down' and game.current_map.tiles[game.char.x][game.char.y].icon != ">"):
+		game.message.new('You see no stairs going in that direction!', game.player.turns, libtcod.white)
+	else:
+		if direction == 'down':
+			level = game.current_map.location_level + 1
+			game.message.new('You climb down the stairs', game.player.turns, libtcod.white)
+		else:
+			level = game.current_map.location_level - 1
+			game.message.new('You climb up the stairs', game.player.turns, libtcod.white)
+		game.old_maps.append(game.current_map)
+		generate = True
+		for i in range(len(game.old_maps) - 1):
+			if game.old_maps[i].location_id == game.current_map.location_id and game.old_maps[i].location_level == level:
+				game.current_map = game.old_maps[i]
+				if direction == 'down':
+					(game.char.x, game.char.y) = game.current_map.up_staircase
+				else:
+					(game.char.x, game.char.y) = game.current_map.down_staircase
+				game.old_maps.pop(i)
+				generate = False
+				break
+		if generate:
+			game.current_map = map.Map(game.current_map.location_name, game.current_map.location_id, level)
+		game.player.add_turn()
+		game.fov_recompute = True
+		util.initialize_fov()
+		util.render_all()
 
 
 # close door
@@ -114,6 +149,7 @@ def drop_item():
 			game.current_map.objects.append(obj)
 			obj.send_to_back()
 			game.player.inventory.pop(choice)
+			game.player.add_turn()
 
 
 # equip an item

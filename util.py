@@ -214,20 +214,22 @@ def render_message_panel():
 
 
 def render_player_stats_panel():
-	render_bar(game.ps, 0, 5, game.PLAYER_STATS_WIDTH, 'HP', game.player.health, game.player.max_health, libtcod.red, libtcod.darker_red)
-	render_bar(game.ps, 0, 6, game.PLAYER_STATS_WIDTH, 'MP', game.player.mana, game.player.max_mana, libtcod.blue, libtcod.darker_blue)
+	render_bar(game.ps, 0, 6, game.PLAYER_STATS_WIDTH, 'HP', game.player.health, game.player.max_health, libtcod.red, libtcod.darker_red)
+	render_bar(game.ps, 0, 7, game.PLAYER_STATS_WIDTH, 'MP', game.player.mana, game.player.max_mana, libtcod.blue, libtcod.darker_blue)
 	libtcod.console_print(game.ps, 0, 0, game.player.name)
 	libtcod.console_print(game.ps, 0, 1, game.player.race + " " + game.player.profession)
 	libtcod.console_set_default_foreground(game.ps, libtcod.dark_green)
 	libtcod.console_print(game.ps, 0, 3, game.current_map.location_name)
+	libtcod.console_print(game.ps, 0, 4, "Level " + str(game.current_map.location_level))
 	libtcod.console_set_default_foreground(game.ps, libtcod.white)
-	libtcod.console_print(game.ps, 0, 8, "LV: " + str(game.player.level))
-	libtcod.console_print(game.ps, 0, 9, "XP: " + str(game.player.xp))
-	libtcod.console_print(game.ps, 0, 10, "Str:  " + str(game.player.strength))
-	libtcod.console_print(game.ps, 0, 11, "Dex:  " + str(game.player.dexterity))
-	libtcod.console_print(game.ps, 0, 12, "Int:  " + str(game.player.intelligence))
-	libtcod.console_print(game.ps, 0, 13, "End:  " + str(game.player.endurance))
-	libtcod.console_print(game.ps, 0, 14, "Luck: " + str(game.player.luck))
+	libtcod.console_print(game.ps, 0, 9, "LV: " + str(game.player.level))
+	libtcod.console_print(game.ps, 0, 10, "XP: " + str(game.player.xp))
+	libtcod.console_print(game.ps, 0, 11, "Str:  " + str(game.player.strength))
+	libtcod.console_print(game.ps, 0, 12, "Dex:  " + str(game.player.dexterity))
+	libtcod.console_print(game.ps, 0, 13, "Int:  " + str(game.player.intelligence))
+	libtcod.console_print(game.ps, 0, 14, "End:  " + str(game.player.endurance))
+	libtcod.console_print(game.ps, 0, 15, "Luck: " + str(game.player.luck))
+	libtcod.console_print(game.ps, 0, 17, "Turns: " + str(game.player.turns))
 	libtcod.console_blit(game.ps, 0, 0, game.PLAYER_STATS_WIDTH, game.PLAYER_STATS_HEIGHT, 0, 0, 0)
 
 

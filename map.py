@@ -10,6 +10,8 @@ class Map(object):
 		self.location_level = level
 		self.tiles = None
 		self.objects = None
+		self.up_staircase = (0, 0)
+		self.down_staircase = (0, 0)
 		self.generate_map()
 
 	def is_blocked(self, x, y):
@@ -94,6 +96,28 @@ class Map(object):
 			self.objects.append(item)
 			#item.send_to_back()  # items appear below other objects
 
+	def place_stairs(self, rooms):
+		#place stairs going up based on character position
+		if self.location_level > 1:
+			self.tiles[game.char.x][game.char.y].icon = '<'
+			self.tiles[game.char.x][game.char.y].name = 'stairs going up'
+			self.tiles[game.char.x][game.char.y].color = libtcod.white
+			self.tiles[game.char.x][game.char.y].dark_color = libtcod.dark_gray
+			self.tiles[game.char.x][game.char.y].blocked = False
+			self.tiles[game.char.x][game.char.y].block_sight = False
+			self.up_staircase = (game.char.x, game.char.y)
+
+		#place stairs going down in a random spot
+		stairs = libtcod.random_get_int(0, 1, len(rooms) - 1)
+		(x, y) = rooms[stairs].center()
+		self.tiles[x][y].icon = '>'
+		self.tiles[x][y].name = 'stairs going down'
+		self.tiles[x][y].color = libtcod.white
+		self.tiles[x][y].dark_color = libtcod.dark_gray
+		self.tiles[x][y].blocked = False
+		self.tiles[x][y].block_sight = False
+		self.down_staircase = (x, y)
+
 	def generate_map(self):
 		#the list of objects with just the player
 		self.objects = [game.char]
@@ -161,6 +185,7 @@ class Map(object):
 
 		self.place_doors()
 		self.place_objects()
+		self.place_stairs(rooms)
 
 
 class Tile(object):
