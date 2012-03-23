@@ -95,7 +95,7 @@ def create_character():
 				show_stats(game.player.gender + " " + game.player.race + " " + game.player.profession, (index * 5) + indexr + 1, 0)
 			if chr(key.c) == 'k':
 				final_choice = True
-				return "play"
+				return "playing"
 			if chr(key.c) == 'c':
 				game.player.name = ""
 				final_choice = True

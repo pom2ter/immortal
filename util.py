@@ -72,9 +72,11 @@ def choices(con, width, height, options, typ, bspace=False):
 	return current
 
 
-def msg_box(typ, header=None, footer=None):
+def msg_box(typ, header=None, footer=None, contents=None, box_height=5):
 	width = 60
-	height = max(16, len(game.player.inventory) + 4)
+	height = box_height
+	if contents == None:
+		height = max(16, box_height + 4)
 	box = libtcod.console_new(width, height)
 	libtcod.console_set_default_foreground(box, libtcod.white)
 	libtcod.console_set_default_background(box, libtcod.black)
@@ -98,6 +100,14 @@ def msg_box(typ, header=None, footer=None):
 		choice = choices(box, width, height, game.player.equipment, 'inventory')
 	if typ == 'use':
 		choice = choices(box, width, height, game.player.inventory, 'inventory')
+	if typ == 'save':
+		choice = choices(box, width, height, game.savefiles, 'savegames')
+	if contents != None:
+		libtcod.console_print_rect_ex(box, width / 2, 2, width, 1, libtcod.BKGND_SET, libtcod.CENTER, contents)
+		libtcod.console_blit(box, 0, 0, width, height, 0, (game.SCREEN_WIDTH - width) / 2, (game.SCREEN_HEIGHT - height) / 2, 1.0, 0.8)
+		libtcod.console_flush()
+		libtcod.console_wait_for_keypress(True)
+		choice = -1
 	return choice
 
 

@@ -1,4 +1,5 @@
 import libtcodpy as libtcod
+import os
 import util
 import map
 import game
@@ -8,8 +9,6 @@ def handle_keys():
 	key = libtcod.console_check_for_keypress(libtcod.KEY_PRESSED)
 	if key.vk == libtcod.KEY_ENTER and key.lalt:
 		libtcod.console_set_fullscreen(not libtcod.console_is_fullscreen())
-	elif key.vk == libtcod.KEY_ESCAPE:
-		return 'exit'
 
 	if game.game_state == 'playing':
 		if key.vk == libtcod.KEY_UP:
@@ -22,6 +21,12 @@ def handle_keys():
 			player_move_or_attack(1, 0)
 		elif key.vk == libtcod.KEY_SPACE:
 			player_move_or_attack(0, 0)
+		elif (key.lctrl or key.rctrl) and chr(key.c) == 'x':
+			if quit_game():
+				return 'exit'
+		elif (key.lctrl or key.rctrl) and chr(key.c) == 's':
+			if save_game():
+				return 'save'
 		else:
 			key_char = chr(key.c)
 
@@ -143,7 +148,7 @@ def drop_item():
 	if len(game.player.inventory) == 0:
 		game.message.new('Your inventory is empty.', game.player.turns, libtcod.white)
 	else:
-		choice = util.msg_box('drop', 'Drop an item', 'Up/down to select, ENTER to drop, ESC to exit')
+		choice = util.msg_box('drop', 'Drop an item', 'Up/down to select, ENTER to drop, ESC to exit', box_height=len(game.player.inventory))
 		if choice != -1:
 			obj = map.Object(game.char.x, game.char.y, game.player.inventory[choice].icon, game.player.inventory[choice].name, game.player.inventory[choice].color, True, item=game.player.inventory[choice])
 			game.current_map.objects.append(obj)
@@ -161,7 +166,7 @@ def equip_item():
 	if not equippable:
 		game.message.new("You don't have any equippable items.", game.player.turns, libtcod.white)
 	else:
-		choice = util.msg_box('equip', 'Wear/Equip an item', 'Up/down to select, ENTER to equip, ESC to exit')
+		choice = util.msg_box('equip', 'Wear/Equip an item', 'Up/down to select, ENTER to equip, ESC to exit', box_height=len(game.player.inventory))
 		if choice != -1:
 			filter = -1
 			for i in range(0, len(game.player.inventory)):
@@ -177,7 +182,7 @@ def inventory():
 	if len(game.player.inventory) == 0:
 		game.message.new('Your inventory is empty.', game.player.turns, libtcod.white)
 	else:
-		choice = util.msg_box('inv', 'Inventory', 'Up/down to select, ENTER-Use, BSPACE-Drop, ESC-Exit')
+		choice = util.msg_box('inv', 'Inventory', 'Up/down to select, ENTER-Use, BSPACE-Drop, ESC-Exit', box_height=len(game.player.inventory))
 		if choice != -1:
 			game.player.inventory[choice].use(choice)
 
@@ -283,14 +288,40 @@ def pickup_item():
 		game.message.new('There is nothing to pick up.', game.player.turns, libtcod.white)
 
 
+# dialog to confirm quitting the game
+def quit_game():
+	util.render_all()
+	libtcod.console_print(game.con, 1, 0, 'Are you sure you want to quit the game? (y/n)')
+	libtcod.console_blit(game.con, 0, 0, game.MAP_WIDTH, game.MAP_HEIGHT, 0, 20, 0)
+	libtcod.console_flush()
+	key = libtcod.console_wait_for_keypress(True)
+	if chr(key.c) == 'y' or chr(key.c) == 'Y':
+		if game.player.name in game.savefiles:
+			os.remove('saves/' + game.player.name)
+		return True
+	return False
+
+
 # remove/unequip an item
 def remove_item():
 	if len(game.player.equipment) == 0:
 		game.message.new("You don't have any equipped items.", game.player.turns, libtcod.white)
 	else:
-		choice = util.msg_box('remove', 'Remove/Unequip an item', 'Up/down to select, ENTER to remove, ESC to exit')
+		choice = util.msg_box('remove', 'Remove/Unequip an item', 'Up/down to select, ENTER to remove, ESC to exit', box_height=len(game.player.inventory))
 		if choice != -1:
 			game.player.unequip(choice)
+
+
+# dialog to confirm saving the game
+def save_game():
+	util.render_all()
+	libtcod.console_print(game.con, 1, 0, 'Do you want to save (and quit) the game? (y/n)')
+	libtcod.console_blit(game.con, 0, 0, game.MAP_WIDTH, game.MAP_HEIGHT, 0, 20, 0)
+	libtcod.console_flush()
+	key = libtcod.console_wait_for_keypress(True)
+	if chr(key.c) == 'y' or chr(key.c) == 'Y':
+		return True
+	return False
 
 
 # use an item
@@ -298,6 +329,6 @@ def use_item():
 	if len(game.player.inventory) == 0:
 		game.message.new('Your inventory is empty.', game.player.turns, libtcod.white)
 	else:
-		choice = util.msg_box('use', 'Use an item', 'Up/down to select, ENTER to use, ESC to exit')
+		choice = util.msg_box('use', 'Use an item', 'Up/down to select, ENTER to use, ESC to exit', box_height=len(game.player.inventory))
 		if choice != -1:
 			game.player.inventory[choice].use(choice)
