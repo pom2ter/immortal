@@ -8,7 +8,7 @@ import map
 import commands
 import util
 
-VERSION = 'v0.0.3'
+VERSION = 'v0.0.4'
 BUILD = '13'
 
 #size of the map
