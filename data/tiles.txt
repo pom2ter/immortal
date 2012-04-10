@@ -1,0 +1,52 @@
+tile_type "wall" {
+	type = "wall"
+	icon = "#"
+	icon_color = "159,159,159"
+	dark_color = "95,95,95"
+	article = "a "
+	blocked
+	block_sight
+}
+
+tile_type "floor" {
+	type = "floor"
+	icon = "."
+	icon_color = "159,159,159"
+	dark_color = "95,95,95"
+	article = "a "
+}
+
+tile_type "door" {
+	type = "door"
+	icon = "+"
+	icon_color = "191,95,0"
+	dark_color = "64,32,0"
+	article = "a "
+	blocked
+	block_sight
+}
+
+tile_type "opened door" {
+	type = "open_door"
+	icon = "/"
+	icon_color = "191,95,0"
+	dark_color = "64,32,0"
+	article = "an "
+}
+
+tile_type "stairs going up" {
+	type = "stairs_up"
+	icon = "<"
+	icon_color = "255,255,255"
+	dark_color = "95,95,95"
+	article = ""
+}
+
+tile_type "stairs going down" {
+	type = "stairs_down"
+	icon = ">"
+	icon_color = "255,255,255"
+	dark_color = "95,95,95"
+	article = ""
+}
+

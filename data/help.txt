@@ -1,0 +1,18 @@
+KEYBOARD COMMANDS
+
+Arrow keys = Move character
+CTRL-S = Save game
+CTRL-X = Quit game
+? = Help screen
+
+c = Close door
+d = Drop item
+e = Equip item
+g = Pickup item
+i = Inventory
+o = Open door
+r = Remove item
+u = Use item
+< = Climb up stairs
+> = Climb down stairs
+SPACE = wait 1 turn

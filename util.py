@@ -1,21 +1,26 @@
 import libtcodpy as libtcod
-import map
 import game
 
 
-def choices(con, width, height, options, typ, bspace=False):
+def choices(con, width, height, options, typ, posx=0, posy=0, default=0):
 	choice = False
-	current, up, empty = 0, 0, 3
-	down = height - empty
+	current, up, down = default, 0, height
+	max_width = posx + width + posx
+	max_height = posy + height + posy
+	key = libtcod.Key()
+	mouse = libtcod.Mouse()
+
 	while not choice and choice != -1:
-		key = libtcod.console_check_for_keypress(libtcod.KEY_PRESSED)
+		ev = libtcod.sys_check_for_event(libtcod.EVENT_ANY, key, mouse)
 		libtcod.console_set_default_foreground(con, libtcod.grey)
 		libtcod.console_set_default_background(con, libtcod.black)
-		libtcod.console_rect(con, 1, 2, width - 2, height - 4, True, libtcod.BKGND_SET)
+		libtcod.console_rect(con, 1, 1, max_width - 2, max_height - 2, True, libtcod.BKGND_SET)
 		if up != 0:
-			libtcod.console_print_ex(con, width - 2, 2, libtcod.BKGND_SET, libtcod.LEFT, chr(136))
+			libtcod.console_print_ex(con, max_width - 2, 1, libtcod.BKGND_SET, libtcod.LEFT, chr(136))
+			libtcod.console_print_ex(con, 1, 1, libtcod.BKGND_SET, libtcod.LEFT, chr(136))
 		if down < len(options):
-			libtcod.console_print_ex(con, width - 2, height - 4, libtcod.BKGND_SET, libtcod.LEFT, chr(142))
+			libtcod.console_print_ex(con, max_width - 2, max_height - 2, libtcod.BKGND_SET, libtcod.LEFT, chr(142))
+			libtcod.console_print_ex(con, 1, max_height - 2, libtcod.BKGND_SET, libtcod.LEFT, chr(142))
 		for y in range(up, down):
 			if y < len(options):
 				if y == current:
@@ -25,58 +30,54 @@ def choices(con, width, height, options, typ, bspace=False):
 					libtcod.console_set_default_foreground(con, libtcod.grey)
 					libtcod.console_set_default_background(con, libtcod.black)
 				if typ == 'inventory':
-					#text = '(' + chr((y - up) + 97) + ') ' + options[y].unidentified_name
 					textl = options[y].unidentified_name
 					textr = str(options[y].weight) + ' lbs'
 				else:
-					#text = '(' + chr((y - up) + 97) + ') ' + options[y]
 					textl = options[y]
 					textr = ''
-				libtcod.console_rect(con, 2, (y - up) + 2, width - 4, 1, True, libtcod.BKGND_SET)
-				libtcod.console_print_ex(con, 3, (y - up) + 2, libtcod.BKGND_SET, libtcod.LEFT, textl)
-				libtcod.console_print_ex(con, width - 4, (y - up) + 2, libtcod.BKGND_SET, libtcod.RIGHT, textr)
+				libtcod.console_rect(con, posx, (y - up) + posy, width, 1, True, libtcod.BKGND_SET)
+				libtcod.console_print_ex(con, posx + 1, (y - up) + posy, libtcod.BKGND_SET, libtcod.LEFT, textl)
+				libtcod.console_print_ex(con, width, (y - up) + posy, libtcod.BKGND_SET, libtcod.RIGHT, textr)
 
-		libtcod.console_blit(con, 0, 0, width, height, 0, (game.SCREEN_WIDTH - width) / 2, (game.SCREEN_HEIGHT - height) / 2, 1.0, 0.75)
+		x = (game.SCREEN_WIDTH - max_width) / 2
+		y = (game.SCREEN_HEIGHT - max_height) / 2
+		libtcod.console_blit(con, 0, 0, max_width, max_height, 0, x, y, 1.0, 0.8)
 		libtcod.console_flush()
-		if key.vk == libtcod.KEY_DOWN:
+
+		(mx, my) = (mouse.cx, mouse.cy)
+		if my in range(y + posy, y + height + posy) and mx in range(x + posx, x + width + posx):
+			current = my - (y + posy) + up
+			if current > len(options) - 1:
+				current = len(options) - 1
+
+		if key.vk == libtcod.KEY_DOWN and ev == libtcod.EVENT_KEY_PRESS:
 			current = (current + 1) % len(options)
 			if current == down:
 				down += 1
 				up += 1
 			if current == 0:
-				down = height - empty
+				down = height
 				up = 0
-		elif key.vk == libtcod.KEY_UP:
+		elif key.vk == libtcod.KEY_UP and ev == libtcod.EVENT_KEY_PRESS:
 			current = (current - 1) % len(options)
 			if current < up:
 				up -= 1
 				down -= 1
 			if current == len(options) - 1:
-				if current > height - empty:
-					up = len(options) - (height - empty)
+				if current > height - 1:
+					up = len(options) - height
 					down = len(options)
-		elif key.vk == libtcod.KEY_BACKSPACE and bspace:
-			obj = map.Object(game.char.x, game.char.y, options[current].icon, options[current].name, options[current].color, True, item=options[current])
-			game.current_map.objects.append(obj)
-			obj.send_to_back()
-			game.player.inventory.pop(current)
-			if current == len(options):
-				current -= 1
-			if len(options) == 0:
-				choice = -1
-		elif key.vk == libtcod.KEY_ESCAPE:
+		elif key.vk == libtcod.KEY_ESCAPE and ev == libtcod.EVENT_KEY_PRESS:
 			current = -1
 			choice = -1
-		elif key.vk == libtcod.KEY_ENTER:
+		elif (key.vk == libtcod.KEY_ENTER and ev == libtcod.EVENT_KEY_PRESS) or (mouse.lbutton_pressed and my in range(y + posy, y + height + posy) and mx in range(x + posx, x + width + posx) and (my - (y + posy) + up) <= len(options) - 1):
 			choice = True
 	return current
 
 
-def msg_box(typ, header=None, footer=None, contents=None, box_height=5):
-	width = 60
+def msg_box(typ, header=None, footer=None, contents=None, box_width=60, box_height=5, center=False, default=0):
+	width = box_width
 	height = box_height
-	if contents == None:
-		height = max(16, box_height + 4)
 	box = libtcod.console_new(width, height)
 	libtcod.console_set_default_foreground(box, libtcod.white)
 	libtcod.console_set_default_background(box, libtcod.black)
@@ -84,80 +85,23 @@ def msg_box(typ, header=None, footer=None, contents=None, box_height=5):
 	if footer != None:
 		libtcod.console_print_ex(box, width / 2, height - 1, libtcod.BKGND_SET, libtcod.CENTER, '[ ' + footer + ' ]')
 
-	if typ == 'inv':
-		choice = choices(box, width, height, game.player.inventory, 'inventory', bspace=True)
-	if typ == 'drop':
-		choice = choices(box, width, height, game.player.inventory, 'inventory')
-	if typ == 'equip':
-		filter = []
-		for i in range(0, len(game.player.inventory)):
-			if game.player.inventory[i].is_equippable():
-				filter.append(game.player.inventory[i])
-		height = max(16, len(filter) + 4)
-		choice = choices(box, width, height, filter, 'inventory')
-	if typ == 'remove':
-		height = max(16, len(game.player.equipment) + 4)
-		choice = choices(box, width, height, game.player.equipment, 'inventory')
-	if typ == 'use':
-		choice = choices(box, width, height, game.player.inventory, 'inventory')
+	if typ in ['inv', 'drop', 'use', 'remove', 'equip']:
+		choice = choices(box, width - 4, height - 4, contents, 'inventory', 2, 2)
 	if typ == 'save':
-		choice = choices(box, width, height, game.savefiles, 'savegames')
-	if contents != None:
-		libtcod.console_print_rect_ex(box, width / 2, 2, width, 1, libtcod.BKGND_SET, libtcod.CENTER, contents)
+		choice = choices(box, width - 4, height - 4, contents, 'savegames', 2, 2)
+	if typ in ['options', 'main_menu']:
+		choice = choices(box, width - 2, height - 2, contents, 'options_menu', 1, 1, default)
+	if typ == 'text':
+		for i, line in enumerate(contents.split('\n')):
+			if center:
+				libtcod.console_print_ex(box, width / 2, 2 + i, libtcod.BKGND_SET, libtcod.CENTER, line)
+			else:
+				libtcod.console_print_ex(box, 2, 2 + i, libtcod.BKGND_SET, libtcod.LEFT, line)
 		libtcod.console_blit(box, 0, 0, width, height, 0, (game.SCREEN_WIDTH - width) / 2, (game.SCREEN_HEIGHT - height) / 2, 1.0, 0.8)
 		libtcod.console_flush()
-		libtcod.console_wait_for_keypress(True)
+		libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, libtcod.Key(), libtcod.Mouse(), True)
 		choice = -1
 	return choice
-
-
-def menu(header, options):
-	choice = False
-	current = 0
-	width = 0
-	height = len(options) + 2
-
-	for option_text in options:
-		if len(option_text) > width:
-			width = len(option_text) + 5
-
-	#create an off-screen console that represents the menu's window
-	window = libtcod.console_new(width, height)
-	libtcod.console_set_default_foreground(window, libtcod.white)
-	libtcod.console_set_default_background(window, libtcod.black)
-	libtcod.console_print_frame(window, 0, 0, width, height, True, libtcod.BKGND_NONE, header)
-
-	while not choice:
-		key = libtcod.console_check_for_keypress(libtcod.KEY_PRESSED)
-		#print all the options
-		for y in range(0, len(options)):
-			if y == current:
-				libtcod.console_set_default_foreground(window, libtcod.white)
-				libtcod.console_set_default_background(window, libtcod.light_blue)
-			else:
-				libtcod.console_set_default_foreground(window, libtcod.grey)
-				libtcod.console_set_default_background(window, libtcod.black)
-			libtcod.console_rect(window, 1, y + 1, width - 2, 1, False, libtcod.BKGND_SET)
-			libtcod.console_print_ex(window, 2, y + 1, libtcod.BKGND_SET, libtcod.LEFT, options[y])
-
-		#blit the contents of "window" to the root console
-		x = game.SCREEN_WIDTH / 2 - width / 2
-		y = game.SCREEN_HEIGHT / 2 - height / 2
-		libtcod.console_blit(window, 0, 0, width, height, 0, x, y, 1.0, 0.75)
-		libtcod.console_flush()
-
-		mouse = libtcod.mouse_get_status()
-		(mx, my) = (mouse.cx, mouse.cy)
-		if my in range(y + 1, len(options) + (y + 1)) and mx in range(x + 1, x + width - 1):
-			current = my - (y + 1)
-
-		if key.vk == libtcod.KEY_DOWN:
-			current = (current + 1) % len(options)
-		elif key.vk == libtcod.KEY_UP:
-			current = (current - 1) % len(options)
-		elif key.vk == libtcod.KEY_ENTER or (mouse.lbutton_pressed and my in range(y + 1, len(options) + (y + 1)) and mx in range(x + 1, x + width - 1)):
-			choice = True
-	return current
 
 
 def render_bar(con, x, y, total_width, name, value, maximum, bar_color, back_color):
@@ -180,19 +124,32 @@ def render_bar(con, x, y, total_width, name, value, maximum, bar_color, back_col
 
 def get_names_under_mouse():
 	#return a string with the names of all objects under the mouse
-	mouse = libtcod.mouse_get_status()
-	(x, y) = (mouse.cx - game.PLAYER_STATS_WIDTH, mouse.cy)
+	(x, y) = (game.mouse.cx - game.MAP_X, game.mouse.cy - 1)
 
 	#create a list with the names of all objects at the mouse's coordinates and in FOV
-	if x in range(0, game.MAP_WIDTH - 1) and y in range(0, game.MAP_HEIGHT - 1) and game.current_map.tiles[x][y].explored:
-		names = [obj.name for obj in game.current_map.objects
-			if obj.x == x and obj.y == y and libtcod.map_is_in_fov(game.fov_map, obj.x, obj.y)]
+	if x in range(0, game.MAP_WIDTH - 1) and y in range(0, game.MAP_HEIGHT - 1) and game.current_map.explored[x][y]:
+		names = [obj for obj in game.current_map.objects
+			if obj.x == x and obj.y == y]
 
+		prefix = 'you see '
+		if not libtcod.map_is_in_fov(game.fov_map, x, y):
+			prefix = 'you remember seeing '
+		if (x, y) == (game.char.x, game.char.y):
+			return 'you see yourself'
 		if names == []:
-			return 'you see a ' + game.current_map.tiles[x][y].name
+			return prefix + game.current_map.tiles[x][y].article + game.current_map.tiles[x][y].name
 
-		names = ', a '.join(names)  # join the names, separated by commas
-		return 'you see a ' + names.capitalize()
+		if len(names) > 1:
+			string = prefix
+			for i in range(0, len(names)):
+				if i == len(names) - 1:
+					string += ' and '
+				elif i > 0:
+					string += ', '
+				string += names[i].item.article + names[i].item.name
+			return string
+		else:
+			return prefix + names[0].item.article + names[0].item.name
 	else:
 		return ''
 
@@ -201,13 +158,17 @@ def initialize_fov():
 	game.fov_map = libtcod.map_new(game.MAP_WIDTH, game.MAP_HEIGHT)
 	for y in range(game.MAP_HEIGHT):
 		for x in range(game.MAP_WIDTH):
-			libtcod.map_set_properties(game.fov_map, x, y, not game.current_map.tiles[x][y].block_sight, game.current_map.tiles[x][y].explored and (not game.current_map.tiles[x][y].blocked))
+			libtcod.map_set_properties(game.fov_map, x, y, not game.current_map.tiles[x][y].block_sight, game.current_map.explored[x][y] and (not game.current_map.tiles[x][y].blocked))
 	game.path_dijk = libtcod.dijkstra_new(game.fov_map)
 	game.path_recalculate = True
 
 
 def render_message_panel():
 	#prepare to render the message panel
+	libtcod.console_set_default_foreground(0, libtcod.grey)
+	libtcod.console_set_default_background(0, libtcod.black)
+	libtcod.console_print_frame(0, game.MESSAGE_X - 1, game.MESSAGE_Y - 1, game.MESSAGE_WIDTH + 2, game.MESSAGE_HEIGHT + 2, True, libtcod.BKGND_NONE, None)
+	libtcod.console_print(0, game.SCREEN_WIDTH - 1, game.MESSAGE_Y - 1, chr(180))
 	libtcod.console_set_default_background(game.panel, libtcod.black)
 	libtcod.console_clear(game.panel)
 	game.message.delete()
@@ -217,13 +178,19 @@ def render_message_panel():
 	for (line, color, turn) in game.message.log:
 		new_color = libtcod.color_lerp(libtcod.darkest_grey, color, 1 - ((game.player.turns - turn) * 0.1))
 		libtcod.console_set_default_foreground(game.panel, new_color)
-		libtcod.console_print(game.panel, game.MSG_X, y, line)
+		libtcod.console_print(game.panel, 0, y, line)
 		y += 1
 
-	libtcod.console_blit(game.panel, 0, 0, game.SCREEN_WIDTH, game.PANEL_HEIGHT, 0, 0, game.PANEL_Y)
+	libtcod.console_blit(game.panel, 0, 0, game.MESSAGE_WIDTH, game.MESSAGE_HEIGHT, 0, game.MESSAGE_X, game.MESSAGE_Y)
 
 
 def render_player_stats_panel():
+	libtcod.console_set_default_foreground(0, libtcod.grey)
+	libtcod.console_set_default_background(0, libtcod.black)
+	libtcod.console_print_frame(0, 0, 0, game.MAP_X, game.SCREEN_HEIGHT, True, libtcod.BKGND_SET, None)
+	libtcod.console_print(0, game.MESSAGE_X - 1, game.MESSAGE_Y - 1, chr(195))
+	libtcod.console_print(0, game.MESSAGE_X - 1, game.SCREEN_HEIGHT - 1, chr(193))
+	libtcod.console_print(0, game.MESSAGE_X - 1, 0, chr(194))
 	render_bar(game.ps, 0, 6, game.PLAYER_STATS_WIDTH, 'HP', game.player.health, game.player.max_health, libtcod.red, libtcod.darker_red)
 	render_bar(game.ps, 0, 7, game.PLAYER_STATS_WIDTH, 'MP', game.player.mana, game.player.max_mana, libtcod.blue, libtcod.darker_blue)
 	libtcod.console_print(game.ps, 0, 0, game.player.name)
@@ -240,16 +207,19 @@ def render_player_stats_panel():
 	libtcod.console_print(game.ps, 0, 14, "End:  " + str(game.player.endurance))
 	libtcod.console_print(game.ps, 0, 15, "Luck: " + str(game.player.luck))
 	libtcod.console_print(game.ps, 0, 17, "Turns: " + str(game.player.turns))
-	libtcod.console_blit(game.ps, 0, 0, game.PLAYER_STATS_WIDTH, game.PLAYER_STATS_HEIGHT, 0, 0, 0)
+	libtcod.console_blit(game.ps, 0, 0, game.PLAYER_STATS_WIDTH, game.PLAYER_STATS_HEIGHT, 0, game.PLAYER_STATS_X, game.PLAYER_STATS_Y)
 
 
 def render_all():
+	libtcod.console_set_default_foreground(0, libtcod.grey)
+	libtcod.console_set_default_background(0, libtcod.black)
+	libtcod.console_print_frame(0, game.MAP_X - 1, game.MAP_Y - 1, game.MAP_WIDTH + 2, game.MAP_HEIGHT + 2, True, libtcod.BKGND_NONE, None)
 	libtcod.console_clear(game.con)
 	# recompute FOV if needed (the player moved or something)
 	if game.fov_recompute:
 		initialize_fov()
 		game.fov_recompute = False
-		if game.TORCH_RADIUS > game.FOV_RADIUS:
+		if game.TORCH_RADIUS > 0:
 			libtcod.map_compute_fov(game.fov_map, game.char.x, game.char.y, game.TORCH_RADIUS, game.FOV_LIGHT_WALLS, game.FOV_ALGO)
 		else:
 			libtcod.map_compute_fov(game.fov_map, game.char.x, game.char.y, game.FOV_RADIUS, game.FOV_LIGHT_WALLS, game.FOV_ALGO)
@@ -274,7 +244,7 @@ def render_all():
 		for x in range(game.MAP_WIDTH):
 			visible = libtcod.map_is_in_fov(game.fov_map, x, y)
 			if not visible:
-				if game.current_map.tiles[x][y].explored:
+				if game.current_map.explored[x][y]:
 					libtcod.console_put_char_ex(game.con, x, y, game.current_map.tiles[x][y].icon, game.current_map.tiles[x][y].dark_color, libtcod.black)
 			else:
 				if not game.fov_torch:
@@ -291,10 +261,10 @@ def render_all():
 							l = 1.0
 						base = libtcod.color_lerp(base, light, l)
 					libtcod.console_put_char_ex(game.con, x, y, game.current_map.tiles[x][y].icon, game.current_map.tiles[x][y].color, base)
-				game.current_map.tiles[x][y].explored = True
+				game.current_map.explored[x][y] = True
 
 	# draw a line between the player and the mouse cursor
-	if game.current_map.tiles[game.path_dx][game.path_dy].explored:
+	if game.current_map.explored[game.path_dx][game.path_dy]:
 		for i in range(libtcod.dijkstra_size(game.path_dijk)):
 			x, y = libtcod.dijkstra_get(game.path_dijk, i)
 			libtcod.console_set_char_background(game.con, x, y, libtcod.desaturated_yellow, libtcod.BKGND_SET)
@@ -312,14 +282,13 @@ def render_all():
 			game.mouse_move = False
 
 	if not game.mouse_move:
-		mouse = libtcod.mouse_get_status()
-		(mx, my) = (mouse.cx - game.PLAYER_STATS_WIDTH, mouse.cy)
+		(mx, my) = (game.mouse.cx - game.MAP_X, game.mouse.cy - 1)
 		if mx in range(0, game.MAP_WIDTH - 1) and my in range(0, game.MAP_HEIGHT - 1):
-			if game.current_map.tiles[mx][my].explored and not game.current_map.tiles[mx][my].blocked:
+			if game.current_map.explored[mx][my] and not game.current_map.tiles[mx][my].blocked:
 				game.path_dx = mx
 				game.path_dy = my
 				libtcod.console_set_char_background(game.con, game.path_dx, game.path_dy, libtcod.white, libtcod.BKGND_SET)
-				if mouse.lbutton_pressed:
+				if game.mouse.lbutton_pressed:
 					game.mouse_move = True
 			else:
 				game.path_dx = 0
@@ -334,9 +303,9 @@ def render_all():
 			object.draw(game.con)
 	game.char.draw(game.con)
 
-	libtcod.console_print(game.con, 1, 0, get_names_under_mouse())
+	libtcod.console_print(game.con, 0, 0, get_names_under_mouse())
 	libtcod.console_print(game.con, game.MAP_WIDTH - 9, 0, '(%3d fps)' % libtcod.sys_get_fps())
-	libtcod.console_blit(game.con, 0, 0, game.MAP_WIDTH, game.MAP_HEIGHT, 0, 20, 0)
+	libtcod.console_blit(game.con, 0, 0, game.MAP_WIDTH, game.MAP_HEIGHT, 0, game.MAP_X, game.MAP_Y)
 
 	render_message_panel()
 	render_player_stats_panel()

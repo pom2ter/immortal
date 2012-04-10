@@ -41,11 +41,14 @@ except ImportError:
 
 if sys.platform.find('linux') != -1:
     _lib = ctypes.cdll['./libtcod.so']
+    LINUX=True
 else:
     try:
         _lib = ctypes.cdll['./libtcod-mingw.dll']
+        MINGW=True
     except WindowsError:
         _lib = ctypes.cdll['./libtcod-VS.dll']
+        MSVC=True
     # On Windows, ctypes doesn't work well with function returning structs,
     # so we have to user the _wrapper functions instead
     _lib.TCOD_color_multiply = _lib.TCOD_color_multiply_wrapper
@@ -64,7 +67,7 @@ else:
 
 HEXVERSION = 0x010501
 STRVERSION = "1.5.1"
-TECHVERSION = 0x01050101
+TECHVERSION = 0x01050103
 
 ############################
 # color module
@@ -398,7 +401,7 @@ class ConsoleBuffer:
         self.fore_r = [fore_r] * n
         self.fore_g = [fore_g] * n
         self.fore_b = [fore_b] * n
-        self.char = [char] * n
+        self.char = [ord(char)] * n
     
     def copy(self):
         # returns a copy of this ConsoleBuffer.
@@ -420,7 +423,7 @@ class ConsoleBuffer:
         self.fore_r[i] = r
         self.fore_g[i] = g
         self.fore_b[i] = b
-        self.char[i] = char
+        self.char[i] = ord(char)
     
     def set_back(self, x, y, r, g, b):
         # set the background color of one cell.
@@ -438,7 +441,7 @@ class ConsoleBuffer:
         self.fore_r[i] = fore_r
         self.fore_g[i] = fore_g
         self.fore_b[i] = fore_b
-        self.char[i] = char
+        self.char[i] = ord(char)
     
     def blit(self, dest, fill_fore=True, fill_back=True):
         # use libtcod's "fill" functions to write the buffer to a console.
@@ -453,10 +456,8 @@ class ConsoleBuffer:
 
         if fill_fore:
             _lib.TCOD_console_fill_foreground(dest, s.pack(*self.fore_r), s.pack(*self.fore_g), s.pack(*self.fore_b))
-            _lib.TCOD_console_fill_char(dest, struct.pack('%dc' % len(self.back_r), *self.char))
+            _lib.TCOD_console_fill_char(dest, s.pack(*self.char))
 
-_lib.TCOD_console_wait_for_keypress.restype = Key
-_lib.TCOD_console_check_for_keypress.restype = Key
 _lib.TCOD_console_credits_render.restype = c_bool
 _lib.TCOD_console_set_custom_font.argtypes=[c_char_p,c_int]
 _lib.TCOD_console_is_fullscreen.restype = c_bool
@@ -719,7 +720,7 @@ def console_put_char_ex(con, x, y, c, fore, back):
     else:
         _lib.TCOD_console_put_char_ex(con, x, y, c, fore, back)
 
-def console_set_char_background(con, x, y, col, flag=BKGND_DEFAULT):
+def console_set_char_background(con, x, y, col, flag=BKGND_SET):
     _lib.TCOD_console_set_char_background(con, x, y, col, flag)
 
 def console_set_char_foreground(con, x, y, col):
@@ -801,7 +802,7 @@ def console_get_fading_color():
 # handling keyboard input
 def console_wait_for_keypress(flush):
     k=Key()
-    _lib.TCOD_console_wait_for_keypress_wrapper(byref(k),c_int(flush))
+    _lib.TCOD_console_wait_for_keypress_wrapper(byref(k),c_bool(flush))
     return k
 
 def console_check_for_keypress(flags=KEY_RELEASED):
@@ -821,7 +822,8 @@ def console_disable_keyboard_repeat():
 # using offscreen consoles
 def console_new(w, h):
     return _lib.TCOD_console_new(w, h)
-
+def console_from_file(filename):
+    return _lib.TCOD_console_from_file(filename)
 def console_get_width(con):
     return _lib.TCOD_console_get_width(con)
 
@@ -883,7 +885,7 @@ def console_fill_background(con,r,g,b) :
     _lib.TCOD_console_fill_background(con, cr, cg, cb)
 
 def console_fill_char(con,arr) :
-    if (numpy_available and isinstance(r, numpy.ndarray) ):
+    if (numpy_available and isinstance(arr, numpy.ndarray) ):
         #numpy arrays, use numpy's ctypes functions
         arr = numpy.ascontiguousarray(arr, dtype=numpy.int_)
         carr = arr.ctypes.data_as(POINTER(c_int))
@@ -892,6 +894,15 @@ def console_fill_char(con,arr) :
         carr = struct.pack('%di' % len(arr), *arr)
 
     _lib.TCOD_console_fill_char(con, carr)
+        
+def console_load_asc(con, filename) :
+    _lib.TCOD_console_load_asc(con,filename)
+def console_save_asc(con, filename) :
+    _lib.TCOD_console_save_asc(con,filename)
+def console_load_apf(con, filename) :
+    _lib.TCOD_console_load_apf(con,filename)
+def console_save_apf(con, filename) :
+    _lib.TCOD_console_save_apf(con,filename)
 
 ############################
 # sys module
@@ -954,6 +965,21 @@ def sys_register_SDL_renderer(callback):
     global sdl_renderer_func
     sdl_renderer_func = SDL_RENDERER_FUNC(callback)
     _lib.TCOD_sys_register_SDL_renderer(sdl_renderer_func)
+
+# events
+EVENT_KEY_PRESS=1
+EVENT_KEY_RELEASE=2
+EVENT_KEY=EVENT_KEY_PRESS|EVENT_KEY_RELEASE
+EVENT_MOUSE_MOVE=4
+EVENT_MOUSE_PRESS=8
+EVENT_MOUSE_RELEASE=16
+EVENT_MOUSE=EVENT_MOUSE_MOVE|EVENT_MOUSE_PRESS|EVENT_MOUSE_RELEASE
+EVENT_ANY=EVENT_KEY|EVENT_MOUSE
+def sys_check_for_event(mask,k,m) :
+    return _lib.TCOD_sys_check_for_event(c_int(mask),byref(k),byref(m))
+
+def sys_wait_for_event(mask,k,m,flush) :
+    return _lib.TCOD_sys_wait_for_event(c_int(mask),byref(k),byref(m),c_bool(flush))
 
 ############################
 # line module
@@ -1100,9 +1126,9 @@ def mouse_move(x, y):
     _lib.TCOD_mouse_move(x, y)
 
 def mouse_get_status():
-    m = Mouse()
-    _lib.TCOD_mouse_get_status_wrapper(byref(m))
-    return m
+    mouse=Mouse()
+    _lib.TCOD_mouse_get_status_wrapper(byref(mouse))
+    return mouse
 
 ############################
 # parser module
@@ -1395,8 +1421,8 @@ def noise_delete(n):
 # fov module
 ############################
 _lib.TCOD_map_is_in_fov.restype = c_bool
-_lib.TCOD_map_is_transparent = c_bool
-_lib.TCOD_map_is_walkable = c_bool
+_lib.TCOD_map_is_transparent.restype = c_bool
+_lib.TCOD_map_is_walkable.restype = c_bool
 
 FOV_BASIC = 0
 FOV_DIAMOND = 1
@@ -1484,6 +1510,9 @@ def path_get_destination(p):
 def path_size(p):
     return _lib.TCOD_path_size(p[0])
 
+def path_reverse(p):
+    _lib.TCOD_path_reverse(p[0])  
+
 def path_get(p, idx):
     x = c_int()
     y = c_int()
@@ -1527,6 +1556,9 @@ def dijkstra_get_distance(p, x, y):
 
 def dijkstra_size(p):
     return _lib.TCOD_dijkstra_size(p[0])
+
+def dijkstra_reverse(p):
+    _lib.TCOD_dijkstra_reverse(p[0])
 
 def dijkstra_get(p, idx):
     x = c_int()

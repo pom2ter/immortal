@@ -3,7 +3,7 @@ import game
 
 
 class Item(object):
-	def __init__(self, typ, name, unid_name, icon, color, dark_color, weight, cost, dice, flags):
+	def __init__(self, typ, name, unid_name, icon, color, dark_color, weight, cost, dice, article, flags):
 		self.type = typ
 		self.name = name
 		self.unidentified_name = unid_name
@@ -13,6 +13,7 @@ class Item(object):
 		self.weight = weight
 		self.cost = cost
 		self.dice = dice
+		self.article = article
 		self.flags = flags
 
 	def pick_up(self):
@@ -51,8 +52,27 @@ class ItemList(object):
 	def __init__(self):
 		self.list = []
 
-	def additem(self, typ=None, name=None, unid_name=None, icon=None, color=[0, 0, 0], dark_color=[0, 0, 0], weight=0.0, cost=0, dice=[0, 0, 0, 0], flags=[]):
-		self.list.append(Item(typ, name, unid_name, icon, color, dark_color, weight, cost, dice, flags))
+	# setup the items structure and run parser
+	def init_parser(self):
+		parser = libtcod.parser_new()
+		item_type_struct = libtcod.parser_new_struct(parser, 'item_type')
+		libtcod.struct_add_property(item_type_struct, 'type', libtcod.TYPE_STRING, True)
+		libtcod.struct_add_property(item_type_struct, 'unidentified_name', libtcod.TYPE_STRING, True)
+		libtcod.struct_add_property(item_type_struct, 'icon', libtcod.TYPE_STRING, True)
+		libtcod.struct_add_property(item_type_struct, 'icon_color', libtcod.TYPE_COLOR, True)
+		libtcod.struct_add_property(item_type_struct, 'dark_color', libtcod.TYPE_COLOR, True)
+		libtcod.struct_add_property(item_type_struct, 'weight', libtcod.TYPE_FLOAT, False)
+		libtcod.struct_add_property(item_type_struct, 'cost', libtcod.TYPE_INT, False)
+		libtcod.struct_add_property(item_type_struct, 'dices', libtcod.TYPE_DICE, False)
+		libtcod.struct_add_property(item_type_struct, 'article', libtcod.TYPE_STRING, True)
+		libtcod.struct_add_flag(item_type_struct, 'healing')
+		libtcod.struct_add_flag(item_type_struct, 'usable')
+		libtcod.struct_add_flag(item_type_struct, 'equippable')
+		libtcod.parser_run(parser, "data/items.txt", ItemListener())
+
+	def additem(self, item=None):
+		if not item == None:
+			self.list.append(item)
 
 	def getitem(self, name):
 		for item in self.list:
@@ -73,10 +93,8 @@ class Dice(object):
 
 
 class ItemListener(object):
-	#temp_item = None
-
 	def new_struct(self, struct, name):
-		self.temp_item = Item('', '', '', '', [0, 0, 0], [0, 0, 0], 0, 0, Dice(0, 0, 0, 0), [])
+		self.temp_item = Item('', '', '', '', [0, 0, 0], [0, 0, 0], 0, 0, Dice(0, 0, 0, 0), '', [])
 		self.temp_item.name = name
 		return True
 
@@ -107,12 +125,14 @@ class ItemListener(object):
 				self.temp_item.icon = value
 			if name == "weight":
 				self.temp_item.weight = value
+			if name == "article":
+				self.temp_item.article = value
 			if name == "unidentified_name":
 				self.temp_item.unidentified_name = value
 		return True
 
 	def end_struct(self, struct, name):
-		game.items.additem(self.temp_item.type, self.temp_item.name, self.temp_item.unidentified_name, self.temp_item.icon, self.temp_item.color, self.temp_item.dark_color, self.temp_item.weight, self.temp_item.cost, self.temp_item.dice, self.temp_item.flags)
+		game.items.additem(self.temp_item)
 		return True
 
 	def error(self, msg):

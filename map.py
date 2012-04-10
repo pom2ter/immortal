@@ -9,6 +9,7 @@ class Map(object):
 		self.location_id = id
 		self.location_level = level
 		self.tiles = None
+		self.explored = None
 		self.objects = None
 		self.up_staircase = (0, 0)
 		self.down_staircase = (0, 0)
@@ -23,51 +24,30 @@ class Map(object):
 		for obj in self.objects:
 			if obj.blocks and obj.x == x and obj.y == y:
 				return True
-
 		return False
 
 	def create_room(self, room):
 		#go through the tiles in the rectangle and make them passable
 		for x in range(room.x1 + 1, room.x2):
 			for y in range(room.y1 + 1, room.y2):
-				self.tiles[x][y].icon = '.'
-				self.tiles[x][y].name = 'floor'
-				self.tiles[x][y].color = libtcod.light_gray
-				self.tiles[x][y].dark_color = libtcod.dark_gray
-				self.tiles[x][y].blocked = False
-				self.tiles[x][y].block_sight = False
+				self.tiles[x][y] = game.tiles.gettile('floor')
 
 	def create_h_tunnel(self, x1, x2, y):
 		#horizontal tunnel. min() and max() are used in case x1>x2
 		for x in range(min(x1, x2), max(x1, x2) + 1):
-			self.tiles[x][y].icon = '.'
-			self.tiles[x][y].name = 'floor'
-			self.tiles[x][y].color = libtcod.light_gray
-			self.tiles[x][y].dark_color = libtcod.dark_gray
-			self.tiles[x][y].blocked = False
-			self.tiles[x][y].block_sight = False
+			self.tiles[x][y] = game.tiles.gettile('floor')
 
 	def create_v_tunnel(self, y1, y2, x):
 		#vertical tunnel
 		for y in range(min(y1, y2), max(y1, y2) + 1):
-			self.tiles[x][y].icon = '.'
-			self.tiles[x][y].name = 'floor'
-			self.tiles[x][y].color = libtcod.light_gray
-			self.tiles[x][y].dark_color = libtcod.dark_gray
-			self.tiles[x][y].blocked = False
-			self.tiles[x][y].block_sight = False
+			self.tiles[x][y] = game.tiles.gettile('floor')
 
 	def place_doors(self):
 		for y in range(1, game.MAP_HEIGHT - 1):
 			for x in range(1, game.MAP_WIDTH - 1):
 				if (self.tiles[x + 1][y].name == 'floor' and self.tiles[x - 1][y].name == 'floor' and self.tiles[x][y - 1].name == 'wall' and self.tiles[x][y + 1].name == 'wall') or (self.tiles[x + 1][y].name == 'wall' and self.tiles[x - 1][y].name == 'wall' and self.tiles[x][y - 1].name == 'floor' and self.tiles[x][y + 1].name == 'floor'):
 					if libtcod.random_get_int(0, 1, 50) == 50:
-						self.tiles[x][y].icon = '+'
-						self.tiles[x][y].name = 'door'
-						self.tiles[x][y].color = libtcod.dark_orange
-						self.tiles[x][y].dark_color = libtcod.darkest_orange
-						self.tiles[x][y].blocked = True
-						self.tiles[x][y].block_sight = True
+						self.tiles[x][y] = game.tiles.gettile('door')
 
 	def place_objects(self):
 		#choose random number of items
@@ -92,30 +72,18 @@ class Map(object):
 				#create a fireball scroll (10% chance)
 				d = game.items.getitem('sword')
 			item = Object(x, y, d.icon, d.name, d.color, True, item=d)
-
 			self.objects.append(item)
-			#item.send_to_back()  # items appear below other objects
 
 	def place_stairs(self, rooms):
 		#place stairs going up based on character position
 		if self.location_level > 1:
-			self.tiles[game.char.x][game.char.y].icon = '<'
-			self.tiles[game.char.x][game.char.y].name = 'stairs going up'
-			self.tiles[game.char.x][game.char.y].color = libtcod.white
-			self.tiles[game.char.x][game.char.y].dark_color = libtcod.dark_gray
-			self.tiles[game.char.x][game.char.y].blocked = False
-			self.tiles[game.char.x][game.char.y].block_sight = False
+			self.tiles[game.char.x][game.char.y] = game.tiles.gettile('stairs going up')
 			self.up_staircase = (game.char.x, game.char.y)
 
 		#place stairs going down in a random spot
 		stairs = libtcod.random_get_int(0, 1, len(rooms) - 1)
 		(x, y) = rooms[stairs].center()
-		self.tiles[x][y].icon = '>'
-		self.tiles[x][y].name = 'stairs going down'
-		self.tiles[x][y].color = libtcod.white
-		self.tiles[x][y].dark_color = libtcod.dark_gray
-		self.tiles[x][y].blocked = False
-		self.tiles[x][y].block_sight = False
+		self.tiles[x][y] = game.tiles.gettile('stairs going down')
 		self.down_staircase = (x, y)
 
 	def generate_map(self):
@@ -123,7 +91,10 @@ class Map(object):
 		self.objects = [game.char]
 
 		#fill map with "blocked" tiles
-		self.tiles = [[Tile('#', 'wall', libtcod.light_gray, libtcod.dark_gray, True)
+		self.tiles = [[game.tiles.gettile('wall')
+			for y in range(game.MAP_HEIGHT)]
+				for x in range(game.MAP_WIDTH)]
+		self.explored = [[False
 			for y in range(game.MAP_HEIGHT)]
 				for x in range(game.MAP_WIDTH)]
 
@@ -190,20 +161,89 @@ class Map(object):
 
 class Tile(object):
 	#a tile of the map and its properties
-	def __init__(self, icon, name, color, dark_color, blocked, block_sight=None):
+	def __init__(self, icon, name, color, dark_color, blocked, block_sight=None, article=None, flags=None, typ=None):
 		self.blocked = blocked
 		self.icon = icon
 		self.name = name
-		self.color = color
-		self.dark_color = dark_color
-
-		#all tiles start unexplored
-		self.explored = False
+		self.color = libtcod.Color(color[0], color[1], color[2])
+		self.dark_color = libtcod.Color(dark_color[0], dark_color[1], dark_color[2])
+		self.article = article
+		self.flags = flags
+		self.type = typ
 
 		#by default, if a tile is blocked, it also blocks sight
 		if block_sight is None:
 			block_sight = blocked
 		self.block_sight = block_sight
+
+
+class TileList(object):
+	def __init__(self):
+		self.list = []
+
+	# setup the items structure and run parser
+	def init_parser(self):
+		parser = libtcod.parser_new()
+		tile_type_struct = libtcod.parser_new_struct(parser, 'tile_type')
+		libtcod.struct_add_property(tile_type_struct, 'type', libtcod.TYPE_STRING, True)
+		libtcod.struct_add_property(tile_type_struct, 'icon', libtcod.TYPE_STRING, True)
+		libtcod.struct_add_property(tile_type_struct, 'icon_color', libtcod.TYPE_COLOR, True)
+		libtcod.struct_add_property(tile_type_struct, 'dark_color', libtcod.TYPE_COLOR, True)
+		libtcod.struct_add_property(tile_type_struct, 'article', libtcod.TYPE_STRING, True)
+		libtcod.struct_add_flag(tile_type_struct, 'blocked')
+		libtcod.struct_add_flag(tile_type_struct, 'block_sight')
+		libtcod.parser_run(parser, "data/tiles.txt", TileListener())
+
+	def addtile(self, tile=None):
+		if not tile == None:
+			if 'blocked' in tile.flags:
+				tile.blocked = True
+			if 'block_sight' in tile.flags:
+				tile.block_sight = True
+			self.list.append(tile)
+
+	def gettile(self, name):
+		for tile in self.list:
+			if name in tile.name:
+				return tile
+		return None
+
+
+class TileListener(object):
+	def new_struct(self, struct, name):
+		self.temp_tile = Tile('', '', [0, 0, 0], [0, 0, 0], False, False, '', [], '')
+		self.temp_tile.name = name
+		return True
+
+	def new_flag(self, name):
+		self.temp_tile.flags.append(name)
+		return True
+
+	def new_property(self, name, typ, value):
+		if name == 'icon_color':
+			self.temp_tile.color.r = value.r
+			self.temp_tile.color.g = value.g
+			self.temp_tile.color.b = value.b
+		elif name == 'dark_color':
+			self.temp_tile.dark_color.r = value.r
+			self.temp_tile.dark_color.g = value.g
+			self.temp_tile.dark_color.b = value.b
+		else:
+			if name == "type":
+				self.temp_tile.type = value
+			if name == "icon":
+				self.temp_tile.icon = value
+			if name == "article":
+				self.temp_tile.article = value
+		return True
+
+	def end_struct(self, struct, name):
+		game.tiles.addtile(self.temp_tile)
+		return True
+
+	def error(self, msg):
+		print 'error : ', msg
+		return True
 
 
 class Rect(object):
@@ -293,7 +333,7 @@ class Object(object):
 			#set the color and then draw the character that represents this object at its position
 			libtcod.console_set_default_foreground(con, self.color)
 			libtcod.console_put_char(con, self.x, self.y, self.char, libtcod.BKGND_NONE)
-		elif game.current_map.tiles[self.x][self.y].explored and self.can_be_pickup:
+		elif game.current_map.explored[self.x][self.y] and self.can_be_pickup:
 			libtcod.console_set_default_foreground(con, self.item.dark_color)
 			libtcod.console_put_char(con, self.x, self.y, self.char, libtcod.BKGND_NONE)
 

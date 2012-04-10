@@ -1,12 +1,13 @@
 item_type "potion of minor healing" {
 	type = "potion"
 	unidentified_name = "potion"
-	icon = ")"
+	icon = "!"
 	icon_color = "255,0,0"
 	dark_color = "85,0,0"
 	weight = 0.5
 	cost = 50
 	dices = "1d8+1"
+	article = "a "
 	healing
 	usable
 }
@@ -17,28 +18,31 @@ item_type "gold" {
 	icon = "$"
 	icon_color = "229,191,0"
 	dark_color = "76,64,0"
+	article = "some "
 }
 
 item_type "short sword" {
 	type = "weapon"
 	unidentified_name = "short sword"
-	icon = "!"
+	icon = "("
 	icon_color = "255,255,255"
 	dark_color = "85,85,85"
 	weight = 2.0
 	cost = 10
 	dices = "1d4"
+	article = "a "
 	equippable
 }
 
 item_type "long sword" {
 	type = "weapon"
 	unidentified_name = "long sword"
-	icon = "!"
+	icon = "("
 	icon_color = "255,255,255"
 	dark_color = "85,85,85"
 	weight = 4.0
 	cost = 10
 	dices = "1d4"
+	article = "a "
 	equippable
 }
