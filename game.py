@@ -9,8 +9,8 @@ import map
 import commands
 import util
 
-VERSION = 'v0.1.0'
-BUILD = '15'
+VERSION = 'v0.1.1'
+BUILD = '16'
 
 #size of the map
 MAP_WIDTH = 72
@@ -131,13 +131,11 @@ class Game(object):
 				break
 
 			#let monsters take their turn
-#			if game_state == 'playing' and player_action != 'didnt-take-turn':
-#				for object in objects:
-#					if object.ai:
-#						object.ai.take_turn()
-
 			if game.player_move:
 				monsters.spawn()
+				for object in current_map.objects:
+					if object.entity != None:
+						object.x, object.y = object.entity.take_turn(object.x, object.y)
 				game.player_move = False
 
 	# save the game using the shelve module
@@ -182,7 +180,7 @@ class Game(object):
 		global player_action
 		player_action = None
 		choice = 0
-		#libtcod.console_credits()
+		libtcod.console_credits()
 		while not libtcod.console_is_window_closed():
 			#libtcod.image_blit_2x(img, 0, 0, 0)
 			libtcod.console_set_default_foreground(0, libtcod.light_yellow)

@@ -58,10 +58,10 @@ class Map(object):
 
 		#only place it if the tile is not blocked
 		dice = libtcod.random_get_int(0, 0, 100)
-		if dice < 70:
+		if dice < 35:
 			#create a healing potion (70% chance)
 			d = game.monsters.getmonster('rat')
-		elif dice < 90:
+		elif dice < 70:
 			#create a lightning bolt scroll (10% chance)
 			d = game.monsters.getmonster('ant')
 		else:

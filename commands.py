@@ -13,15 +13,23 @@ def handle_keys():
 			libtcod.console_set_fullscreen(not libtcod.console_is_fullscreen())
 
 		if game.game_state == 'playing':
-			if key.vk == libtcod.KEY_UP:
-				player_move_or_attack(0, -1)
-			elif key.vk == libtcod.KEY_DOWN:
-				player_move_or_attack(0, 1)
-			elif key.vk == libtcod.KEY_LEFT:
-				player_move_or_attack(-1, 0)
-			elif key.vk == libtcod.KEY_RIGHT:
-				player_move_or_attack(1, 0)
-			elif key.vk == libtcod.KEY_SPACE:
+			if key.vk == libtcod.KEY_UP or key.vk == libtcod.KEY_KP8:
+				player_move(0, -1)
+			elif key.vk == libtcod.KEY_DOWN or key.vk == libtcod.KEY_KP2:
+				player_move(0, 1)
+			elif key.vk == libtcod.KEY_LEFT or key.vk == libtcod.KEY_KP4:
+				player_move(-1, 0)
+			elif key.vk == libtcod.KEY_RIGHT or key.vk == libtcod.KEY_KP6:
+				player_move(1, 0)
+			elif key.vk == libtcod.KEY_KP7:
+				player_move(-1, -1)
+			elif key.vk == libtcod.KEY_KP9:
+				player_move(1, -1)
+			elif key.vk == libtcod.KEY_KP1:
+				player_move(-1, 1)
+			elif key.vk == libtcod.KEY_KP3:
+				player_move(1, 1)
+			elif key.vk == libtcod.KEY_SPACE or key.vk == libtcod.KEY_KP5:
 				wait_turn()
 			elif key.vk == libtcod.KEY_ESCAPE:
 				state = options_menu()
@@ -70,7 +78,31 @@ def handle_keys():
 				return 'didnt-take-turn'
 
 
-def player_move_or_attack(dx, dy):
+def key_check(key, dx, dy):
+	if key.vk == libtcod.KEY_UP or key.vk == libtcod.KEY_KP8:
+		dy -= 1
+	elif key.vk == libtcod.KEY_DOWN or key.vk == libtcod.KEY_KP2:
+		dy += 1
+	elif key.vk == libtcod.KEY_LEFT or key.vk == libtcod.KEY_KP4:
+		dx -= 1
+	elif key.vk == libtcod.KEY_RIGHT or key.vk == libtcod.KEY_KP6:
+		dx += 1
+	elif key.vk == libtcod.KEY_KP7:
+		dx -= 1
+		dy -= 1
+	elif key.vk == libtcod.KEY_KP9:
+		dx += 1
+		dy -= 1
+	elif key.vk == libtcod.KEY_KP1:
+		dx -= 1
+		dy += 1
+	elif key.vk == libtcod.KEY_KP3:
+		dx += 1
+		dy += 1
+	return dx, dy
+
+
+def player_move(dx, dy):
 	#the coordinates the player is moving to/attacking
 	x = game.char.x + dx
 	y = game.char.y + dy
@@ -131,14 +163,7 @@ def close_door():
 	key = libtcod.Key()
 
 	libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, key, libtcod.Mouse(), True)
-	if key.vk == libtcod.KEY_UP:
-		dy = -1
-	elif key.vk == libtcod.KEY_DOWN:
-		dy = 1
-	elif key.vk == libtcod.KEY_LEFT:
-		dx = -1
-	elif key.vk == libtcod.KEY_RIGHT:
-		dx = 1
+	dx, dy = key_check(key, dx, dy)
 
 	if game.current_map.tiles[game.char.x + dx][game.char.y + dy].name == 'opened door':
 		game.current_map.tiles[game.char.x + dx][game.char.y + dy] = game.tiles.gettile('door')
@@ -218,14 +243,7 @@ def look():
 		text = ""
 
 		libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, key, libtcod.Mouse(), True)
-		if key.vk == libtcod.KEY_UP:
-			dy -= 1
-		elif key.vk == libtcod.KEY_DOWN:
-			dy += 1
-		elif key.vk == libtcod.KEY_LEFT:
-			dx -= 1
-		elif key.vk == libtcod.KEY_RIGHT:
-			dx += 1
+		dx, dy = key_check(key, dx, dy)
 		if key.vk == libtcod.KEY_ESCAPE:
 			del game.message.log[len(game.message.log) - 1]
 			break
@@ -288,14 +306,7 @@ def open_door():
 	key = libtcod.Key()
 
 	libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, key, libtcod.Mouse(), True)
-	if key.vk == libtcod.KEY_UP:
-		dy = -1
-	elif key.vk == libtcod.KEY_DOWN:
-		dy = 1
-	elif key.vk == libtcod.KEY_LEFT:
-		dx = -1
-	elif key.vk == libtcod.KEY_RIGHT:
-		dx = 1
+	dx, dy = key_check(key, dx, dy)
 
 	if game.current_map.tiles[game.char.x + dx][game.char.y + dy].name == 'door':
 		game.current_map.tiles[game.char.x + dx][game.char.y + dy] = game.tiles.gettile('opened door')

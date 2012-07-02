@@ -18,6 +18,14 @@ class Monster(object):
 		self.xp = xp
 		self.flags = flags
 
+	def take_turn(self, dx, dy):
+		x, y = libtcod.random_get_int(0, -1, 1), libtcod.random_get_int(0, -1, 1)
+		while (game.current_map.is_blocked(dx + x, dy + y)):
+			if x == 0 and y == 0:
+				break
+			x, y = libtcod.random_get_int(0, -1, 1), libtcod.random_get_int(0, -1, 1)
+		return dx + x, dy + y
+
 
 class MonsterList(object):
 	def __init__(self):
@@ -37,6 +45,9 @@ class MonsterList(object):
 		libtcod.struct_add_property(monster_type_struct, 'damage', libtcod.TYPE_DICE, False)
 		libtcod.struct_add_property(monster_type_struct, 'article', libtcod.TYPE_STRING, True)
 		libtcod.struct_add_property(monster_type_struct, 'xp', libtcod.TYPE_INT, True)
+		libtcod.struct_add_flag(monster_type_struct, 'ai_friendly')
+		libtcod.struct_add_flag(monster_type_struct, 'ai_neutral')
+		libtcod.struct_add_flag(monster_type_struct, 'ai_hostile')
 		libtcod.parser_run(parser, "data/monsters.txt", MonsterListener())
 
 	def add_to_list(self, monster=None):

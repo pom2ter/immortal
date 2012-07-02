@@ -9,6 +9,7 @@ monster_type "rat" {
 	damage = "1d4"
 	article = "a "
 	xp = 6
+	ai_friendly
 }
 
 monster_type "kobold" {
@@ -22,6 +23,7 @@ monster_type "kobold" {
 	damage = "1d6"
 	article = "a "
 	xp = 10
+	ai_hostile
 }
 
 monster_type "ant" {
@@ -35,4 +37,5 @@ monster_type "ant" {
 	damage = "1d4"
 	article = "an "
 	xp = 6
+	ai_neutral
 }
