@@ -49,10 +49,35 @@ class Map(object):
 					if libtcod.random_get_int(0, 1, 50) == 50:
 						self.tiles[x][y] = game.tiles.gettile('door')
 
+	def place_monsters(self):
+		x, y = 0, 0
+		#choose random spot for this monster
+		while (self.is_blocked(x, y)):
+			x = libtcod.random_get_int(0, 0, game.MAP_WIDTH - 1)
+			y = libtcod.random_get_int(0, 0, game.MAP_HEIGHT - 1)
+
+		#only place it if the tile is not blocked
+		dice = libtcod.random_get_int(0, 0, 100)
+		if dice < 70:
+			#create a healing potion (70% chance)
+			d = game.monsters.getmonster('rat')
+		elif dice < 90:
+			#create a lightning bolt scroll (10% chance)
+			d = game.monsters.getmonster('ant')
+		else:
+			#create a fireball scroll (10% chance)
+			d = game.monsters.getmonster('kobold')
+		monster = Object(x, y, d.icon, d.name, d.color, blocks=True, entity=d)
+		self.objects.append(monster)
+
 	def place_objects(self):
+		#choose random number of monsters
+		num_monsters = libtcod.random_get_int(0, 0, game.MAX_MONSTERS_PER_LEVEL)
+		for i in range(num_monsters):
+			self.place_monsters()
+
 		#choose random number of items
 		num_items = libtcod.random_get_int(0, 1, game.MAX_ITEMS_PER_LEVEL)
-
 		for i in range(num_items):
 			#choose random spot for this item
 			x, y = 0, 0
@@ -268,7 +293,7 @@ class Rect(object):
 class Object(object):
 	#this is a generic object: the player, a monster, an item, the stairs...
 	#it's always represented by a character on screen.
-	def __init__(self, x, y, char, name, color, pickup=False, blocks=False, fighter=None, ai=None, item=None):
+	def __init__(self, x, y, char, name, color, pickup=False, blocks=False, entity=None, ai=None, item=None):
 		self.x = x
 		self.y = y
 		self.char = char
@@ -276,9 +301,9 @@ class Object(object):
 		self.color = color
 		self.can_be_pickup = pickup
 		self.blocks = blocks
-		self.fighter = fighter
-		if self.fighter:  # let the fighter component know who owns it
-			self.fighter.owner = self
+		self.entity = entity
+		if self.entity:  # let the fighter component know who owns it
+			self.entity.owner = self
 
 		self.ai = ai
 		if self.ai:  # let the AI component know who owns it

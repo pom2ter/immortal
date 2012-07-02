@@ -247,6 +247,9 @@ def look():
 			prefix = 'you see '
 			if not libtcod.map_is_in_fov(game.fov_map, dx, dy):
 				prefix = 'you remember seeing '
+				for i in range(len(names) - 1, -1, -1):
+					if names[i].entity != None:
+						names.pop(i)
 			if (dx, dy) == (game.char.x, game.char.y):
 				text = 'you see yourself'
 			elif names == []:
@@ -258,9 +261,15 @@ def look():
 						text += ' and '
 					elif i > 0:
 						text += ', '
-					text += names[i].item.article + names[i].item.name
+					if names[i].item != None:
+						text += names[i].item.article + names[i].item.name
+					if names[i].entity != None:
+						text += names[i].entity.article + names[i].entity.name
 			else:
-				text = prefix + names[0].item.article + names[0].item.name
+				if names[0].item != None:
+					text = prefix + names[0].item.article + names[0].item.name
+				if names[0].entity != None:
+					text = prefix + names[0].entity.article + names[0].entity.name
 
 		libtcod.console_set_default_foreground(game.con, libtcod.white)
 		libtcod.console_set_default_background(game.con, libtcod.black)

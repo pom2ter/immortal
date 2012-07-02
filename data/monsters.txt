@@ -1,0 +1,38 @@
+monster_type "rat" {
+	type = "animal"
+	unidentified_name = "rat"
+	icon = "r"
+	icon_color = "128,0,0"
+	dark_color = "64,0,0"
+	health = 6
+	strength = 6
+	damage = "1d4"
+	article = "a "
+	xp = 6
+}
+
+monster_type "kobold" {
+	type = "humanoid"
+	unidentified_name = "kobold"
+	icon = "k"
+	icon_color = "0,0,128"
+	dark_color = "0,0,64"
+	health = 8
+	strength = 8
+	damage = "1d6"
+	article = "a "
+	xp = 10
+}
+
+monster_type "ant" {
+	type = "insect"
+	unidentified_name = "ant"
+	icon = "a"
+	icon_color = "80,60,20"
+	dark_color = "40,30,20"
+	health = 6
+	strength = 6
+	damage = "1d4"
+	article = "an "
+	xp = 6
+}

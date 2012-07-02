@@ -172,6 +172,7 @@ class Player(object):
 
 	def add_turn(self):
 		self.turns += 1
+		game.player_move = True
 
 	def equip(self, item):
 		self.equipment.append(self.inventory[item])

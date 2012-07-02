@@ -70,7 +70,7 @@ class ItemList(object):
 		libtcod.struct_add_flag(item_type_struct, 'equippable')
 		libtcod.parser_run(parser, "data/items.txt", ItemListener())
 
-	def additem(self, item=None):
+	def add_to_list(self, item=None):
 		if not item == None:
 			self.list.append(item)
 
@@ -132,7 +132,7 @@ class ItemListener(object):
 		return True
 
 	def end_struct(self, struct, name):
-		game.items.additem(self.temp_item)
+		game.items.add_to_list(self.temp_item)
 		return True
 
 	def error(self, msg):

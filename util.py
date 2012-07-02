@@ -134,6 +134,9 @@ def get_names_under_mouse():
 		prefix = 'you see '
 		if not libtcod.map_is_in_fov(game.fov_map, x, y):
 			prefix = 'you remember seeing '
+			for i in range(len(names) - 1, -1, -1):
+				if names[i].entity != None:
+					names.pop(i)
 		if (x, y) == (game.char.x, game.char.y):
 			return 'you see yourself'
 		if names == []:
@@ -146,10 +149,16 @@ def get_names_under_mouse():
 					string += ' and '
 				elif i > 0:
 					string += ', '
-				string += names[i].item.article + names[i].item.name
+				if names[i].item != None:
+					string += names[i].item.article + names[i].item.name
+				if names[i].entity != None:
+					string += names[i].entity.article + names[i].entity.name
 			return string
 		else:
-			return prefix + names[0].item.article + names[0].item.name
+			if names[0].item != None:
+				return prefix + names[0].item.article + names[0].item.name
+			if names[0].entity != None:
+				return prefix + names[0].entity.article + names[0].entity.name
 	else:
 		return ''
 
@@ -158,7 +167,7 @@ def initialize_fov():
 	game.fov_map = libtcod.map_new(game.MAP_WIDTH, game.MAP_HEIGHT)
 	for y in range(game.MAP_HEIGHT):
 		for x in range(game.MAP_WIDTH):
-			libtcod.map_set_properties(game.fov_map, x, y, not game.current_map.tiles[x][y].block_sight, game.current_map.explored[x][y] and (not game.current_map.tiles[x][y].blocked))
+			libtcod.map_set_properties(game.fov_map, x, y, not game.current_map.tiles[x][y].block_sight, game.current_map.explored[x][y] and (not game.current_map.is_blocked(x, y)))
 	game.path_dijk = libtcod.dijkstra_new(game.fov_map)
 	game.path_recalculate = True
 
