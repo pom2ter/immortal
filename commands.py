@@ -109,14 +109,14 @@ def player_move(dx, dy):
 
 	#try to find an attackable object there
 	target = None
-#	for object in maps.objects:
-#		if object.fighter and object.x == x and object.y == y:
+#	for object in game.current_map.objects:
+#		if object.entity and object.x == x and object.y == y:
 #			target = object
 #			break
 
 	#attack if target found, move otherwise
 	if target is not None:
-		game.char.fighter.attack(target)
+		game.player.attack(target)
 	else:
 		game.char.move(dx, dy, game.current_map)
 		game.fov_recompute = True

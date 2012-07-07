@@ -1,4 +1,5 @@
 import libtcodpy as libtcod
+import math
 import game
 import item
 
@@ -18,13 +19,57 @@ class Monster(object):
 		self.xp = xp
 		self.flags = flags
 
-	def take_turn(self, dx, dy):
-		x, y = libtcod.random_get_int(0, -1, 1), libtcod.random_get_int(0, -1, 1)
-		while (game.current_map.is_blocked(dx + x, dy + y)):
-			if x == 0 and y == 0:
+	def is_hostile(self):
+		if "ai_hostile" in self.flags:
+			return True
+		return False
+
+	def distance_to_player(self, player, x, y):
+		#return the distance relative to the player
+		dx = player.x - x
+		dy = player.y - y
+		return math.sqrt(dx ** 2 + dy ** 2)
+
+	def move_towards_player(self, player, x, y):
+		#vector from this object to the target, and distance
+		dx = player.x - x
+		dy = player.y - y
+		distance = math.sqrt(dx ** 2 + dy ** 2)
+
+		#normalize it to length 1 (preserving direction), then round it and convert to integer so the movement is restricted to the map grid
+		dx = int(round(dx / distance))
+		dy = int(round(dy / distance))
+		while (game.current_map.is_blocked(x + dx, y + dy)):
+			if dx == 0 and dy == 0:
 				break
-			x, y = libtcod.random_get_int(0, -1, 1), libtcod.random_get_int(0, -1, 1)
-		return dx + x, dy + y
+			dx, dy = libtcod.random_get_int(0, -1, 1), libtcod.random_get_int(0, -1, 1)
+		return dx, dy
+
+	def take_turn(self, x, y):
+		if self.is_hostile() and libtcod.map_is_in_fov(game.fov_map, x, y):
+			#move towards player if far away
+			dx, dy = 0, 0
+			if self.distance_to_player(game.char, x, y) >= 2:
+				dx, dy = self.move_towards_player(game.char, x, y)
+		else:
+			dx, dy = libtcod.random_get_int(0, -1, 1), libtcod.random_get_int(0, -1, 1)
+			if all(i == "ai_neutral" and i != "ai_hostile" for i in self.flags):
+				if self.distance_to_player(game.char, x, y) <= 2:
+					turn_hostile = libtcod.random_get_int(0, 0, 100)
+					if turn_hostile < 10:
+						self.flags.append("ai_hostile")
+			#elif set(['ai_neutral', 'ai_hostile']).issubset(self.flags):
+			elif all(i in self.flags for i in ["ai_neutral", "ai_hostile"]):
+				print self.flags
+				return_neutral = libtcod.random_get_int(0, 0, 100)
+				if return_neutral < 10:
+					self.flags[:] = (value for value in self.flags if value != "ai_hostile")
+			#retry if destination is blocked
+			while (game.current_map.is_blocked(x + dx, y + dy)):
+				if dx == 0 and dy == 0:
+					break
+				dx, dy = libtcod.random_get_int(0, -1, 1), libtcod.random_get_int(0, -1, 1)
+		return x + dx, y + dy
 
 
 class MonsterList(object):
