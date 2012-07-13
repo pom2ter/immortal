@@ -4,10 +4,12 @@ monster_type "rat" {
 	icon = "r"
 	icon_color = "128,0,0"
 	dark_color = "64,0,0"
-	health = 6
-	strength = 6
-	damage = "1d4"
 	article = "a "
+	level = 1
+	attack_rating = 4
+	defense_rating = 6
+	health = 4
+	damage = "1d4"
 	xp = 6
 	ai_friendly
 }
@@ -18,10 +20,12 @@ monster_type "kobold" {
 	icon = "k"
 	icon_color = "0,0,128"
 	dark_color = "0,0,64"
-	health = 8
-	strength = 8
-	damage = "1d6"
 	article = "a "
+	level = 1
+	attack_rating = 8
+	defense_rating = 10
+	health = 8
+	damage = "1d6"
 	xp = 10
 	ai_hostile
 }
@@ -32,10 +36,125 @@ monster_type "ant" {
 	icon = "a"
 	icon_color = "80,60,20"
 	dark_color = "40,30,20"
-	health = 6
-	strength = 6
-	damage = "1d4"
 	article = "an "
+	level = 1
+	attack_rating = 5
+	defense_rating = 5
+	health = 6
+	damage = "1d4"
 	xp = 6
 	ai_neutral
+}
+
+monster_type "goblin" {
+	type = "humanoid"
+	unidentified_name = "goblin"
+	icon = "g"
+	icon_color = "166,210,255"
+	dark_color = "83,105,127"
+	article = "a "
+	level = 1
+	attack_rating = 8
+	defense_rating = 10
+	health = 8
+	damage = "1d6"
+	xp = 10
+	ai_hostile
+}
+
+monster_type "lizard" {
+	type = "animal"
+	unidentified_name = "lizard"
+	icon = "l"
+	icon_color = "255,127,0"
+	dark_color = "128,64,0"
+	article = "a "
+	level = 1
+	attack_rating = 6
+	defense_rating = 4
+	health = 4
+	damage = "1d4"
+	xp = 8
+	ai_neutral
+}
+
+monster_type "large bat" {
+	type = "animal"
+	unidentified_name = "bat"
+	icon = "b"
+	icon_color = "127,101,63"
+	dark_color = "64,50,32"
+	article = "a "
+	level = 1
+	attack_rating = 4
+	defense_rating = 8
+	health = 4
+	damage = "1d4"
+	xp = 5
+	ai_neutral
+	flying
+}
+
+monster_type "skeleton" {
+	type = "undead"
+	unidentified_name = "skeleton"
+	icon = "z"
+	icon_color = "255,255,255"
+	dark_color = "127,127,127"
+	article = "a "
+	level = 1
+	attack_rating = 10
+	defense_rating = 4
+	health = 6
+	damage = "1d6"
+	xp = 6
+	ai_hostile
+}
+
+monster_type "scrawny dog" {
+	type = "animal"
+	unidentified_name = "dog"
+	icon = "d"
+	icon_color = "191,191,191"
+	dark_color = "95,95,95"
+	article = "a "
+	level = 1
+	attack_rating = 4
+	defense_rating = 4
+	health = 4
+	damage = "1d4"
+	xp = 4
+	ai_neutral
+}
+
+monster_type "orc" {
+	type = "humanoid"
+	unidentified_name = "orc"
+	icon = "o"
+	icon_color = "0,191,0"
+	dark_color = "0,95,0"
+	article = "an "
+	level = 2
+	attack_rating = 10
+	defense_rating = 10
+	health = 10
+	damage = "1d6"
+	xp = 12
+	ai_hostile
+}
+
+monster_type "zombie" {
+	type = "undead"
+	unidentified_name = "zombie"
+	icon = "z"
+	icon_color = "71,83,95"
+	dark_color = "35,42,48"
+	article = "a "
+	level = 2
+	attack_rating = 10
+	defense_rating = 8
+	health = 10
+	damage = "1d6"
+	xp = 12
+	ai_hostile
 }

@@ -57,22 +57,19 @@ class Map(object):
 			y = libtcod.random_get_int(0, 0, game.MAP_HEIGHT - 1)
 
 		#only place it if the tile is not blocked
-		dice = libtcod.random_get_int(0, 0, 100)
-		if dice < 35:
-			#create a healing potion (70% chance)
-			d = game.monsters.getmonster('rat')
-		elif dice < 70:
-			#create a lightning bolt scroll (10% chance)
-			d = game.monsters.getmonster('ant')
+		dice = libtcod.random_get_int(0, 1, 100)
+		if dice <= 60:
+			d = game.monsters.get_monster_by_level(1)
+		elif dice <= 90:
+			d = game.monsters.get_monster_by_level(2)
 		else:
-			#create a fireball scroll (10% chance)
-			d = game.monsters.getmonster('kobold')
+			d = game.monsters.get_monster_by_level(3)
 		monster = Object(x, y, d.icon, d.name, d.color, blocks=True, entity=d)
 		self.objects.append(monster)
 
 	def place_objects(self):
 		#choose random number of monsters
-		num_monsters = libtcod.random_get_int(0, 0, game.MAX_MONSTERS_PER_LEVEL)
+		num_monsters = libtcod.random_get_int(0, 1, game.MAX_MONSTERS_PER_LEVEL)
 		for i in range(num_monsters):
 			self.place_monsters()
 
@@ -86,16 +83,13 @@ class Map(object):
 				y = libtcod.random_get_int(0, 0, game.MAP_HEIGHT - 1)
 
 			#only place it if the tile is not blocked
-			dice = libtcod.random_get_int(0, 0, 100)
-			if dice < 70:
-				#create a healing potion (70% chance)
-				d = game.items.getitem('gold')
-			elif dice < 90:
-				#create a lightning bolt scroll (10% chance)
-				d = game.items.getitem('potion of minor healing')
+			dice = libtcod.random_get_int(0, 1, 100)
+			if dice <= 60:
+				d = game.items.get_item_by_level(1)
+			elif dice <= 90:
+				d = game.items.get_item_by_level(2)
 			else:
-				#create a fireball scroll (10% chance)
-				d = game.items.getitem('sword')
+				d = game.items.get_item_by_level(3)
 			item = Object(x, y, d.icon, d.name, d.color, True, item=d)
 			self.objects.append(item)
 

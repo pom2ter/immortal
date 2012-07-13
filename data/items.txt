@@ -4,11 +4,27 @@ item_type "potion of minor healing" {
 	icon = "!"
 	icon_color = "255,0,0"
 	dark_color = "85,0,0"
+	level = 1
 	weight = 0.5
 	cost = 50
 	dices = "1d8+1"
 	article = "a "
 	healing
+	usable
+}
+
+item_type "potion of mana" {
+	type = "potion"
+	unidentified_name = "potion"
+	icon = "!"
+	icon_color = "0,0,255"
+	dark_color = "0,0,85"
+	level = 1
+	weight = 0.5
+	cost = 50
+	dices = "1d8+1"
+	article = "a "
+	mana_healing
 	usable
 }
 
@@ -18,7 +34,22 @@ item_type "gold" {
 	icon = "$"
 	icon_color = "229,191,0"
 	dark_color = "76,64,0"
+	level = 1
 	article = "some "
+}
+
+item_type "dagger" {
+	type = "weapon"
+	unidentified_name = "dagger"
+	icon = "("
+	icon_color = "255,255,255"
+	dark_color = "85,85,85"
+	level = 1
+	weight = 1.0
+	cost = 10
+	dices = "1d4"
+	article = "a "
+	equippable
 }
 
 item_type "short sword" {
@@ -27,9 +58,10 @@ item_type "short sword" {
 	icon = "("
 	icon_color = "255,255,255"
 	dark_color = "85,85,85"
+	level = 1
 	weight = 2.0
 	cost = 10
-	dices = "1d4"
+	dices = "1d6"
 	article = "a "
 	equippable
 }
@@ -40,9 +72,36 @@ item_type "long sword" {
 	icon = "("
 	icon_color = "255,255,255"
 	dark_color = "85,85,85"
+	level = 1
 	weight = 4.0
 	cost = 10
-	dices = "1d4"
+	dices = "1d8"
 	article = "a "
+	equippable
+}
+
+item_type "robes" {
+	type = "armor"
+	unidentified_name = "robes"
+	icon = "["
+	icon_color = "0,0,255"
+	dark_color = "0,0,85"
+	level = 1
+	weight = 5.0
+	cost = 10
+	article = "some "
+	equippable
+}
+
+item_type "helmet" {
+	type = "armor"
+	unidentified_name = "helmet"
+	icon = "["
+	icon_color = "127,127,127"
+	dark_color = "42,42,42"
+	level = 1
+	weight = 1.0
+	cost = 10
+	article = "an "
 	equippable
 }

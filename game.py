@@ -10,7 +10,7 @@ import commands
 import util
 
 VERSION = 'v0.1.1'
-BUILD = '17'
+BUILD = '18'
 
 #size of the map
 MAP_WIDTH = 72

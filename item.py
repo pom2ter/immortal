@@ -3,13 +3,14 @@ import game
 
 
 class Item(object):
-	def __init__(self, typ, name, unid_name, icon, color, dark_color, weight, cost, dice, article, flags):
+	def __init__(self, typ, name, unid_name, icon, color, dark_color, level, weight, cost, dice, article, flags):
 		self.type = typ
 		self.name = name
 		self.unidentified_name = unid_name
 		self.icon = icon
 		self.color = libtcod.Color(color[0], color[1], color[2])
 		self.dark_color = libtcod.Color(dark_color[0], dark_color[1], dark_color[2])
+		self.level = level
 		self.weight = weight
 		self.cost = cost
 		self.dice = dice
@@ -39,6 +40,17 @@ class Item(object):
 					game.player.inventory.pop(pos)
 					game.message.new("You gain " + str(heal) + " hit points.", game.player.turns, libtcod.green)
 					game.player.add_turn()
+			if "mana_healing" in self.flags:
+				if game.player.mana == game.player.max_mana:
+					game.message.new("Your mana is already at maximum.", game.player.turns, libtcod.white)
+				else:
+					heal = self.dice.roll_dice()
+					game.player.mana += heal
+					if game.player.mana > game.player.max_mana:
+						game.player.mana = game.player.max_mana
+					game.player.inventory.pop(pos)
+					game.message.new("You gain " + str(heal) + " mana points.", game.player.turns, libtcod.green)
+					game.player.add_turn()
 		else:
 			game.message.new("You can't use that item.", game.player.turns, libtcod.white)
 
@@ -61,11 +73,13 @@ class ItemList(object):
 		libtcod.struct_add_property(item_type_struct, 'icon', libtcod.TYPE_STRING, True)
 		libtcod.struct_add_property(item_type_struct, 'icon_color', libtcod.TYPE_COLOR, True)
 		libtcod.struct_add_property(item_type_struct, 'dark_color', libtcod.TYPE_COLOR, True)
+		libtcod.struct_add_property(item_type_struct, 'level', libtcod.TYPE_INT, True)
 		libtcod.struct_add_property(item_type_struct, 'weight', libtcod.TYPE_FLOAT, False)
 		libtcod.struct_add_property(item_type_struct, 'cost', libtcod.TYPE_INT, False)
 		libtcod.struct_add_property(item_type_struct, 'dices', libtcod.TYPE_DICE, False)
 		libtcod.struct_add_property(item_type_struct, 'article', libtcod.TYPE_STRING, True)
 		libtcod.struct_add_flag(item_type_struct, 'healing')
+		libtcod.struct_add_flag(item_type_struct, 'mana_healing')
 		libtcod.struct_add_flag(item_type_struct, 'usable')
 		libtcod.struct_add_flag(item_type_struct, 'equippable')
 		libtcod.parser_run(parser, "data/items.txt", ItemListener())
@@ -74,11 +88,17 @@ class ItemList(object):
 		if not item == None:
 			self.list.append(item)
 
-	def getitem(self, name):
+	def get_item(self, name):
 		for item in self.list:
 			if name in item.name:
 				return item
 		return None
+
+	def get_item_by_level(self, level):
+		item = libtcod.random_get_int(0, 0, len(self.list) - 1)
+		while self.list[item].level > level:
+			item = libtcod.random_get_int(0, 0, len(self.list) - 1)
+		return self.list[item]
 
 
 class Dice(object):
@@ -94,7 +114,7 @@ class Dice(object):
 
 class ItemListener(object):
 	def new_struct(self, struct, name):
-		self.temp_item = Item('', '', '', '', [0, 0, 0], [0, 0, 0], 0, 0, Dice(0, 0, 0, 0), '', [])
+		self.temp_item = Item('', '', '', '', [0, 0, 0], [0, 0, 0], 0, 0, 0, Dice(0, 0, 0, 0), '', [])
 		self.temp_item.name = name
 		return True
 
@@ -123,6 +143,8 @@ class ItemListener(object):
 				self.temp_item.cost = value
 			if name == "icon":
 				self.temp_item.icon = value
+			if name == "level":
+				self.temp_item.level = value
 			if name == "weight":
 				self.temp_item.weight = value
 			if name == "article":
