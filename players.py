@@ -1,5 +1,6 @@
 import libtcodpy as libtcod
 import game
+import util
 from messages import *
 
 RACES = ["Human", "Elf", "Dwarf", "Halfling"]
@@ -124,12 +125,11 @@ def show_stats(stats, text, attr=-1, roll=-1):
 
 	if not roll == -1:
 		stat = []
-		libtcod.random_get_instance()
-		stat.append(libtcod.random_get_int(0, 0, 8))
-		stat.append(libtcod.random_get_int(0, 0, 8))
-		stat.append(libtcod.random_get_int(0, 0, 8))
-		stat.append(libtcod.random_get_int(0, 0, 8))
-		stat.append(libtcod.random_get_int(0, 0, 8))
+		stat.append(libtcod.random_get_int(game.rnd, 0, 8))
+		stat.append(libtcod.random_get_int(game.rnd, 0, 8))
+		stat.append(libtcod.random_get_int(game.rnd, 0, 8))
+		stat.append(libtcod.random_get_int(game.rnd, 0, 8))
+		stat.append(libtcod.random_get_int(game.rnd, 0, 8))
 		for i in range(0, 5):
 			libtcod.console_print(stats, 24, i + 5, str(stat[i]) + ' ')
 			libtcod.console_print(stats, 30, i + 5, str(BASE_STATS[attr][i] + stat[i]) + ' ')
@@ -138,7 +138,7 @@ def show_stats(stats, text, attr=-1, roll=-1):
 		game.player.intelligence = BASE_STATS[attr][2] + stat[2]
 		game.player.endurance = BASE_STATS[attr][3] + stat[3]
 		game.player.luck = BASE_STATS[attr][4] + stat[4]
-		game.player.gold = libtcod.random_get_int(0, 1, 50)
+		game.player.gold = libtcod.random_get_int(game.rnd, 1, 50)
 
 	for i in range(0, game.SCREEN_HEIGHT):
 		libtcod.console_print(stats, 0, i, chr(179))
@@ -161,7 +161,7 @@ class Player(object):
 		self.icon_color = libtcod.white
 		self.level = 1
 		self.xp = 0
-		self.health = 2
+		self.health = 12
 		self.max_health = 12
 		self.mana = 2
 		self.max_mana = 2
@@ -185,3 +185,51 @@ class Player(object):
 		self.add_turn()
 		game.message.new("You unequip the " + self.equipment[item].unidentified_name, self.turns, libtcod.green)
 		self.equipment.pop(item)
+
+	def attack_rating(self):
+		ar = self.strength
+		ar += self.dexterity * 0.2
+		ar += self.luck * 0.2
+		return ar
+
+	def defense_rating(self):
+		dr = self.dexterity
+		dr += self.luck * 0.2
+		return dr
+
+	def carrying_capacity(self):
+		cw = self.strength * 2.5
+		cw += self.endurance * 1.25
+		cw += self.luck * 0.5
+		return cw
+
+	def health_bonus(self):
+		hb = self.endurance * 2
+		hb += self.luck * 0.2
+		return int(hb)
+
+	def mana_bonus(self):
+		mb = self.intelligence * 2
+		mb += self.luck * 0.2
+		return int(mb)
+
+	def attack(self, target):
+		if not target.entity.is_hostile():
+			target.entity.becomes_hostile()
+		thac0 = 20 - (self.attack_rating() - target.entity.defense_rating)
+		dice = util.roll_dice(1, 20, 1, 0)
+		if dice != 1 and (dice >= thac0 or dice == 20):
+			damage = 0
+			for i in range(0, len(self.equipment)):
+				if self.equipment[i].type == "weapon":
+					damage = self.equipment[i].dice.roll_dice()
+			if damage == 0:
+				damage = util.roll_dice(1, 4, 1, 0)
+			game.message.new('You hit the ' + target.entity.name + ' for ' + str(damage) + ' pts of damage', self.turns, libtcod.white)
+			target.entity.health -= damage
+			if target.entity.health < 1:
+				game.message.new('The ' + target.entity.name + ' dies!', self.turns, libtcod.light_orange)
+				target.delete()
+		else:
+			game.message.new('You missed the ' + target.entity.name, self.turns, libtcod.white)
+		self.add_turn()

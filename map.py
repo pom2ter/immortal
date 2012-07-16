@@ -46,18 +46,18 @@ class Map(object):
 		for y in range(1, game.MAP_HEIGHT - 1):
 			for x in range(1, game.MAP_WIDTH - 1):
 				if (self.tiles[x + 1][y].name == 'floor' and self.tiles[x - 1][y].name == 'floor' and self.tiles[x][y - 1].name == 'wall' and self.tiles[x][y + 1].name == 'wall') or (self.tiles[x + 1][y].name == 'wall' and self.tiles[x - 1][y].name == 'wall' and self.tiles[x][y - 1].name == 'floor' and self.tiles[x][y + 1].name == 'floor'):
-					if libtcod.random_get_int(0, 1, 50) == 50:
+					if libtcod.random_get_int(game.rnd, 1, 50) == 50:
 						self.tiles[x][y] = game.tiles.gettile('door')
 
 	def place_monsters(self):
 		x, y = 0, 0
 		#choose random spot for this monster
 		while (self.is_blocked(x, y)):
-			x = libtcod.random_get_int(0, 0, game.MAP_WIDTH - 1)
-			y = libtcod.random_get_int(0, 0, game.MAP_HEIGHT - 1)
+			x = libtcod.random_get_int(game.rnd, 0, game.MAP_WIDTH - 1)
+			y = libtcod.random_get_int(game.rnd, 0, game.MAP_HEIGHT - 1)
 
 		#only place it if the tile is not blocked
-		dice = libtcod.random_get_int(0, 1, 100)
+		dice = libtcod.random_get_int(game.rnd, 1, 100)
 		if dice <= 60:
 			d = game.monsters.get_monster_by_level(1)
 		elif dice <= 90:
@@ -65,25 +65,26 @@ class Map(object):
 		else:
 			d = game.monsters.get_monster_by_level(3)
 		monster = Object(x, y, d.icon, d.name, d.color, blocks=True, entity=d)
-		self.objects.append(monster)
+		#self.objects.append(monster)
+		self.objects.insert(1, monster)
 
 	def place_objects(self):
 		#choose random number of monsters
-		num_monsters = libtcod.random_get_int(0, 1, game.MAX_MONSTERS_PER_LEVEL)
+		num_monsters = libtcod.random_get_int(game.rnd, 1, game.MAX_MONSTERS_PER_LEVEL)
 		for i in range(num_monsters):
 			self.place_monsters()
 
 		#choose random number of items
-		num_items = libtcod.random_get_int(0, 1, game.MAX_ITEMS_PER_LEVEL)
+		num_items = libtcod.random_get_int(game.rnd, 1, game.MAX_ITEMS_PER_LEVEL)
 		for i in range(num_items):
 			#choose random spot for this item
 			x, y = 0, 0
 			while (self.is_blocked(x, y)):
-				x = libtcod.random_get_int(0, 0, game.MAP_WIDTH - 1)
-				y = libtcod.random_get_int(0, 0, game.MAP_HEIGHT - 1)
+				x = libtcod.random_get_int(game.rnd, 0, game.MAP_WIDTH - 1)
+				y = libtcod.random_get_int(game.rnd, 0, game.MAP_HEIGHT - 1)
 
 			#only place it if the tile is not blocked
-			dice = libtcod.random_get_int(0, 1, 100)
+			dice = libtcod.random_get_int(game.rnd, 1, 100)
 			if dice <= 60:
 				d = game.items.get_item_by_level(1)
 			elif dice <= 90:
@@ -100,7 +101,7 @@ class Map(object):
 			self.up_staircase = (game.char.x, game.char.y)
 
 		#place stairs going down in a random spot
-		stairs = libtcod.random_get_int(0, 1, len(rooms) - 1)
+		stairs = libtcod.random_get_int(game.rnd, 1, len(rooms) - 1)
 		(x, y) = rooms[stairs].center()
 		self.tiles[x][y] = game.tiles.gettile('stairs going down')
 		self.down_staircase = (x, y)
@@ -124,11 +125,11 @@ class Map(object):
 
 		for r in range(game.MAX_ROOMS):
 			#random width and height
-			w = libtcod.random_get_int(0, game.ROOM_MIN_SIZE, game.ROOM_MAX_SIZE)
-			h = libtcod.random_get_int(0, game.ROOM_MIN_SIZE, game.ROOM_MAX_SIZE)
+			w = libtcod.random_get_int(game.rnd, game.ROOM_MIN_SIZE, game.ROOM_MAX_SIZE)
+			h = libtcod.random_get_int(game.rnd, game.ROOM_MIN_SIZE, game.ROOM_MAX_SIZE)
 			#random position without going out of the boundaries of the map
-			x = libtcod.random_get_int(0, 0, game.MAP_WIDTH - w - 1)
-			y = libtcod.random_get_int(0, 0, game.MAP_HEIGHT - h - 1)
+			x = libtcod.random_get_int(game.rnd, 0, game.MAP_WIDTH - w - 1)
+			y = libtcod.random_get_int(game.rnd, 0, game.MAP_HEIGHT - h - 1)
 
 			#"Rect" class makes rectangles easier to work with
 			new_room = Rect(x, y, w, h)
@@ -160,7 +161,7 @@ class Map(object):
 					(prev_x, prev_y) = rooms[num_rooms - 1].center()
 
 					#draw a coin (random number that is either 0 or 1)
-					if libtcod.random_get_int(0, 0, 1) == 1:
+					if libtcod.random_get_int(game.rnd, 0, 1) == 1:
 						#first move horizontally, then vertically
 						self.create_h_tunnel(prev_x, new_x, prev_y)
 						self.create_v_tunnel(prev_y, new_y, new_x)
@@ -345,6 +346,9 @@ class Object(object):
 		#make this object be drawn first, so all others appear above it if they're in the same tile.
 		game.current_map.objects.remove(self)
 		game.current_map.objects.insert(0, self)
+
+	def delete(self):
+		game.current_map.objects.remove(self)
 
 	def draw(self, con):
 		#only show if it's visible to the player

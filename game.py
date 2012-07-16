@@ -9,8 +9,8 @@ import map
 import commands
 import util
 
-VERSION = 'v0.1.1'
-BUILD = '18'
+VERSION = 'v0.1.2'
+BUILD = '19'
 
 #size of the map
 MAP_WIDTH = 72
@@ -68,15 +68,17 @@ path_dx = 0
 path_dy = 0
 mouse_move = False
 mouse = libtcod.Mouse()
+rnd = None
 
 
 class Game(object):
 	def __init__(self):
-		global con, panel, ps, fov_noise, savefiles, items, tiles, monsters
+		global con, panel, ps, fov_noise, savefiles, items, tiles, monsters, rnd
 		#img = libtcod.image_load('title_screen2.png')
 		libtcod.console_set_custom_font('font.png', libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_ASCII_INROW)
 		libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, 'Immortal ' + VERSION, False)
 		#libtcod.sys_set_fps(60)
+		rnd = libtcod.random_new()
 		con = libtcod.console_new(MAP_WIDTH, MAP_HEIGHT)
 		panel = libtcod.console_new(MESSAGE_WIDTH, MESSAGE_HEIGHT)
 		ps = libtcod.console_new(PLAYER_STATS_WIDTH, PLAYER_STATS_HEIGHT)
@@ -137,6 +139,7 @@ class Game(object):
 					if object.entity != None:
 						object.x, object.y = object.entity.take_turn(object.x, object.y)
 				game.player_move = False
+				#game.rnd = libtcod.random_new()
 
 	# save the game using the shelve module
 	def save_game(self):
@@ -180,7 +183,7 @@ class Game(object):
 		global player_action
 		player_action = None
 		choice = 0
-		#libtcod.console_credits()
+		libtcod.console_credits()
 		while not libtcod.console_is_window_closed():
 			#libtcod.image_blit_2x(img, 0, 0, 0)
 			libtcod.console_set_default_foreground(0, libtcod.light_yellow)

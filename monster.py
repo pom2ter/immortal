@@ -26,6 +26,10 @@ class Monster(object):
 			return True
 		return False
 
+	def becomes_hostile(self):
+		self.flags.append("ai_hostile")
+		self.flags[:] = (value for value in self.flags if value != "ai_neutral" and value != "ai_friendly")
+
 	def distance_to_player(self, player, x, y):
 		#return the distance relative to the player
 		dx = player.x - x
@@ -44,7 +48,7 @@ class Monster(object):
 		while (game.current_map.is_blocked(x + dx, y + dy)):
 			if dx == 0 and dy == 0:
 				break
-			dx, dy = libtcod.random_get_int(0, -1, 1), libtcod.random_get_int(0, -1, 1)
+			dx, dy = libtcod.random_get_int(game.rnd, -1, 1), libtcod.random_get_int(game.rnd, -1, 1)
 		return dx, dy
 
 	def take_turn(self, x, y):
@@ -54,22 +58,22 @@ class Monster(object):
 			if self.distance_to_player(game.char, x, y) >= 2:
 				dx, dy = self.move_towards_player(game.char, x, y)
 		else:
-			dx, dy = libtcod.random_get_int(0, -1, 1), libtcod.random_get_int(0, -1, 1)
+			dx, dy = libtcod.random_get_int(game.rnd, -1, 1), libtcod.random_get_int(game.rnd, -1, 1)
 			if all(i == "ai_neutral" and i != "ai_hostile" for i in self.flags):
 				if self.distance_to_player(game.char, x, y) <= 2:
-					turn_hostile = libtcod.random_get_int(0, 1, 100)
+					turn_hostile = libtcod.random_get_int(game.rnd, 1, 100)
 					if turn_hostile <= 10:
 						self.flags.append("ai_hostile")
 			#elif set(['ai_neutral', 'ai_hostile']).issubset(self.flags):
 			elif all(i in self.flags for i in ["ai_neutral", "ai_hostile"]):
-				return_neutral = libtcod.random_get_int(0, 1, 100)
+				return_neutral = libtcod.random_get_int(game.rnd, 1, 100)
 				if return_neutral <= 10:
 					self.flags[:] = (value for value in self.flags if value != "ai_hostile")
 			#retry if destination is blocked
 			while (game.current_map.is_blocked(x + dx, y + dy)):
 				if dx == 0 and dy == 0:
 					break
-				dx, dy = libtcod.random_get_int(0, -1, 1), libtcod.random_get_int(0, -1, 1)
+				dx, dy = libtcod.random_get_int(game.rnd, -1, 1), libtcod.random_get_int(game.rnd, -1, 1)
 		return x + dx, y + dy
 
 
@@ -110,9 +114,9 @@ class MonsterList(object):
 		return None
 
 	def get_monster_by_level(self, level):
-		mst = libtcod.random_get_int(0, 0, len(self.list) - 1)
+		mst = libtcod.random_get_int(game.rnd, 0, len(self.list) - 1)
 		while self.list[mst].level > level:
-			mst = libtcod.random_get_int(0, 0, len(self.list) - 1)
+			mst = libtcod.random_get_int(game.rnd, 0, len(self.list) - 1)
 		return self.list[mst]
 
 	def number_of_monsters_on_map(self):
@@ -124,7 +128,7 @@ class MonsterList(object):
 
 	def spawn(self):
 		if self.number_of_monsters_on_map() < game.MAX_MONSTERS_PER_LEVEL:
-			number = libtcod.random_get_int(0, 1, 100)
+			number = libtcod.random_get_int(game.rnd, 1, 100)
 			if number == 1:
 				game.current_map.place_monsters()
 

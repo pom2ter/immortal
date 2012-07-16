@@ -104,22 +104,16 @@ def msg_box(typ, header=None, footer=None, contents=None, box_width=60, box_heig
 	return choice
 
 
-def render_bar(con, x, y, total_width, name, value, maximum, bar_color, back_color):
-	#render a bar (HP, experience, etc). first calculate the width of the bar
-	bar_width = int(float(value) / maximum * total_width)
+def items_at_feet():
+	objects = [obj for obj in game.current_map.objects if obj.item and obj.x == game.char.x and obj.y == game.char.y]
+	if len(objects) > 1:
+		game.message.new('You see several items at your feet.', game.player.turns, libtcod.white)
+	elif len(objects) == 1:
+		game.message.new('You see ' + objects[0].item.article + objects[0].item.name, game.player.turns, libtcod.white)
 
-	#render the background first
-	libtcod.console_set_default_background(con, back_color)
-	libtcod.console_rect(con, x, y, total_width, 1, False, libtcod.BKGND_SET)
 
-	#now render the bar on top
-	libtcod.console_set_default_background(con, bar_color)
-	if bar_width > 0:
-		libtcod.console_rect(con, x, y, bar_width, 1, False, libtcod.BKGND_SET)
-
-	#finally, some centered text with the values
-	libtcod.console_set_default_foreground(con, libtcod.white)
-	libtcod.console_print_ex(con, x + total_width / 2, y, libtcod.BKGND_NONE, libtcod.CENTER, name + ': ' + str(value) + '/' + str(maximum))
+def roll_dice(nb_dices, nb_faces, multiplier, bonus):
+	return libtcod.random_get_int(game.rnd, nb_dices, nb_dices * nb_faces * multiplier) + bonus
 
 
 def get_names_under_mouse():
@@ -170,6 +164,24 @@ def initialize_fov():
 			libtcod.map_set_properties(game.fov_map, x, y, not game.current_map.tiles[x][y].block_sight, game.current_map.explored[x][y] and (not game.current_map.is_blocked(x, y)))
 	game.path_dijk = libtcod.dijkstra_new(game.fov_map)
 	game.path_recalculate = True
+
+
+def render_bar(con, x, y, total_width, name, value, maximum, bar_color, back_color):
+	#render a bar (HP, experience, etc). first calculate the width of the bar
+	bar_width = int(float(value) / maximum * total_width)
+
+	#render the background first
+	libtcod.console_set_default_background(con, back_color)
+	libtcod.console_rect(con, x, y, total_width, 1, False, libtcod.BKGND_SET)
+
+	#now render the bar on top
+	libtcod.console_set_default_background(con, bar_color)
+	if bar_width > 0:
+		libtcod.console_rect(con, x, y, bar_width, 1, False, libtcod.BKGND_SET)
+
+	#finally, some centered text with the values
+	libtcod.console_set_default_foreground(con, libtcod.white)
+	libtcod.console_print_ex(con, x + total_width / 2, y, libtcod.BKGND_NONE, libtcod.CENTER, name + ': ' + str(value) + '/' + str(maximum))
 
 
 def render_message_panel():

@@ -19,7 +19,7 @@ class Item(object):
 
 	def pick_up(self):
 		if self.type == "money":
-			gold = libtcod.random_get_int(0, 1, 100)
+			gold = libtcod.random_get_int(game.rnd, 1, 100)
 			game.message.new('You pick up ' + str(gold) + ' gold pieces', game.player.turns, libtcod.gold)
 			game.player.gold += gold
 		else:
@@ -95,9 +95,9 @@ class ItemList(object):
 		return None
 
 	def get_item_by_level(self, level):
-		item = libtcod.random_get_int(0, 0, len(self.list) - 1)
+		item = libtcod.random_get_int(game.rnd, 0, len(self.list) - 1)
 		while self.list[item].level > level:
-			item = libtcod.random_get_int(0, 0, len(self.list) - 1)
+			item = libtcod.random_get_int(game.rnd, 0, len(self.list) - 1)
 		return self.list[item]
 
 
@@ -109,7 +109,7 @@ class Dice(object):
 		self.bonus = bonus
 
 	def roll_dice(self):
-		return libtcod.random_get_int(0, self.nb_dices, self.nb_dices * self.nb_faces * int(self.multiplier)) + int(self.bonus)
+		return libtcod.random_get_int(game.rnd, self.nb_dices, self.nb_dices * self.nb_faces * int(self.multiplier)) + int(self.bonus)
 
 
 class ItemListener(object):

@@ -109,16 +109,17 @@ def player_move(dx, dy):
 
 	#try to find an attackable object there
 	target = None
-#	for object in game.current_map.objects:
-#		if object.entity and object.x == x and object.y == y:
-#			target = object
-#			break
+	for object in game.current_map.objects:
+		if object.entity and object.x == x and object.y == y:
+			target = object
+			break
 
 	#attack if target found, move otherwise
 	if target is not None:
 		game.player.attack(target)
 	else:
 		game.char.move(dx, dy, game.current_map)
+		util.items_at_feet()
 		game.fov_recompute = True
 
 
@@ -259,8 +260,7 @@ def look():
 
 		#create a list with the names of all objects at the cursor coordinates
 		if dx in range(0, game.MAP_WIDTH - 1) and dy in range(0, game.MAP_HEIGHT - 1) and game.current_map.explored[dx][dy]:
-			names = [obj for obj in game.current_map.objects
-				if obj.x == dx and obj.y == dy]
+			names = [obj for obj in game.current_map.objects if obj.x == dx and obj.y == dy]
 
 			prefix = 'you see '
 			if not libtcod.map_is_in_fov(game.fov_map, dx, dy):
