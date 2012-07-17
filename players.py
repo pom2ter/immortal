@@ -11,6 +11,157 @@ BASE_STATS = [[9, 9, 8, 9, 9], [12, 9, 6, 11, 8], [10, 12, 7, 8, 9], [9, 8, 10, 
 				[11, 7, 6, 12, 8], [14, 7, 4, 14, 7], [12, 10, 5, 11, 8], [11, 6, 8, 13, 8], [9, 8, 10, 11, 8],
 				[8, 10, 7, 9, 10], [11, 10, 5, 11, 9], [9, 13, 6, 8, 10], [8, 9, 9, 10, 10], [6, 11, 11, 8, 10],
 				]
+EXPERIENCE_TABLES = [0, 10, 250, 500, 800, 1250, 1750, 2450, 3250, 4150, 5200, 6400, 7800, 9400, 11200, 13200, 16400, 18800, 21400, 24200, 27000]
+FIGHTER_HP_GAIN = 10
+FIGHTER_MP_GAIN = 2
+ROGUE_HP_GAIN = 8
+ROGUE_MP_GAIN = 4
+PRIEST_HP_GAIN = 7
+PRIEST_MP_GAIN = 8
+MAGE_HP_GAIN = 5
+MAGE_MP_GAIN = 10
+
+
+class Player(object):
+	def __init__(self):
+		self.name = ""
+		self.race = RACES[0]
+		self.gender = GENDER[0]
+		self.profession = CLASSES[0]
+		self.strength = 9
+		self.dexterity = 9
+		self.intelligence = 8
+		self.endurance = 9
+		self.luck = 9
+		self.icon = '@'
+		self.icon_color = libtcod.white
+		self.level = 1
+		self.xp = 0
+		self.health = 0
+		self.max_health = 0
+		self.base_health = 0
+		self.mana = 0
+		self.max_mana = 0
+		self.base_mana = 0
+		self.inventory = []
+		self.equipment = []
+		self.turns = 0
+		self.gold = 0
+
+	def add_turn(self):
+		self.turns += 1
+		game.player_move = True
+
+	def equip(self, item):
+		self.equipment.append(self.inventory[item])
+		self.add_turn()
+		game.message.new("You equip the " + self.inventory[item].unidentified_name, self.turns, libtcod.green)
+		self.inventory.pop(item)
+
+	def unequip(self, item):
+		self.inventory.append(self.equipment[item])
+		self.add_turn()
+		game.message.new("You unequip the " + self.equipment[item].unidentified_name, self.turns, libtcod.green)
+		self.equipment.pop(item)
+
+	def attack_rating(self):
+		ar = self.strength
+		ar += self.dexterity * 0.2
+		ar += self.luck * 0.2
+		return ar
+
+	def defense_rating(self):
+		dr = self.dexterity
+		dr += self.luck * 0.2
+		return dr
+
+	def carrying_capacity(self):
+		cw = self.strength * 2.5
+		cw += self.endurance * 1.25
+		cw += self.luck * 0.5
+		return cw
+
+	def health_bonus(self):
+		hb = self.endurance
+		hb += self.luck * 0.2
+		return int(hb)
+
+	def mana_bonus(self):
+		mb = self.intelligence
+		mb += self.luck * 0.2
+		return int(mb)
+
+	def set_max_health(self):
+		self.max_health = self.base_health + self.health_bonus()
+		if self.health > self.max_health:
+			self.health = self.max_health
+
+	def set_max_mana(self):
+		self.max_mana = self.base_mana + self.mana_bonus()
+		if self.mana > self.max_mana:
+			self.mana = self.max_mana
+
+	def stat_gain(self, st, dx, en, iq):
+		fate = libtcod.random_get_int(game.rnd, 1, 100)
+		if fate <= st:
+			self.strength += 1
+		elif fate <= st + dx:
+			self.dexterity += 1
+		elif fate <= st + dx + en:
+			self.endurance += 1
+		elif fate <= st + dx + en + iq:
+			self.intelligence += 1
+		self.carrying_capacity()
+
+	def gain_level(self):
+		self.level += 1
+		if self.profession == "Fighter":
+			hp_increase = libtcod.random_get_int(game.rnd, 2, FIGHTER_HP_GAIN)
+			mp_increase = libtcod.random_get_int(game.rnd, 2, FIGHTER_MP_GAIN)
+			self.stat_gain(50, 15, 25, 10)
+		if self.profession == "Rogue":
+			hp_increase = libtcod.random_get_int(game.rnd, 2, ROGUE_HP_GAIN)
+			mp_increase = libtcod.random_get_int(game.rnd, 2, ROGUE_MP_GAIN)
+			self.stat_gain(25, 50, 15, 10)
+		if self.profession == "Priest":
+			hp_increase = libtcod.random_get_int(game.rnd, 2, PRIEST_HP_GAIN)
+			mp_increase = libtcod.random_get_int(game.rnd, 2, PRIEST_MP_GAIN)
+			self.stat_gain(50, 15, 10, 25)
+		if self.profession == "Mage":
+			hp_increase = libtcod.random_get_int(game.rnd, 2, MAGE_HP_GAIN)
+			mp_increase = libtcod.random_get_int(game.rnd, 2, MAGE_MP_GAIN)
+			self.stat_gain(10, 25, 15, 50)
+		self.base_health += hp_increase
+		self.base_mana += mp_increase
+		self.health += hp_increase
+		self.mana += mp_increase
+		self.set_max_health()
+		self.set_max_mana()
+
+	def attack(self, target):
+		if not target.entity.is_hostile():
+			target.entity.becomes_hostile()
+		thac0 = 20 - (self.attack_rating() - target.entity.defense_rating)
+		dice = util.roll_dice(1, 20, 1, 0)
+		if dice != 1 and (dice >= thac0 or dice == 20):
+			damage = 0
+			for i in range(0, len(self.equipment)):
+				if self.equipment[i].type == "weapon":
+					damage = self.equipment[i].dice.roll_dice()
+			if damage == 0:
+				damage = util.roll_dice(1, 4, 1, 0)
+			game.message.new('You hit the ' + target.entity.name + ' for ' + str(damage) + ' pts of damage', self.turns, libtcod.white)
+			target.entity.health -= damage
+			if target.entity.health < 1:
+				game.message.new('The ' + target.entity.name + ' dies!', self.turns, libtcod.light_orange)
+				self.xp += target.entity.xp
+				if self.xp >= EXPERIENCE_TABLES[self.level]:
+					game.message.new('You are now level ' + str(self.level + 1) + '!', self.turns, libtcod.green)
+					self.gain_level()
+				target.delete()
+		else:
+			game.message.new('You missed the ' + target.entity.name, self.turns, libtcod.white)
+		self.add_turn()
 
 
 def create_character():
@@ -140,96 +291,24 @@ def show_stats(stats, text, attr=-1, roll=-1):
 		game.player.luck = BASE_STATS[attr][4] + stat[4]
 		game.player.gold = libtcod.random_get_int(game.rnd, 1, 50)
 
+		if game.player.profession == "Fighter":
+			game.player.base_health = libtcod.random_get_int(game.rnd, 2, FIGHTER_HP_GAIN)
+			game.player.base_mana = libtcod.random_get_int(game.rnd, 2, FIGHTER_MP_GAIN)
+		if game.player.profession == "Rogue":
+			game.player.base_health = libtcod.random_get_int(game.rnd, 2, ROGUE_HP_GAIN)
+			game.player.base_mana = libtcod.random_get_int(game.rnd, 2, ROGUE_MP_GAIN)
+		if game.player.profession == "Priest":
+			game.player.base_health = libtcod.random_get_int(game.rnd, 2, PRIEST_HP_GAIN)
+			game.player.base_mana = libtcod.random_get_int(game.rnd, 2, PRIEST_MP_GAIN)
+		if game.player.profession == "Mage":
+			game.player.base_health = libtcod.random_get_int(game.rnd, 2, MAGE_HP_GAIN)
+			game.player.base_mana = libtcod.random_get_int(game.rnd, 2, MAGE_MP_GAIN)
+		game.player.set_max_health()
+		game.player.set_max_mana()
+		game.player.health = game.player.max_health
+		game.player.mana = game.player.max_mana
+
 	for i in range(0, game.SCREEN_HEIGHT):
 		libtcod.console_print(stats, 0, i, chr(179))
 	libtcod.console_blit(stats, 0, 0, 35, game.SCREEN_HEIGHT, 0, game.SCREEN_WIDTH - 35, 0)
 	libtcod.console_flush()
-
-
-class Player(object):
-	def __init__(self):
-		self.name = ""
-		self.race = RACES[0]
-		self.gender = GENDER[0]
-		self.profession = CLASSES[0]
-		self.strength = 9
-		self.dexterity = 9
-		self.intelligence = 8
-		self.endurance = 9
-		self.luck = 9
-		self.icon = '@'
-		self.icon_color = libtcod.white
-		self.level = 1
-		self.xp = 0
-		self.health = 12
-		self.max_health = 12
-		self.mana = 2
-		self.max_mana = 2
-		self.inventory = []
-		self.equipment = []
-		self.turns = 0
-		self.gold = 0
-
-	def add_turn(self):
-		self.turns += 1
-		game.player_move = True
-
-	def equip(self, item):
-		self.equipment.append(self.inventory[item])
-		self.add_turn()
-		game.message.new("You equip the " + self.inventory[item].unidentified_name, self.turns, libtcod.green)
-		self.inventory.pop(item)
-
-	def unequip(self, item):
-		self.inventory.append(self.equipment[item])
-		self.add_turn()
-		game.message.new("You unequip the " + self.equipment[item].unidentified_name, self.turns, libtcod.green)
-		self.equipment.pop(item)
-
-	def attack_rating(self):
-		ar = self.strength
-		ar += self.dexterity * 0.2
-		ar += self.luck * 0.2
-		return ar
-
-	def defense_rating(self):
-		dr = self.dexterity
-		dr += self.luck * 0.2
-		return dr
-
-	def carrying_capacity(self):
-		cw = self.strength * 2.5
-		cw += self.endurance * 1.25
-		cw += self.luck * 0.5
-		return cw
-
-	def health_bonus(self):
-		hb = self.endurance * 2
-		hb += self.luck * 0.2
-		return int(hb)
-
-	def mana_bonus(self):
-		mb = self.intelligence * 2
-		mb += self.luck * 0.2
-		return int(mb)
-
-	def attack(self, target):
-		if not target.entity.is_hostile():
-			target.entity.becomes_hostile()
-		thac0 = 20 - (self.attack_rating() - target.entity.defense_rating)
-		dice = util.roll_dice(1, 20, 1, 0)
-		if dice != 1 and (dice >= thac0 or dice == 20):
-			damage = 0
-			for i in range(0, len(self.equipment)):
-				if self.equipment[i].type == "weapon":
-					damage = self.equipment[i].dice.roll_dice()
-			if damage == 0:
-				damage = util.roll_dice(1, 4, 1, 0)
-			game.message.new('You hit the ' + target.entity.name + ' for ' + str(damage) + ' pts of damage', self.turns, libtcod.white)
-			target.entity.health -= damage
-			if target.entity.health < 1:
-				game.message.new('The ' + target.entity.name + ' dies!', self.turns, libtcod.light_orange)
-				target.delete()
-		else:
-			game.message.new('You missed the ' + target.entity.name, self.turns, libtcod.white)
-		self.add_turn()

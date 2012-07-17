@@ -10,7 +10,7 @@ import commands
 import util
 
 VERSION = 'v0.1.2'
-BUILD = '19'
+BUILD = '20'
 
 #size of the map
 MAP_WIDTH = 72
@@ -183,7 +183,7 @@ class Game(object):
 		global player_action
 		player_action = None
 		choice = 0
-		libtcod.console_credits()
+		#libtcod.console_credits()
 		while not libtcod.console_is_window_closed():
 			#libtcod.image_blit_2x(img, 0, 0, 0)
 			libtcod.console_set_default_foreground(0, libtcod.light_yellow)
