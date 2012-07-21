@@ -2,10 +2,11 @@ import libtcodpy as libtcod
 import math
 import game
 import item
+import map
 
 
 class Monster(object):
-	def __init__(self, typ, name, unid_name, icon, color, dark_color, level, health, damage, article, ar, dr, xp, flags):
+	def __init__(self, typ, name, unid_name, icon, color, dark_color, level, health, damage, article, ar, dr, xp, corpse, flags):
 		self.type = typ
 		self.name = name
 		self.unidentified_name = unid_name
@@ -19,6 +20,7 @@ class Monster(object):
 		self.attack_rating = ar
 		self.defense_rating = dr
 		self.xp = xp
+		self.corpse = corpse
 		self.flags = flags
 
 	def is_hostile(self):
@@ -29,6 +31,38 @@ class Monster(object):
 	def becomes_hostile(self):
 		self.flags.append("ai_hostile")
 		self.flags[:] = (value for value in self.flags if value != "ai_neutral" and value != "ai_friendly")
+
+	def drops(self, x, y):
+		#see if monster drops an item or a corpse when dying
+		corpse = libtcod.random_get_int(game.rnd, 1, 100)
+		if corpse <= self.corpse:
+			if "corpse_goblin" in self.flags:
+				d = game.items.get_item("goblin corpse")
+			elif "corpse_kobold" in self.flags:
+				d = game.items.get_item("kobold corpse")
+			elif "corpse_rat" in self.flags:
+				d = game.items.get_item("rat corpse")
+			elif "corpse_lizard" in self.flags:
+				d = game.items.get_item("lizard corpse")
+			elif "corpse_bat" in self.flags:
+				d = game.items.get_item("bat corpse")
+			elif "corpse_dog" in self.flags:
+				d = game.items.get_item("dog corpse")
+			elif "corpse_orc" in self.flags:
+				d = game.items.get_item("orc corpse")
+			loot = map.Object(x, y, d.icon, d.name, d.color, True, item=d)
+			game.current_map.objects.append(loot)
+		drop_chance = libtcod.random_get_int(game.rnd, 1, 100)
+		if drop_chance >= 80:
+			dice = libtcod.random_get_int(game.rnd, 1, 100)
+			if dice <= 60:
+				d = game.items.get_item_by_level(1)
+			elif dice <= 90:
+				d = game.items.get_item_by_level(2)
+			else:
+				d = game.items.get_item_by_level(3)
+			loot = map.Object(x, y, d.icon, d.name, d.color, True, item=d)
+			game.current_map.objects.append(loot)
 
 	def distance_to_player(self, player, x, y):
 		#return the distance relative to the player
@@ -97,10 +131,18 @@ class MonsterList(object):
 		libtcod.struct_add_property(monster_type_struct, 'damage', libtcod.TYPE_DICE, True)
 		libtcod.struct_add_property(monster_type_struct, 'article', libtcod.TYPE_STRING, True)
 		libtcod.struct_add_property(monster_type_struct, 'xp', libtcod.TYPE_INT, True)
+		libtcod.struct_add_property(monster_type_struct, 'corpse', libtcod.TYPE_INT, False)
 		libtcod.struct_add_flag(monster_type_struct, 'ai_friendly')
 		libtcod.struct_add_flag(monster_type_struct, 'ai_neutral')
 		libtcod.struct_add_flag(monster_type_struct, 'ai_hostile')
 		libtcod.struct_add_flag(monster_type_struct, 'flying')
+		libtcod.struct_add_flag(monster_type_struct, 'corpse_goblin')
+		libtcod.struct_add_flag(monster_type_struct, 'corpse_kobold')
+		libtcod.struct_add_flag(monster_type_struct, 'corpse_orc')
+		libtcod.struct_add_flag(monster_type_struct, 'corpse_rat')
+		libtcod.struct_add_flag(monster_type_struct, 'corpse_bat')
+		libtcod.struct_add_flag(monster_type_struct, 'corpse_dog')
+		libtcod.struct_add_flag(monster_type_struct, 'corpse_lizard')
 		libtcod.parser_run(parser, "data/monsters.txt", MonsterListener())
 
 	def add_to_list(self, monster=None):
@@ -135,7 +177,7 @@ class MonsterList(object):
 
 class MonsterListener(object):
 	def new_struct(self, struct, name):
-		self.temp_monster = Monster('', '', '', '', [0, 0, 0], [0, 0, 0], 0, 0, item.Dice(0, 0, 0, 0), '', 0, 0, 0, [])
+		self.temp_monster = Monster('', '', '', '', [0, 0, 0], [0, 0, 0], 0, 0, item.Dice(0, 0, 0, 0), '', 0, 0, 0, 0, [])
 		self.temp_monster.name = name
 		return True
 
@@ -172,6 +214,8 @@ class MonsterListener(object):
 				self.temp_monster.defense_rating = value
 			if name == "xp":
 				self.temp_monster.xp = value
+			if name == "corpse":
+				self.temp_monster.corpse = value
 			if name == "article":
 				self.temp_monster.article = value
 			if name == "unidentified_name":

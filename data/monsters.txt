@@ -11,6 +11,8 @@ monster_type "rat" {
 	health = 4
 	damage = "1d4"
 	xp = 6
+	corpse = 10
+	corpse_rat
 	ai_friendly
 }
 
@@ -27,6 +29,8 @@ monster_type "kobold" {
 	health = 8
 	damage = "1d6"
 	xp = 10
+	corpse = 20
+	corpse_kobold
 	ai_hostile
 }
 
@@ -59,6 +63,8 @@ monster_type "goblin" {
 	health = 8
 	damage = "1d6"
 	xp = 10
+	corpse = 20
+	corpse_goblin
 	ai_hostile
 }
 
@@ -75,6 +81,8 @@ monster_type "lizard" {
 	health = 4
 	damage = "1d4"
 	xp = 8
+	corpse = 15
+	corpse_lizard
 	ai_neutral
 }
 
@@ -91,6 +99,8 @@ monster_type "large bat" {
 	health = 4
 	damage = "1d4"
 	xp = 5
+	corpse = 10
+	corpse_bat
 	ai_neutral
 	flying
 }
@@ -124,6 +134,8 @@ monster_type "scrawny dog" {
 	health = 4
 	damage = "1d4"
 	xp = 4
+	corpse = 20
+	corpse_dog
 	ai_neutral
 }
 
@@ -140,6 +152,8 @@ monster_type "orc" {
 	health = 10
 	damage = "1d6"
 	xp = 12
+	corpse = 20
+	corpse_orc
 	ai_hostile
 }
 

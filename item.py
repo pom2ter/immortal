@@ -82,6 +82,14 @@ class ItemList(object):
 		libtcod.struct_add_flag(item_type_struct, 'mana_healing')
 		libtcod.struct_add_flag(item_type_struct, 'usable')
 		libtcod.struct_add_flag(item_type_struct, 'equippable')
+		libtcod.struct_add_flag(item_type_struct, 'consumable')
+		libtcod.struct_add_flag(item_type_struct, 'corpse_goblin')
+		libtcod.struct_add_flag(item_type_struct, 'corpse_kobold')
+		libtcod.struct_add_flag(item_type_struct, 'corpse_orc')
+		libtcod.struct_add_flag(item_type_struct, 'corpse_rat')
+		libtcod.struct_add_flag(item_type_struct, 'corpse_bat')
+		libtcod.struct_add_flag(item_type_struct, 'corpse_dog')
+		libtcod.struct_add_flag(item_type_struct, 'corpse_lizard')
 		libtcod.parser_run(parser, "data/items.txt", ItemListener())
 
 	def add_to_list(self, item=None):
@@ -96,7 +104,7 @@ class ItemList(object):
 
 	def get_item_by_level(self, level):
 		item = libtcod.random_get_int(game.rnd, 0, len(self.list) - 1)
-		while self.list[item].level > level:
+		while (self.list[item].level > level) or (self.list[item].type == "corpse"):
 			item = libtcod.random_get_int(game.rnd, 0, len(self.list) - 1)
 		return self.list[item]
 

@@ -158,6 +158,7 @@ class Player(object):
 				if self.xp >= EXPERIENCE_TABLES[self.level]:
 					game.message.new('You are now level ' + str(self.level + 1) + '!', self.turns, libtcod.green)
 					self.gain_level()
+				target.entity.drops(target.x, target.y)
 				target.delete()
 		else:
 			game.message.new('You missed the ' + target.entity.name, self.turns, libtcod.white)

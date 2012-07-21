@@ -105,3 +105,94 @@ item_type "helmet" {
 	article = "an "
 	equippable
 }
+
+item_type "goblin corpse" {
+	type = "corpse"
+	unidentified_name = "goblin corpse"
+	icon = "%"
+	icon_color = "127,101,63"
+	dark_color = "64,50,32"
+	weight = 10.0
+	article = "a "
+	consumable
+	corpse_goblin
+	usable
+}
+
+item_type "kobold corpse" {
+	type = "corpse"
+	unidentified_name = "kobold corpse"
+	icon = "%"
+	icon_color = "127,101,63"
+	dark_color = "64,50,32"
+	weight = 10.0
+	article = "a "
+	consumable
+	corpse_kobold
+	usable
+}
+
+item_type "rat corpse" {
+	type = "corpse"
+	unidentified_name = "rat corpse"
+	icon = "%"
+	icon_color = "127,101,63"
+	dark_color = "64,50,32"
+	weight = 5.0
+	article = "a "
+	consumable
+	corpse_rat
+	usable
+}
+
+item_type "lizard corpse" {
+	type = "corpse"
+	unidentified_name = "lizard corpse"
+	icon = "%"
+	icon_color = "127,101,63"
+	dark_color = "64,50,32"
+	weight = 5.0
+	article = "a "
+	consumable
+	corpse_lizard
+	usable
+}
+
+item_type "bat corpse" {
+	type = "corpse"
+	unidentified_name = "bat corpse"
+	icon = "%"
+	icon_color = "127,101,63"
+	dark_color = "64,50,32"
+	weight = 5.0
+	article = "a "
+	consumable
+	corpse_bat
+	usable
+}
+
+item_type "dog corpse" {
+	type = "corpse"
+	unidentified_name = "dog corpse"
+	icon = "%"
+	icon_color = "127,101,63"
+	dark_color = "64,50,32"
+	weight = 5.0
+	article = "a "
+	consumable
+	corpse_dog
+	usable
+}
+
+item_type "orc corpse" {
+	type = "corpse"
+	unidentified_name = "orc corpse"
+	icon = "%"
+	icon_color = "127,101,63"
+	dark_color = "64,50,32"
+	weight = 10.0
+	article = "a "
+	consumable
+	corpse_orc
+	usable
+}

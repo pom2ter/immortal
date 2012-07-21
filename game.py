@@ -10,7 +10,7 @@ import commands
 import util
 
 VERSION = 'v0.1.2'
-BUILD = '20'
+BUILD = '21'
 
 #size of the map
 MAP_WIDTH = 72
@@ -45,27 +45,30 @@ FOV_LIGHT_WALLS = True
 TORCH_RADIUS = 6
 FOV_RADIUS = 8
 SQUARED_TORCH_RADIUS = TORCH_RADIUS * TORCH_RADIUS
-
-con = 0
-panel = 0
-ps = 0
-
 fov_recompute = True
 fov_torch = True
 fov_map = None
 fov_noise = None
 fov_torchx = 0.0
+
+#dijkstra
+path_dijk = None
+path_recalculate = False
+path_dx = 0
+path_dy = 0
+
+#different windows
+con = 0
+panel = 0
+ps = 0
+
+#miscellaneous variables
 current_map = None
 old_maps = []
 char = None
 savefiles = []
 times_saved = 0
 player_move = False
-
-path_dijk = None
-path_recalculate = False
-path_dx = 0
-path_dy = 0
 mouse_move = False
 mouse = libtcod.Mouse()
 rnd = None
