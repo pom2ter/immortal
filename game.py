@@ -9,8 +9,8 @@ import map
 import commands
 import util
 
-VERSION = 'v0.1.2'
-BUILD = '21'
+VERSION = 'v0.1.3'
+BUILD = '22'
 
 #size of the map
 MAP_WIDTH = 72
@@ -131,7 +131,6 @@ class Game(object):
 			if player_action == 'save':
 				self.save_game()
 				player_action = 'exit'
-				break
 			if player_action == 'exit':
 				break
 
@@ -142,7 +141,13 @@ class Game(object):
 					if object.entity != None:
 						object.x, object.y = object.entity.take_turn(object.x, object.y)
 				game.player_move = False
-				#game.rnd = libtcod.random_new()
+
+			if game_state == 'death':
+				util.render_all()
+				libtcod.console_flush()
+				libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, libtcod.Key(), libtcod.Mouse(), True)
+				player_action = 'exit'
+				break
 
 	# save the game using the shelve module
 	def save_game(self):
@@ -186,7 +191,7 @@ class Game(object):
 		global player_action
 		player_action = None
 		choice = 0
-		#libtcod.console_credits()
+		libtcod.console_credits()
 		while not libtcod.console_is_window_closed():
 			#libtcod.image_blit_2x(img, 0, 0, 0)
 			libtcod.console_set_default_foreground(0, libtcod.light_yellow)

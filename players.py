@@ -51,6 +51,10 @@ class Player(object):
 	def add_turn(self):
 		self.turns += 1
 		game.player_move = True
+		if self.turns % (50 - self.endurance) == 0:
+			self.health += 1
+			if self.health > self.max_health:
+				self.health = self.max_health
 
 	def equip(self, item):
 		self.equipment.append(self.inventory[item])
@@ -76,10 +80,10 @@ class Player(object):
 		return dr
 
 	def carrying_capacity(self):
-		cw = self.strength * 2.5
-		cw += self.endurance * 1.25
-		cw += self.luck * 0.5
-		return cw
+		cc = self.strength * 2.5
+		cc += self.endurance * 1.25
+		cc += self.luck * 0.5
+		return cc
 
 	def health_bonus(self):
 		hb = self.endurance
@@ -141,9 +145,12 @@ class Player(object):
 	def attack(self, target):
 		if not target.entity.is_hostile():
 			target.entity.becomes_hostile()
-		thac0 = 20 - (self.attack_rating() - target.entity.defense_rating)
-		dice = util.roll_dice(1, 20, 1, 0)
-		if dice != 1 and (dice >= thac0 or dice == 20):
+		#thac0 = 20 - (self.attack_rating() - target.entity.defense_rating)
+		#dice = util.roll_dice(1, 20, 1, 0)
+		attacker = util.roll_dice(1, 50, 1, 0)
+		defender = util.roll_dice(1, 50, 1, 0)
+		if attacker != 1 and defender != 50 and ((attacker + self.attack_rating()) >= (defender + target.entity.defense_rating) or attacker == 50 or defender == 1):
+		#if dice != 1 and (dice >= thac0 or dice == 20):
 			damage = 0
 			for i in range(0, len(self.equipment)):
 				if self.equipment[i].type == "weapon":
@@ -156,8 +163,8 @@ class Player(object):
 				game.message.new('The ' + target.entity.name + ' dies!', self.turns, libtcod.light_orange)
 				self.xp += target.entity.xp
 				if self.xp >= EXPERIENCE_TABLES[self.level]:
-					game.message.new('You are now level ' + str(self.level + 1) + '!', self.turns, libtcod.green)
 					self.gain_level()
+					game.message.new('You are now level ' + str(self.level) + '!', self.turns, libtcod.green)
 				target.entity.drops(target.x, target.y)
 				target.delete()
 		else:

@@ -6,8 +6,8 @@ monster_type "rat" {
 	dark_color = "64,0,0"
 	article = "a "
 	level = 1
-	attack_rating = 4
-	defense_rating = 6
+	attack_rating = 6
+	defense_rating = 10
 	health = 4
 	damage = "1d4"
 	xp = 6
@@ -24,8 +24,8 @@ monster_type "kobold" {
 	dark_color = "0,0,64"
 	article = "a "
 	level = 1
-	attack_rating = 8
-	defense_rating = 10
+	attack_rating = 10
+	defense_rating = 12
 	health = 8
 	damage = "1d6"
 	xp = 10
@@ -42,8 +42,8 @@ monster_type "ant" {
 	dark_color = "40,30,20"
 	article = "an "
 	level = 1
-	attack_rating = 5
-	defense_rating = 5
+	attack_rating = 8
+	defense_rating = 8
 	health = 6
 	damage = "1d4"
 	xp = 6
@@ -58,7 +58,7 @@ monster_type "goblin" {
 	dark_color = "83,105,127"
 	article = "a "
 	level = 1
-	attack_rating = 8
+	attack_rating = 12
 	defense_rating = 10
 	health = 8
 	damage = "1d6"
@@ -76,8 +76,8 @@ monster_type "lizard" {
 	dark_color = "128,64,0"
 	article = "a "
 	level = 1
-	attack_rating = 6
-	defense_rating = 4
+	attack_rating = 8
+	defense_rating = 8
 	health = 4
 	damage = "1d4"
 	xp = 8
@@ -94,8 +94,8 @@ monster_type "large bat" {
 	dark_color = "64,50,32"
 	article = "a "
 	level = 1
-	attack_rating = 4
-	defense_rating = 8
+	attack_rating = 6
+	defense_rating = 10
 	health = 4
 	damage = "1d4"
 	xp = 5
@@ -113,8 +113,8 @@ monster_type "skeleton" {
 	dark_color = "127,127,127"
 	article = "a "
 	level = 1
-	attack_rating = 10
-	defense_rating = 4
+	attack_rating = 12
+	defense_rating = 6
 	health = 6
 	damage = "1d6"
 	xp = 6
@@ -129,8 +129,8 @@ monster_type "scrawny dog" {
 	dark_color = "95,95,95"
 	article = "a "
 	level = 1
-	attack_rating = 4
-	defense_rating = 4
+	attack_rating = 6
+	defense_rating = 6
 	health = 4
 	damage = "1d4"
 	xp = 4
@@ -147,8 +147,8 @@ monster_type "orc" {
 	dark_color = "0,95,0"
 	article = "an "
 	level = 2
-	attack_rating = 10
-	defense_rating = 10
+	attack_rating = 15
+	defense_rating = 12
 	health = 10
 	damage = "1d6"
 	xp = 12
@@ -165,8 +165,8 @@ monster_type "zombie" {
 	dark_color = "35,42,48"
 	article = "a "
 	level = 2
-	attack_rating = 10
-	defense_rating = 8
+	attack_rating = 16
+	defense_rating = 10
 	health = 10
 	damage = "1d6"
 	xp = 12

@@ -3,6 +3,7 @@ import math
 import game
 import item
 import map
+import util
 
 
 class Monster(object):
@@ -91,6 +92,8 @@ class Monster(object):
 			dx, dy = 0, 0
 			if self.distance_to_player(game.char, x, y) >= 2:
 				dx, dy = self.move_towards_player(game.char, x, y)
+			else:
+				self.attack()
 		else:
 			dx, dy = libtcod.random_get_int(game.rnd, -1, 1), libtcod.random_get_int(game.rnd, -1, 1)
 			if all(i == "ai_neutral" and i != "ai_hostile" for i in self.flags):
@@ -109,6 +112,20 @@ class Monster(object):
 					break
 				dx, dy = libtcod.random_get_int(game.rnd, -1, 1), libtcod.random_get_int(game.rnd, -1, 1)
 		return x + dx, y + dy
+
+	def attack(self):
+		attacker = util.roll_dice(1, 50, 1, 0)
+		defender = util.roll_dice(1, 50, 1, 0)
+		if attacker != 1 and defender != 50 and ((attacker + self.attack_rating) >= (defender + game.player.defense_rating()) or attacker == 50 or defender == 1):
+			damage = self.damage.roll_dice()
+			game.message.new('The ' + self.name + ' hits you for ' + str(damage) + ' pts of damage', game.player.turns, libtcod.light_red)
+			game.player.health -= damage
+			if game.player.health < 1:
+				game.message.new('You die...', game.player.turns, libtcod.light_orange)
+				game.message.new('*** Press any key ***', game.player.turns, libtcod.white)
+				game.game_state = "death"
+		else:
+			game.message.new('The ' + self.name + ' attack but misses.', game.player.turns, libtcod.white)
 
 
 class MonsterList(object):
@@ -194,7 +211,7 @@ class MonsterListener(object):
 			self.temp_monster.dark_color.r = value.r
 			self.temp_monster.dark_color.g = value.g
 			self.temp_monster.dark_color.b = value.b
-		elif name == 'dices':
+		elif name == 'damage':
 			self.temp_monster.damage.nb_dices = value.nb_dices
 			self.temp_monster.damage.nb_faces = value.nb_faces
 			self.temp_monster.damage.multiplier = value.multiplier

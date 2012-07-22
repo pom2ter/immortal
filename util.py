@@ -181,7 +181,7 @@ def render_bar(con, x, y, total_width, name, value, maximum, bar_color, back_col
 
 	#finally, some centered text with the values
 	libtcod.console_set_default_foreground(con, libtcod.white)
-	libtcod.console_print_ex(con, x + total_width / 2, y, libtcod.BKGND_NONE, libtcod.CENTER, name + ': ' + str(value) + '/' + str(maximum))
+	libtcod.console_print_ex(con, x + total_width / 2, y, libtcod.BKGND_NONE, libtcod.CENTER, ' ' + name + ': ' + str(value) + '/' + str(maximum) + ' ')
 
 
 def render_message_panel():
