@@ -68,6 +68,8 @@ def handle_keys():
 					remove_item()
 				if key_char == 'u':
 					use_item()
+				if key_char == 'z':
+					ztats()
 				if key_char == '<':
 					climb_stairs('up')
 				if key_char == '>':
@@ -400,3 +402,108 @@ def use_item():
 def wait_turn():
 	game.message.new("Time passes...", game.player.turns, libtcod.white)
 	game.player.add_turn()
+
+
+# character sheet for stats
+def sheet_stats(con, width, height):
+	libtcod.console_print_frame(con, 0, 0, width, height, True, libtcod.BKGND_NONE, 'Player stats')
+	libtcod.console_print(con, 2, 2, game.player.name + ', a level ' + str(game.player.level) + ' ' + game.player.gender + ' ' + game.player.race + ' ' + game.player.profession)
+	libtcod.console_print(con, 2, 4, 'Strength: ' + str(game.player.strength))
+	libtcod.console_print(con, 2, 5, 'Dexterity: ' + str(game.player.dexterity))
+	libtcod.console_print(con, 2, 6, 'Intelligence: ' + str(game.player.intelligence))
+	libtcod.console_print(con, 2, 7, 'Endurance: ' + str(game.player.endurance))
+	libtcod.console_print(con, 2, 8, 'Luck: ' + str(game.player.luck))
+
+	libtcod.console_print(con, 30, 4, 'Health: ' + str(game.player.health) + '/' + str(game.player.max_health))
+	libtcod.console_print(con, 30, 5, 'Mana: ' + str(game.player.mana) + '/' + str(game.player.max_mana))
+	libtcod.console_print(con, 30, 6, 'Experience: ' + str(game.player.xp))
+	libtcod.console_print(con, 30, 7, 'Gold: ' + str(game.player.gold))
+
+	libtcod.console_print(con, 2, 10, 'Attack Rating: ' + str(game.player.attack_rating()))
+	libtcod.console_print(con, 2, 11, 'Defense Rating: ' + str(game.player.defense_rating()))
+	libtcod.console_print(con, 2, 12, 'Carrying Capacity: ' + str(game.player.carrying_capacity()) + 'lbs')
+
+
+# character sheet for skills
+def sheet_skills(con, width, height):
+	libtcod.console_print_frame(con, 0, 0, width, height, True, libtcod.BKGND_NONE, 'Skills')
+	libtcod.console_print(con, 2, 2, 'Combat Skills')
+	for i in range(0, len(game.player.combat_skills)):
+		libtcod.console_print(con, 2, i + 4, game.player.combat_skills[i].name)
+		libtcod.console_print(con, 15, i + 4, str(game.player.combat_skills[i].level))
+
+
+# character sheet for equipment
+def sheet_equipment(con, width, height):
+	libtcod.console_print_frame(con, 0, 0, width, height, True, libtcod.BKGND_NONE, 'Equipment')
+	libtcod.console_print(con, 2, 2, 'Head')
+	libtcod.console_print(con, 2, 3, 'Neck')
+	libtcod.console_print(con, 2, 4, 'Body')
+	libtcod.console_print(con, 2, 5, 'Right Hand')
+	libtcod.console_print(con, 2, 6, 'Left Hand')
+	libtcod.console_print(con, 2, 7, 'Ring')
+	libtcod.console_print(con, 2, 8, 'Ring')
+	libtcod.console_print(con, 2, 9, 'Gauntlets')
+	libtcod.console_print(con, 2, 10, 'Boots')
+	for i in range(0, len(game.player.equipment)):
+		if "armor_head" in game.player.equipment[i].flags:
+			y = 2
+		if "armor_neck" in game.player.equipment[i].flags:
+			y = 3
+		if "armor_body" in game.player.equipment[i].flags:
+			y = 4
+		if "armor_ring" in game.player.equipment[i].flags:
+			y = 7
+		if "armor_hands" in game.player.equipment[i].flags:
+			y = 9
+		if "armor_feet" in game.player.equipment[i].flags:
+			y = 10
+		if game.player.equipment[i].type == "weapon":
+			y = 5
+		if game.player.equipment[i].type == "shield":
+			y = 6
+		libtcod.console_print(con, 12, y, ': ' + game.player.equipment[i].name)
+		libtcod.console_print_ex(con, width - 3, y, libtcod.BKGND_SET, libtcod.RIGHT, str(game.player.equipment[i].weight) + ' lbs')
+
+
+# character sheet for inventory
+def sheet_inventory(con, width, height):
+	libtcod.console_print_frame(con, 0, 0, width, height, True, libtcod.BKGND_NONE, 'Inventory')
+	for i in range(0, len(game.player.inventory)):
+		libtcod.console_print(con, 2, i + 2, game.player.inventory[i].name)
+		libtcod.console_print_ex(con, width - 3, i + 2, libtcod.BKGND_SET, libtcod.RIGHT, str(game.player.inventory[i].weight) + ' lbs')
+
+
+# character sheet
+def ztats():
+	width = 60
+	height = 20
+	screen = 0
+	exit = False
+	key = libtcod.Key()
+	stats = libtcod.console_new(width, height)
+
+	while exit == False:
+		if screen == 0:
+			sheet_stats(stats, width, height)
+		elif screen == 1:
+			sheet_skills(stats, width, height)
+		elif screen == 2:
+			sheet_equipment(stats, width, height)
+		elif screen == 3:
+			sheet_inventory(stats, width, height)
+
+		libtcod.console_print_ex(stats, width / 2, height - 1, libtcod.BKGND_SET, libtcod.CENTER, '[ Arrow Left/Right = Change Pages ]')
+		libtcod.console_blit(stats, 0, 0, width, height, 0, (game.SCREEN_WIDTH - width) / 2, (game.SCREEN_HEIGHT - height) / 2, 1.0, 1.0)
+		libtcod.console_flush()
+		libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, key, game.mouse, True)
+		if key.vk == libtcod.KEY_LEFT:
+			screen -= 1
+			if screen < 0:
+				screen = 3
+		elif key.vk == libtcod.KEY_RIGHT:
+			screen += 1
+			if screen > 3:
+				screen = 0
+		elif key.vk == libtcod.KEY_ESCAPE:
+			exit = True

@@ -13,6 +13,7 @@ i = Inventory
 o = Open door
 r = Remove item
 u = Use item
+z = Player stats
 < = Climb up stairs
 > = Climb down stairs
 SPACE = wait 1 turn

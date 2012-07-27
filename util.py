@@ -190,7 +190,7 @@ def render_message_panel():
 	libtcod.console_set_default_background(0, libtcod.black)
 	libtcod.console_print_frame(0, game.MESSAGE_X - 1, game.MESSAGE_Y - 1, game.MESSAGE_WIDTH + 2, game.MESSAGE_HEIGHT + 2, True, libtcod.BKGND_NONE, None)
 	libtcod.console_print(0, game.SCREEN_WIDTH - 1, game.MESSAGE_Y - 1, chr(180))
-	libtcod.console_set_default_background(game.panel, libtcod.black)
+	libtcod.console_set_default_background(game.panel, libtcod.black)  # libtcod.Color(60, 45, 33))
 	libtcod.console_clear(game.panel)
 	game.message.delete()
 

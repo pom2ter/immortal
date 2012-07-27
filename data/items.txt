@@ -50,6 +50,7 @@ item_type "dagger" {
 	dices = "1d4"
 	article = "a "
 	equippable
+	weapon_dagger
 }
 
 item_type "short sword" {
@@ -64,6 +65,7 @@ item_type "short sword" {
 	dices = "1d6"
 	article = "a "
 	equippable
+	weapon_sword
 }
 
 item_type "long sword" {
@@ -78,6 +80,7 @@ item_type "long sword" {
 	dices = "1d8"
 	article = "a "
 	equippable
+	weapon_sword
 }
 
 item_type "robes" {
@@ -91,6 +94,7 @@ item_type "robes" {
 	cost = 10
 	article = "some "
 	equippable
+	armor_body
 }
 
 item_type "helmet" {
@@ -104,6 +108,7 @@ item_type "helmet" {
 	cost = 10
 	article = "an "
 	equippable
+	armor_head
 }
 
 item_type "goblin corpse" {

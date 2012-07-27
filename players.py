@@ -6,6 +6,7 @@ from messages import *
 RACES = ["Human", "Elf", "Dwarf", "Halfling"]
 CLASSES = ["Fighter", "Rogue", "Priest", "Mage"]
 GENDER = ["Male", "Female"]
+COMBAT_SKILLS = ['Sword', 'Axe', 'Mace', 'Dagger', 'Polearm', 'Staff', 'Bow', 'Missile', 'Hands']
 BASE_STATS = [[9, 9, 8, 9, 9], [12, 9, 6, 11, 8], [10, 12, 7, 8, 9], [9, 8, 10, 10, 9], [7, 10, 12, 8, 9],
 				[7, 9, 10, 8, 10], [10, 9, 8, 10, 9], [8, 12, 9, 7, 10], [7, 8, 12, 9, 10], [5, 10, 14, 7, 10],
 				[11, 7, 6, 12, 8], [14, 7, 4, 14, 7], [12, 10, 5, 11, 8], [11, 6, 8, 13, 8], [9, 8, 10, 11, 8],
@@ -47,6 +48,8 @@ class Player(object):
 		self.equipment = []
 		self.turns = 0
 		self.gold = 0
+		self.combat_skills = [Skill('Sword', 0, 0), Skill('Axe', 0, 0), Skill('Mace', 0, 0), Skill('Dagger', 0, 0), Skill('Polearm', 0, 0),
+								Skill('Staff', 0, 0), Skill('Bow', 0, 0), Skill('Missile', 0, 0), Skill('Hands', 0, 0)]
 
 	def add_turn(self):
 		self.turns += 1
@@ -68,10 +71,32 @@ class Player(object):
 		game.message.new("You unequip the " + self.equipment[item].unidentified_name, self.turns, libtcod.green)
 		self.equipment.pop(item)
 
+	def find_weapon_type(self):
+		weapon_type = 8
+		for i in range(0, len(self.equipment)):
+			if "weapon_sword" in self.equipment[i].flags:
+				return 0
+			if "weapon_axe" in self.equipment[i].flags:
+				return 1
+			if "weapon_mace" in self.equipment[i].flags:
+				return 2
+			if "weapon_dagger" in self.equipment[i].flags:
+				return 3
+			if "weapon_polearm" in self.equipment[i].flags:
+				return 4
+			if "weapon_staff" in self.equipment[i].flags:
+				return 5
+			if "weapon_bow" in self.equipment[i].flags:
+				return 6
+			if "weapon_missile" in self.equipment[i].flags:
+				return 7
+		return weapon_type
+
 	def attack_rating(self):
 		ar = self.strength
 		ar += self.dexterity * 0.2
 		ar += self.luck * 0.2
+		ar += self.combat_skills[self.find_weapon_type()].level * 0.2
 		return ar
 
 	def defense_rating(self):
@@ -167,9 +192,32 @@ class Player(object):
 					game.message.new('You are now level ' + str(self.level) + '!', self.turns, libtcod.green)
 				target.entity.drops(target.x, target.y)
 				target.delete()
+			self.combat_skills[self.find_weapon_type()].gain_xp(2)
 		else:
 			game.message.new('You missed the ' + target.entity.name, self.turns, libtcod.white)
+			self.combat_skills[self.find_weapon_type()].gain_xp(1)
 		self.add_turn()
+
+
+class Skill(object):
+	def __init__(self, name, cat, level, xp):
+		self.name = name
+		self.level = level
+		self.xp = xp
+
+	def gain_xp(self, xp):
+		if self.level < 100:
+			self.xp += xp
+			if self.xp >= (self.level + 1) * 5:
+				self.xp = 0
+				self.level += 1
+				game.message.new('Your ' + self.name + ' skill increased to ' + str(self.level) + '!', game.player.turns, libtcod.light_green)
+
+	def gain_level(self):
+		if self.level < 100:
+			self.level += 1
+			self.xp = 0
+			game.message.new('Your ' + self.name + ' skill increased to ' + str(self.level) + '!', game.player.turns, libtcod.light_green)
 
 
 def create_character():
