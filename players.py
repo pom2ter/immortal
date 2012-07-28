@@ -198,9 +198,20 @@ class Player(object):
 			self.combat_skills[self.find_weapon_type()].gain_xp(1)
 		self.add_turn()
 
+	def score(self):
+		score, skills = 0, 0
+		score += (self.strength + self.dexterity + self.intelligence + self.endurance + self.luck) / 5
+		for i in range(0, len(self.combat_skills)):
+			skills += self.combat_skills[i].level
+		score += skills / 20
+		score += self.xp / 5
+		score += (self.level - 1) * 50
+		score += self.turns / 50
+		return score
+
 
 class Skill(object):
-	def __init__(self, name, cat, level, xp):
+	def __init__(self, name, level, xp):
 		self.name = name
 		self.level = level
 		self.xp = xp

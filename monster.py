@@ -1,9 +1,9 @@
 import libtcodpy as libtcod
 import math
 import game
+import util
 import item
 import map
-import util
 
 
 class Monster(object):
@@ -122,7 +122,8 @@ class Monster(object):
 			game.player.health -= damage
 			if game.player.health < 1:
 				game.message.new('You die...', game.player.turns, libtcod.light_orange)
-				game.message.new('*** Press any key ***', game.player.turns, libtcod.white)
+				game.message.new('*** Press space ***', game.player.turns, libtcod.white)
+				game.killer = self.article + self.name
 				game.game_state = "death"
 		else:
 			game.message.new('The ' + self.name + ' attack but misses.', game.player.turns, libtcod.white)

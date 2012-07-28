@@ -1,6 +1,12 @@
 import libtcodpy as libtcod
+import pickle
+import os
 import game
 
+
+#######################################
+# messages functions
+#######################################
 
 def choices(con, width, height, options, typ, posx=0, posy=0, default=0):
 	choice = False
@@ -75,6 +81,22 @@ def choices(con, width, height, options, typ, posx=0, posy=0, default=0):
 	return current
 
 
+def box1(con, x1, y1, x2, y2, header=None):
+	libtcod.console_clear(con)
+	libtcod.console_set_default_foreground(con, libtcod.silver)
+	for i in range(x1, x2):
+		libtcod.console_print(con, i, y1, chr(205))
+		libtcod.console_print(con, i, y2 - 1, chr(205))
+	for i in range(y1, y2):
+		libtcod.console_print(con, x1, i, chr(186))
+		libtcod.console_print(con, x2 - 1, i, chr(186))
+	libtcod.console_set_default_background(con, libtcod.gold)
+	libtcod.console_print_ex(con, x1, y1, libtcod.BKGND_SET, libtcod.CENTER, ' ')
+	libtcod.console_print_ex(con, x1, y2 - 1, libtcod.BKGND_SET, libtcod.CENTER, ' ')
+	libtcod.console_print_ex(con, x2 - 1, y1, libtcod.BKGND_SET, libtcod.CENTER, ' ')
+	libtcod.console_print_ex(con, x2 - 1, y2 - 1, libtcod.BKGND_SET, libtcod.CENTER, ' ')
+
+
 def msg_box(typ, header=None, footer=None, contents=None, box_width=60, box_height=5, center=False, default=0):
 	width = box_width
 	height = box_height
@@ -91,12 +113,18 @@ def msg_box(typ, header=None, footer=None, contents=None, box_width=60, box_heig
 		choice = choices(box, width - 4, height - 4, contents, 'savegames', 2, 2)
 	if typ in ['options', 'main_menu']:
 		choice = choices(box, width - 2, height - 2, contents, 'options_menu', 1, 1, default)
-	if typ == 'text':
-		for i, line in enumerate(contents.split('\n')):
-			if center:
-				libtcod.console_print_ex(box, width / 2, 2 + i, libtcod.BKGND_SET, libtcod.CENTER, line)
-			else:
-				libtcod.console_print_ex(box, 2, 2 + i, libtcod.BKGND_SET, libtcod.LEFT, line)
+	if typ in ['text', 'highscore']:
+		if typ == 'highscore':
+			for i, (score, line1, line2) in enumerate(game.highscore):
+				libtcod.console_print_ex(box, 2, 2 + (i * 3), libtcod.BKGND_SET, libtcod.LEFT, str(score))
+				libtcod.console_print_ex(box, 8, 2 + (i * 3), libtcod.BKGND_SET, libtcod.LEFT, line1)
+				libtcod.console_print_ex(box, 8, 3 + (i * 3), libtcod.BKGND_SET, libtcod.LEFT, line2)
+		if typ == 'text':
+			for i, line in enumerate(contents.split('\n')):
+				if center:
+					libtcod.console_print_ex(box, width / 2, 2 + i, libtcod.BKGND_SET, libtcod.CENTER, line)
+				else:
+					libtcod.console_print_ex(box, 2, 2 + i, libtcod.BKGND_SET, libtcod.LEFT, line)
 		libtcod.console_blit(box, 0, 0, width, height, 0, (game.SCREEN_WIDTH - width) / 2, (game.SCREEN_HEIGHT - height) / 2, 1.0, 0.8)
 		libtcod.console_flush()
 		libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, libtcod.Key(), libtcod.Mouse(), True)
@@ -104,16 +132,54 @@ def msg_box(typ, header=None, footer=None, contents=None, box_width=60, box_heig
 	return choice
 
 
-def items_at_feet():
-	objects = [obj for obj in game.current_map.objects if obj.item and obj.x == game.char.x and obj.y == game.char.y]
-	if len(objects) > 1:
-		game.message.new('You see several items at your feet.', game.player.turns, libtcod.white)
-	elif len(objects) == 1:
-		game.message.new('You see ' + objects[0].item.article + objects[0].item.name, game.player.turns, libtcod.white)
+#######################################
+# miscellanous functions
+#######################################
 
+# death screens and final score
+def death():
+	libtcod.console_clear(0)
+	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 1, libtcod.BKGND_SET, libtcod.CENTER, 'Summary for ' + game.player.name)
+	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 3, libtcod.BKGND_SET, libtcod.CENTER, '_________________')
+	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 4, libtcod.BKGND_SET, libtcod.CENTER, '  /                 \ ')
+	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 5, libtcod.BKGND_SET, libtcod.CENTER, '  /                   \ ')
+	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 6, libtcod.BKGND_SET, libtcod.CENTER, '  /                     \ ')
+	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 7, libtcod.BKGND_SET, libtcod.CENTER, '|                     |')
+	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 8, libtcod.BKGND_SET, libtcod.CENTER, '|                     |')
+	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 9, libtcod.BKGND_SET, libtcod.CENTER, '|                     |')
+	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 10, libtcod.BKGND_SET, libtcod.CENTER, '|                     |')
+	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 11, libtcod.BKGND_SET, libtcod.CENTER, '|                     |')
+	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 12, libtcod.BKGND_SET, libtcod.CENTER, '|                     |')
+	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 13, libtcod.BKGND_SET, libtcod.CENTER, '|                     |')
+	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 14, libtcod.BKGND_SET, libtcod.CENTER, '|                     |')
+	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 15, libtcod.BKGND_SET, libtcod.CENTER, '|                     |')
+	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 16, libtcod.BKGND_SET, libtcod.CENTER, '* |   *     *     *     |*')
+	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 17, libtcod.BKGND_SET, libtcod.CENTER, '____\(/___\-/___/|\___\/\____/)\_____')
 
-def roll_dice(nb_dices, nb_faces, multiplier, bonus):
-	return libtcod.random_get_int(game.rnd, nb_dices, nb_dices * nb_faces * multiplier) + bonus
+	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 6, libtcod.BKGND_SET, libtcod.CENTER, 'R I P')
+	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 8, libtcod.BKGND_SET, libtcod.CENTER, game.player.name)
+	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 10, libtcod.BKGND_SET, libtcod.CENTER, 'Killed by')
+	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 11, libtcod.BKGND_SET, libtcod.CENTER, game.killer)
+	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 12, libtcod.BKGND_SET, libtcod.CENTER, 'on level ' + str(game.current_map.location_level) + ' in the')
+	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 13, libtcod.BKGND_SET, libtcod.CENTER, game.current_map.location_name)
+
+	score = game.player.score()
+	line1 = game.player.name + ', the level ' + str(game.player.level) + ' ' + game.player.gender + ' ' + game.player.race + ' ' + game.player.profession + ','
+	line2 = 'killed by ' + game.killer + ' on level ' + str(game.current_map.location_level) + ' in the ' + game.current_map.location_name + ' (' + str(game.player.turns) + ' turns)'
+	libtcod.console_print(0, 2, 20, 'Final score')
+	libtcod.console_print(0, 2, 22, str(score))
+	libtcod.console_print(0, 8, 22, line1)
+	libtcod.console_print(0, 8, 23,	line2)
+	libtcod.console_flush()
+	libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, libtcod.Key(), libtcod.Mouse(), True)
+
+	game.highscore.append((score, line1, line2))
+	game.highscore = sorted(game.highscore, reverse=True)
+	if len(game.highscore) > 10:
+		game.highscore.pop()
+	save_high_scores()
+	if game.player.name.lower() in game.savefiles:
+		os.remove('saves/' + game.player.name.lower())
 
 
 def get_names_under_mouse():
@@ -156,6 +222,29 @@ def get_names_under_mouse():
 	else:
 		return ''
 
+
+# output names of items you pass by
+def items_at_feet():
+	objects = [obj for obj in game.current_map.objects if obj.item and obj.x == game.char.x and obj.y == game.char.y]
+	if len(objects) > 1:
+		game.message.new('You see several items at your feet.', game.player.turns, libtcod.white)
+	elif len(objects) == 1:
+		game.message.new('You see ' + objects[0].item.article + objects[0].item.name, game.player.turns, libtcod.white)
+
+
+def roll_dice(nb_dices, nb_faces, multiplier, bonus):
+	return libtcod.random_get_int(game.rnd, nb_dices, nb_dices * nb_faces * multiplier) + bonus
+
+
+def save_high_scores():
+	f = open('data/highscores.dat', 'wb')
+	pickle.dump(game.highscore, f)
+	f.close()
+
+
+#######################################
+# main screen functions
+#######################################
 
 def initialize_fov():
 	game.fov_map = libtcod.map_new(game.MAP_WIDTH, game.MAP_HEIGHT)

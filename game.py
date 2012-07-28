@@ -1,5 +1,6 @@
 import libtcodpy as libtcod
 import shelve
+import pickle
 import os
 from players import *
 from messages import *
@@ -9,17 +10,17 @@ import map
 import commands
 import util
 
-VERSION = 'v0.1.3'
-BUILD = '23'
+VERSION = 'v0.1.4'
+BUILD = '24'
 
 #size of the map
-MAP_WIDTH = 72
+MAP_WIDTH = 70
 MAP_HEIGHT = 30
 
 #actual size of the window
-PLAYER_STATS_WIDTH = 18
+PLAYER_STATS_WIDTH = 16
 PLAYER_STATS_HEIGHT = 35
-MESSAGE_WIDTH = 72
+MESSAGE_WIDTH = MAP_WIDTH
 MESSAGE_HEIGHT = 4
 SCREEN_WIDTH = MAP_WIDTH + PLAYER_STATS_WIDTH + 3
 SCREEN_HEIGHT = MAP_HEIGHT + MESSAGE_HEIGHT + 3
@@ -72,6 +73,8 @@ player_move = False
 mouse_move = False
 mouse = libtcod.Mouse()
 rnd = None
+killer = None
+highscore = []
 
 
 class Game(object):
@@ -87,6 +90,8 @@ class Game(object):
 		ps = libtcod.console_new(PLAYER_STATS_WIDTH, PLAYER_STATS_HEIGHT)
 		fov_noise = libtcod.noise_new(1, 1.0, 1.0)
 		savefiles = os.listdir('saves')
+		if os.path.exists('data/highscores.dat'):
+			self.load_high_scores()
 		items = ItemList()
 		items.init_parser()
 		tiles = map.TileList()
@@ -104,13 +109,6 @@ class Game(object):
 		game_state = create_character()
 		#player.name = 'Ben'
 		#game_state = 'playing'
-		#game.player.inventory.append(items.list[1])
-		#game.player.inventory.append(items.list[2])
-		#game.player.inventory.append(items.list[0])
-		#game.player.inventory.append(items.list[3])
-		#game.player.inventory.append(items.list[2])
-		#game.player.inventory.append(items.list[1])
-		#game.player.inventory.append(items.list[2])
 		if game_state == 'playing':
 			current_map = map.Map('Starter Dungeon', 1, 1)
 			self.play_game()
@@ -143,9 +141,12 @@ class Game(object):
 				game.player_move = False
 
 			if game_state == 'death':
+				key = libtcod.Key()
 				util.render_all()
 				libtcod.console_flush()
-				libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, libtcod.Key(), libtcod.Mouse(), True)
+				while not key.vk == libtcod.KEY_SPACE:
+					libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, key, libtcod.Mouse(), True)
+				util.death()
 				player_action = 'exit'
 				break
 
@@ -186,20 +187,33 @@ class Game(object):
 		contents = open('data/help.txt', 'r').read()
 		util.msg_box('text', 'Help', contents=contents, box_width=40, box_height=22)
 
+	# high scores tables
+	def high_scores(self):
+		if os.path.exists('data/highscores.dat'):
+			self.load_high_scores()
+			util.msg_box('highscore', 'High scores', contents=game.highscore, box_width=game.SCREEN_WIDTH, box_height=game.SCREEN_HEIGHT)
+		else:
+			util.msg_box('text', 'High scores', contents="The high scores file is empty.", box_width=41, box_height=5, center=True)
+
+	def load_high_scores(self):
+		contents = open('data/highscores.dat', 'rb')
+		game.highscore = pickle.load(contents)
+		contents.close()
+
 	# brings up the main menu
 	def main_menu(self):
 		global player_action
 		player_action = None
 		choice = 0
-		#libtcod.console_credits()
+		libtcod.console_credits()
 		while not libtcod.console_is_window_closed():
 			#libtcod.image_blit_2x(img, 0, 0, 0)
 			libtcod.console_set_default_foreground(0, libtcod.light_yellow)
 			libtcod.console_set_default_background(0, libtcod.black)
 			libtcod.console_clear(0)
-			libtcod.console_print_ex(0, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 5, libtcod.BKGND_SET, libtcod.CENTER, 'Immortal ' + VERSION)
+			libtcod.console_print_ex(0, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 6, libtcod.BKGND_SET, libtcod.CENTER, 'Immortal ' + VERSION)
 			libtcod.console_print_ex(0, SCREEN_WIDTH / 2, SCREEN_HEIGHT - 2, libtcod.BKGND_SET, libtcod.CENTER, 'By Potatoman')
-			contents = ['Start a new game', 'Load a saved game', 'Help', 'Options', 'Quit']
+			contents = ['Start a new game', 'Load a saved game', 'Help', 'Options', 'High Scores', 'Quit']
 			choice = util.msg_box('main_menu', 'Main menu', contents=contents, box_width=21, box_height=len(contents) + 2, default=choice)
 
 			if choice == 0:  # start new game
@@ -212,5 +226,7 @@ class Game(object):
 					break
 			if choice == 2:  # help
 				self.help()
-			if choice == 4:  # quit
+			if choice == 4:  # high scores
+				self.high_scores()
+			if choice == 5:  # quit
 				break

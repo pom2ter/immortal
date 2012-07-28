@@ -1,8 +1,8 @@
 import libtcodpy as libtcod
 import os
+import game
 import util
 import map
-import game
 
 
 def handle_keys():
@@ -217,7 +217,7 @@ def equip_item():
 
 # help screen
 def help():
-	contents = open('data/commands.txt', 'r').read()
+	contents = open('data/help.txt', 'r').read()
 	util.msg_box('text', 'Help', contents=contents, box_width=40, box_height=22)
 
 
