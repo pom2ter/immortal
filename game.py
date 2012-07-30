@@ -11,19 +11,19 @@ import commands
 import util
 
 VERSION = 'v0.1.4'
-BUILD = '24'
+BUILD = '25'
 
 #size of the map
 MAP_WIDTH = 70
-MAP_HEIGHT = 30
+MAP_HEIGHT = 28
 
 #actual size of the window
 PLAYER_STATS_WIDTH = 16
-PLAYER_STATS_HEIGHT = 35
 MESSAGE_WIDTH = MAP_WIDTH
-MESSAGE_HEIGHT = 4
+MESSAGE_HEIGHT = 5
 SCREEN_WIDTH = MAP_WIDTH + PLAYER_STATS_WIDTH + 3
 SCREEN_HEIGHT = MAP_HEIGHT + MESSAGE_HEIGHT + 3
+PLAYER_STATS_HEIGHT = SCREEN_HEIGHT - 2
 
 #sizes and coordinates relevant for the GUI
 PLAYER_STATS_X = 1
@@ -75,6 +75,7 @@ mouse = libtcod.Mouse()
 rnd = None
 killer = None
 highscore = []
+redraw_gui = True
 
 
 class Game(object):
@@ -107,10 +108,8 @@ class Game(object):
 		player = Player()
 		char = map.Object(0, 0, player.icon, 'player', player.icon_color, blocks=True)
 		game_state = create_character()
-		#player.name = 'Ben'
-		#game_state = 'playing'
 		if game_state == 'playing':
-			current_map = map.Map('Starter Dungeon', 1, 1)
+			current_map = map.Map('Starter Dungeon', 'SD', 1, 1)
 			self.play_game()
 
 	# main game loop
@@ -119,12 +118,15 @@ class Game(object):
 		libtcod.console_clear(0)
 		util.initialize_fov()
 		while not libtcod.console_is_window_closed():
+			if game.redraw_gui:
+				util.render_gui(libtcod.red)
+				util.render_message_panel()
+				util.render_player_stats_panel()
+				game.redraw_gui = False
 			util.render_all()
 			libtcod.console_flush()
 
-			for object in current_map.objects:
-				object.clear(con)
-
+			#player movement
 			player_action = commands.handle_keys()
 			if player_action == 'save':
 				self.save_game()
@@ -140,6 +142,7 @@ class Game(object):
 						object.x, object.y = object.entity.take_turn(object.x, object.y)
 				game.player_move = False
 
+			#death screen summary
 			if game_state == 'death':
 				key = libtcod.Key()
 				util.render_all()
@@ -205,7 +208,7 @@ class Game(object):
 		global player_action
 		player_action = None
 		choice = 0
-		libtcod.console_credits()
+		#libtcod.console_credits()
 		while not libtcod.console_is_window_closed():
 			#libtcod.image_blit_2x(img, 0, 0, 0)
 			libtcod.console_set_default_foreground(0, libtcod.light_yellow)
@@ -214,7 +217,7 @@ class Game(object):
 			libtcod.console_print_ex(0, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 6, libtcod.BKGND_SET, libtcod.CENTER, 'Immortal ' + VERSION)
 			libtcod.console_print_ex(0, SCREEN_WIDTH / 2, SCREEN_HEIGHT - 2, libtcod.BKGND_SET, libtcod.CENTER, 'By Potatoman')
 			contents = ['Start a new game', 'Load a saved game', 'Help', 'Options', 'High Scores', 'Quit']
-			choice = util.msg_box('main_menu', 'Main menu', contents=contents, box_width=21, box_height=len(contents) + 2, default=choice)
+			choice = util.msg_box('main_menu', header=None, contents=contents, box_width=21, box_height=len(contents) + 2, default=choice)
 
 			if choice == 0:  # start new game
 				self.new_game()

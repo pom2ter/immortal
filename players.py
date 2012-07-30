@@ -1,7 +1,6 @@
 import libtcodpy as libtcod
 import game
 import util
-from messages import *
 
 RACES = ["Human", "Elf", "Dwarf", "Halfling"]
 CLASSES = ["Fighter", "Rogue", "Priest", "Mage"]
@@ -54,6 +53,7 @@ class Player(object):
 	def add_turn(self):
 		self.turns += 1
 		game.player_move = True
+		game.redraw_gui = True
 		if self.turns % (50 - self.endurance) == 0:
 			self.health += 1
 			if self.health > self.max_health:
@@ -68,7 +68,7 @@ class Player(object):
 	def unequip(self, item):
 		self.inventory.append(self.equipment[item])
 		self.add_turn()
-		game.message.new("You unequip the " + self.equipment[item].unidentified_name, self.turns, libtcod.green)
+		game.message.new("You unequip the " + self.equipment[item].unidentified_name, self.turns, libtcod.red)
 		self.equipment.pop(item)
 
 	def find_weapon_type(self):
@@ -182,7 +182,7 @@ class Player(object):
 					damage = self.equipment[i].dice.roll_dice()
 			if damage == 0:
 				damage = util.roll_dice(1, 4, 1, 0)
-			game.message.new('You hit the ' + target.entity.name + ' for ' + str(damage) + ' pts of damage', self.turns, libtcod.white)
+			game.message.new('You hit the ' + target.entity.name + ' for ' + str(damage) + ' pts of damage.', self.turns)
 			target.entity.health -= damage
 			if target.entity.health < 1:
 				game.message.new('The ' + target.entity.name + ' dies!', self.turns, libtcod.light_orange)
@@ -194,7 +194,7 @@ class Player(object):
 				target.delete()
 			self.combat_skills[self.find_weapon_type()].gain_xp(2)
 		else:
-			game.message.new('You missed the ' + target.entity.name, self.turns, libtcod.white)
+			game.message.new('You missed the ' + target.entity.name + '.', self.turns)
 			self.combat_skills[self.find_weapon_type()].gain_xp(1)
 		self.add_turn()
 
@@ -207,6 +207,7 @@ class Player(object):
 		score += self.xp / 5
 		score += (self.level - 1) * 50
 		score += self.turns / 50
+		score += len(game.old_maps) * 10
 		return score
 
 

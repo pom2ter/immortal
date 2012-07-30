@@ -122,11 +122,11 @@ class Monster(object):
 			game.player.health -= damage
 			if game.player.health < 1:
 				game.message.new('You die...', game.player.turns, libtcod.light_orange)
-				game.message.new('*** Press space ***', game.player.turns, libtcod.white)
+				game.message.new('*** Press space ***', game.player.turns)
 				game.killer = self.article + self.name
 				game.game_state = "death"
 		else:
-			game.message.new('The ' + self.name + ' attack but misses.', game.player.turns, libtcod.white)
+			game.message.new('The ' + self.name + ' attack but misses.', game.player.turns)
 
 
 class MonsterList(object):

@@ -120,7 +120,10 @@ def player_move(dx, dy):
 	if target is not None:
 		game.player.attack(target)
 	else:
-		game.char.move(dx, dy, game.current_map)
+		if game.current_map.tiles[game.char.x + dx][game.char.y + dy].type == 'door':
+			open_door(dx, dy)
+		else:
+			game.char.move(dx, dy, game.current_map)
 		util.items_at_feet()
 		game.fov_recompute = True
 
@@ -128,14 +131,14 @@ def player_move(dx, dy):
 #climb up/down stairs
 def climb_stairs(direction):
 	if (direction == 'up' and game.current_map.tiles[game.char.x][game.char.y].icon != "<") or (direction == 'down' and game.current_map.tiles[game.char.x][game.char.y].icon != ">"):
-		game.message.new('You see no stairs going in that direction!', game.player.turns, libtcod.white)
+		game.message.new('You see no stairs going in that direction!', game.player.turns)
 	else:
 		if direction == 'down':
 			level = game.current_map.location_level + 1
-			game.message.new('You climb down the stairs.', game.player.turns, libtcod.white)
+			game.message.new('You climb down the stairs.', game.player.turns)
 		else:
 			level = game.current_map.location_level - 1
-			game.message.new('You climb up the stairs.', game.player.turns, libtcod.white)
+			game.message.new('You climb up the stairs.', game.player.turns)
 		game.old_maps.append(game.current_map)
 		generate = True
 		for i in range(len(game.old_maps) - 1):
@@ -149,20 +152,16 @@ def climb_stairs(direction):
 				generate = False
 				break
 		if generate:
-			game.current_map = map.Map(game.current_map.location_name, game.current_map.location_id, level)
+			game.current_map = map.Map(game.current_map.location_name, game.current_map.location_abbr, game.current_map.location_id, level)
 		game.player.add_turn()
 		game.fov_recompute = True
-		util.initialize_fov()
-		util.render_all()
 
 
 # close door
 def close_door():
 	game.message.new('Close door in which direction?', game.player.turns)
-	util.render_all()
 	libtcod.console_flush()
-	dx = 0
-	dy = 0
+	dx, dy = 0, 0
 	key = libtcod.Key()
 
 	libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, key, libtcod.Mouse(), True)
@@ -173,26 +172,26 @@ def close_door():
 		game.player.add_turn()
 		game.message.new('You close the door.', game.player.turns)
 		game.fov_recompute = True
-		util.initialize_fov()
-		util.render_all()
 	elif game.current_map.tiles[game.char.x + dx][game.char.y + dy].name == 'door':
-		game.message.new('That door is already closed!', game.player.turns, libtcod.red)
+		game.message.new('That door is already closed!', game.player.turns)
 	elif dx != 0 or dy != 0:
-		game.message.new('There is no door in that direction!', game.player.turns, libtcod.red)
+		game.message.new('There is no door in that direction!', game.player.turns)
 
 
 # drop an item
 def drop_item():
 	if len(game.player.inventory) == 0:
-		game.message.new('Your inventory is empty.', game.player.turns, libtcod.white)
+		game.message.new('Your inventory is empty.', game.player.turns)
 	else:
-		choice = util.msg_box('drop', 'Drop an item', 'Up/down to select, ENTER to drop, ESC to exit', game.player.inventory, box_height=max(16, len(game.player.inventory) + 4))
+		choice = util.msg_box('drop', 'Drop an item', 'Up/down to select, ENTER to drop, ESC to exit', game.player.inventory, box_height=max(16, len(game.player.inventory) + 4), blitmap=True)
 		if choice != -1:
 			obj = map.Object(game.char.x, game.char.y, game.player.inventory[choice].icon, game.player.inventory[choice].name, game.player.inventory[choice].color, True, item=game.player.inventory[choice])
+			game.message.new('You drop the ' + obj.name, game.player.turns, libtcod.red)
 			game.current_map.objects.append(obj)
 			obj.send_to_back()
 			game.player.inventory.pop(choice)
 			game.player.add_turn()
+	game.redraw_gui = True
 
 
 # equip an item
@@ -202,7 +201,7 @@ def equip_item():
 		if item.is_equippable():
 			equippable = True
 	if not equippable:
-		game.message.new("You don't have any equippable items.", game.player.turns, libtcod.white)
+		game.message.new("You don't have any equippable items.", game.player.turns)
 	else:
 		filter = []
 		itempos = []
@@ -210,25 +209,28 @@ def equip_item():
 			if game.player.inventory[i].is_equippable():
 				filter.append(game.player.inventory[i])
 				itempos.append(i)
-		choice = util.msg_box('equip', 'Wear/Equip an item', 'Up/down to select, ENTER to equip, ESC to exit', filter, box_height=max(16, len(filter) + 4))
+		choice = util.msg_box('equip', 'Wear/Equip an item', 'Up/down to select, ENTER to equip, ESC to exit', filter, box_height=max(16, len(filter) + 4), blitmap=True)
 		if choice != -1:
 			game.player.equip(itempos[choice])
+	game.redraw_gui = True
 
 
 # help screen
 def help():
 	contents = open('data/help.txt', 'r').read()
-	util.msg_box('text', 'Help', contents=contents, box_width=40, box_height=22)
+	util.msg_box('text', 'Help', contents=contents, box_width=40, box_height=22, blitmap=True)
+	game.redraw_gui = True
 
 
 # see inventory
 def inventory():
 	if len(game.player.inventory) == 0:
-		game.message.new('Your inventory is empty.', game.player.turns, libtcod.white)
+		game.message.new('Your inventory is empty.', game.player.turns)
 	else:
-		choice = util.msg_box('inv', 'Inventory', 'Up/down to select, ENTER to use, ESC to exit', game.player.inventory, box_height=max(16, len(game.player.inventory) + 4))
+		choice = util.msg_box('inv', 'Inventory', 'Up/down to select, ENTER to use, ESC to exit', game.player.inventory, box_height=max(16, len(game.player.inventory) + 4), blitmap=True)
 		if choice != -1:
 			game.player.inventory[choice].use(choice)
+	game.redraw_gui = True
 
 
 # look (with keyboard)
@@ -249,6 +251,7 @@ def look():
 		dx, dy = key_check(key, dx, dy)
 		if key.vk == libtcod.KEY_ESCAPE:
 			del game.message.log[len(game.message.log) - 1]
+			util.render_message_panel()
 			break
 
 		if dx < 0:
@@ -299,33 +302,31 @@ def look():
 
 
 # open door
-def open_door():
-	game.message.new('Open door in which direction?', game.player.turns)
-	util.render_all()
-	libtcod.console_flush()
-	dx = 0
-	dy = 0
-	key = libtcod.Key()
-
-	libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, key, libtcod.Mouse(), True)
-	dx, dy = key_check(key, dx, dy)
+def open_door(x=None, y=None):
+	dx, dy = 0, 0
+	if x == None:
+		game.message.new('Open door in which direction?', game.player.turns)
+		libtcod.console_flush()
+		key = libtcod.Key()
+		libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, key, libtcod.Mouse(), True)
+		dx, dy = key_check(key, dx, dy)
+	else:
+		dx, dy = x, y
 
 	if game.current_map.tiles[game.char.x + dx][game.char.y + dy].name == 'door':
 		game.current_map.tiles[game.char.x + dx][game.char.y + dy] = game.tiles.gettile('opened door')
 		game.player.add_turn()
 		game.message.new('You open the door.', game.player.turns)
 		game.fov_recompute = True
-		util.initialize_fov()
-		util.render_all()
 	elif game.current_map.tiles[game.char.x + dx][game.char.y + dy].name == 'opened door':
-		game.message.new('That door is already opened!', game.player.turns, libtcod.red)
+		game.message.new('That door is already opened!', game.player.turns)
 	elif dx != 0 or dy != 0:
-		game.message.new('There is no door in that direction!', game.player.turns, libtcod.red)
+		game.message.new('There is no door in that direction!', game.player.turns)
 
 
 # ingame options menu
 def options_menu():
-	choice = util.msg_box('options', 'Main Menu', contents=['Help', 'Options', 'Save and quit game', 'Quit without saving'], box_width=23, box_height=6)
+	choice = util.msg_box('options', 'Main Menu', contents=['Help', 'Options', 'Save and quit game', 'Quit without saving'], box_width=23, box_height=6, blitmap=True)
 	if choice == 0:
 		return 'help'
 	if choice == 2:
@@ -345,7 +346,7 @@ def pickup_item():
 			pickup = True
 			break
 	if not pickup:
-		game.message.new('There is nothing to pick up.', game.player.turns, libtcod.white)
+		game.message.new('There is nothing to pick up.', game.player.turns)
 
 
 # dialog to confirm quitting the game
@@ -367,11 +368,12 @@ def quit_game():
 # remove/unequip an item
 def remove_item():
 	if len(game.player.equipment) == 0:
-		game.message.new("You don't have any equipped items.", game.player.turns, libtcod.white)
+		game.message.new("You don't have any equipped items.", game.player.turns)
 	else:
-		choice = util.msg_box('remove', 'Remove/Unequip an item', 'Up/down to select, ENTER to remove, ESC to exit', game.player.equipment, box_height=max(16, len(game.player.equipment) + 4))
+		choice = util.msg_box('remove', 'Remove/Unequip an item', 'Up/down to select, ENTER to remove, ESC to exit', game.player.equipment, box_height=max(16, len(game.player.equipment) + 4), blitmap=True)
 		if choice != -1:
 			game.player.unequip(choice)
+	game.redraw_gui = True
 
 
 # dialog to confirm saving the game
@@ -391,22 +393,25 @@ def save_game():
 # use an item
 def use_item():
 	if len(game.player.inventory) == 0:
-		game.message.new('Your inventory is empty.', game.player.turns, libtcod.white)
+		game.message.new('Your inventory is empty.', game.player.turns)
 	else:
-		choice = util.msg_box('use', 'Use an item', 'Up/down to select, ENTER to use, ESC to exit', game.player.inventory, box_height=max(16, len(game.player.inventory) + 4))
+		choice = util.msg_box('use', 'Use an item', 'Up/down to select, ENTER to use, ESC to exit', game.player.inventory, box_height=max(16, len(game.player.inventory) + 4), blitmap=True)
 		if choice != -1:
 			game.player.inventory[choice].use(choice)
+	game.redraw_gui = True
 
 
 # passing one turn
 def wait_turn():
-	game.message.new("Time passes...", game.player.turns, libtcod.white)
+	game.message.new("Time passes...", game.player.turns)
 	game.player.add_turn()
 
 
 # character sheet for stats
 def sheet_stats(con, width, height):
-	libtcod.console_print_frame(con, 0, 0, width, height, True, libtcod.BKGND_NONE, 'Player stats')
+	util.text_box(con, 0, 0, width, height, 'Player stats')
+	libtcod.console_set_default_foreground(con, libtcod.white)
+	libtcod.console_set_default_background(con, libtcod.black)
 	libtcod.console_print(con, 2, 2, game.player.name + ', a level ' + str(game.player.level) + ' ' + game.player.gender + ' ' + game.player.race + ' ' + game.player.profession)
 	libtcod.console_print(con, 2, 4, 'Strength: ' + str(game.player.strength))
 	libtcod.console_print(con, 2, 5, 'Dexterity: ' + str(game.player.dexterity))
@@ -426,7 +431,9 @@ def sheet_stats(con, width, height):
 
 # character sheet for skills
 def sheet_skills(con, width, height):
-	libtcod.console_print_frame(con, 0, 0, width, height, True, libtcod.BKGND_NONE, 'Skills')
+	util.text_box(con, 0, 0, width, height, 'Skills')
+	libtcod.console_set_default_foreground(con, libtcod.white)
+	libtcod.console_set_default_background(con, libtcod.black)
 	libtcod.console_print(con, 2, 2, 'Combat Skills')
 	for i in range(0, len(game.player.combat_skills)):
 		libtcod.console_print(con, 2, i + 4, game.player.combat_skills[i].name)
@@ -435,7 +442,9 @@ def sheet_skills(con, width, height):
 
 # character sheet for equipment
 def sheet_equipment(con, width, height):
-	libtcod.console_print_frame(con, 0, 0, width, height, True, libtcod.BKGND_NONE, 'Equipment')
+	util.text_box(con, 0, 0, width, height, 'Equipment')
+	libtcod.console_set_default_foreground(con, libtcod.white)
+	libtcod.console_set_default_background(con, libtcod.black)
 	libtcod.console_print(con, 2, 2, 'Head')
 	libtcod.console_print(con, 2, 3, 'Neck')
 	libtcod.console_print(con, 2, 4, 'Body')
@@ -468,7 +477,9 @@ def sheet_equipment(con, width, height):
 
 # character sheet for inventory
 def sheet_inventory(con, width, height):
-	libtcod.console_print_frame(con, 0, 0, width, height, True, libtcod.BKGND_NONE, 'Inventory')
+	util.text_box(con, 0, 0, width, height, 'Inventory')
+	libtcod.console_set_default_foreground(con, libtcod.white)
+	libtcod.console_set_default_background(con, libtcod.black)
 	for i in range(0, len(game.player.inventory)):
 		libtcod.console_print(con, 2, i + 2, game.player.inventory[i].name)
 		libtcod.console_print_ex(con, width - 3, i + 2, libtcod.BKGND_SET, libtcod.RIGHT, str(game.player.inventory[i].weight) + ' lbs')
@@ -494,7 +505,7 @@ def ztats():
 			sheet_inventory(stats, width, height)
 
 		libtcod.console_print_ex(stats, width / 2, height - 1, libtcod.BKGND_SET, libtcod.CENTER, '[ Arrow Left/Right = Change Pages ]')
-		libtcod.console_blit(stats, 0, 0, width, height, 0, (game.SCREEN_WIDTH - width) / 2, (game.SCREEN_HEIGHT - height) / 2, 1.0, 1.0)
+		libtcod.console_blit(stats, 0, 0, width, height, 0, ((game.MAP_WIDTH - width) / 2) + game.MAP_X, (game.MAP_HEIGHT - height) / 2, 1.0, 1.0)
 		libtcod.console_flush()
 		libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, key, game.mouse, True)
 		if key.vk == libtcod.KEY_LEFT:
@@ -507,3 +518,4 @@ def ztats():
 				screen = 0
 		elif key.vk == libtcod.KEY_ESCAPE:
 			exit = True
+	game.redraw_gui = True

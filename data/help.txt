@@ -1,6 +1,7 @@
 KEYBOARD COMMANDS
 
 Arrow keys = Move character
+SPACE = wait 1 turn
 CTRL-S = Save game
 CTRL-X = Quit game
 ? = Help screen
@@ -16,4 +17,3 @@ u = Use item
 z = Player stats
 < = Climb up stairs
 > = Climb down stairs
-SPACE = wait 1 turn

@@ -20,6 +20,7 @@ class Message(object):
 
 			#add the new line as a tuple, with the text and the color
 			self.log.append((line, color, turn))
+		util.render_message_panel()
 
 	def input(self, typ, con, posx, posy, con2=None):
 		command = ''

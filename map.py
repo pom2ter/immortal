@@ -4,8 +4,9 @@ import game
 
 
 class Map(object):
-	def __init__(self, name, id, level):
+	def __init__(self, name, abbr, id, level):
 		self.location_name = name
+		self.location_abbr = abbr
 		self.location_id = id
 		self.location_level = level
 		self.tiles = None
@@ -315,9 +316,7 @@ class Object(object):
 			self.y += dy
 			game.path_recalculate = True
 			game.player.add_turn()
-		elif map.tiles[self.x + dx][self.y + dy].name == 'door':
-			game.message.new('You bump into a door!', game.player.turns)
-		elif map.tiles[self.x + dx][self.y + dy].name == 'wall':
+		elif map.tiles[self.x + dx][self.y + dy].type == 'wall':
 			game.message.new('The wall laughs at your attempt to pass through it.', game.player.turns)
 
 	def move_towards(self, target_x, target_y):

@@ -31,7 +31,7 @@ class Item(object):
 		if "usable" in self.flags:
 			if "healing" in self.flags:
 				if game.player.health == game.player.max_health:
-					game.message.new("You are already at max health.", game.player.turns, libtcod.white)
+					game.message.new("You are already at max health.", game.player.turns)
 				else:
 					heal = self.dice.roll_dice()
 					game.player.health += heal
@@ -42,7 +42,7 @@ class Item(object):
 					game.player.add_turn()
 			if "mana_healing" in self.flags:
 				if game.player.mana == game.player.max_mana:
-					game.message.new("Your mana is already at maximum.", game.player.turns, libtcod.white)
+					game.message.new("Your mana is already at maximum.", game.player.turns)
 				else:
 					heal = self.dice.roll_dice()
 					game.player.mana += heal
@@ -52,7 +52,7 @@ class Item(object):
 					game.message.new("You gain " + str(heal) + " mana points.", game.player.turns, libtcod.green)
 					game.player.add_turn()
 		else:
-			game.message.new("You can't use that item.", game.player.turns, libtcod.white)
+			game.message.new("You can't use that item.", game.player.turns)
 
 	def is_equippable(self):
 		if "equippable" in self.flags:
