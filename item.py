@@ -16,14 +16,16 @@ class Item(object):
 		self.dice = dice
 		self.article = article
 		self.flags = flags
+		self.turn_spawned = 0
 
-	def pick_up(self):
+	def pick_up(self, ts):
 		if self.type == "money":
 			gold = libtcod.random_get_int(game.rnd, 1, 100)
 			game.message.new('You pick up ' + str(gold) + ' gold pieces', game.player.turns, libtcod.gold)
 			game.player.gold += gold
 		else:
 			game.message.new('You pick up a ' + self.unidentified_name, game.player.turns, libtcod.green)
+			self.turn_spawned = ts
 			game.player.inventory.append(self)
 		game.player.add_turn()
 

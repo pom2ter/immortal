@@ -66,7 +66,6 @@ class Map(object):
 		else:
 			d = game.monsters.get_monster_by_level(3)
 		monster = Object(x, y, d.icon, d.name, d.color, blocks=True, entity=d)
-		#self.objects.append(monster)
 		self.objects.insert(1, monster)
 
 	def place_objects(self):
@@ -296,6 +295,7 @@ class Object(object):
 		self.name = name
 		self.color = color
 		self.can_be_pickup = pickup
+		self.first_appearance = game.player.turns
 		self.blocks = blocks
 		self.entity = entity
 		if self.entity:  # let the fighter component know who owns it

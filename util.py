@@ -8,7 +8,7 @@ import game
 # messages functions
 #######################################
 
-def choices(con, width, height, options, typ, posx=0, posy=0, default=0, blitmap=False):
+def choices(con, width, height, options, typ, posx=0, posy=0, default=0, blitmap=False, mouse_out=False):
 	choice = False
 	current, up, down = default, 0, height
 	max_width = posx + width + posx
@@ -56,9 +56,9 @@ def choices(con, width, height, options, typ, posx=0, posy=0, default=0, blitmap
 
 		(mx, my) = (mouse.cx, mouse.cy)
 		if my in range(y + posy, y + height + posy) and mx in range(x + posx, x + width + posx):
-			current = my - (y + posy) + up
-			if current > len(options) - 1:
-				current = len(options) - 1
+			mpos = my - (y + posy) + up
+			if mpos <= len(options) - 1:
+				current = mpos
 
 		if key.vk == libtcod.KEY_DOWN and ev == libtcod.EVENT_KEY_PRESS:
 			current = (current + 1) % len(options)
@@ -77,7 +77,7 @@ def choices(con, width, height, options, typ, posx=0, posy=0, default=0, blitmap
 				if current > height - 1:
 					up = len(options) - height
 					down = len(options)
-		elif key.vk == libtcod.KEY_ESCAPE and ev == libtcod.EVENT_KEY_PRESS:
+		elif key.vk == libtcod.KEY_ESCAPE and ev == libtcod.EVENT_KEY_PRESS or (mouse_out and mouse.lbutton_pressed and mx == max_width + x - 4 and my == y):
 			current = -1
 			choice = -1
 		elif (key.vk == libtcod.KEY_ENTER and ev == libtcod.EVENT_KEY_PRESS) or (mouse.lbutton_pressed and my in range(y + posy, y + height + posy) and mx in range(x + posx, x + width + posx) and (my - (y + posy) + up) <= len(options) - 1):
@@ -106,21 +106,28 @@ def text_box(con, x1, y1, x2, y2, header=None, color=libtcod.green):
 
 
 def msg_box(typ, header=None, footer=None, contents=None, box_width=60, box_height=5, center=False, default=0, color=libtcod.green, blitmap=False):
-	width = box_width
-	height = box_height
-	box = libtcod.console_new(width, height)
-	text_box(box, 0, 0, width, height, header, color)
-	libtcod.console_set_default_foreground(box, libtcod.white)
+	box = libtcod.console_new(box_width, box_height)
+	text_box(box, 0, 0, box_width, box_height, header, color)
+	libtcod.console_set_default_foreground(box, color)
 	libtcod.console_set_default_background(box, libtcod.black)
 	if footer != None:
-		libtcod.console_print_ex(box, width / 2, height - 1, libtcod.BKGND_SET, libtcod.CENTER, '[ ' + footer + ' ]')
+		libtcod.console_print_ex(box, box_width / 2, box_height - 1, libtcod.BKGND_SET, libtcod.CENTER, '[ ' + footer + ' ]')
+	if typ in ['inv', 'drop', 'use', 'remove', 'equip', 'save', 'options']:
+		libtcod.console_print_ex(box, box_width - 5, 0, libtcod.BKGND_SET, libtcod.LEFT, '[x]')
+	libtcod.console_set_default_foreground(box, libtcod.white)
 
 	if typ in ['inv', 'drop', 'use', 'remove', 'equip']:
-		choice = choices(box, width - 4, height - 4, contents, 'inventory', 2, 2, blitmap=blitmap)
+		choice = choices(box, box_width - 4, box_height - 4, contents, 'inventory', 2, 2, blitmap=blitmap, mouse_out=True)
 	if typ == 'save':
-		choice = choices(box, width - 4, height - 4, contents, 'savegames', 2, 2)
+		choice = choices(box, box_width - 4, box_height - 4, contents, 'savegames', 2, 2, mouse_out=True)
 	if typ in ['options', 'main_menu']:
-		choice = choices(box, width - 2, height - 2, contents, 'options_menu', 1, 1, default, blitmap=blitmap)
+		if typ == 'options':
+			choice = choices(box, box_width - 2, box_height - 2, contents, 'options_menu', 1, 1, default, blitmap=blitmap, mouse_out=True)
+		else:
+			choice = choices(box, box_width - 2, box_height - 2, contents, 'options_menu', 1, 1, default, blitmap=blitmap)
+	if typ == 'settings':
+		change_settings(box, box_width, box_height, contents, blitmap=blitmap)
+		choice = -1
 	if typ in ['text', 'highscore']:
 		if typ == 'highscore':
 			for i, (score, line1, line2) in enumerate(game.highscore):
@@ -130,13 +137,13 @@ def msg_box(typ, header=None, footer=None, contents=None, box_width=60, box_heig
 		if typ == 'text':
 			for i, line in enumerate(contents.split('\n')):
 				if center:
-					libtcod.console_print_ex(box, width / 2, 2 + i, libtcod.BKGND_SET, libtcod.CENTER, line)
+					libtcod.console_print_ex(box, box_width / 2, 2 + i, libtcod.BKGND_SET, libtcod.CENTER, line)
 				else:
 					libtcod.console_print_ex(box, 2, 2 + i, libtcod.BKGND_SET, libtcod.LEFT, line)
 		if blitmap:
-			libtcod.console_blit(box, 0, 0, width, height, 0, ((game.MAP_WIDTH - width) / 2) + game.MAP_X, (game.MAP_HEIGHT - height) / 2, 1.0, 0.9)
+			libtcod.console_blit(box, 0, 0, box_width, box_height, 0, ((game.MAP_WIDTH - box_width) / 2) + game.MAP_X, (game.MAP_HEIGHT - box_height) / 2, 1.0, 0.9)
 		else:
-			libtcod.console_blit(box, 0, 0, width, height, 0, (game.SCREEN_WIDTH - width) / 2, (game.SCREEN_HEIGHT - height) / 2, 1.0, 0.9)
+			libtcod.console_blit(box, 0, 0, box_width, box_height, 0, (game.SCREEN_WIDTH - box_width) / 2, (game.SCREEN_HEIGHT - box_height) / 2, 1.0, 0.9)
 		libtcod.console_flush()
 		libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, libtcod.Key(), libtcod.Mouse(), True)
 		choice = -1
@@ -146,6 +153,56 @@ def msg_box(typ, header=None, footer=None, contents=None, box_width=60, box_heig
 #######################################
 # miscellanous functions
 #######################################
+
+# change game settings
+def change_settings(box, width, height, options, blitmap=False):
+	fonts = ['  Small  ', '  Large  ']
+	confirm, cancel = False, False
+	if game.font == 'large':
+		current = 1
+	else:
+		current = 0
+
+	key = libtcod.Key()
+	libtcod.console_print_rect(box, 2, 2, width - 4, 2, '(You may need to restart the game for the changes to take effect)')
+	libtcod.console_print(box, 2, 5, 'Font: ')
+
+	while not confirm and not cancel:
+		for i in range(0, len(fonts)):
+			libtcod.console_set_default_background(box, libtcod.black)
+			if current == i:
+				libtcod.console_set_default_background(box, libtcod.light_blue)
+			libtcod.console_print_ex(box, 10 + (i * 10), 5, libtcod.BKGND_SET, libtcod.LEFT, fonts[i])
+
+		if blitmap:
+			libtcod.console_blit(box, 0, 0, width, height, 0, ((game.MAP_WIDTH - width) / 2) + game.MAP_X, (game.MAP_HEIGHT - height) / 2, 1.0, 1.0)
+		else:
+			libtcod.console_blit(box, 0, 0, width, height, 0, (game.SCREEN_WIDTH - width) / 2, (game.SCREEN_HEIGHT - height) / 2, 1.0, 1.0)
+		libtcod.console_flush()
+		libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, key, libtcod.Mouse(), True)
+
+		if key.vk == libtcod.KEY_LEFT:
+			current -= 1
+			if current < 0:
+				current = 1
+		elif key.vk == libtcod.KEY_RIGHT:
+			current += 1
+			if current > 1:
+				current = 0
+		elif key.vk == libtcod.KEY_ESCAPE:
+			cancel = True
+		elif key.vk == libtcod.KEY_ENTER:
+			confirm = True
+
+	if confirm:
+		f = open('settings.ini', 'wb')
+		f.write('[Font]\n')
+		if current == 0:
+			f.write('small\n')
+		else:
+			f.write('large\n')
+		f.close()
+
 
 # death screens and final score
 def death():
@@ -198,9 +255,7 @@ def get_names_under_mouse():
 	#create a list with the names of all objects at the mouse's coordinates and in FOV
 	(x, y) = (game.mouse.cx - game.MAP_X, game.mouse.cy - 1)
 	if x in range(0, game.MAP_WIDTH - 1) and y in range(0, game.MAP_HEIGHT - 1) and game.current_map.explored[x][y]:
-		names = [obj for obj in game.current_map.objects
-			if obj.x == x and obj.y == y]
-
+		names = [obj for obj in game.current_map.objects if obj.x == x and obj.y == y]
 		prefix = 'you see '
 		if not libtcod.map_is_in_fov(game.fov_map, x, y):
 			prefix = 'you remember seeing '
@@ -240,6 +295,16 @@ def items_at_feet():
 		game.message.new('You see several items at your feet.', game.player.turns)
 	elif len(objects) == 1:
 		game.message.new('You see ' + objects[0].item.article + objects[0].item.name, game.player.turns)
+
+
+# check to see if you can auto-move with mouse
+def mouse_auto_move():
+	for obj in game.current_map.objects:
+		if libtcod.map_is_in_fov(game.fov_map, obj.x, obj.y) and (obj.entity != None):
+			game.message.new("Auto-move aborted: Monster is near", game.player.turns)
+			game.mouse_move = False
+			return False
+	return True
 
 
 def roll_dice(nb_dices, nb_faces, multiplier, bonus):
@@ -324,12 +389,13 @@ def render_player_stats_panel():
 	libtcod.console_print(game.ps, 0, 3, game.current_map.location_abbr + '-' + str(game.current_map.location_level))
 	libtcod.console_print(game.ps, 0, 8, "LV: " + str(game.player.level))
 	libtcod.console_print(game.ps, 0, 9, "XP: " + str(game.player.xp))
-	libtcod.console_print(game.ps, 0, 10, "Str:  " + str(game.player.strength))
-	libtcod.console_print(game.ps, 0, 11, "Dex:  " + str(game.player.dexterity))
-	libtcod.console_print(game.ps, 0, 12, "Int:  " + str(game.player.intelligence))
-	libtcod.console_print(game.ps, 0, 13, "End:  " + str(game.player.endurance))
-	libtcod.console_print(game.ps, 0, 14, "Luck: " + str(game.player.luck))
-	libtcod.console_print(game.ps, 0, 16, "Turns: " + str(game.player.turns))
+	libtcod.console_print(game.ps, 0, 10, "Str: " + str(game.player.strength) + ' ')
+	libtcod.console_print(game.ps, 0, 11, "Dex: " + str(game.player.dexterity) + ' ')
+	libtcod.console_print(game.ps, 0, 12, "Int: " + str(game.player.intelligence) + ' ')
+	libtcod.console_print(game.ps, 0, 12, "Wis: " + str(game.player.wisdom) + ' ')
+	libtcod.console_print(game.ps, 0, 13, "End: " + str(game.player.endurance) + ' ')
+	libtcod.console_print(game.ps, 0, 14, "Karma: " + str(game.player.karma) + ' ')
+	libtcod.console_print(game.ps, 0, 16, "Turns: " + str(game.player.turns) + ' ')
 	libtcod.console_blit(game.ps, 0, 0, game.PLAYER_STATS_WIDTH, game.PLAYER_STATS_HEIGHT, 0, game.PLAYER_STATS_X, game.PLAYER_STATS_Y)
 
 
@@ -391,7 +457,7 @@ def render_all():
 
 	# move the player if using mouse
 	if game.mouse_move:
-		if not libtcod.dijkstra_is_empty(game.path_dijk):
+		if not libtcod.dijkstra_is_empty(game.path_dijk) and mouse_auto_move():
 			libtcod.console_put_char(game.con, game.char.x, game.char.y, ' ', libtcod.BKGND_NONE)
 			game.char.x, game.char.y = libtcod.dijkstra_path_walk(game.path_dijk)
 			libtcod.console_put_char(game.con, game.char.x, game.char.y, '@', libtcod.BKGND_NONE)
@@ -403,13 +469,14 @@ def render_all():
 
 	if not game.mouse_move:
 		(mx, my) = (game.mouse.cx - game.MAP_X, game.mouse.cy - 1)
-		if mx in range(0, game.MAP_WIDTH - 1) and my in range(0, game.MAP_HEIGHT - 1):
+		if mx in range(0, game.MAP_WIDTH) and my in range(0, game.MAP_HEIGHT):
+			game.path_dx = mx
+			game.path_dy = my
+			libtcod.console_set_char_background(game.con, game.path_dx, game.path_dy, libtcod.white, libtcod.BKGND_SET)
 			if game.current_map.explored[mx][my] and not game.current_map.tiles[mx][my].blocked:
-				game.path_dx = mx
-				game.path_dy = my
-				libtcod.console_set_char_background(game.con, game.path_dx, game.path_dy, libtcod.white, libtcod.BKGND_SET)
 				if game.mouse.lbutton_pressed:
-					game.mouse_move = True
+					if mouse_auto_move():
+						game.mouse_move = True
 			else:
 				game.path_dx = 0
 				game.path_dy = 0

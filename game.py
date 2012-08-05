@@ -10,8 +10,8 @@ import map
 import commands
 import util
 
-VERSION = 'v0.1.4'
-BUILD = '25'
+VERSION = 'v0.2.0'
+BUILD = '26'
 
 #size of the map
 MAP_WIDTH = 70
@@ -76,13 +76,18 @@ rnd = None
 killer = None
 highscore = []
 redraw_gui = True
+font = 'small'
 
 
 class Game(object):
 	def __init__(self):
 		global con, panel, ps, fov_noise, savefiles, items, tiles, monsters, rnd
+		self.load_settings()
 		#img = libtcod.image_load('title_screen2.png')
-		libtcod.console_set_custom_font('font.png', libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_ASCII_INROW)
+		if game.font == 'large':
+			libtcod.console_set_custom_font('font-large.png', libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_ASCII_INROW)
+		else:
+			libtcod.console_set_custom_font('font-small.png', libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_TCOD)
 		libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, 'Immortal ' + VERSION, False)
 		#libtcod.sys_set_fps(60)
 		rnd = libtcod.random_new()
@@ -91,8 +96,7 @@ class Game(object):
 		ps = libtcod.console_new(PLAYER_STATS_WIDTH, PLAYER_STATS_HEIGHT)
 		fov_noise = libtcod.noise_new(1, 1.0, 1.0)
 		savefiles = os.listdir('saves')
-		if os.path.exists('data/highscores.dat'):
-			self.load_high_scores()
+		self.load_high_scores()
 		items = ItemList()
 		items.init_parser()
 		tiles = map.TileList()
@@ -137,7 +141,10 @@ class Game(object):
 			#let monsters take their turn
 			if game.player_move:
 				monsters.spawn()
-				for object in current_map.objects:
+				for object in reversed(current_map.objects):
+					if object.item != None:
+						if object.item.type == "corpse" and (game.player.turns - object.first_appearance > 500):
+							object.delete()
 					if object.entity != None:
 						object.x, object.y = object.entity.take_turn(object.x, object.y)
 				game.player_move = False
@@ -172,7 +179,15 @@ class Game(object):
 		if len(savefiles) == 0:
 			util.msg_box('text', 'Saved games', contents='There are no save games.', center=True, box_height=5)
 		else:
-			choice = util.msg_box('save', 'Saved games', contents=savefiles, box_height=max(16, len(savefiles) + 4))
+			desc = []
+			for i in range(0, len(savefiles)):
+				file = shelve.open('saves/' + savefiles[i], 'r')
+				file['current_map']
+				file['maps']
+				pl = file['player']
+				desc.append(savefiles[i] + ', a level ' + str(pl.level) + ' ' + pl.gender + ' ' + pl.race + ' ' + pl.profession)
+				file.close()
+			choice = util.msg_box('save', 'Saved games', contents=desc, box_height=max(16, len(savefiles) + 4))
 			if choice != -1:
 				file = shelve.open('saves/' + savefiles[choice], 'r')
 				current_map = file['current_map']
@@ -190,8 +205,22 @@ class Game(object):
 		contents = open('data/help.txt', 'r').read()
 		util.msg_box('text', 'Help', contents=contents, box_width=40, box_height=22)
 
-	# high scores tables
-	def high_scores(self):
+	# loading and changin game settings
+	def settings(self):
+		util.msg_box('settings', 'Settings', contents=game.font, box_width=40, box_height=8, center=True)
+		self.load_settings()
+
+	def load_settings(self):
+		if os.path.exists('settings.ini'):
+			contents = open('settings.ini', 'r')
+			for line in contents:
+				game.font = line.rstrip()
+			if game.font != 'large':
+				game.font = 'small'
+			contents.close()
+
+	# loading and showing the high scores screen
+	def show_high_scores(self):
 		if os.path.exists('data/highscores.dat'):
 			self.load_high_scores()
 			util.msg_box('highscore', 'High scores', contents=game.highscore, box_width=game.SCREEN_WIDTH, box_height=game.SCREEN_HEIGHT)
@@ -199,9 +228,10 @@ class Game(object):
 			util.msg_box('text', 'High scores', contents="The high scores file is empty.", box_width=41, box_height=5, center=True)
 
 	def load_high_scores(self):
-		contents = open('data/highscores.dat', 'rb')
-		game.highscore = pickle.load(contents)
-		contents.close()
+		if os.path.exists('data/highscores.dat'):
+			contents = open('data/highscores.dat', 'rb')
+			game.highscore = pickle.load(contents)
+			contents.close()
 
 	# brings up the main menu
 	def main_menu(self):
@@ -216,7 +246,9 @@ class Game(object):
 			libtcod.console_clear(0)
 			libtcod.console_print_ex(0, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 6, libtcod.BKGND_SET, libtcod.CENTER, 'Immortal ' + VERSION)
 			libtcod.console_print_ex(0, SCREEN_WIDTH / 2, SCREEN_HEIGHT - 2, libtcod.BKGND_SET, libtcod.CENTER, 'By Potatoman')
-			contents = ['Start a new game', 'Load a saved game', 'Help', 'Options', 'High Scores', 'Quit']
+			contents = ['Start a new game', 'Load a saved game', 'Help', 'Settings', 'High Scores', 'Quit']
+			if choice == -1:
+				choice = 0
 			choice = util.msg_box('main_menu', header=None, contents=contents, box_width=21, box_height=len(contents) + 2, default=choice)
 
 			if choice == 0:  # start new game
@@ -229,7 +261,9 @@ class Game(object):
 					break
 			if choice == 2:  # help
 				self.help()
+			if choice == 3:  # settings
+				self.settings()
 			if choice == 4:  # high scores
-				self.high_scores()
+				self.show_high_scores()
 			if choice == 5:  # quit
 				break

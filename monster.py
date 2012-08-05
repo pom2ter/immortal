@@ -33,7 +33,7 @@ class Monster(object):
 		self.flags.append("ai_hostile")
 		self.flags[:] = (value for value in self.flags if value != "ai_neutral" and value != "ai_friendly")
 
-	def drops(self, x, y):
+	def loot(self, x, y):
 		#see if monster drops an item or a corpse when dying
 		corpse = libtcod.random_get_int(game.rnd, 1, 100)
 		if corpse <= self.corpse:
@@ -51,8 +51,8 @@ class Monster(object):
 				d = game.items.get_item("dog corpse")
 			elif "corpse_orc" in self.flags:
 				d = game.items.get_item("orc corpse")
-			loot = map.Object(x, y, d.icon, d.name, d.color, True, item=d)
-			game.current_map.objects.append(loot)
+			drop = map.Object(x, y, d.icon, d.name, d.color, True, item=d)
+			game.current_map.objects.append(drop)
 		drop_chance = libtcod.random_get_int(game.rnd, 1, 100)
 		if drop_chance >= 80:
 			dice = libtcod.random_get_int(game.rnd, 1, 100)
@@ -62,8 +62,8 @@ class Monster(object):
 				d = game.items.get_item_by_level(2)
 			else:
 				d = game.items.get_item_by_level(3)
-			loot = map.Object(x, y, d.icon, d.name, d.color, True, item=d)
-			game.current_map.objects.append(loot)
+			drop = map.Object(x, y, d.icon, d.name, d.color, True, item=d)
+			game.current_map.objects.append(drop)
 
 	def distance_to_player(self, player, x, y):
 		#return the distance relative to the player

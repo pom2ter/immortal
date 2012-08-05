@@ -33,8 +33,6 @@ def handle_keys():
 				wait_turn()
 			elif key.vk == libtcod.KEY_ESCAPE:
 				state = options_menu()
-				if state == 'help':
-					help()
 				if state == 'save':
 					if save_game():
 						return 'save'
@@ -186,6 +184,7 @@ def drop_item():
 		choice = util.msg_box('drop', 'Drop an item', 'Up/down to select, ENTER to drop, ESC to exit', game.player.inventory, box_height=max(16, len(game.player.inventory) + 4), blitmap=True)
 		if choice != -1:
 			obj = map.Object(game.char.x, game.char.y, game.player.inventory[choice].icon, game.player.inventory[choice].name, game.player.inventory[choice].color, True, item=game.player.inventory[choice])
+			obj.first_appearance = game.player.inventory[choice].turn_spawned
 			game.message.new('You drop the ' + obj.name, game.player.turns, libtcod.red)
 			game.current_map.objects.append(obj)
 			obj.send_to_back()
@@ -219,6 +218,15 @@ def equip_item():
 def help():
 	contents = open('data/help.txt', 'r').read()
 	util.msg_box('text', 'Help', contents=contents, box_width=40, box_height=22, blitmap=True)
+	game.redraw_gui = True
+
+
+# highscore screen
+def highscores():
+	if os.path.exists('data/highscores.dat'):
+		util.msg_box('highscore', 'High scores', contents=game.highscore, box_width=game.SCREEN_WIDTH, box_height=game.SCREEN_HEIGHT)
+	else:
+		util.msg_box('text', 'High scores', contents="The high scores file is empty.", box_width=41, box_height=5, center=True)
 	game.redraw_gui = True
 
 
@@ -326,12 +334,16 @@ def open_door(x=None, y=None):
 
 # ingame options menu
 def options_menu():
-	choice = util.msg_box('options', 'Main Menu', contents=['Help', 'Options', 'Save and quit game', 'Quit without saving'], box_width=23, box_height=6, blitmap=True)
+	choice = util.msg_box('options', 'Menu', contents=['Help', 'Settings', 'High scores', 'Save and quit game', 'Quit without saving'], box_width=23, box_height=7, blitmap=True)
 	if choice == 0:
-		return 'help'
+		help()
+	if choice == 1:
+		settings()
 	if choice == 2:
-		return 'save'
+		highscores()
 	if choice == 3:
+		return 'save'
+	if choice == 4:
 		return 'exit'
 	return
 
@@ -341,7 +353,7 @@ def pickup_item():
 	pickup = False
 	for object in game.current_map.objects:  # look for an item in the player's tile
 		if object.x == game.char.x and object.y == game.char.y and object.can_be_pickup:
-			object.item.pick_up()
+			object.item.pick_up(object.first_appearance)
 			game.current_map.objects.remove(object)
 			pickup = True
 			break
@@ -390,6 +402,12 @@ def save_game():
 	return False
 
 
+# settings screen
+def settings():
+	util.msg_box('settings', 'Settings', contents=game.font, box_width=40, box_height=8, center=True, blitmap=True)
+	game.redraw_gui = True
+
+
 # use an item
 def use_item():
 	if len(game.player.inventory) == 0:
@@ -416,17 +434,18 @@ def sheet_stats(con, width, height):
 	libtcod.console_print(con, 2, 4, 'Strength: ' + str(game.player.strength))
 	libtcod.console_print(con, 2, 5, 'Dexterity: ' + str(game.player.dexterity))
 	libtcod.console_print(con, 2, 6, 'Intelligence: ' + str(game.player.intelligence))
-	libtcod.console_print(con, 2, 7, 'Endurance: ' + str(game.player.endurance))
-	libtcod.console_print(con, 2, 8, 'Luck: ' + str(game.player.luck))
+	libtcod.console_print(con, 2, 7, 'Wisdom: ' + str(game.player.wisdom))
+	libtcod.console_print(con, 2, 8, 'Endurance: ' + str(game.player.endurance))
+	libtcod.console_print(con, 2, 9, 'Karma: ' + str(game.player.karma))
 
 	libtcod.console_print(con, 30, 4, 'Health: ' + str(game.player.health) + '/' + str(game.player.max_health))
 	libtcod.console_print(con, 30, 5, 'Mana: ' + str(game.player.mana) + '/' + str(game.player.max_mana))
 	libtcod.console_print(con, 30, 6, 'Experience: ' + str(game.player.xp))
 	libtcod.console_print(con, 30, 7, 'Gold: ' + str(game.player.gold))
 
-	libtcod.console_print(con, 2, 10, 'Attack Rating: ' + str(game.player.attack_rating()))
-	libtcod.console_print(con, 2, 11, 'Defense Rating: ' + str(game.player.defense_rating()))
-	libtcod.console_print(con, 2, 12, 'Carrying Capacity: ' + str(game.player.carrying_capacity()) + 'lbs')
+	libtcod.console_print(con, 2, 11, 'Attack Rating: ' + str(game.player.attack_rating()))
+	libtcod.console_print(con, 2, 12, 'Defense Rating: ' + str(game.player.defense_rating()))
+	libtcod.console_print(con, 2, 13, 'Carrying Capacity: ' + str(game.player.carrying_capacity()) + 'lbs')
 
 
 # character sheet for skills

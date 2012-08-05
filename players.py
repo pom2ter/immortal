@@ -6,10 +6,10 @@ RACES = ["Human", "Elf", "Dwarf", "Halfling"]
 CLASSES = ["Fighter", "Rogue", "Priest", "Mage"]
 GENDER = ["Male", "Female"]
 COMBAT_SKILLS = ['Sword', 'Axe', 'Mace', 'Dagger', 'Polearm', 'Staff', 'Bow', 'Missile', 'Hands']
-BASE_STATS = [[9, 9, 8, 9, 9], [12, 9, 6, 11, 8], [10, 12, 7, 8, 9], [9, 8, 10, 10, 9], [7, 10, 12, 8, 9],
-				[7, 9, 10, 8, 10], [10, 9, 8, 10, 9], [8, 12, 9, 7, 10], [7, 8, 12, 9, 10], [5, 10, 14, 7, 10],
-				[11, 7, 6, 12, 8], [14, 7, 4, 14, 7], [12, 10, 5, 11, 8], [11, 6, 8, 13, 8], [9, 8, 10, 11, 8],
-				[8, 10, 7, 9, 10], [11, 10, 5, 11, 9], [9, 13, 6, 8, 10], [8, 9, 9, 10, 10], [6, 11, 11, 8, 10],
+BASE_STATS = [[9, 9, 9, 9, 9], [12, 9, 7, 8, 11], [10, 12, 8, 9, 8], [10, 8, 9, 12, 8], [7, 9, 13, 10, 8],
+				[7, 9, 11, 10, 8], [10, 9, 9, 9, 10], [8, 12, 10, 10, 7], [8, 8, 11, 13, 7], [5, 9, 15, 11, 7],
+				[11, 7, 7, 8, 12], [14, 7, 5, 7, 14], [12, 10, 6, 8, 11], [12, 6, 7, 11, 11], [9, 7, 11, 9, 11],
+				[8, 10, 8, 10, 9], [11, 10, 6, 9, 11], [9, 13, 7, 10, 8], [9, 9, 8, 13, 8], [6, 10, 12, 11, 8],
 				]
 EXPERIENCE_TABLES = [0, 10, 250, 500, 800, 1250, 1750, 2450, 3250, 4150, 5200, 6400, 7800, 9400, 11200, 13200, 16400, 18800, 21400, 24200, 27000]
 FIGHTER_HP_GAIN = 10
@@ -30,9 +30,10 @@ class Player(object):
 		self.profession = CLASSES[0]
 		self.strength = 9
 		self.dexterity = 9
-		self.intelligence = 8
+		self.intelligence = 9
+		self.wisdom = 9
 		self.endurance = 9
-		self.luck = 9
+		self.karma = 9
 		self.icon = '@'
 		self.icon_color = libtcod.white
 		self.level = 1
@@ -58,6 +59,14 @@ class Player(object):
 			self.health += 1
 			if self.health > self.max_health:
 				self.health = self.max_health
+		self.item_degradation()
+
+	def item_degradation(self):
+		for i in range(0, len(self.inventory)):
+			if self.inventory[i].type == "corpse" and (self.turns - self.inventory[i].turn_spawned > 500):
+				game.message.new('An item in your inventory just rotted away.', self.turns, libtcod.red)
+				self.inventory.pop(i)
+				break
 
 	def equip(self, item):
 		self.equipment.append(self.inventory[item])
@@ -94,30 +103,32 @@ class Player(object):
 
 	def attack_rating(self):
 		ar = self.strength
-		ar += self.dexterity * 0.2
-		ar += self.luck * 0.2
+		ar += self.dexterity * 0.25
+		ar += self.karma * 0.25
 		ar += self.combat_skills[self.find_weapon_type()].level * 0.2
 		return ar
 
 	def defense_rating(self):
 		dr = self.dexterity
-		dr += self.luck * 0.2
+		dr += self.wisdom * 0.25
+		dr += self.karma * 0.25
 		return dr
 
 	def carrying_capacity(self):
 		cc = self.strength * 2.5
 		cc += self.endurance * 1.25
-		cc += self.luck * 0.5
+		cc += self.karma * 0.5
 		return cc
 
 	def health_bonus(self):
 		hb = self.endurance
-		hb += self.luck * 0.2
+		hb += self.karma * 0.25
 		return int(hb)
 
 	def mana_bonus(self):
 		mb = self.intelligence
-		mb += self.luck * 0.2
+		mb += self.wisdom * 0.75
+		mb += self.karma * 0.25
 		return int(mb)
 
 	def set_max_health(self):
@@ -130,16 +141,18 @@ class Player(object):
 		if self.mana > self.max_mana:
 			self.mana = self.max_mana
 
-	def stat_gain(self, st, dx, en, iq):
+	def stat_gain(self, st, dx, iq, wi, en):
 		fate = libtcod.random_get_int(game.rnd, 1, 100)
 		if fate <= st:
 			self.strength += 1
 		elif fate <= st + dx:
 			self.dexterity += 1
-		elif fate <= st + dx + en:
-			self.endurance += 1
-		elif fate <= st + dx + en + iq:
+		elif fate <= st + dx + iq:
 			self.intelligence += 1
+		elif fate <= st + dx + iq + wi:
+			self.wisdom += 1
+		elif fate <= st + dx + iq + wi + en:
+			self.endurance += 1
 		self.carrying_capacity()
 
 	def gain_level(self):
@@ -147,19 +160,19 @@ class Player(object):
 		if self.profession == "Fighter":
 			hp_increase = libtcod.random_get_int(game.rnd, 2, FIGHTER_HP_GAIN)
 			mp_increase = libtcod.random_get_int(game.rnd, 2, FIGHTER_MP_GAIN)
-			self.stat_gain(50, 15, 25, 10)
+			self.stat_gain(50, 15, 5, 10, 20)
 		if self.profession == "Rogue":
 			hp_increase = libtcod.random_get_int(game.rnd, 2, ROGUE_HP_GAIN)
 			mp_increase = libtcod.random_get_int(game.rnd, 2, ROGUE_MP_GAIN)
-			self.stat_gain(25, 50, 15, 10)
+			self.stat_gain(20, 50, 10, 10, 10)
 		if self.profession == "Priest":
 			hp_increase = libtcod.random_get_int(game.rnd, 2, PRIEST_HP_GAIN)
 			mp_increase = libtcod.random_get_int(game.rnd, 2, PRIEST_MP_GAIN)
-			self.stat_gain(50, 15, 10, 25)
+			self.stat_gain(20, 10, 10, 50, 10)
 		if self.profession == "Mage":
 			hp_increase = libtcod.random_get_int(game.rnd, 2, MAGE_HP_GAIN)
 			mp_increase = libtcod.random_get_int(game.rnd, 2, MAGE_MP_GAIN)
-			self.stat_gain(10, 25, 15, 50)
+			self.stat_gain(10, 15, 50, 20, 5)
 		self.base_health += hp_increase
 		self.base_mana += mp_increase
 		self.health += hp_increase
@@ -190,7 +203,7 @@ class Player(object):
 				if self.xp >= EXPERIENCE_TABLES[self.level]:
 					self.gain_level()
 					game.message.new('You are now level ' + str(self.level) + '!', self.turns, libtcod.green)
-				target.entity.drops(target.x, target.y)
+				target.entity.loot(target.x, target.y)
 				target.delete()
 			self.combat_skills[self.find_weapon_type()].gain_xp(2)
 		else:
@@ -200,7 +213,7 @@ class Player(object):
 
 	def score(self):
 		score, skills = 0, 0
-		score += (self.strength + self.dexterity + self.intelligence + self.endurance + self.luck) / 5
+		score += (self.strength + self.dexterity + self.intelligence + self.wisdom + self.endurance + self.karma) / 5
 		for i in range(0, len(self.combat_skills)):
 			skills += self.combat_skills[i].level
 		score += skills / 20
@@ -268,9 +281,9 @@ def create_character():
 		libtcod.console_print(cs, 0, 2, 'Select a race:')
 		libtcod.console_print(cs, 15, 3, 'Modifiers')
 		libtcod.console_print(cs, 0, 4, '1) Human       None')
-		libtcod.console_print(cs, 0, 5, '2) Elf         +2 Int, +1 Luck, -2 Str, -1 End')
-		libtcod.console_print(cs, 0, 6, '3) Dwarf       +2 Str, +3 End, -2 Int, -2 Dex, -1 Luck')
-		libtcod.console_print(cs, 0, 7, '4) Halfling    +1 Dex, +1 Luck, -1 Int, -1 Str')
+		libtcod.console_print(cs, 0, 5, '2) Elf         +2 Int, +1 Wis, -2 Str, -1 End')
+		libtcod.console_print(cs, 0, 6, '3) Dwarf       +2 Str, +3 End, -2 Dex, -2 Int, -1 Wis')
+		libtcod.console_print(cs, 0, 7, '4) Halfling    +1 Dex, +1 Wis, -1 Str, -1 Int')
 		libtcod.console_blit(cs, 0, 0, cs_width, game.SCREEN_HEIGHT, 0, 0, 0)
 		libtcod.console_flush()
 
@@ -286,10 +299,10 @@ def create_character():
 		libtcod.console_rect(cs, 0, 2, cs_width, game.SCREEN_HEIGHT, True, libtcod.BKGND_SET)
 		libtcod.console_print(cs, 0, 2, 'Select a class:')
 		libtcod.console_print(cs, 15, 3, 'Modifiers')
-		libtcod.console_print(cs, 0, 4, '1) Fighter     +3 Str, +2 End, -2 Int, -1 Luck')
+		libtcod.console_print(cs, 0, 4, '1) Fighter     +3 Str, +2 End, -2 Int, -1 Wis')
 		libtcod.console_print(cs, 0, 5, '2) Rogue       +3 Dex, +1 Str, -1 Int, -1 End')
-		libtcod.console_print(cs, 0, 6, '3) Priest      +2 Int, +1 End, -1 Dex')
-		libtcod.console_print(cs, 0, 7, '4) Mage        +4 Int, +1 Dex, -2 Str, -1 End')
+		libtcod.console_print(cs, 0, 6, '3) Priest      +3 Wis, +1 Str, -1 Dex, -1 End')
+		libtcod.console_print(cs, 0, 7, '4) Mage        +4 Int, +1 Wis, -2 Str, -1 End')
 		libtcod.console_blit(cs, 0, 0, cs_width, game.SCREEN_HEIGHT, 0, 0, 0)
 		libtcod.console_flush()
 
@@ -335,28 +348,32 @@ def show_stats(stats, text, attr=-1, roll=-1):
 	libtcod.console_print(stats, 2, 5, 'Strength:      ')
 	libtcod.console_print(stats, 2, 6, 'Dexterity:     ')
 	libtcod.console_print(stats, 2, 7, 'Intelligence:  ')
-	libtcod.console_print(stats, 2, 8, 'Endurance:     ')
-	libtcod.console_print(stats, 2, 9, 'Luck:          ')
+	libtcod.console_print(stats, 2, 8, 'Wisdom:        ')
+	libtcod.console_print(stats, 2, 9, 'Endurance:     ')
+	libtcod.console_print(stats, 2, 11, 'Karma:         ')
 
 	if not attr == -1:
 		for i in range(0, 5):
-			libtcod.console_print(stats, 17, i + 5, str(BASE_STATS[attr][i]))
+			libtcod.console_print_ex(stats, 18, i + 5, libtcod.BKGND_SET, libtcod.RIGHT, str(BASE_STATS[attr][i]))
 
 	if not roll == -1:
 		stat = []
-		stat.append(libtcod.random_get_int(game.rnd, 0, 8))
-		stat.append(libtcod.random_get_int(game.rnd, 0, 8))
-		stat.append(libtcod.random_get_int(game.rnd, 0, 8))
-		stat.append(libtcod.random_get_int(game.rnd, 0, 8))
-		stat.append(libtcod.random_get_int(game.rnd, 0, 8))
+		stat.append(libtcod.random_get_int(game.rnd, 0, 6))
+		stat.append(libtcod.random_get_int(game.rnd, 0, 6))
+		stat.append(libtcod.random_get_int(game.rnd, 0, 6))
+		stat.append(libtcod.random_get_int(game.rnd, 0, 6))
+		stat.append(libtcod.random_get_int(game.rnd, 0, 6))
+		stat.append(libtcod.random_get_int(game.rnd, 0, 19))
 		for i in range(0, 5):
-			libtcod.console_print(stats, 24, i + 5, str(stat[i]) + ' ')
-			libtcod.console_print(stats, 30, i + 5, str(BASE_STATS[attr][i] + stat[i]) + ' ')
+			libtcod.console_print(stats, 24, i + 5, str(stat[i]))
+			libtcod.console_print_ex(stats, 31, i + 5, libtcod.BKGND_SET, libtcod.RIGHT, ' ' + str(BASE_STATS[attr][i] + stat[i]))
+		libtcod.console_print_ex(stats, 31, 11, libtcod.BKGND_SET, libtcod.RIGHT, ' ' + str(stat[5]))
 		game.player.strength = BASE_STATS[attr][0] + stat[0]
 		game.player.dexterity = BASE_STATS[attr][1] + stat[1]
 		game.player.intelligence = BASE_STATS[attr][2] + stat[2]
-		game.player.endurance = BASE_STATS[attr][3] + stat[3]
-		game.player.luck = BASE_STATS[attr][4] + stat[4]
+		game.player.wisdom = BASE_STATS[attr][3] + stat[3]
+		game.player.endurance = BASE_STATS[attr][4] + stat[4]
+		game.player.karma = stat[5]
 		game.player.gold = libtcod.random_get_int(game.rnd, 1, 50)
 
 		if game.player.profession == "Fighter":
