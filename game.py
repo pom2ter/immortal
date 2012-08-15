@@ -6,12 +6,13 @@ from players import *
 from messages import *
 from item import *
 from monster import *
+import worldgen
 import map
 import commands
 import util
 
 VERSION = 'v0.2.0'
-BUILD = '26'
+BUILD = '27'
 
 #size of the map
 MAP_WIDTH = 70
@@ -24,6 +25,9 @@ MESSAGE_HEIGHT = 5
 SCREEN_WIDTH = MAP_WIDTH + PLAYER_STATS_WIDTH + 3
 SCREEN_HEIGHT = MAP_HEIGHT + MESSAGE_HEIGHT + 3
 PLAYER_STATS_HEIGHT = SCREEN_HEIGHT - 2
+
+WORLDMAP_WIDTH = 600
+WORLDMAP_HEIGHT = 400
 
 #sizes and coordinates relevant for the GUI
 PLAYER_STATS_X = 1
@@ -64,6 +68,7 @@ panel = 0
 ps = 0
 
 #miscellaneous variables
+worldmap = None
 current_map = None
 old_maps = []
 char = None
@@ -233,6 +238,61 @@ class Game(object):
 			game.highscore = pickle.load(contents)
 			contents.close()
 
+	# testing the world generation
+	def world_generation(self):
+		game.worldmap = worldgen.World()
+		game.worldmap.compute_sun_light([1.0, 1.0, 0.0])
+		key = libtcod.Key()
+		mouse = libtcod.Mouse()
+		curx, cury = 0, 0
+
+		while not libtcod.console_is_window_closed():
+			libtcod.sys_check_for_event(libtcod.EVENT_ANY, key, mouse)
+			mx = curx + mouse.cx
+			my = cury + mouse.cy
+			if key.vk == libtcod.KEY_UP:
+				if cury > 3:
+					cury -= 4
+			if key.vk == libtcod.KEY_DOWN:
+				if cury <= game.WORLDMAP_HEIGHT - game.SCREEN_HEIGHT - 3:
+					cury += 4
+			if key.vk == libtcod.KEY_LEFT:
+				if curx > 3:
+					curx -= 4
+			if key.vk == libtcod.KEY_RIGHT:
+				if curx <= game.WORLDMAP_WIDTH - game.SCREEN_WIDTH - 3:
+					curx += 4
+			if key.vk == libtcod.KEY_ESCAPE:
+				break
+
+			for px in range(0, game.SCREEN_WIDTH):
+				for py in range(0, game.SCREEN_HEIGHT):
+					wx = px + curx
+					wy = py + cury
+					cellheight = libtcod.heightmap_get_value(game.worldmap.hm, wx, wy)
+					hcolor = libtcod.blue
+					if cellheight >= 0.08:
+						hcolor = libtcod.light_blue
+					if cellheight >= 0.12:
+						hcolor = libtcod.light_yellow
+					if cellheight >= 0.16:
+						hcolor = libtcod.light_green
+					if cellheight >= 0.3:
+						hcolor = libtcod.green
+					if cellheight >= 0.5:
+						hcolor = libtcod.dark_green
+					if cellheight >= 0.655:
+						hcolor = libtcod.grey
+					if cellheight >= 0.905:
+						hcolor = libtcod.silver
+					libtcod.console_put_char_ex(0, px, py, ' ', hcolor, hcolor)
+
+			cellheight = libtcod.heightmap_get_value(game.worldmap.hm, mx, my)
+			libtcod.console_set_default_foreground(0, libtcod.black)
+			libtcod.console_print(0, 0, game.SCREEN_HEIGHT - 2, 'X: ' + str(mx) + ' Y: ' + str(my) + '   ')
+			libtcod.console_print(0, 0, game.SCREEN_HEIGHT - 1, str(cellheight) + '   ')
+			libtcod.console_flush()
+
 	# brings up the main menu
 	def main_menu(self):
 		global player_action
@@ -244,9 +304,9 @@ class Game(object):
 			libtcod.console_set_default_foreground(0, libtcod.light_yellow)
 			libtcod.console_set_default_background(0, libtcod.black)
 			libtcod.console_clear(0)
-			libtcod.console_print_ex(0, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 6, libtcod.BKGND_SET, libtcod.CENTER, 'Immortal ' + VERSION)
+			libtcod.console_print_ex(0, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 7, libtcod.BKGND_SET, libtcod.CENTER, 'Immortal ' + VERSION)
 			libtcod.console_print_ex(0, SCREEN_WIDTH / 2, SCREEN_HEIGHT - 2, libtcod.BKGND_SET, libtcod.CENTER, 'By Potatoman')
-			contents = ['Start a new game', 'Load a saved game', 'Help', 'Settings', 'High Scores', 'Quit']
+			contents = ['Start a new game', 'Load a saved game', 'World Generation', 'Help', 'Settings', 'High Scores', 'Quit']
 			if choice == -1:
 				choice = 0
 			choice = util.msg_box('main_menu', header=None, contents=contents, box_width=21, box_height=len(contents) + 2, default=choice)
@@ -259,11 +319,13 @@ class Game(object):
 				self.load_game()
 				if player_action == 'exit':
 					break
-			if choice == 2:  # help
+			if choice == 2:  # world generation
+				self.world_generation()
+			if choice == 3:  # help
 				self.help()
-			if choice == 3:  # settings
+			if choice == 4:  # settings
 				self.settings()
-			if choice == 4:  # high scores
+			if choice == 5:  # high scores
 				self.show_high_scores()
-			if choice == 5:  # quit
+			if choice == 6:  # quit
 				break

@@ -111,12 +111,8 @@ class Map(object):
 		self.objects = [game.char]
 
 		#fill map with "blocked" tiles
-		self.tiles = [[game.tiles.gettile('wall')
-			for y in range(game.MAP_HEIGHT)]
-				for x in range(game.MAP_WIDTH)]
-		self.explored = [[False
-			for y in range(game.MAP_HEIGHT)]
-				for x in range(game.MAP_WIDTH)]
+		self.tiles = [[game.tiles.gettile('wall') for y in range(game.MAP_HEIGHT)] for x in range(game.MAP_WIDTH)]
+		self.explored = [[False for y in range(game.MAP_HEIGHT)] for x in range(game.MAP_WIDTH)]
 
 		rooms = []
 		num_rooms = 0

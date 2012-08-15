@@ -350,15 +350,24 @@ def options_menu():
 
 # pick up an item
 def pickup_item():
-	pickup = False
-	for object in game.current_map.objects:  # look for an item in the player's tile
-		if object.x == game.char.x and object.y == game.char.y and object.can_be_pickup:
-			object.item.pick_up(object.first_appearance)
-			game.current_map.objects.remove(object)
-			pickup = True
-			break
-	if not pickup:
+	nb_items, itempos = [], []
+	for i in range(0, len(game.current_map.objects)):
+		if game.current_map.objects[i].x == game.char.x and game.current_map.objects[i].y == game.char.y and game.current_map.objects[i].can_be_pickup:
+			game.current_map.objects[i].item.turn_spawned = game.current_map.objects[i].first_appearance
+			nb_items.append(game.current_map.objects[i].item)
+			itempos.append(i)
+
+	if len(nb_items) == 0:
 		game.message.new('There is nothing to pick up.', game.player.turns)
+	elif len(nb_items) == 1:
+		nb_items[0].pick_up(nb_items[0].turn_spawned)
+		game.current_map.objects.pop(itempos[0])
+	else:
+		choice = util.msg_box('pickup', 'Get an item', 'Up/down to select, ENTER to get, ESC to exit', nb_items, box_height=max(16, len(nb_items) + 4), blitmap=True)
+		if choice != -1:
+			nb_items[choice].pick_up(nb_items[choice].turn_spawned)
+			game.current_map.objects.pop(itempos[choice])
+		game.redraw_gui = True
 
 
 # dialog to confirm quitting the game

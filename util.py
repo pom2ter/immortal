@@ -116,7 +116,7 @@ def msg_box(typ, header=None, footer=None, contents=None, box_width=60, box_heig
 		libtcod.console_print_ex(box, box_width - 5, 0, libtcod.BKGND_SET, libtcod.LEFT, '[x]')
 	libtcod.console_set_default_foreground(box, libtcod.white)
 
-	if typ in ['inv', 'drop', 'use', 'remove', 'equip']:
+	if typ in ['inv', 'drop', 'use', 'remove', 'equip', 'pickup']:
 		choice = choices(box, box_width - 4, box_height - 4, contents, 'inventory', 2, 2, blitmap=blitmap, mouse_out=True)
 	if typ == 'save':
 		choice = choices(box, box_width - 4, box_height - 4, contents, 'savegames', 2, 2, mouse_out=True)
