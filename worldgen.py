@@ -181,6 +181,61 @@ class World(object):
 				v = self.get_interpolated_intensity(lowResMap, x * coef, y * coef, smallWidth, smallHeight)
 				libtcod.heightmap_set_value(self.precipitation, x, y, v)
 
+	def smooth_map(self):
+		smoothKernelSize = 9
+		smoothKernelDx = [-1, 0, 1, -1, 0, 1, -1, 0, 1]
+		smoothKernelDy = [-1, -1, -1, 0, 0, 0, 1, 1, 1]
+		smoothKernelWeight = [2, 8, 2, 8, 20, 8, 2, 8, 2]
+
+		t0 = libtcod.sys_elapsed_seconds()
+		libtcod.heightmap_kernel_transform(self.hm, smoothKernelSize, smoothKernelDx, smoothKernelDy, smoothKernelWeight, -1000, 1000)
+		libtcod.heightmap_kernel_transform(self.hm2, smoothKernelSize, smoothKernelDx, smoothKernelDy, smoothKernelWeight, -1000, 1000)
+		libtcod.heightmap_normalize(self.hm)
+		t1 = libtcod.sys_elapsed_seconds()
+		print "Blur: ", t1 - t0
+
+	def generate_rivers(self):
+		riverId = 0
+		sx, sy = 0, 0
+		dx, dy = 0, 0
+		# get a random point near the coast
+		sx = libtcod.random_get_int(self.rnd, 0, game.WORLDMAP_WIDTH - 1)
+		sy = libtcod.random_get_int(self.rnd, game.WORLDMAP_HEIGHT / 5, 4 * game.WORLDMAP_HEIGHT / 5)
+		h = libtcod.heightmap_get_value(self.hm, sx, sy)
+		while h < self.sandheight - 0.02 or h >= self.sandheight:
+			sx += 1
+			if sx == game.WORLDMAP_WIDTH:
+				sx = 0
+				sy += 1
+				if sy == game.WORLDMAP_HEIGHT:
+					sy = 0
+			h = libtcod.heightmap_get_value(self.hm, sx, sy)
+
+		tree = []
+		randPt = []
+		tree.append(sx + sy * game.WORLDMAP_WIDTH)
+		riverId += 1
+		dx = sx
+		dy = sy
+		for i in range(0, libtcod.random_get_int(self.rnd, 50, 200)):
+			rx = libtcod.random_get_int(self.rnd, sx - 200, sx + 200)
+			ry = libtcod.random_get_int(self.rnd, sy - 200, sy + 200)
+			randPt.append(rx + ry * game.WORLDMAP_WIDTH)
+
+		for i in range(0, len(randPt)):
+			rx = randPt[i] % game.WORLDMAP_WIDTH
+			ry = randPt[i] / game.WORLDMAP_WIDTH
+			minDist = 1 ** 10
+			bestx, besty = -1, -1
+			for j in range(0, len(tree)):
+				tx = tree[j] % game.WORLDMAP_WIDTH
+				ty = tree[j] / game.WORLDMAP_WIDTH
+				dist = (tx - rx) * (tx - rx) + (ty - ry) * (ty - ry)
+				if dist < minDist:
+					minDist = dist
+					bestx = tx
+					besty = ty
+
 	def compute_sun_light(self, light):
 		for x in range(0, game.WORLDMAP_WIDTH):
 			for y in range(0, game.WORLDMAP_HEIGHT):
@@ -221,8 +276,17 @@ class World(object):
 		self.hm = libtcod.heightmap_new(game.WORLDMAP_WIDTH, game.WORLDMAP_HEIGHT)
 		self.hm2 = libtcod.heightmap_new(game.WORLDMAP_WIDTH, game.WORLDMAP_HEIGHT)
 		self.precipitation = libtcod.heightmap_new(game.WORLDMAP_WIDTH, game.WORLDMAP_HEIGHT)
+
 		self.build_base_map()
 		self.compute_precipitations()
+		self.smooth_map()
+		self.set_land_mass(0.5, self.sandheight)
+		t0 = libtcod.sys_elapsed_seconds()
+		for i in range(0, 500):
+			self.generate_rivers()
+		t1 = libtcod.sys_elapsed_seconds()
+		print "Rivers: ", t1 - t0
+
 
 #	def update_clouds(self, elapsedtime):
 #		self.cloudtotaldx += elapsedtime * 5

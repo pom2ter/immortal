@@ -120,6 +120,7 @@ class Monster(object):
 			damage = self.damage.roll_dice()
 			game.message.new('The ' + self.name + ' hits you for ' + str(damage) + ' pts of damage', game.player.turns, libtcod.light_red)
 			game.player.health -= damage
+			game.hp_anim.append([game.char, str(-damage), libtcod.red, 0])
 			if game.player.health < 1:
 				game.message.new('You die...', game.player.turns, libtcod.light_orange)
 				game.message.new('*** Press space ***', game.player.turns)
@@ -167,7 +168,7 @@ class MonsterList(object):
 		if not monster == None:
 			self.list.append(monster)
 
-	def getmonster(self, name):
+	def get_monster(self, name):
 		for monster in self.list:
 			if name in monster.name:
 				return monster

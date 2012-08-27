@@ -399,6 +399,17 @@ def render_player_stats_panel():
 	libtcod.console_blit(game.ps, 0, 0, game.PLAYER_STATS_WIDTH, game.PLAYER_STATS_HEIGHT, 0, game.PLAYER_STATS_X, game.PLAYER_STATS_Y)
 
 
+def render_damage_animations():
+	for i, (obj, line, color, turn) in enumerate(reversed(game.hp_anim)):
+		new_color = libtcod.color_lerp(libtcod.black, color, 1 - ((turn / 30) * 0.2))
+		libtcod.console_set_default_foreground(game.con, new_color)
+		x, y = obj.x, obj.y
+		libtcod.console_print_ex(game.con, x, y - (turn / 30), libtcod.BKGND_NONE, libtcod.CENTER, line)
+		game.hp_anim[len(game.hp_anim) - i - 1] = (obj, line, color, turn + 1)
+		if turn > 120:
+			game.hp_anim.pop(len(game.hp_anim) - i - 1)
+
+
 def render_all():
 	# recompute FOV if needed (the player moved or something)
 	libtcod.console_clear(game.con)
@@ -431,7 +442,7 @@ def render_all():
 			visible = libtcod.map_is_in_fov(game.fov_map, x, y)
 			if not visible:
 				if game.current_map.explored[x][y]:
-					libtcod.console_put_char_ex(game.con, x, y, game.current_map.tiles[x][y].icon, game.current_map.tiles[x][y].dark_color, libtcod.black)
+					libtcod.console_put_char_ex(game.con, x, y, game.current_map.tiles[x][y].icon, game.current_map.tiles[x][y].dark_color,  libtcod.black)
 			else:
 				if not game.fov_torch:
 					libtcod.console_put_char_ex(game.con, x, y, game.current_map.tiles[x][y].icon, game.current_map.tiles[x][y].color, libtcod.black)
@@ -492,4 +503,5 @@ def render_all():
 
 	libtcod.console_print(game.con, 0, 0, get_names_under_mouse())
 	libtcod.console_print(game.con, game.MAP_WIDTH - 9, 0, '(%3d fps)' % libtcod.sys_get_fps())
+	render_damage_animations()
 	libtcod.console_blit(game.con, 0, 0, game.MAP_WIDTH, game.MAP_HEIGHT, 0, game.MAP_X, game.MAP_Y)

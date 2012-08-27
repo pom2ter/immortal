@@ -11,8 +11,8 @@ import map
 import commands
 import util
 
-VERSION = 'v0.2.0'
-BUILD = '27'
+VERSION = 'v0.2.1'
+BUILD = '28'
 
 #size of the map
 MAP_WIDTH = 70
@@ -82,6 +82,7 @@ killer = None
 highscore = []
 redraw_gui = True
 font = 'small'
+hp_anim = []
 
 
 class Game(object):
@@ -298,7 +299,7 @@ class Game(object):
 		global player_action
 		player_action = None
 		choice = 0
-		#libtcod.console_credits()
+		libtcod.console_credits()
 		while not libtcod.console_is_window_closed():
 			#libtcod.image_blit_2x(img, 0, 0, 0)
 			libtcod.console_set_default_foreground(0, libtcod.light_yellow)

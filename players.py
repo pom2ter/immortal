@@ -59,6 +59,8 @@ class Player(object):
 			self.health += 1
 			if self.health > self.max_health:
 				self.health = self.max_health
+			else:
+				game.hp_anim.append([game.char, '1', libtcod.green, 0])
 		self.item_degradation()
 
 	def item_degradation(self):
@@ -197,6 +199,7 @@ class Player(object):
 				damage = util.roll_dice(1, 4, 1, 0)
 			game.message.new('You hit the ' + target.entity.name + ' for ' + str(damage) + ' pts of damage.', self.turns)
 			target.entity.health -= damage
+			game.hp_anim.append([target, str(-damage), libtcod.light_yellow, 0])
 			if target.entity.health < 1:
 				game.message.new('The ' + target.entity.name + ' dies!', self.turns, libtcod.light_orange)
 				self.xp += target.entity.xp

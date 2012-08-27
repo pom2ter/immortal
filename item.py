@@ -37,6 +37,7 @@ class Item(object):
 				else:
 					heal = self.dice.roll_dice()
 					game.player.health += heal
+					game.hp_anim.append([game.char, str(heal), libtcod.green, 0])
 					if game.player.health > game.player.max_health:
 						game.player.health = game.player.max_health
 					game.player.inventory.pop(pos)
@@ -48,6 +49,7 @@ class Item(object):
 				else:
 					heal = self.dice.roll_dice()
 					game.player.mana += heal
+					game.hp_anim.append([game.char, str(heal), libtcod.green, 0])
 					if game.player.mana > game.player.max_mana:
 						game.player.mana = game.player.max_mana
 					game.player.inventory.pop(pos)
@@ -168,6 +170,7 @@ class ItemListener(object):
 		return True
 
 	def end_struct(self, struct, name):
+		self.temp_item.dark_color = libtcod.color_lerp(libtcod.black, self.temp_item.color, 0.3)
 		game.items.add_to_list(self.temp_item)
 		return True
 

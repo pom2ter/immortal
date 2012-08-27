@@ -166,7 +166,7 @@ def close_door():
 	dx, dy = key_check(key, dx, dy)
 
 	if game.current_map.tiles[game.char.x + dx][game.char.y + dy].name == 'opened door':
-		game.current_map.tiles[game.char.x + dx][game.char.y + dy] = game.tiles.gettile('door')
+		game.current_map.tiles[game.char.x + dx][game.char.y + dy] = game.tiles.get_tile('door')
 		game.player.add_turn()
 		game.message.new('You close the door.', game.player.turns)
 		game.fov_recompute = True
@@ -322,7 +322,7 @@ def open_door(x=None, y=None):
 		dx, dy = x, y
 
 	if game.current_map.tiles[game.char.x + dx][game.char.y + dy].name == 'door':
-		game.current_map.tiles[game.char.x + dx][game.char.y + dy] = game.tiles.gettile('opened door')
+		game.current_map.tiles[game.char.x + dx][game.char.y + dy] = game.tiles.get_tile('opened door')
 		game.player.add_turn()
 		game.message.new('You open the door.', game.player.turns)
 		game.fov_recompute = True

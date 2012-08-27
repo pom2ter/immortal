@@ -31,24 +31,24 @@ class Map(object):
 		#go through the tiles in the rectangle and make them passable
 		for x in range(room.x1 + 1, room.x2):
 			for y in range(room.y1 + 1, room.y2):
-				self.tiles[x][y] = game.tiles.gettile('floor')
+				self.tiles[x][y] = game.tiles.get_tile('floor')
 
 	def create_h_tunnel(self, x1, x2, y):
 		#horizontal tunnel. min() and max() are used in case x1>x2
 		for x in range(min(x1, x2), max(x1, x2) + 1):
-			self.tiles[x][y] = game.tiles.gettile('floor')
+			self.tiles[x][y] = game.tiles.get_tile('floor')
 
 	def create_v_tunnel(self, y1, y2, x):
 		#vertical tunnel
 		for y in range(min(y1, y2), max(y1, y2) + 1):
-			self.tiles[x][y] = game.tiles.gettile('floor')
+			self.tiles[x][y] = game.tiles.get_tile('floor')
 
 	def place_doors(self):
 		for y in range(1, game.MAP_HEIGHT - 1):
 			for x in range(1, game.MAP_WIDTH - 1):
 				if (self.tiles[x + 1][y].name == 'floor' and self.tiles[x - 1][y].name == 'floor' and self.tiles[x][y - 1].name == 'wall' and self.tiles[x][y + 1].name == 'wall') or (self.tiles[x + 1][y].name == 'wall' and self.tiles[x - 1][y].name == 'wall' and self.tiles[x][y - 1].name == 'floor' and self.tiles[x][y + 1].name == 'floor'):
 					if libtcod.random_get_int(game.rnd, 1, 50) == 50:
-						self.tiles[x][y] = game.tiles.gettile('door')
+						self.tiles[x][y] = game.tiles.get_tile('door')
 
 	def place_monsters(self):
 		x, y = 0, 0
@@ -97,13 +97,13 @@ class Map(object):
 	def place_stairs(self, rooms):
 		#place stairs going up based on character position
 		if self.location_level > 1:
-			self.tiles[game.char.x][game.char.y] = game.tiles.gettile('stairs going up')
+			self.tiles[game.char.x][game.char.y] = game.tiles.get_tile('stairs going up')
 			self.up_staircase = (game.char.x, game.char.y)
 
 		#place stairs going down in a random spot
 		stairs = libtcod.random_get_int(game.rnd, 1, len(rooms) - 1)
 		(x, y) = rooms[stairs].center()
-		self.tiles[x][y] = game.tiles.gettile('stairs going down')
+		self.tiles[x][y] = game.tiles.get_tile('stairs going down')
 		self.down_staircase = (x, y)
 
 	def generate_map(self):
@@ -111,7 +111,7 @@ class Map(object):
 		self.objects = [game.char]
 
 		#fill map with "blocked" tiles
-		self.tiles = [[game.tiles.gettile('wall') for y in range(game.MAP_HEIGHT)] for x in range(game.MAP_WIDTH)]
+		self.tiles = [[game.tiles.get_tile('wall') for y in range(game.MAP_HEIGHT)] for x in range(game.MAP_WIDTH)]
 		self.explored = [[False for y in range(game.MAP_HEIGHT)] for x in range(game.MAP_WIDTH)]
 
 		rooms = []
@@ -210,7 +210,7 @@ class TileList(object):
 		libtcod.struct_add_flag(tile_type_struct, 'block_sight')
 		libtcod.parser_run(parser, "data/tiles.txt", TileListener())
 
-	def addtile(self, tile=None):
+	def add_to_list(self, tile=None):
 		if not tile == None:
 			if 'blocked' in tile.flags:
 				tile.blocked = True
@@ -218,7 +218,7 @@ class TileList(object):
 				tile.block_sight = True
 			self.list.append(tile)
 
-	def gettile(self, name):
+	def get_tile(self, name):
 		for tile in self.list:
 			if name in tile.name:
 				return tile
@@ -254,7 +254,8 @@ class TileListener(object):
 		return True
 
 	def end_struct(self, struct, name):
-		game.tiles.addtile(self.temp_tile)
+		self.temp_tile.dark_color = libtcod.color_lerp(libtcod.black, self.temp_tile.color, 0.3)
+		game.tiles.add_to_list(self.temp_tile)
 		return True
 
 	def error(self, msg):
@@ -358,3 +359,6 @@ class Object(object):
 	def clear(self, con):
 		#erase the character that represents this object
 		libtcod.console_put_char(con, self.x, self.y, ' ', libtcod.BKGND_NONE)
+
+	def coordinates(self):
+		return self.x, self.y
