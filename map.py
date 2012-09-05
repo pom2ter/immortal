@@ -177,12 +177,13 @@ class Map(object):
 
 class Tile(object):
 	#a tile of the map and its properties
-	def __init__(self, icon, name, color, dark_color, blocked, block_sight=None, article=None, flags=None, typ=None):
+	def __init__(self, icon, name, color, dark_color, back_color, blocked, block_sight=None, article=None, flags=None, typ=None):
 		self.blocked = blocked
 		self.icon = icon
 		self.name = name
 		self.color = libtcod.Color(color[0], color[1], color[2])
 		self.dark_color = libtcod.Color(dark_color[0], dark_color[1], dark_color[2])
+		self.back_color = libtcod.Color(back_color[0], back_color[1], back_color[2])
 		self.article = article
 		self.flags = flags
 		self.type = typ
@@ -204,7 +205,8 @@ class TileList(object):
 		libtcod.struct_add_property(tile_type_struct, 'type', libtcod.TYPE_STRING, True)
 		libtcod.struct_add_property(tile_type_struct, 'icon', libtcod.TYPE_STRING, True)
 		libtcod.struct_add_property(tile_type_struct, 'icon_color', libtcod.TYPE_COLOR, True)
-		libtcod.struct_add_property(tile_type_struct, 'dark_color', libtcod.TYPE_COLOR, True)
+		libtcod.struct_add_property(tile_type_struct, 'dark_color', libtcod.TYPE_COLOR, False)
+		libtcod.struct_add_property(tile_type_struct, 'back_color', libtcod.TYPE_COLOR, False)
 		libtcod.struct_add_property(tile_type_struct, 'article', libtcod.TYPE_STRING, True)
 		libtcod.struct_add_flag(tile_type_struct, 'blocked')
 		libtcod.struct_add_flag(tile_type_struct, 'block_sight')
@@ -227,7 +229,7 @@ class TileList(object):
 
 class TileListener(object):
 	def new_struct(self, struct, name):
-		self.temp_tile = Tile('', '', [0, 0, 0], [0, 0, 0], False, False, '', [], '')
+		self.temp_tile = Tile('', '', [0, 0, 0], [0, 0, 0], [0, 0, 0], False, False, '', [], '')
 		self.temp_tile.name = name
 		return True
 
@@ -244,6 +246,10 @@ class TileListener(object):
 			self.temp_tile.dark_color.r = value.r
 			self.temp_tile.dark_color.g = value.g
 			self.temp_tile.dark_color.b = value.b
+		elif name == 'back_color':
+			self.temp_tile.back_color.r = value.r
+			self.temp_tile.back_color.g = value.g
+			self.temp_tile.back_color.b = value.b
 		else:
 			if name == "type":
 				self.temp_tile.type = value

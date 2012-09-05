@@ -2,6 +2,35 @@ import libtcodpy as libtcod
 import game
 import math
 
+TUNDRA = libtcod.Color(200, 240, 255)
+COLD_DESERT = libtcod.Color(180, 210, 210)
+GRASSLAND = libtcod.sea
+BOREAL_FOREST = libtcod.Color(14, 93, 43)
+TEMPERATE_FOREST = libtcod.Color(44, 177, 83)
+TROPICAL_MONTANE_FOREST = libtcod.Color(185, 232, 164)
+HOT_DESERT = libtcod.Color(235, 255, 210)
+SAVANNA = libtcod.Color(255, 205, 20)
+TROPICAL_DRY_FOREST = libtcod.Color(60, 130, 40)
+TROPICAL_EVERGREEN_FOREST = libtcod.green
+THORN_FOREST = libtcod.Color(192, 192, 112)
+
+ARTIC_ALPINE = 0
+COLD = 1
+TEMPERATE = 2
+WARM = 3
+TROPICAL = 4
+
+biomes = [[TUNDRA, TUNDRA, TUNDRA, TUNDRA, TUNDRA],
+	[COLD_DESERT, GRASSLAND, BOREAL_FOREST, BOREAL_FOREST, BOREAL_FOREST],
+	[COLD_DESERT, GRASSLAND, TEMPERATE_FOREST, TEMPERATE_FOREST, TROPICAL_MONTANE_FOREST],
+	[HOT_DESERT, SAVANNA, TROPICAL_DRY_FOREST, TROPICAL_EVERGREEN_FOREST, TROPICAL_EVERGREEN_FOREST],
+	[HOT_DESERT, THORN_FOREST, TROPICAL_DRY_FOREST, TROPICAL_EVERGREEN_FOREST, TROPICAL_EVERGREEN_FOREST]]
+
+EClimate = [ARTIC_ALPINE, COLD, TEMPERATE, WARM, TROPICAL]
+EBiome = [TUNDRA, COLD_DESERT, GRASSLAND, BOREAL_FOREST, TEMPERATE_FOREST, TROPICAL_MONTANE_FOREST, HOT_DESERT, SAVANNA, TROPICAL_DRY_FOREST, TROPICAL_EVERGREEN_FOREST, THORN_FOREST]
+
+
+
 
 class World(object):
 	def __init__(self):
@@ -12,14 +41,16 @@ class World(object):
 		self.hm = 0
 		self.hm2 = 0
 		self.precipitation = 0
+		self.temperature = 0
+		self.biomemap = [0] * (game.WORLDMAP_WIDTH * game.WORLDMAP_HEIGHT)
 		self.sandheight = 0.12
-		self.grassheight = 0.16
+		self.grassheight = 0.15
 		self.clouds = [[None for y in range(game.WORLDMAP_HEIGHT)] for x in range(game.WORLDMAP_WIDTH)]
 		self.clouddx = 0.0
 		self.cloudtotaldx = 0.0
 		self.worldint = [0] * (game.WORLDMAP_WIDTH * game.WORLDMAP_HEIGHT)
 		self.worldimg = libtcod.image_new(game.WORLDMAP_WIDTH, game.WORLDMAP_HEIGHT)
-		self.generate()
+		self.generate2()
 
 	def add_hill(self, nbHill, baseRadius, radiusVar, height):
 		for i in range(0, nbHill):
@@ -47,6 +78,8 @@ class World(object):
 		newwaterlevel = i / 255.0
 		landcoef = (1.0 - waterlevel) / (1.0 - newwaterlevel)
 		watercoef = waterlevel / newwaterlevel
+
+		print newwaterlevel, landcoef, watercoef
 
 		for x in range(0, game.WORLDMAP_WIDTH):
 			for y in range(0, game.WORLDMAP_HEIGHT):
@@ -236,6 +269,87 @@ class World(object):
 					bestx = tx
 					besty = ty
 
+	def smooth_precipitations(self):
+		t0 = libtcod.sys_elapsed_seconds()
+		temphm = libtcod.heightmap_new(game.WORLDMAP_WIDTH, game.WORLDMAP_HEIGHT)
+		libtcod.heightmap_copy(self.precipitation, temphm)
+
+		for i in range(4, 0):
+			for x in range(0, game.WORLDMAP_WIDTH):
+				minx = x - 2
+				maxx = x + 2
+				miny = 0
+				maxy = 2
+				summ = 0.0
+				count = 0
+				minx = max(0, minx)
+				maxx = min(game.WORLDMAP_WIDTH - 1, maxx)
+				# compute the kernel sum at x,0
+				for ix in range(minx, maxx):
+					for iy in range(miny, maxy):
+						summ += libtcod.heightmap_get_value(self.precipitation, ix, iy)
+						count += 1
+				libtcod.heightmap_set_value(temphm, x, 0, summ / count)
+				for y in range(1, game.WORLDMAP_HEIGHT):
+					if y - 2 >= 0:
+						# remove the top-line sum
+						for ix in range(minx, maxx):
+							summ -= libtcod.heightmap_get_value(self.precipitation, ix, y - 2)
+							count -= 1
+					if y + 2 < game.WORLDMAP_HEIGHT:
+						# add the bottom-line sum
+						for ix in range(minx, maxx):
+							summ += libtcod.heightmap_get_value(self.precipitation, ix, y + 2)
+							count += 1
+					libtcod.heightmap_set_value(temphm, x, y, summ / count)
+
+		libtcod.heightmap_copy(temphm, self.precipitation)
+		t1 = libtcod.sys_elapsed_seconds()
+		print "Blur: ", t1 - t0
+		t0 = t1
+		libtcod.heightmap_normalize(self.precipitation)
+		t1 = libtcod.sys_elapsed_seconds()
+		print "Normalization: ", t1 - t0
+
+	def compute_temperatures_and_biomes(self):
+		sandCoef = 1.0 / (1.0 - self.sandheight)
+		waterCoef = 1.0 / self.sandheight
+		for y in range(0, game.WORLDMAP_HEIGHT):
+			lat = float(y - game.WORLDMAP_HEIGHT / 2) * 2 / game.WORLDMAP_HEIGHT
+			latTemp = 0.5 * (1.0 + math.pow(math.sin(3.1415926 * (lat + 0.5)), 5))  # between 0 and 1
+			if (latTemp > 0.0):
+				latTemp = math.sqrt(latTemp)
+			latTemp = -30 + latTemp * 60
+			for x in range(0, game.WORLDMAP_WIDTH):
+				h0 = libtcod.heightmap_get_value(self.hm, x, y)
+				h = h0 - self.sandheight
+				if h < 0.0:
+					h *= waterCoef
+				else:
+					h *= sandCoef
+				altShift = -35 * h
+				temp = latTemp + altShift
+				libtcod.heightmap_set_value(self.temperature, x, y, temp)
+				humid = libtcod.heightmap_get_value(self.precipitation, x, y)
+				climate = self.get_climate_from_temp(temp)
+				iHumid = int(humid * 5)
+				iHumid = min(4, iHumid)
+				biome = biomes[climate][iHumid]
+				self.biomemap[x + y * game.WORLDMAP_WIDTH] = biome
+		tmin, tmax = libtcod.heightmap_get_minmax(self.temperature)
+		print "Temperatures min/max: ", tmin, " / ", tmax
+
+	def get_climate_from_temp(self, temp):
+		if temp <= -5:
+			return ARTIC_ALPINE
+		if temp <= 5:
+			return COLD
+		if temp <= 15:
+			return TEMPERATE
+		if temp <= 20:
+			return WARM
+		return TROPICAL
+
 	def compute_sun_light(self, light):
 		for x in range(0, game.WORLDMAP_WIDTH):
 			for y in range(0, game.WORLDMAP_HEIGHT):
@@ -276,6 +390,7 @@ class World(object):
 		self.hm = libtcod.heightmap_new(game.WORLDMAP_WIDTH, game.WORLDMAP_HEIGHT)
 		self.hm2 = libtcod.heightmap_new(game.WORLDMAP_WIDTH, game.WORLDMAP_HEIGHT)
 		self.precipitation = libtcod.heightmap_new(game.WORLDMAP_WIDTH, game.WORLDMAP_HEIGHT)
+		self.temperature = libtcod.heightmap_new(game.WORLDMAP_WIDTH, game.WORLDMAP_HEIGHT)
 
 		self.build_base_map()
 		self.compute_precipitations()
@@ -287,54 +402,74 @@ class World(object):
 		t1 = libtcod.sys_elapsed_seconds()
 		print "Rivers: ", t1 - t0
 
+		self.smooth_precipitations()
+		self.compute_temperatures_and_biomes()
 
-#	def update_clouds(self, elapsedtime):
-#		self.cloudtotaldx += elapsedtime * 5
-#		self.clouddx += elapsedtime * 5
-#		if self.clouddx >= 1.0:
-#			colsToTranslate = int(self.clouddx)
-#			self.clouddx -= colsToTranslate
-#			for x in range(colsToTranslate, game.WORLDMAP_WIDTH):
-#				for y in range(0, game.WORLDMAP_HEIGHT):
-#					self.clouds[x - colsToTranslate][y] = self.clouds[x][y]
-#			f = [0] * 2
-#			cdx = int(self.cloudtotaldx)
-#			for x in range(game.WORLDMAP_WIDTH - colsToTranslate, game.WORLDMAP_WIDTH):
-#				for y in range(0, game.WORLDMAP_HEIGHT):
-#					f[0] = 6.0 * ((x + cdx) / game.WORLDMAP_WIDTH)
-#					f[1] = 6.0 * (y / game.WORLDMAP_HEIGHT)
-#					self.clouds[x][y] = 0.5 * (1.0 + 0.8 * libtcod.noise_get_fbm(self.noise, f, 4.0))
+	def generate2(self):
+		self.noise = libtcod.noise_new(2, self.rnd)
+		self.noise1d = libtcod.noise_new(1)
+		self.noise2d = libtcod.noise_new(2)
+		self.hm = libtcod.heightmap_new(game.WORLDMAP_WIDTH, game.WORLDMAP_HEIGHT)
+		self.precipitation = libtcod.heightmap_new(game.WORLDMAP_WIDTH, game.WORLDMAP_HEIGHT)
+		self.temperature = libtcod.heightmap_new(game.WORLDMAP_WIDTH, game.WORLDMAP_HEIGHT)
 
-#	def get_cloud_thickness(self, x, y):
-#		x += self.clouddx
-#		ix, iy = int(x), int(y)
-#		ix1, iy1 = min(game.WORLDMAP_WIDTH - 1, ix + 1), min(game.WORLDMAP_HEIGHT - 1, iy + 1)
-#		fdx, fdy = x - ix, y - iy
-#		v1, v2 = self.clouds[ix][iy], self.clouds[ix1][iy]
-#		v3, v4 = self.clouds[ix][iy1], self.clouds[ix1][iy1]
-#		vx1 = ((1.0 - fdx) * v1 + fdx * v2)
-#		vx2 = ((1.0 - fdx) * v3 + fdx * v4)
-#		v = ((1.0 - fdy) * vx1 + fdy * vx2)
-#		return v
+		self.add_landmass()
+		self.set_land_mass(0.5, self.sandheight)
+		self.save_world()
 
-#	def get_interpolated_color(self, x, y):
-#		w, h = libtcod.image_get_size(self.worldimg)
-#		wx = max(0.0, min(x, w - 1))
-#		wy = max(0.0, min(y, h - 1))
-#		iwx = int(wx)
-#		iwy = int(wy)
-#		dx = wx - iwx
-#		dy = wy - iwy
+	def add_landmass(self):
+		# create some hills
+		for i in range(0, 300):
+			radius = libtcod.random_get_float(self.rnd, 32 * (1.0 - 0.7), 32 * (1.0 + 0.7))
+			x = libtcod.random_get_int(self.rnd, int(radius) - 5, game.WORLDMAP_WIDTH - int(radius) - 5)
+			y = libtcod.random_get_int(self.rnd, int(radius) - 5, game.WORLDMAP_HEIGHT - int(radius) - 5)
+			libtcod.heightmap_add_hill(self.hm, x, y, radius, 0.3)
+		libtcod.heightmap_normalize(self.hm)
+		libtcod.heightmap_add_fbm(self.hm, self.noise, 2.25, 2.25, 0, 0, 10.0, 1.0, 2.0)
+		libtcod.heightmap_normalize(self.hm)
 
-#		colNW = libtcod.image_get_pixel(self.worldimg, iwx, iwy)
-#		colNE, colSW, colSE = colNW, colNW, colNW
-#		if iwx < w - 1:
-#			colNE = libtcod.image_get_pixel(self.worldimg, iwx + 1, iwy)
-#		if iwy < h - 1:
-#			colSW = libtcod.image_get_pixel(self.worldimg, iwx, iwy + 1)
-#		if iwx < w - 1 and iwy < h - 1:
-#			colSE = libtcod.image_get_pixel(self.worldimg, iwx + 1, iwy + 1)
-#		colN = libtcod.color_lerp(colNW, colNE, dx)
-#		colS = libtcod.color_lerp(colSW, colSE, dx)
-#		col = libtcod.color_lerp(colN, colS, dy)
-#		return col
+		# reduce mountainous regions
+		for x in range(0, game.WORLDMAP_WIDTH):
+			for y in range(0, game.WORLDMAP_HEIGHT):
+				h = libtcod.heightmap_get_value(self.hm, x, y)
+				if h > self.sandheight:
+					coef = (h - self.sandheight) / (1.0 - self.sandheight)
+					h = self.sandheight + coef * coef * coef * (1.0 - self.sandheight)
+					libtcod.heightmap_set_value(self.hm, x, y, h)
+
+	def save_world(self):
+		con = libtcod.console_new(game.WORLDMAP_WIDTH, game.WORLDMAP_HEIGHT)
+		for x in range(0, game.WORLDMAP_WIDTH):
+			for y in range(0, game.WORLDMAP_HEIGHT):
+				cellheight = libtcod.heightmap_get_value(self.hm, x, y)
+				hcolor = libtcod.darkest_blue
+				if cellheight >= 0.065:
+					hcolor = libtcod.blue
+				if cellheight >= 0.114:
+					hcolor = libtcod.light_blue
+				if cellheight >= 0.12:
+					hcolor = libtcod.light_yellow
+				if cellheight >= 0.126:
+					hcolor = libtcod.light_green
+				if cellheight >= 0.25:
+					hcolor = libtcod.green
+				if cellheight >= 0.45:
+					hcolor = libtcod.dark_green
+				if cellheight >= 0.575:
+					hcolor = libtcod.Color(53, 33, 16)
+				if cellheight >= 0.675:
+					hcolor = libtcod.grey
+				if cellheight >= 0.90:
+					hcolor = libtcod.silver
+
+				if hcolor == libtcod.darkest_blue:
+					libtcod.console_put_char_ex(con, x, y, '~', libtcod.Color(24, 24, 240), libtcod.Color(0, 0, 96))
+				elif hcolor == libtcod.blue:
+					libtcod.console_put_char_ex(con, x, y, '~', libtcod.Color(60, 60, 220), libtcod.Color(24, 24, 240))
+				elif hcolor == libtcod.light_blue:
+					libtcod.console_put_char_ex(con, x, y, '~', libtcod.Color(172, 172, 255), libtcod.Color(135, 135, 255))
+				else:
+					libtcod.console_put_char_ex(con, x, y, ' ', hcolor, hcolor)
+
+		img = libtcod.image_from_console(con)
+		libtcod.image_save(img, 'worldgen.png')

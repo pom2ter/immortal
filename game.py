@@ -12,7 +12,7 @@ import commands
 import util
 
 VERSION = 'v0.2.1'
-BUILD = '28'
+BUILD = '29'
 
 #size of the map
 MAP_WIDTH = 70
@@ -95,7 +95,7 @@ class Game(object):
 		else:
 			libtcod.console_set_custom_font('font-small.png', libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_TCOD)
 		libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, 'Immortal ' + VERSION, False)
-		#libtcod.sys_set_fps(60)
+		libtcod.sys_set_fps(600)
 		rnd = libtcod.random_new()
 		con = libtcod.console_new(MAP_WIDTH, MAP_HEIGHT)
 		panel = libtcod.console_new(MESSAGE_WIDTH, MESSAGE_HEIGHT)
@@ -242,7 +242,7 @@ class Game(object):
 	# testing the world generation
 	def world_generation(self):
 		game.worldmap = worldgen.World()
-		game.worldmap.compute_sun_light([1.0, 1.0, 0.0])
+		#game.worldmap.compute_sun_light([1.0, 1.0, 0.0])
 		key = libtcod.Key()
 		mouse = libtcod.Mouse()
 		curx, cury = 0, 0
@@ -271,22 +271,34 @@ class Game(object):
 					wx = px + curx
 					wy = py + cury
 					cellheight = libtcod.heightmap_get_value(game.worldmap.hm, wx, wy)
-					hcolor = libtcod.blue
-					if cellheight >= 0.08:
+					hcolor = libtcod.darkest_blue
+					if cellheight >= 0.065:
+						hcolor = libtcod.blue
+					if cellheight >= 0.114:
 						hcolor = libtcod.light_blue
 					if cellheight >= 0.12:
 						hcolor = libtcod.light_yellow
-					if cellheight >= 0.16:
+					if cellheight >= 0.126:
 						hcolor = libtcod.light_green
-					if cellheight >= 0.3:
+					if cellheight >= 0.25:
 						hcolor = libtcod.green
-					if cellheight >= 0.5:
+					if cellheight >= 0.45:
 						hcolor = libtcod.dark_green
-					if cellheight >= 0.655:
+					if cellheight >= 0.575:
+						hcolor = libtcod.Color(53, 33, 16)
+					if cellheight >= 0.675:
 						hcolor = libtcod.grey
-					if cellheight >= 0.905:
+					if cellheight >= 0.90:
 						hcolor = libtcod.silver
-					libtcod.console_put_char_ex(0, px, py, ' ', hcolor, hcolor)
+
+					if hcolor == libtcod.darkest_blue:
+						libtcod.console_put_char_ex(0, px, py, '~', libtcod.Color(24, 24, 240), libtcod.Color(0, 0, 96))
+					elif hcolor == libtcod.blue:
+						libtcod.console_put_char_ex(0, px, py, '~', libtcod.Color(60, 60, 220), libtcod.Color(24, 24, 240))
+					elif hcolor == libtcod.light_blue:
+						libtcod.console_put_char_ex(0, px, py, '~', libtcod.Color(172, 172, 255), libtcod.Color(135, 135, 255))
+					else:
+						libtcod.console_put_char_ex(0, px, py, ' ', hcolor, hcolor)
 
 			cellheight = libtcod.heightmap_get_value(game.worldmap.hm, mx, my)
 			libtcod.console_set_default_foreground(0, libtcod.black)
@@ -299,7 +311,7 @@ class Game(object):
 		global player_action
 		player_action = None
 		choice = 0
-		libtcod.console_credits()
+		#libtcod.console_credits()
 		while not libtcod.console_is_window_closed():
 			#libtcod.image_blit_2x(img, 0, 0, 0)
 			libtcod.console_set_default_foreground(0, libtcod.light_yellow)

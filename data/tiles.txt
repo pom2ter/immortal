@@ -50,3 +50,26 @@ tile_type "stairs going down" {
 	article = ""
 }
 
+tile_type "shallow water" {
+	type = "water"
+	icon = "~"
+	icon_color = "172,172,255"
+	back_color = "135,135,255"
+	article = ""
+}
+
+tile_type "deep water" {
+	type = "water"
+	icon = "~"
+	icon_color = "60,60,220"
+	back_color = "24,24,240"
+	article = ""
+}
+
+tile_type "very deep water" {
+	type = "water"
+	icon = "~"
+	icon_color = "24,24,240"
+	back_color = "0,0,96"
+	article = ""
+}
