@@ -12,7 +12,7 @@ import commands
 import util
 
 VERSION = 'v0.2.1'
-BUILD = '29'
+BUILD = '30'
 
 #size of the map
 MAP_WIDTH = 70
@@ -26,8 +26,8 @@ SCREEN_WIDTH = MAP_WIDTH + PLAYER_STATS_WIDTH + 3
 SCREEN_HEIGHT = MAP_HEIGHT + MESSAGE_HEIGHT + 3
 PLAYER_STATS_HEIGHT = SCREEN_HEIGHT - 2
 
-WORLDMAP_WIDTH = 600
-WORLDMAP_HEIGHT = 400
+WORLDMAP_WIDTH = 400
+WORLDMAP_HEIGHT = 240
 
 #sizes and coordinates relevant for the GUI
 PLAYER_STATS_X = 1
@@ -242,7 +242,6 @@ class Game(object):
 	# testing the world generation
 	def world_generation(self):
 		game.worldmap = worldgen.World()
-		#game.worldmap.compute_sun_light([1.0, 1.0, 0.0])
 		key = libtcod.Key()
 		mouse = libtcod.Mouse()
 		curx, cury = 0, 0
@@ -272,27 +271,27 @@ class Game(object):
 					wy = py + cury
 					cellheight = libtcod.heightmap_get_value(game.worldmap.hm, wx, wy)
 					hcolor = libtcod.darkest_blue
-					if cellheight >= 0.065:
+					if cellheight >= 0.060:
 						hcolor = libtcod.blue
-					if cellheight >= 0.114:
+					if cellheight >= 0.110:
 						hcolor = libtcod.light_blue
-					if cellheight >= 0.12:
+					if cellheight >= 0.118:
 						hcolor = libtcod.light_yellow
 					if cellheight >= 0.126:
 						hcolor = libtcod.light_green
-					if cellheight >= 0.25:
+					if cellheight >= 0.250:
 						hcolor = libtcod.green
-					if cellheight >= 0.45:
+					if cellheight >= 0.450:
 						hcolor = libtcod.dark_green
 					if cellheight >= 0.575:
 						hcolor = libtcod.Color(53, 33, 16)
-					if cellheight >= 0.675:
+					if cellheight >= 0.700:
 						hcolor = libtcod.grey
-					if cellheight >= 0.90:
+					if cellheight >= 0.900:
 						hcolor = libtcod.silver
 
 					if hcolor == libtcod.darkest_blue:
-						libtcod.console_put_char_ex(0, px, py, '~', libtcod.Color(24, 24, 240), libtcod.Color(0, 0, 96))
+						libtcod.console_put_char_ex(0, px, py, '~', libtcod.Color(24, 24, 240), libtcod.Color(0, 0, 80))
 					elif hcolor == libtcod.blue:
 						libtcod.console_put_char_ex(0, px, py, '~', libtcod.Color(60, 60, 220), libtcod.Color(24, 24, 240))
 					elif hcolor == libtcod.light_blue:
