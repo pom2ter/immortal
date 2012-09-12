@@ -48,6 +48,8 @@ def handle_keys():
 			else:
 				key_char = chr(key.c)
 
+				if key_char == 'a':
+					attack()
 				if key_char == 'c':
 					close_door()
 				if key_char == 'd':
@@ -126,7 +128,60 @@ def player_move(dx, dy):
 		game.fov_recompute = True
 
 
-#climb up/down stairs
+# attack someone (primarily use for ranged weapons)
+def attack():
+	game.message.new('Attack... (Arrow keys to move cursor, ENTER to attack, ESC to exit)', game.player.turns)
+	util.render_all()
+	target = None
+	dx = game.char.x
+	dy = game.char.y
+	key = libtcod.Key()
+
+	while not libtcod.console_is_window_closed():
+		libtcod.console_set_default_background(0, libtcod.white)
+		libtcod.console_rect(0, game.MAP_X + dx, dy + 1, 1, 1, False, libtcod.BKGND_SET)
+		libtcod.console_flush()
+
+		libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, key, libtcod.Mouse(), True)
+		dx, dy = key_check(key, dx, dy)
+		if key.vk == libtcod.KEY_ESCAPE:
+			del game.message.log[len(game.message.log) - 1]
+			util.render_message_panel()
+			break
+
+		if dx < 0:
+			dx = 0
+		if dy < 0:
+			dy = 0
+		if dx == game.MAP_WIDTH:
+			dx -= 1
+		if dy == game.MAP_HEIGHT:
+			dy -= 1
+
+		if key.vk == libtcod.KEY_ENTER:
+			for obj in game.current_map.objects:
+				if obj.entity and obj.x == dx and obj.y == dy:
+					target = obj
+			if not game.current_map.explored[dx][dy]:
+				game.message.new("You can't fight darkness.", game.player.turns)
+			elif target is None:
+				game.message.new('There is no one here.', game.player.turns)
+			else:
+				if abs(dx - game.char.x) > 1 or abs(dy - game.char.y) > 1:
+					game.message.new('Target is out of range.', game.player.turns)
+					target = None
+			break
+
+		libtcod.console_set_default_foreground(game.con, libtcod.white)
+		libtcod.console_set_default_background(game.con, libtcod.black)
+		libtcod.console_rect(game.con, 0, 0, game.MAP_WIDTH, 1, True, libtcod.BKGND_SET)
+		libtcod.console_blit(game.con, 0, 0, game.MAP_WIDTH, game.MAP_HEIGHT, 0, game.MAP_X, game.MAP_Y)
+
+	if target is not None:
+		game.player.attack(target)
+
+
+# climb up/down stairs
 def climb_stairs(direction):
 	if (direction == 'up' and game.current_map.tiles[game.char.x][game.char.y].icon != "<") or (direction == 'down' and game.current_map.tiles[game.char.x][game.char.y].icon != ">"):
 		game.message.new('You see no stairs going in that direction!', game.player.turns)
@@ -217,7 +272,7 @@ def equip_item():
 # help screen
 def help():
 	contents = open('data/help.txt', 'r').read()
-	util.msg_box('text', 'Help', contents=contents, box_width=40, box_height=22, blitmap=True)
+	util.msg_box('text', 'Help', contents=contents, box_width=40, box_height=24, blitmap=True)
 	game.redraw_gui = True
 
 

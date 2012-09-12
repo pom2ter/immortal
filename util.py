@@ -392,10 +392,10 @@ def render_player_stats_panel():
 	libtcod.console_print(game.ps, 0, 10, "Str: " + str(game.player.strength) + ' ')
 	libtcod.console_print(game.ps, 0, 11, "Dex: " + str(game.player.dexterity) + ' ')
 	libtcod.console_print(game.ps, 0, 12, "Int: " + str(game.player.intelligence) + ' ')
-	libtcod.console_print(game.ps, 0, 12, "Wis: " + str(game.player.wisdom) + ' ')
-	libtcod.console_print(game.ps, 0, 13, "End: " + str(game.player.endurance) + ' ')
-	libtcod.console_print(game.ps, 0, 14, "Karma: " + str(game.player.karma) + ' ')
-	libtcod.console_print(game.ps, 0, 16, "Turns: " + str(game.player.turns) + ' ')
+	libtcod.console_print(game.ps, 0, 13, "Wis: " + str(game.player.wisdom) + ' ')
+	libtcod.console_print(game.ps, 0, 14, "End: " + str(game.player.endurance) + ' ')
+	libtcod.console_print(game.ps, 0, 15, "Karma: " + str(game.player.karma) + ' ')
+	libtcod.console_print(game.ps, 0, 17, "Turns: " + str(game.player.turns) + ' ')
 	libtcod.console_blit(game.ps, 0, 0, game.PLAYER_STATS_WIDTH, game.PLAYER_STATS_HEIGHT, 0, game.PLAYER_STATS_X, game.PLAYER_STATS_Y)
 
 

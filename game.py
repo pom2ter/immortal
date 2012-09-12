@@ -11,8 +11,8 @@ import map
 import commands
 import util
 
-VERSION = 'v0.2.1'
-BUILD = '30'
+VERSION = 'v0.2.2'
+BUILD = '31'
 
 #size of the map
 MAP_WIDTH = 70
@@ -209,7 +209,7 @@ class Game(object):
 	# basic help text
 	def help(self):
 		contents = open('data/help.txt', 'r').read()
-		util.msg_box('text', 'Help', contents=contents, box_width=40, box_height=22)
+		util.msg_box('text', 'Help', contents=contents, box_width=40, box_height=24)
 
 	# loading and changin game settings
 	def settings(self):

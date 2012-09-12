@@ -4,6 +4,7 @@ Arrow keys = Move character
 SPACE = wait 1 turn
 CTRL-S = Save game
 CTRL-X = Quit game
+ESC = Menu screen
 ? = Help screen
 
 c = Close door
@@ -11,6 +12,7 @@ d = Drop item
 e = Equip item
 g = Pickup item
 i = Inventory
+l = Look
 o = Open door
 r = Remove item
 u = Use item

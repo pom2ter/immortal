@@ -197,7 +197,7 @@ class Player(object):
 					damage = self.equipment[i].dice.roll_dice()
 			if damage == 0:
 				damage = util.roll_dice(1, 4, 1, 0)
-			game.message.new('You hit the ' + target.entity.name + ' for ' + str(damage) + ' pts of damage.', self.turns)
+			game.message.new('You hit the ' + target.entity.name + ' for ' + str(damage) + ' pts of damage.', self.turns, libtcod.light_yellow)
 			target.entity.health -= damage
 			game.hp_anim.append([target, str(-damage), libtcod.light_yellow, 0])
 			if target.entity.health < 1:
