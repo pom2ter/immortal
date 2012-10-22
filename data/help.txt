@@ -2,6 +2,7 @@ KEYBOARD COMMANDS
 
 Arrow keys = Move character
 SPACE = wait 1 turn
+TAB = World map
 CTRL-S = Save game
 CTRL-X = Quit game
 ESC = Menu screen

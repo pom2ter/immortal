@@ -15,6 +15,8 @@ def choices(con, width, height, options, typ, posx=0, posy=0, default=0, blitmap
 	max_height = posy + height + posy
 	key = libtcod.Key()
 	mouse = libtcod.Mouse()
+	lerp = 1.0
+	descending = True
 
 	while not choice and choice != -1:
 		ev = libtcod.sys_check_for_event(libtcod.EVENT_ANY, key, mouse)
@@ -30,8 +32,20 @@ def choices(con, width, height, options, typ, posx=0, posy=0, default=0, blitmap
 		for y in range(up, down):
 			if y < len(options):
 				if y == current:
+					color = libtcod.black
 					libtcod.console_set_default_foreground(con, libtcod.white)
-					libtcod.console_set_default_background(con, libtcod.light_blue)
+					if descending:
+						lerp -= 0.001
+						if lerp < 0.4:
+							lerp = 0.4
+							descending = False
+					else:
+						lerp += 0.001
+						if lerp > 1.0:
+							lerp = 1.0
+							descending = True
+					color = libtcod.color_lerp(color, libtcod.light_blue, lerp)
+					libtcod.console_set_default_background(con, color)
 				else:
 					libtcod.console_set_default_foreground(con, libtcod.grey)
 					libtcod.console_set_default_background(con, libtcod.black)
@@ -68,6 +82,8 @@ def choices(con, width, height, options, typ, posx=0, posy=0, default=0, blitmap
 			if current == 0:
 				down = height
 				up = 0
+			lerp = 1.0
+			descending = True
 		elif key.vk == libtcod.KEY_UP and ev == libtcod.EVENT_KEY_PRESS:
 			current = (current - 1) % len(options)
 			if current < up:
@@ -77,6 +93,8 @@ def choices(con, width, height, options, typ, posx=0, posy=0, default=0, blitmap
 				if current > height - 1:
 					up = len(options) - height
 					down = len(options)
+			lerp = 1.0
+			descending = True
 		elif key.vk == libtcod.KEY_ESCAPE and ev == libtcod.EVENT_KEY_PRESS or (mouse_out and mouse.lbutton_pressed and mx == max_width + x - 4 and my == y):
 			current = -1
 			choice = -1
@@ -128,7 +146,7 @@ def msg_box(typ, header=None, footer=None, contents=None, box_width=60, box_heig
 	if typ == 'settings':
 		change_settings(box, box_width, box_height, contents, blitmap=blitmap)
 		choice = -1
-	if typ in ['text', 'highscore']:
+	if typ in ['text', 'highscore', 'map']:
 		if typ == 'highscore':
 			for i, (score, line1, line2) in enumerate(game.highscore):
 				libtcod.console_print_ex(box, 2, 2 + (i * 3), libtcod.BKGND_SET, libtcod.LEFT, str(score))
@@ -140,12 +158,18 @@ def msg_box(typ, header=None, footer=None, contents=None, box_width=60, box_heig
 					libtcod.console_print_ex(box, box_width / 2, 2 + i, libtcod.BKGND_SET, libtcod.CENTER, line)
 				else:
 					libtcod.console_print_ex(box, 2, 2 + i, libtcod.BKGND_SET, libtcod.LEFT, line)
+		if typ == 'map':
+			#libtcod.image_blit(game.worldmap.mapimg_small, box, game.SCREEN_WIDTH / 2 + 1, game.SCREEN_HEIGHT / 2, libtcod.BKGND_SET, 1.0, 1.0, 0.0)
+			libtcod.image_blit_2x(game.worldmap.mapimg_small, box, 1, 1)
 		if blitmap:
 			libtcod.console_blit(box, 0, 0, box_width, box_height, 0, ((game.MAP_WIDTH - box_width) / 2) + game.MAP_X, (game.MAP_HEIGHT - box_height) / 2, 1.0, 0.9)
-		else:
+		elif typ in ['text', 'highscore']:
 			libtcod.console_blit(box, 0, 0, box_width, box_height, 0, (game.SCREEN_WIDTH - box_width) / 2, (game.SCREEN_HEIGHT - box_height) / 2, 1.0, 0.9)
+		else:
+			libtcod.console_blit(box, 0, 0, box_width, box_height, 0, (game.SCREEN_WIDTH - box_width) / 2, (game.SCREEN_HEIGHT - box_height) / 2, 1.0, 1.0)
 		libtcod.console_flush()
-		libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, libtcod.Key(), libtcod.Mouse(), True)
+		if contents != "Generating world map...":
+			libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, libtcod.Key(), libtcod.Mouse(), True)
 		choice = -1
 	return choice
 

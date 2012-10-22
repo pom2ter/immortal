@@ -12,7 +12,7 @@ import commands
 import util
 
 VERSION = 'v0.2.2'
-BUILD = '31'
+BUILD = '32'
 
 #size of the map
 MAP_WIDTH = 70
@@ -67,8 +67,15 @@ con = 0
 panel = 0
 ps = 0
 
-#miscellaneous variables
+#worldmap
 worldmap = None
+hm = 0
+hmcopy = 0
+precipitation = 0
+temperature = 0
+mask = 0
+
+#miscellaneous variables
 current_map = None
 old_maps = []
 char = None
@@ -83,13 +90,14 @@ highscore = []
 redraw_gui = True
 font = 'small'
 hp_anim = []
+img = None
 
 
 class Game(object):
 	def __init__(self):
 		global con, panel, ps, fov_noise, savefiles, items, tiles, monsters, rnd
 		self.load_settings()
-		#img = libtcod.image_load('title_screen2.png')
+		#game.img = libtcod.image_load('title_screen2.png')
 		if game.font == 'large':
 			libtcod.console_set_custom_font('font-large.png', libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_ASCII_INROW)
 		else:
@@ -113,11 +121,13 @@ class Game(object):
 
 	# new game setup
 	def new_game(self):
-		global player, char, message, game_state, current_map
+		global player, char, worldmap, message, game_state, current_map
 		message = Message()
 		player = Player()
 		char = map.Object(0, 0, player.icon, 'player', player.icon_color, blocks=True)
 		game_state = create_character()
+		util.msg_box('text', contents='Generating world map...', center=True, box_width=50, box_height=5)
+		worldmap = worldgen.World()
 		if game_state == 'playing':
 			current_map = map.Map('Starter Dungeon', 'SD', 1, 1)
 			self.play_game()
@@ -168,9 +178,11 @@ class Game(object):
 
 	# save the game using the shelve module
 	def save_game(self):
+		global worldmap, current_map, old_maps, player, message, game_state, times_saved
 		if not os.path.exists('saves'):
 			os.makedirs('saves')
 		file = shelve.open('saves/' + player.name.lower(), 'n')
+		file['worldmap'] = worldmap
 		file['current_map'] = current_map
 		file['maps'] = old_maps
 		file['player'] = player
@@ -181,13 +193,14 @@ class Game(object):
 
 	# load the game using the shelve module
 	def load_game(self):
-		global current_map, old_maps, player, char, message, game_state, times_saved
+		global worldmap, current_map, old_maps, player, char, message, game_state, times_saved
 		if len(savefiles) == 0:
 			util.msg_box('text', 'Saved games', contents='There are no save games.', center=True, box_height=5)
 		else:
 			desc = []
 			for i in range(0, len(savefiles)):
 				file = shelve.open('saves/' + savefiles[i], 'r')
+				file['worldmap']
 				file['current_map']
 				file['maps']
 				pl = file['player']
@@ -196,6 +209,7 @@ class Game(object):
 			choice = util.msg_box('save', 'Saved games', contents=desc, box_height=max(16, len(savefiles) + 4))
 			if choice != -1:
 				file = shelve.open('saves/' + savefiles[choice], 'r')
+				worldmap = file['worldmap']
 				current_map = file['current_map']
 				old_maps = file['maps']
 				player = file['player']
@@ -204,6 +218,7 @@ class Game(object):
 				times_saved = file['times_saved']
 				file.close()
 				char = current_map.objects[0]
+				worldmap.save_map(1)
 				self.play_game()
 
 	# basic help text
@@ -239,72 +254,6 @@ class Game(object):
 			game.highscore = pickle.load(contents)
 			contents.close()
 
-	# testing the world generation
-	def world_generation(self):
-		game.worldmap = worldgen.World()
-		key = libtcod.Key()
-		mouse = libtcod.Mouse()
-		curx, cury = 0, 0
-
-		while not libtcod.console_is_window_closed():
-			libtcod.sys_check_for_event(libtcod.EVENT_ANY, key, mouse)
-			mx = curx + mouse.cx
-			my = cury + mouse.cy
-			if key.vk == libtcod.KEY_UP:
-				if cury > 3:
-					cury -= 4
-			if key.vk == libtcod.KEY_DOWN:
-				if cury <= game.WORLDMAP_HEIGHT - game.SCREEN_HEIGHT - 3:
-					cury += 4
-			if key.vk == libtcod.KEY_LEFT:
-				if curx > 3:
-					curx -= 4
-			if key.vk == libtcod.KEY_RIGHT:
-				if curx <= game.WORLDMAP_WIDTH - game.SCREEN_WIDTH - 3:
-					curx += 4
-			if key.vk == libtcod.KEY_ESCAPE:
-				break
-
-			for px in range(0, game.SCREEN_WIDTH):
-				for py in range(0, game.SCREEN_HEIGHT):
-					wx = px + curx
-					wy = py + cury
-					cellheight = libtcod.heightmap_get_value(game.worldmap.hm, wx, wy)
-					hcolor = libtcod.darkest_blue
-					if cellheight >= 0.060:
-						hcolor = libtcod.blue
-					if cellheight >= 0.110:
-						hcolor = libtcod.light_blue
-					if cellheight >= 0.118:
-						hcolor = libtcod.light_yellow
-					if cellheight >= 0.126:
-						hcolor = libtcod.light_green
-					if cellheight >= 0.250:
-						hcolor = libtcod.green
-					if cellheight >= 0.450:
-						hcolor = libtcod.dark_green
-					if cellheight >= 0.575:
-						hcolor = libtcod.Color(53, 33, 16)
-					if cellheight >= 0.700:
-						hcolor = libtcod.grey
-					if cellheight >= 0.900:
-						hcolor = libtcod.silver
-
-					if hcolor == libtcod.darkest_blue:
-						libtcod.console_put_char_ex(0, px, py, '~', libtcod.Color(24, 24, 240), libtcod.Color(0, 0, 80))
-					elif hcolor == libtcod.blue:
-						libtcod.console_put_char_ex(0, px, py, '~', libtcod.Color(60, 60, 220), libtcod.Color(24, 24, 240))
-					elif hcolor == libtcod.light_blue:
-						libtcod.console_put_char_ex(0, px, py, '~', libtcod.Color(172, 172, 255), libtcod.Color(135, 135, 255))
-					else:
-						libtcod.console_put_char_ex(0, px, py, ' ', hcolor, hcolor)
-
-			cellheight = libtcod.heightmap_get_value(game.worldmap.hm, mx, my)
-			libtcod.console_set_default_foreground(0, libtcod.black)
-			libtcod.console_print(0, 0, game.SCREEN_HEIGHT - 2, 'X: ' + str(mx) + ' Y: ' + str(my) + '   ')
-			libtcod.console_print(0, 0, game.SCREEN_HEIGHT - 1, str(cellheight) + '   ')
-			libtcod.console_flush()
-
 	# brings up the main menu
 	def main_menu(self):
 		global player_action
@@ -312,13 +261,14 @@ class Game(object):
 		choice = 0
 		#libtcod.console_credits()
 		while not libtcod.console_is_window_closed():
-			#libtcod.image_blit_2x(img, 0, 0, 0)
 			libtcod.console_set_default_foreground(0, libtcod.light_yellow)
 			libtcod.console_set_default_background(0, libtcod.black)
 			libtcod.console_clear(0)
-			libtcod.console_print_ex(0, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 7, libtcod.BKGND_SET, libtcod.CENTER, 'Immortal ' + VERSION)
+			#libtcod.image_blit_2x(game.img, 0, 0, 0)
+			#libtcod.image_blit(game.img, 0, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, libtcod.BKGND_SET, 1.0, 1.0, 0.0)
+			contents = ['Start a new game', 'Load a saved game', 'Help', 'Settings', 'High Scores', 'Quit']
+			libtcod.console_print_ex(0, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - len(contents), libtcod.BKGND_SET, libtcod.CENTER, 'Immortal ' + VERSION)
 			libtcod.console_print_ex(0, SCREEN_WIDTH / 2, SCREEN_HEIGHT - 2, libtcod.BKGND_SET, libtcod.CENTER, 'By Potatoman')
-			contents = ['Start a new game', 'Load a saved game', 'World Generation', 'Help', 'Settings', 'High Scores', 'Quit']
 			if choice == -1:
 				choice = 0
 			choice = util.msg_box('main_menu', header=None, contents=contents, box_width=21, box_height=len(contents) + 2, default=choice)
@@ -331,13 +281,11 @@ class Game(object):
 				self.load_game()
 				if player_action == 'exit':
 					break
-			if choice == 2:  # world generation
-				self.world_generation()
-			if choice == 3:  # help
+			if choice == 2:  # help
 				self.help()
-			if choice == 4:  # settings
+			if choice == 3:  # settings
 				self.settings()
-			if choice == 5:  # high scores
+			if choice == 4:  # high scores
 				self.show_high_scores()
-			if choice == 6:  # quit
+			if choice == 5:  # quit
 				break

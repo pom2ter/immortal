@@ -31,6 +31,8 @@ def handle_keys():
 				player_move(1, 1)
 			elif key.vk == libtcod.KEY_SPACE or key.vk == libtcod.KEY_KP5:
 				wait_turn()
+			elif key.vk == libtcod.KEY_TAB:
+				show_worldmap()
 			elif key.vk == libtcod.KEY_ESCAPE:
 				state = options_menu()
 				if state == 'save':
@@ -464,6 +466,12 @@ def save_game():
 	if chr(key.c) == 'y' or chr(key.c) == 'Y':
 		return True
 	return False
+
+
+# show a miniature world map
+def show_worldmap():
+	util.msg_box('map', 'World Map', box_width=game.SCREEN_WIDTH, box_height=game.SCREEN_HEIGHT)
+	game.redraw_gui = True
 
 
 # settings screen
