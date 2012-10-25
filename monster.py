@@ -56,7 +56,9 @@ class Monster(object):
 		drop_chance = libtcod.random_get_int(game.rnd, 1, 100)
 		if drop_chance >= 80:
 			dice = libtcod.random_get_int(game.rnd, 1, 100)
-			if dice <= 60:
+			if dice <= 10:
+				d = game.items.get_item("gold")
+			elif dice <= 60:
 				d = game.items.get_item_by_level(1)
 			elif dice <= 90:
 				d = game.items.get_item_by_level(2)
@@ -188,7 +190,7 @@ class MonsterList(object):
 		return number
 
 	def spawn(self):
-		if self.number_of_monsters_on_map() < game.MAX_MONSTERS_PER_LEVEL:
+		if self.number_of_monsters_on_map() < game.current_map.max_monsters:
 			number = libtcod.random_get_int(game.rnd, 1, 100)
 			if number == 1:
 				game.current_map.place_monsters()

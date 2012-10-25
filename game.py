@@ -2,6 +2,7 @@ import libtcodpy as libtcod
 import shelve
 import pickle
 import os
+import ctypes
 from players import *
 from messages import *
 from item import *
@@ -12,16 +13,14 @@ import commands
 import util
 
 VERSION = 'v0.2.2'
-BUILD = '32'
+BUILD = '33'
 
-#size of the map
+#size of the gui windows
 MAP_WIDTH = 70
 MAP_HEIGHT = 28
-
-#actual size of the window
-PLAYER_STATS_WIDTH = 16
 MESSAGE_WIDTH = MAP_WIDTH
 MESSAGE_HEIGHT = 5
+PLAYER_STATS_WIDTH = 16
 SCREEN_WIDTH = MAP_WIDTH + PLAYER_STATS_WIDTH + 3
 SCREEN_HEIGHT = MAP_HEIGHT + MESSAGE_HEIGHT + 3
 PLAYER_STATS_HEIGHT = SCREEN_HEIGHT - 2
@@ -40,9 +39,6 @@ MESSAGE_Y = MAP_HEIGHT + 2
 #parameters for dungeon generator
 ROOM_MAX_SIZE = 10
 ROOM_MIN_SIZE = 6
-MAX_ROOMS = 30
-MAX_MONSTERS_PER_LEVEL = 8
-MAX_ITEMS_PER_LEVEL = 10
 
 #fov
 FOV_ALGO = 0
@@ -91,18 +87,26 @@ redraw_gui = True
 font = 'small'
 hp_anim = []
 img = None
+font_width = 12
+font_height = 12
+curx = 0
+cury = 0
 
 
 class Game(object):
 	def __init__(self):
-		global con, panel, ps, fov_noise, savefiles, items, tiles, monsters, rnd
+		global img, font_width, font_height, rnd, con, panel, ps, fov_noise, savefiles, items, tiles, monsters
 		self.load_settings()
-		#game.img = libtcod.image_load('title_screen2.png')
-		if game.font == 'large':
+		#img = libtcod.image_load('title_screen2.png')
+		if font == 'large':
 			libtcod.console_set_custom_font('font-large.png', libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_ASCII_INROW)
+			font_width = 17
+			font_height = 22
 		else:
 			libtcod.console_set_custom_font('font-small.png', libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_TCOD)
-		libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, 'Immortal ' + VERSION, False)
+		self.init_root_console()
+		#libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, 'Immortal ' + VERSION, False)
+
 		libtcod.sys_set_fps(600)
 		rnd = libtcod.random_new()
 		con = libtcod.console_new(MAP_WIDTH, MAP_HEIGHT)
@@ -119,9 +123,32 @@ class Game(object):
 		monsters.init_parser()
 		self.main_menu()
 
+	# create the root console based on desktop resolution and font size
+	def init_root_console(self):
+		global MAP_WIDTH, MAP_HEIGHT, SCREEN_WIDTH, SCREEN_HEIGHT, MESSAGE_WIDTH, PLAYER_STATS_HEIGHT, MESSAGE_Y
+		user32 = ctypes.windll.user32
+		desktop_width = user32.GetSystemMetrics(0)
+		desktop_height = user32.GetSystemMetrics(1)
+		max_width_size = (desktop_width / font_width) - 6
+		max_height_size = (desktop_height / font_height) - 6
+		if max_width_size > SCREEN_WIDTH:
+			MAP_WIDTH = MAP_WIDTH + (max_width_size - SCREEN_WIDTH)
+			if MAP_WIDTH > 90:
+				MAP_WIDTH = 90
+			MESSAGE_WIDTH = MAP_WIDTH
+			SCREEN_WIDTH = MAP_WIDTH + PLAYER_STATS_WIDTH + 3
+		if max_height_size > SCREEN_HEIGHT:
+			MAP_HEIGHT = MAP_HEIGHT + (max_height_size - SCREEN_HEIGHT)
+			if MAP_HEIGHT > 54:
+				MAP_HEIGHT = 54
+			SCREEN_HEIGHT = MAP_HEIGHT + MESSAGE_HEIGHT + 3
+			PLAYER_STATS_HEIGHT = SCREEN_HEIGHT - 2
+			MESSAGE_Y = MAP_HEIGHT + 2
+		libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, 'Immortal ' + VERSION, False)
+
 	# new game setup
 	def new_game(self):
-		global player, char, worldmap, message, game_state, current_map
+		global message, player, char, game_state, worldmap, current_map
 		message = Message()
 		player = Player()
 		char = map.Object(0, 0, player.icon, 'player', player.icon_color, blocks=True)
@@ -129,21 +156,21 @@ class Game(object):
 		util.msg_box('text', contents='Generating world map...', center=True, box_width=50, box_height=5)
 		worldmap = worldgen.World()
 		if game_state == 'playing':
-			current_map = map.Map('Starter Dungeon', 'SD', 1, 1)
+			current_map = map.Map('Starter Dungeon', 'SD', 1, 1, 120, 72)
 			self.play_game()
 
 	# main game loop
 	def play_game(self):
-		global player_action
+		global player_action, redraw_gui, player_move
 		libtcod.console_clear(0)
 		util.initialize_fov()
 		while not libtcod.console_is_window_closed():
-			if game.redraw_gui:
+			if redraw_gui:
 				util.render_gui(libtcod.red)
 				util.render_message_panel()
 				util.render_player_stats_panel()
-				game.redraw_gui = False
-			util.render_all()
+				redraw_gui = False
+			util.render_map()
 			libtcod.console_flush()
 
 			#player movement
@@ -155,20 +182,20 @@ class Game(object):
 				break
 
 			#let monsters take their turn
-			if game.player_move:
+			if player_move:
 				monsters.spawn()
 				for object in reversed(current_map.objects):
 					if object.item != None:
-						if object.item.type == "corpse" and (game.player.turns - object.first_appearance > 500):
+						if object.item.type == "corpse" and (player.turns - object.first_appearance > 500):
 							object.delete()
 					if object.entity != None:
 						object.x, object.y = object.entity.take_turn(object.x, object.y)
-				game.player_move = False
+				player_move = False
 
 			#death screen summary
 			if game_state == 'death':
 				key = libtcod.Key()
-				util.render_all()
+				util.render_map()
 				libtcod.console_flush()
 				while not key.vk == libtcod.KEY_SPACE:
 					libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, key, libtcod.Mouse(), True)
@@ -193,7 +220,7 @@ class Game(object):
 
 	# load the game using the shelve module
 	def load_game(self):
-		global worldmap, current_map, old_maps, player, char, message, game_state, times_saved
+		global worldmap, current_map, old_maps, player, message, game_state, times_saved, char
 		if len(savefiles) == 0:
 			util.msg_box('text', 'Saved games', contents='There are no save games.', center=True, box_height=5)
 		else:
@@ -224,34 +251,36 @@ class Game(object):
 	# basic help text
 	def help(self):
 		contents = open('data/help.txt', 'r').read()
-		util.msg_box('text', 'Help', contents=contents, box_width=40, box_height=24)
+		util.msg_box('text', 'Help', contents=contents, box_width=40, box_height=25)
 
 	# loading and changin game settings
 	def settings(self):
-		util.msg_box('settings', 'Settings', contents=game.font, box_width=40, box_height=8, center=True)
+		util.msg_box('settings', 'Settings', contents=font, box_width=40, box_height=8, center=True)
 		self.load_settings()
 
 	def load_settings(self):
+		global font
 		if os.path.exists('settings.ini'):
 			contents = open('settings.ini', 'r')
 			for line in contents:
-				game.font = line.rstrip()
-			if game.font != 'large':
-				game.font = 'small'
+				font = line.rstrip()
+			if font != 'large':
+				font = 'small'
 			contents.close()
 
 	# loading and showing the high scores screen
 	def show_high_scores(self):
 		if os.path.exists('data/highscores.dat'):
 			self.load_high_scores()
-			util.msg_box('highscore', 'High scores', contents=game.highscore, box_width=game.SCREEN_WIDTH, box_height=game.SCREEN_HEIGHT)
+			util.msg_box('highscore', 'High scores', contents=highscore, box_width=SCREEN_WIDTH, box_height=SCREEN_HEIGHT)
 		else:
 			util.msg_box('text', 'High scores', contents="The high scores file is empty.", box_width=41, box_height=5, center=True)
 
 	def load_high_scores(self):
+		global highscore
 		if os.path.exists('data/highscores.dat'):
 			contents = open('data/highscores.dat', 'rb')
-			game.highscore = pickle.load(contents)
+			highscore = pickle.load(contents)
 			contents.close()
 
 	# brings up the main menu
@@ -264,8 +293,8 @@ class Game(object):
 			libtcod.console_set_default_foreground(0, libtcod.light_yellow)
 			libtcod.console_set_default_background(0, libtcod.black)
 			libtcod.console_clear(0)
-			#libtcod.image_blit_2x(game.img, 0, 0, 0)
-			#libtcod.image_blit(game.img, 0, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, libtcod.BKGND_SET, 1.0, 1.0, 0.0)
+			#libtcod.image_blit_2x(img, 0, 0, 0)
+			#libtcod.image_blit(img, 0, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, libtcod.BKGND_SET, 1.0, 1.0, 0.0)
 			contents = ['Start a new game', 'Load a saved game', 'Help', 'Settings', 'High Scores', 'Quit']
 			libtcod.console_print_ex(0, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - len(contents), libtcod.BKGND_SET, libtcod.CENTER, 'Immortal ' + VERSION)
 			libtcod.console_print_ex(0, SCREEN_WIDTH / 2, SCREEN_HEIGHT - 2, libtcod.BKGND_SET, libtcod.CENTER, 'By Potatoman')

@@ -4,11 +4,15 @@ import game
 
 
 class Map(object):
-	def __init__(self, name, abbr, id, level):
+	def __init__(self, name, abbr, id, level, mw=70, mh=28):
 		self.location_name = name
 		self.location_abbr = abbr
 		self.location_id = id
 		self.location_level = level
+		self.map_width = mw
+		self.map_height = mh
+		self.max_monsters = min(25, (mw * mh) / 300)
+		self.max_items = min(25, (mw * mh) / 300)
 		self.tiles = None
 		self.explored = None
 		self.objects = None
@@ -44,8 +48,8 @@ class Map(object):
 			self.tiles[x][y] = game.tiles.get_tile('floor')
 
 	def place_doors(self):
-		for y in range(1, game.MAP_HEIGHT - 1):
-			for x in range(1, game.MAP_WIDTH - 1):
+		for y in range(1, self.map_height - 1):
+			for x in range(1, self.map_width - 1):
 				if (self.tiles[x + 1][y].name == 'floor' and self.tiles[x - 1][y].name == 'floor' and self.tiles[x][y - 1].name == 'wall' and self.tiles[x][y + 1].name == 'wall') or (self.tiles[x + 1][y].name == 'wall' and self.tiles[x - 1][y].name == 'wall' and self.tiles[x][y - 1].name == 'floor' and self.tiles[x][y + 1].name == 'floor'):
 					if libtcod.random_get_int(game.rnd, 1, 50) == 50:
 						self.tiles[x][y] = game.tiles.get_tile('door')
@@ -54,8 +58,8 @@ class Map(object):
 		x, y = 0, 0
 		#choose random spot for this monster
 		while (self.is_blocked(x, y)):
-			x = libtcod.random_get_int(game.rnd, 0, game.MAP_WIDTH - 1)
-			y = libtcod.random_get_int(game.rnd, 0, game.MAP_HEIGHT - 1)
+			x = libtcod.random_get_int(game.rnd, 0, self.map_width - 1)
+			y = libtcod.random_get_int(game.rnd, 0, self.map_height - 1)
 
 		#only place it if the tile is not blocked
 		dice = libtcod.random_get_int(game.rnd, 1, 100)
@@ -70,22 +74,24 @@ class Map(object):
 
 	def place_objects(self):
 		#choose random number of monsters
-		num_monsters = libtcod.random_get_int(game.rnd, 1, game.MAX_MONSTERS_PER_LEVEL)
+		num_monsters = libtcod.random_get_int(game.rnd, self.max_monsters / 5, self.max_monsters)
 		for i in range(num_monsters):
 			self.place_monsters()
 
 		#choose random number of items
-		num_items = libtcod.random_get_int(game.rnd, 1, game.MAX_ITEMS_PER_LEVEL)
+		num_items = libtcod.random_get_int(game.rnd, self.max_items / 5, self.max_items)
 		for i in range(num_items):
 			#choose random spot for this item
 			x, y = 0, 0
 			while (self.is_blocked(x, y)):
-				x = libtcod.random_get_int(game.rnd, 0, game.MAP_WIDTH - 1)
-				y = libtcod.random_get_int(game.rnd, 0, game.MAP_HEIGHT - 1)
+				x = libtcod.random_get_int(game.rnd, 0, self.map_width - 1)
+				y = libtcod.random_get_int(game.rnd, 0, self.map_height - 1)
 
 			#only place it if the tile is not blocked
 			dice = libtcod.random_get_int(game.rnd, 1, 100)
-			if dice <= 60:
+			if dice <= 10:
+				d = game.items.get_item("gold")
+			elif dice <= 60:
 				d = game.items.get_item_by_level(1)
 			elif dice <= 90:
 				d = game.items.get_item_by_level(2)
@@ -111,21 +117,21 @@ class Map(object):
 		self.objects = [game.char]
 
 		#fill map with "blocked" tiles
-		self.tiles = [[game.tiles.get_tile('wall') for y in range(game.MAP_HEIGHT)] for x in range(game.MAP_WIDTH)]
-		self.explored = [[False for y in range(game.MAP_HEIGHT)] for x in range(game.MAP_WIDTH)]
+		self.tiles = [[game.tiles.get_tile('wall') for y in range(self.map_height)] for x in range(self.map_width)]
+		self.explored = [[False for y in range(self.map_height)] for x in range(self.map_width)]
 
 		rooms = []
 		num_rooms = 0
 		game.fov_noise = libtcod.noise_new(1, 1.0, 1.0)
 		game.fov_torchx = 0.0
 
-		for r in range(game.MAX_ROOMS):
+		for r in range((self.map_width * self.map_height) / 80):
 			#random width and height
 			w = libtcod.random_get_int(game.rnd, game.ROOM_MIN_SIZE, game.ROOM_MAX_SIZE)
 			h = libtcod.random_get_int(game.rnd, game.ROOM_MIN_SIZE, game.ROOM_MAX_SIZE)
 			#random position without going out of the boundaries of the map
-			x = libtcod.random_get_int(game.rnd, 0, game.MAP_WIDTH - w - 1)
-			y = libtcod.random_get_int(game.rnd, 0, game.MAP_HEIGHT - h - 1)
+			x = libtcod.random_get_int(game.rnd, 0, self.map_width - w - 1)
+			y = libtcod.random_get_int(game.rnd, 0, self.map_height - h - 1)
 
 			#"Rect" class makes rectangles easier to work with
 			new_room = Rect(x, y, w, h)
@@ -357,10 +363,10 @@ class Object(object):
 		if libtcod.map_is_in_fov(game.fov_map, self.x, self.y):
 			#set the color and then draw the character that represents this object at its position
 			libtcod.console_set_default_foreground(con, self.color)
-			libtcod.console_put_char(con, self.x, self.y, self.char, libtcod.BKGND_NONE)
+			libtcod.console_put_char(con, self.x - game.curx, self.y - game.cury, self.char, libtcod.BKGND_NONE)
 		elif game.current_map.explored[self.x][self.y] and self.can_be_pickup:
 			libtcod.console_set_default_foreground(con, self.item.dark_color)
-			libtcod.console_put_char(con, self.x, self.y, self.char, libtcod.BKGND_NONE)
+			libtcod.console_put_char(con, self.x - game.curx, self.y - game.cury, self.char, libtcod.BKGND_NONE)
 
 	def clear(self, con):
 		#erase the character that represents this object

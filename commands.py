@@ -133,7 +133,7 @@ def player_move(dx, dy):
 # attack someone (primarily use for ranged weapons)
 def attack():
 	game.message.new('Attack... (Arrow keys to move cursor, ENTER to attack, ESC to exit)', game.player.turns)
-	util.render_all()
+	util.render_map()
 	target = None
 	dx = game.char.x
 	dy = game.char.y
@@ -274,7 +274,7 @@ def equip_item():
 # help screen
 def help():
 	contents = open('data/help.txt', 'r').read()
-	util.msg_box('text', 'Help', contents=contents, box_width=40, box_height=24, blitmap=True)
+	util.msg_box('text', 'Help', contents=contents, box_width=40, box_height=25, blitmap=True)
 	game.redraw_gui = True
 
 
@@ -301,9 +301,9 @@ def inventory():
 # look (with keyboard)
 def look():
 	game.message.new('Looking... (Arrow keys to move cursor, ESC to exit)', game.player.turns)
-	util.render_all()
-	dx = game.char.x
-	dy = game.char.y
+	util.render_map()
+	dx = game.char.x - game.curx
+	dy = game.char.y - game.cury
 	key = libtcod.Key()
 
 	while not libtcod.console_is_window_closed():
@@ -327,21 +327,22 @@ def look():
 			dx -= 1
 		if dy == game.MAP_HEIGHT:
 			dy -= 1
+		px = dx + game.curx
+		py = dy + game.cury
 
 		#create a list with the names of all objects at the cursor coordinates
-		if dx in range(0, game.MAP_WIDTH - 1) and dy in range(0, game.MAP_HEIGHT - 1) and game.current_map.explored[dx][dy]:
-			names = [obj for obj in game.current_map.objects if obj.x == dx and obj.y == dy]
-
+		if dx in range(0, game.MAP_WIDTH - 1) and dy in range(0, game.MAP_HEIGHT - 1) and game.current_map.explored[px][py]:
+			names = [obj for obj in game.current_map.objects if obj.x == px and obj.y == py]
 			prefix = 'you see '
-			if not libtcod.map_is_in_fov(game.fov_map, dx, dy):
+			if not libtcod.map_is_in_fov(game.fov_map, px, py):
 				prefix = 'you remember seeing '
 				for i in range(len(names) - 1, -1, -1):
 					if names[i].entity != None:
 						names.pop(i)
-			if (dx, dy) == (game.char.x, game.char.y):
+			if (px, py) == (game.char.x, game.char.y):
 				text = 'you see yourself'
 			elif names == []:
-				text = prefix + game.current_map.tiles[dx][dy].article + game.current_map.tiles[dx][dy].name
+				text = prefix + game.current_map.tiles[px][py].article + game.current_map.tiles[px][py].name
 			elif len(names) > 1:
 				text = prefix
 				for i in range(0, len(names)):
@@ -429,7 +430,7 @@ def pickup_item():
 
 # dialog to confirm quitting the game
 def quit_game():
-	util.render_all()
+	util.render_map()
 	libtcod.console_print(game.con, 0, 0, 'Are you sure you want to quit the game? (y/n)')
 	libtcod.console_blit(game.con, 0, 0, game.MAP_WIDTH, game.MAP_HEIGHT, 0, game.MAP_X, game.MAP_Y)
 	libtcod.console_flush()
@@ -456,7 +457,7 @@ def remove_item():
 
 # dialog to confirm saving the game
 def save_game():
-	util.render_all()
+	util.render_map()
 	libtcod.console_print(game.con, 0, 0, 'Do you want to save (and quit) the game? (y/n)')
 	libtcod.console_blit(game.con, 0, 0, game.MAP_WIDTH, game.MAP_HEIGHT, 0, game.MAP_X, game.MAP_Y)
 	libtcod.console_flush()
@@ -498,30 +499,30 @@ def wait_turn():
 
 
 # character sheet for stats
-def sheet_stats(con, width, height):
+def ztats_attributes(con, width, height):
 	util.text_box(con, 0, 0, width, height, 'Player stats')
 	libtcod.console_set_default_foreground(con, libtcod.white)
 	libtcod.console_set_default_background(con, libtcod.black)
 	libtcod.console_print(con, 2, 2, game.player.name + ', a level ' + str(game.player.level) + ' ' + game.player.gender + ' ' + game.player.race + ' ' + game.player.profession)
-	libtcod.console_print(con, 2, 4, 'Strength: ' + str(game.player.strength))
-	libtcod.console_print(con, 2, 5, 'Dexterity: ' + str(game.player.dexterity))
-	libtcod.console_print(con, 2, 6, 'Intelligence: ' + str(game.player.intelligence))
-	libtcod.console_print(con, 2, 7, 'Wisdom: ' + str(game.player.wisdom))
-	libtcod.console_print(con, 2, 8, 'Endurance: ' + str(game.player.endurance))
-	libtcod.console_print(con, 2, 9, 'Karma: ' + str(game.player.karma))
+	libtcod.console_print(con, 2, 4, 'Strength     : ' + str(game.player.strength))
+	libtcod.console_print(con, 2, 5, 'Dexterity    : ' + str(game.player.dexterity))
+	libtcod.console_print(con, 2, 6, 'Intelligence : ' + str(game.player.intelligence))
+	libtcod.console_print(con, 2, 7, 'Wisdom       : ' + str(game.player.wisdom))
+	libtcod.console_print(con, 2, 8, 'Endurance    : ' + str(game.player.endurance))
+	libtcod.console_print(con, 2, 9, 'Karma        : ' + str(game.player.karma))
 
-	libtcod.console_print(con, 30, 4, 'Health: ' + str(game.player.health) + '/' + str(game.player.max_health))
-	libtcod.console_print(con, 30, 5, 'Mana: ' + str(game.player.mana) + '/' + str(game.player.max_mana))
+	libtcod.console_print(con, 30, 4, 'Health : ' + str(game.player.health) + '/' + str(game.player.max_health))
+	libtcod.console_print(con, 30, 5, 'Mana   : ' + str(game.player.mana) + '/' + str(game.player.max_mana))
 	libtcod.console_print(con, 30, 6, 'Experience: ' + str(game.player.xp))
 	libtcod.console_print(con, 30, 7, 'Gold: ' + str(game.player.gold))
 
-	libtcod.console_print(con, 2, 11, 'Attack Rating: ' + str(game.player.attack_rating()))
-	libtcod.console_print(con, 2, 12, 'Defense Rating: ' + str(game.player.defense_rating()))
-	libtcod.console_print(con, 2, 13, 'Carrying Capacity: ' + str(game.player.carrying_capacity()) + 'lbs')
+	libtcod.console_print(con, 2, 11, 'Attack Rating     : ' + str(game.player.attack_rating()))
+	libtcod.console_print(con, 2, 12, 'Defense Rating    : ' + str(game.player.defense_rating()))
+	libtcod.console_print(con, 2, 13, 'Carrying Capacity : ' + str(game.player.carrying_capacity()) + 'lbs')
 
 
 # character sheet for skills
-def sheet_skills(con, width, height):
+def ztats_skills(con, width, height):
 	util.text_box(con, 0, 0, width, height, 'Skills')
 	libtcod.console_set_default_foreground(con, libtcod.white)
 	libtcod.console_set_default_background(con, libtcod.black)
@@ -532,19 +533,19 @@ def sheet_skills(con, width, height):
 
 
 # character sheet for equipment
-def sheet_equipment(con, width, height):
+def ztats_equipment(con, width, height):
 	util.text_box(con, 0, 0, width, height, 'Equipment')
 	libtcod.console_set_default_foreground(con, libtcod.white)
 	libtcod.console_set_default_background(con, libtcod.black)
-	libtcod.console_print(con, 2, 2, 'Head')
-	libtcod.console_print(con, 2, 3, 'Neck')
-	libtcod.console_print(con, 2, 4, 'Body')
-	libtcod.console_print(con, 2, 5, 'Right Hand')
-	libtcod.console_print(con, 2, 6, 'Left Hand')
-	libtcod.console_print(con, 2, 7, 'Ring')
-	libtcod.console_print(con, 2, 8, 'Ring')
-	libtcod.console_print(con, 2, 9, 'Gauntlets')
-	libtcod.console_print(con, 2, 10, 'Boots')
+	libtcod.console_print(con, 2, 2, 'Head       :')
+	libtcod.console_print(con, 2, 3, 'Neck       :')
+	libtcod.console_print(con, 2, 4, 'Body       :')
+	libtcod.console_print(con, 2, 5, 'Right Hand :')
+	libtcod.console_print(con, 2, 6, 'Left Hand  :')
+	libtcod.console_print(con, 2, 7, 'Ring       :')
+	libtcod.console_print(con, 2, 8, 'Ring       :')
+	libtcod.console_print(con, 2, 9, 'Gauntlets  :')
+	libtcod.console_print(con, 2, 10, 'Boots      :')
 	for i in range(0, len(game.player.equipment)):
 		if "armor_head" in game.player.equipment[i].flags:
 			y = 2
@@ -567,7 +568,7 @@ def sheet_equipment(con, width, height):
 
 
 # character sheet for inventory
-def sheet_inventory(con, width, height):
+def ztats_inventory(con, width, height):
 	util.text_box(con, 0, 0, width, height, 'Inventory')
 	libtcod.console_set_default_foreground(con, libtcod.white)
 	libtcod.console_set_default_background(con, libtcod.black)
@@ -587,13 +588,13 @@ def ztats():
 
 	while exit == False:
 		if screen == 0:
-			sheet_stats(stats, width, height)
+			ztats_attributes(stats, width, height)
 		elif screen == 1:
-			sheet_skills(stats, width, height)
+			ztats_skills(stats, width, height)
 		elif screen == 2:
-			sheet_equipment(stats, width, height)
+			ztats_equipment(stats, width, height)
 		elif screen == 3:
-			sheet_inventory(stats, width, height)
+			ztats_inventory(stats, width, height)
 
 		libtcod.console_print_ex(stats, width / 2, height - 1, libtcod.BKGND_SET, libtcod.CENTER, '[ Arrow Left/Right = Change Pages ]')
 		libtcod.console_blit(stats, 0, 0, width, height, 0, ((game.MAP_WIDTH - width) / 2) + game.MAP_X, (game.MAP_HEIGHT - height) / 2, 1.0, 1.0)
