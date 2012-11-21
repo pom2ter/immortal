@@ -98,6 +98,10 @@ class Monster(object):
 				self.attack()
 		else:
 			dx, dy = libtcod.random_get_int(game.rnd, -1, 1), libtcod.random_get_int(game.rnd, -1, 1)
+			if x + dx < 0 or x + dx >= game.current_map.map_width:
+				dx = 0
+			if y + dy < 0 or y + dy >= game.current_map.map_height:
+				dy = 0
 			if all(i == "ai_neutral" and i != "ai_hostile" for i in self.flags):
 				if self.distance_to_player(game.char, x, y) <= 2:
 					turn_hostile = libtcod.random_get_int(game.rnd, 1, 100)
@@ -113,6 +117,10 @@ class Monster(object):
 				if dx == 0 and dy == 0:
 					break
 				dx, dy = libtcod.random_get_int(game.rnd, -1, 1), libtcod.random_get_int(game.rnd, -1, 1)
+				if x + dx < 0 or x + dx >= game.current_map.map_width:
+					dx = 0
+				if y + dy < 0 or y + dy >= game.current_map.map_height:
+					dy = 0
 		return x + dx, y + dy
 
 	def attack(self):

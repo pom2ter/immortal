@@ -126,6 +126,14 @@ def player_move(dx, dy):
 			open_door(dx, dy)
 		else:
 			game.char.move(dx, dy, game.current_map)
+			if game.current_map.location_id == 0:
+				coordx = [-1, 0, 1]
+				coordy = [-(game.WORLDMAP_WIDTH), 0, game.WORLDMAP_WIDTH]
+				px = game.current_map.map_width / 3
+				py = game.current_map.map_height / 3
+				if (game.char.y / py) == 0 or (game.char.x / px) == 0 or (game.char.y / py) == 2 or (game.char.x / px) == 2:
+					level = game.current_map.location_level + coordx[game.char.x / px] + coordy[game.char.y / py]
+					util.change_maps(0, level)
 		util.items_at_feet()
 		game.fov_recompute = True
 

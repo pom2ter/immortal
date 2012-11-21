@@ -4,11 +4,12 @@ import game
 
 
 class Map(object):
-	def __init__(self, name, abbr, id, level, mw=70, mh=28):
+	def __init__(self, name, abbr, id, level, mw=120, mh=72, typ='Dungeon', empty=False):
 		self.location_name = name
 		self.location_abbr = abbr
 		self.location_id = id
 		self.location_level = level
+		self.type = typ
 		self.map_width = mw
 		self.map_height = mh
 		self.max_monsters = min(25, (mw * mh) / 300)
@@ -18,7 +19,7 @@ class Map(object):
 		self.objects = None
 		self.up_staircase = (0, 0)
 		self.down_staircase = (0, 0)
-		self.generate_map()
+		self.generate_map(empty)
 
 	def is_blocked(self, x, y):
 		#first test the map tile
@@ -112,19 +113,9 @@ class Map(object):
 		self.tiles[x][y] = game.tiles.get_tile('stairs going down')
 		self.down_staircase = (x, y)
 
-	def generate_map(self):
-		#the list of objects with just the player
-		self.objects = [game.char]
-
-		#fill map with "blocked" tiles
-		self.tiles = [[game.tiles.get_tile('wall') for y in range(self.map_height)] for x in range(self.map_width)]
-		self.explored = [[False for y in range(self.map_height)] for x in range(self.map_width)]
-
+	def generate_dungeon(self):
 		rooms = []
 		num_rooms = 0
-		game.fov_noise = libtcod.noise_new(1, 1.0, 1.0)
-		game.fov_torchx = 0.0
-
 		for r in range((self.map_width * self.map_height) / 80):
 			#random width and height
 			w = libtcod.random_get_int(game.rnd, game.ROOM_MIN_SIZE, game.ROOM_MAX_SIZE)
@@ -175,10 +166,84 @@ class Map(object):
 				#finally, append the new room to the list
 				rooms.append(new_room)
 				num_rooms += 1
+		return rooms
 
-		self.place_doors()
-		self.place_objects()
-		self.place_stairs(rooms)
+	def generate_forest(self):
+		# populate region
+		trees_tiles = libtcod.random_get_int(game.rnd, 25, int((self.map_width * self.map_height) * 0.2))
+		rocks_tiles = libtcod.random_get_int(game.rnd, 10, int((self.map_width * self.map_height) * 0.01))
+		water_tiles = libtcod.random_get_int(game.rnd, 10, 80)
+		dirt_tiles = libtcod.random_get_int(game.rnd, 10, 80)
+		grass_tiles = libtcod.random_get_int(game.rnd, 25, int((self.map_width * self.map_height) * 0.2))
+		tall_grass_tiles = libtcod.random_get_int(game.rnd, 25, int((self.map_width * self.map_height) * 0.2))
+
+		for i in range(trees_tiles):
+			x = libtcod.random_get_int(game.rnd, 0, self.map_width - 1)
+			y = libtcod.random_get_int(game.rnd, 0, self.map_height - 1)
+			while (self.tiles[x][y].name != 'grass'):
+				x = libtcod.random_get_int(game.rnd, 0, self.map_width - 1)
+				y = libtcod.random_get_int(game.rnd, 0, self.map_height - 1)
+			self.tiles[x][y] = game.tiles.get_tile('tree')
+
+		for i in range(rocks_tiles):
+			x = libtcod.random_get_int(game.rnd, 0, self.map_width - 1)
+			y = libtcod.random_get_int(game.rnd, 0, self.map_height - 1)
+			while (self.tiles[x][y].name != 'grass'):
+				x = libtcod.random_get_int(game.rnd, 0, self.map_width - 1)
+				y = libtcod.random_get_int(game.rnd, 0, self.map_height - 1)
+			self.tiles[x][y] = game.tiles.get_tile('rock')
+
+		for i in range(water_tiles):
+			x = libtcod.random_get_int(game.rnd, 0, self.map_width - 1)
+			y = libtcod.random_get_int(game.rnd, 0, self.map_height - 1)
+			while (self.tiles[x][y].name != 'grass'):
+				x = libtcod.random_get_int(game.rnd, 0, self.map_width - 1)
+				y = libtcod.random_get_int(game.rnd, 0, self.map_height - 1)
+			self.tiles[x][y] = game.tiles.get_tile('shallow water')
+
+		for i in range(dirt_tiles):
+			x = libtcod.random_get_int(game.rnd, 0, self.map_width - 1)
+			y = libtcod.random_get_int(game.rnd, 0, self.map_height - 1)
+			while (self.tiles[x][y].name != 'grass'):
+				x = libtcod.random_get_int(game.rnd, 0, self.map_width - 1)
+				y = libtcod.random_get_int(game.rnd, 0, self.map_height - 1)
+			self.tiles[x][y] = game.tiles.get_tile('dirt')
+
+		for i in range(grass_tiles):
+			x = libtcod.random_get_int(game.rnd, 0, self.map_width - 1)
+			y = libtcod.random_get_int(game.rnd, 0, self.map_height - 1)
+			while (self.tiles[x][y].name != 'grass'):
+				x = libtcod.random_get_int(game.rnd, 0, self.map_width - 1)
+				y = libtcod.random_get_int(game.rnd, 0, self.map_height - 1)
+			self.tiles[x][y] = game.tiles.get_tile('grass2')
+
+		for i in range(tall_grass_tiles):
+			x = libtcod.random_get_int(game.rnd, 0, self.map_width - 1)
+			y = libtcod.random_get_int(game.rnd, 0, self.map_height - 1)
+			while (self.tiles[x][y].name != 'grass'):
+				x = libtcod.random_get_int(game.rnd, 0, self.map_width - 1)
+				y = libtcod.random_get_int(game.rnd, 0, self.map_height - 1)
+			self.tiles[x][y] = game.tiles.get_tile('tall grass')
+
+	def generate_map(self, empty=False):
+		default_block_tiles = {'Dungeon': 'wall', 'Forest': 'grass'}
+
+		self.objects = [game.char]
+		self.tiles = [[game.tiles.get_tile(default_block_tiles[self.type]) for y in range(self.map_height)] for x in range(self.map_width)]
+		self.explored = [[False for y in range(self.map_height)] for x in range(self.map_width)]
+
+		game.fov_noise = libtcod.noise_new(1, 1.0, 1.0)
+		game.fov_torchx = 0.0
+
+		if not empty:
+			if self.type == 'Dungeon':
+				rooms = self.generate_dungeon()
+				self.place_doors()
+				self.place_objects()
+				self.place_stairs(rooms)
+			if self.type == 'Forest':
+				self.generate_forest()
+				self.place_objects()
 
 
 class Tile(object):

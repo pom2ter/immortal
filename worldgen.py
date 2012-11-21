@@ -10,8 +10,10 @@ class World(object):
 		self.noise = 0
 		self.hm_list = [0] * (game.WORLDMAP_WIDTH * game.WORLDMAP_HEIGHT)
 		self.sandheight = 0.12
-		self.mapimg_big = 0
-		self.mapimg_small = 0
+		self.map_image_big = 0
+		self.map_image_small = 0
+		self.player_positionx = 0
+		self.player_positiony = 0
 		self.generate()
 
 	def generate(self):
@@ -27,7 +29,7 @@ class World(object):
 		self.smooth_edges()
 		self.set_land_mass(libtcod.random_get_float(self.rnd, 0.35, 0.45), self.sandheight)
 		#libtcod.heightmap_rain_erosion(game.hm, (game.WORLDMAP_WIDTH * game.WORLDMAP_HEIGHT) / 7, 0.70, 0.01, self.rnd)
-		self.save_map()
+		self.create_map_images()
 
 	def add_landmass(self):
 		# create some hills
@@ -103,16 +105,16 @@ class World(object):
 		#t1 = libtcod.sys_elapsed_seconds()
 		#print "Fixing Landmass: ", t1 - t0
 
-	def save_map(self, mode=0):
+	def create_map_images(self, mode=0):
 		#t0 = libtcod.sys_elapsed_seconds()
 		con = libtcod.console_new(game.WORLDMAP_WIDTH, game.WORLDMAP_HEIGHT)
-		self.mapimg_small = libtcod.image_new(game.WORLDMAP_WIDTH, game.WORLDMAP_HEIGHT)
+		self.map_image_small = libtcod.image_new(game.WORLDMAP_WIDTH, game.WORLDMAP_HEIGHT)
 		for x in range(0, game.WORLDMAP_WIDTH):
 			for y in range(0, game.WORLDMAP_HEIGHT):
 				if mode == 0:
 					cellheight = libtcod.heightmap_get_value(game.hm, x, y)
 				else:
-					cellheight = self.hm_list[(x * game.WORLDMAP_HEIGHT) + y]
+					cellheight = self.hm_list[(y * game.WORLDMAP_WIDTH) + x]
 				if cellheight >= 0.950:
 					# mountain peak
 					bcolor = libtcod.color_lerp(libtcod.white, libtcod.silver, (1.000 - cellheight) / 0.050)
@@ -141,15 +143,22 @@ class World(object):
 					# ocean
 					bcolor = libtcod.Color(0, 0, 80)
 				libtcod.console_put_char_ex(con, x, y, ' ', bcolor, bcolor)
-				libtcod.image_put_pixel(self.mapimg_small, x, y, bcolor)
+				libtcod.image_put_pixel(self.map_image_small, x, y, bcolor)
 				if mode == 0:
-					self.hm_list[(x * game.WORLDMAP_HEIGHT) + y] = cellheight
+					self.hm_list[(y * game.WORLDMAP_WIDTH) + x] = cellheight
 
-		self.mapimg_big = libtcod.image_from_console(con)
-		libtcod.image_scale(self.mapimg_small, (game.SCREEN_WIDTH - 2) * 2, (game.SCREEN_HEIGHT - 2) * 2)
+		while self.player_positionx == 0:
+			start = libtcod.random_get_int(self.rnd, 0, (game.WORLDMAP_WIDTH * game.WORLDMAP_HEIGHT) - 1)
+			if int(self.hm_list[start] * 1000) in range(250, 699):
+				self.player_positionx = start % game.WORLDMAP_WIDTH
+				self.player_positiony = start / game.WORLDMAP_WIDTH
+				#libtcod.image_put_pixel(self.map_image_small, self.player_positionx, self.player_positiony, libtcod.white)
+
+		self.map_image_big = libtcod.image_from_console(con)
+		libtcod.image_scale(self.map_image_small, (game.SCREEN_WIDTH - 2) * 2, (game.SCREEN_HEIGHT - 2) * 2)
 		if not os.path.exists('maps'):
 			os.makedirs('maps')
-		#libtcod.image_save(self.mapimg_big, 'maps/' + time.strftime('%Y%m%d-%H%M%S') + '.png')
-		#libtcod.image_save(self.mapimg_small, 'maps/' + time.strftime('%Y%m%d-%H%M%S') + '.png')
+		#libtcod.image_save(self.map_image_big, 'maps/' + time.strftime('%Y%m%d-%H%M%S') + '.png')
+		#libtcod.image_save(self.map_image_small, 'maps/' + time.strftime('%Y%m%d-%H%M%S') + '.png')
 		#t1 = libtcod.sys_elapsed_seconds()
 		#print "Saving map: ", t1 - t0

@@ -12,8 +12,8 @@ import map
 import commands
 import util
 
-VERSION = 'v0.2.2'
-BUILD = '33'
+VERSION = 'v0.2.3'
+BUILD = '34'
 
 #size of the gui windows
 MAP_WIDTH = 70
@@ -43,8 +43,8 @@ ROOM_MIN_SIZE = 6
 #fov
 FOV_ALGO = 0
 FOV_LIGHT_WALLS = True
-TORCH_RADIUS = 6
-FOV_RADIUS = 8
+TORCH_RADIUS = 5
+FOV_RADIUS = 9
 SQUARED_TORCH_RADIUS = TORCH_RADIUS * TORCH_RADIUS
 fov_recompute = True
 fov_torch = True
@@ -71,9 +71,13 @@ precipitation = 0
 temperature = 0
 mask = 0
 
-#miscellaneous variables
+#maps
 current_map = None
+current_backup = None
+border_maps = [0] * 8
 old_maps = []
+
+#miscellaneous variables
 char = None
 savefiles = []
 times_saved = 0
@@ -107,7 +111,7 @@ class Game(object):
 		self.init_root_console()
 		#libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, 'Immortal ' + VERSION, False)
 
-		libtcod.sys_set_fps(600)
+		libtcod.sys_set_fps(500)
 		rnd = libtcod.random_new()
 		con = libtcod.console_new(MAP_WIDTH, MAP_HEIGHT)
 		panel = libtcod.console_new(MESSAGE_WIDTH, MESSAGE_HEIGHT)
@@ -125,7 +129,7 @@ class Game(object):
 
 	# create the root console based on desktop resolution and font size
 	def init_root_console(self):
-		global MAP_WIDTH, MAP_HEIGHT, SCREEN_WIDTH, SCREEN_HEIGHT, MESSAGE_WIDTH, PLAYER_STATS_HEIGHT, MESSAGE_Y
+		global MAP_WIDTH, MAP_HEIGHT, SCREEN_WIDTH, SCREEN_HEIGHT, MESSAGE_WIDTH, PLAYER_STATS_HEIGHT, MESSAGE_Y, buffer
 		user32 = ctypes.windll.user32
 		desktop_width = user32.GetSystemMetrics(0)
 		desktop_height = user32.GetSystemMetrics(1)
@@ -149,14 +153,18 @@ class Game(object):
 	# new game setup
 	def new_game(self):
 		global message, player, char, game_state, worldmap, current_map
+		cardinal = [-(WORLDMAP_WIDTH - 1), -(WORLDMAP_WIDTH), -(WORLDMAP_WIDTH + 1), -1, 1, WORLDMAP_WIDTH - 1, WORLDMAP_WIDTH, WORLDMAP_WIDTH + 1]
 		message = Message()
 		player = Player()
-		char = map.Object(0, 0, player.icon, 'player', player.icon_color, blocks=True)
+		char = map.Object(50, 50, player.icon, 'player', player.icon_color, blocks=True)
 		game_state = create_character()
-		util.msg_box('text', contents='Generating world map...', center=True, box_width=50, box_height=5)
-		worldmap = worldgen.World()
 		if game_state == 'playing':
-			current_map = map.Map('Starter Dungeon', 'SD', 1, 1, 120, 72)
+			util.msg_box('text', contents='Generating world map...', center=True, box_width=50, box_height=5)
+			worldmap = worldgen.World()
+			current_map = map.Map('Wilderness', 'WD', 0, (worldmap.player_positiony * WORLDMAP_WIDTH) + worldmap.player_positionx, typ='Forest')
+			for i in range(len(border_maps)):
+				border_maps[i] = map.Map('Wilderness', 'WD', 0, (worldmap.player_positiony * WORLDMAP_WIDTH) + worldmap.player_positionx + cardinal[i], typ='Forest')
+			util.combine_maps()
 			self.play_game()
 
 	# main game loop
@@ -205,12 +213,14 @@ class Game(object):
 
 	# save the game using the shelve module
 	def save_game(self):
-		global worldmap, current_map, old_maps, player, message, game_state, times_saved
+		global worldmap, current_map, border_maps, old_maps, player, message, game_state, times_saved
 		if not os.path.exists('saves'):
 			os.makedirs('saves')
 		file = shelve.open('saves/' + player.name.lower(), 'n')
 		file['worldmap'] = worldmap
 		file['current_map'] = current_map
+		file['current_backup'] = current_backup
+		file['border_maps'] = border_maps
 		file['maps'] = old_maps
 		file['player'] = player
 		file['messages'] = message
@@ -220,12 +230,12 @@ class Game(object):
 
 	# load the game using the shelve module
 	def load_game(self):
-		global worldmap, current_map, old_maps, player, message, game_state, times_saved, char
+		global worldmap, current_map, current_backup, border_maps, old_maps, player, message, game_state, times_saved, char
 		if len(savefiles) == 0:
 			util.msg_box('text', 'Saved games', contents='There are no save games.', center=True, box_height=5)
 		else:
 			desc = []
-			for i in range(0, len(savefiles)):
+			for i in range(len(savefiles)):
 				file = shelve.open('saves/' + savefiles[i], 'r')
 				file['worldmap']
 				file['current_map']
@@ -238,6 +248,8 @@ class Game(object):
 				file = shelve.open('saves/' + savefiles[choice], 'r')
 				worldmap = file['worldmap']
 				current_map = file['current_map']
+				current_backup = file['current_backup']
+				border_maps = file['border_maps']
 				old_maps = file['maps']
 				player = file['player']
 				message = file['messages']
@@ -245,7 +257,7 @@ class Game(object):
 				times_saved = file['times_saved']
 				file.close()
 				char = current_map.objects[0]
-				worldmap.save_map(1)
+				worldmap.create_map_images(1)
 				self.play_game()
 
 	# basic help text

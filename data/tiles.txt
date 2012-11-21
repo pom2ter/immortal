@@ -82,7 +82,7 @@ tile_type "grass" {
 	article = ""
 }
 
-tile_type "grass" {
+tile_type "grass2" {
 	type = "grass"
 	icon = ","
 	icon_color = "0,255,0"
@@ -104,7 +104,6 @@ tile_type "tree" {
 	icon_color = "0,191,0"
 	back_color = "0,0,96"
 	article = "a "
-	blocked
 	block_sight
 }
 
