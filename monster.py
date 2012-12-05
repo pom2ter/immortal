@@ -51,6 +51,12 @@ class Monster(object):
 				d = game.items.get_item("dog corpse")
 			elif "corpse_orc" in self.flags:
 				d = game.items.get_item("orc corpse")
+			elif "corpse_human" in self.flags:
+				d = game.items.get_item("human corpse")
+			elif "corpse_wolf" in self.flags:
+				d = game.items.get_item("wolf corpse")
+			elif "corpse_bear" in self.flags:
+				d = game.items.get_item("bear corpse")
 			drop = map.Object(x, y, d.icon, d.name, d.color, True, item=d)
 			game.current_map.objects.append(drop)
 		drop_chance = libtcod.random_get_int(game.rnd, 1, 100)
@@ -172,6 +178,9 @@ class MonsterList(object):
 		libtcod.struct_add_flag(monster_type_struct, 'corpse_bat')
 		libtcod.struct_add_flag(monster_type_struct, 'corpse_dog')
 		libtcod.struct_add_flag(monster_type_struct, 'corpse_lizard')
+		libtcod.struct_add_flag(monster_type_struct, 'corpse_human')
+		libtcod.struct_add_flag(monster_type_struct, 'corpse_wolf')
+		libtcod.struct_add_flag(monster_type_struct, 'corpse_bear')
 		libtcod.parser_run(parser, "data/monsters.txt", MonsterListener())
 
 	def add_to_list(self, monster=None):
@@ -252,6 +261,7 @@ class MonsterListener(object):
 		return True
 
 	def end_struct(self, struct, name):
+		self.temp_monster.dark_color = libtcod.color_lerp(libtcod.black, self.temp_monster.color, 0.3)
 		game.monsters.add_to_list(self.temp_monster)
 		return True
 

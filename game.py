@@ -13,7 +13,7 @@ import commands
 import util
 
 VERSION = 'v0.2.3'
-BUILD = '34'
+BUILD = '35'
 
 #size of the gui windows
 MAP_WIDTH = 70
@@ -96,6 +96,13 @@ font_height = 12
 curx = 0
 cury = 0
 
+terrain = [{'name': 'Mountain Peak', 'type': 'dirt', 'elevation': 0.950}, {'name': 'Mountains', 'type': 'dirt', 'elevation': 0.850},
+		{'name': 'Hills', 'type': 'dirt', 'elevation': 0.700}, {'name': 'Forest', 'type': 'grass', 'elevation': 0.250},
+		{'name': 'Plains', 'type': 'grass', 'elevation': 0.175}, {'name': 'Coast', 'type': 'sand', 'elevation': 0.120},
+		{'name': 'Shore', 'type': 'shallow water', 'elevation': 0.110}, {'name': 'Sea', 'type': 'deep water', 'elevation': 0.060},
+		{'name': 'Ocean', 'type': 'very deep water', 'elevation': 0.000}, {'name': 'Dungeon', 'type': 'wall', 'elevation': 0.000}
+		]
+
 
 class Game(object):
 	def __init__(self):
@@ -129,7 +136,7 @@ class Game(object):
 
 	# create the root console based on desktop resolution and font size
 	def init_root_console(self):
-		global MAP_WIDTH, MAP_HEIGHT, SCREEN_WIDTH, SCREEN_HEIGHT, MESSAGE_WIDTH, PLAYER_STATS_HEIGHT, MESSAGE_Y, buffer
+		global MAP_WIDTH, MAP_HEIGHT, SCREEN_WIDTH, SCREEN_HEIGHT, MESSAGE_WIDTH, PLAYER_STATS_HEIGHT, MESSAGE_Y
 		user32 = ctypes.windll.user32
 		desktop_width = user32.GetSystemMetrics(0)
 		desktop_height = user32.GetSystemMetrics(1)
@@ -137,14 +144,14 @@ class Game(object):
 		max_height_size = (desktop_height / font_height) - 6
 		if max_width_size > SCREEN_WIDTH:
 			MAP_WIDTH = MAP_WIDTH + (max_width_size - SCREEN_WIDTH)
-			if MAP_WIDTH > 90:
-				MAP_WIDTH = 90
+			if MAP_WIDTH > 74:
+				MAP_WIDTH = 74
 			MESSAGE_WIDTH = MAP_WIDTH
 			SCREEN_WIDTH = MAP_WIDTH + PLAYER_STATS_WIDTH + 3
 		if max_height_size > SCREEN_HEIGHT:
 			MAP_HEIGHT = MAP_HEIGHT + (max_height_size - SCREEN_HEIGHT)
-			if MAP_HEIGHT > 54:
-				MAP_HEIGHT = 54
+			if MAP_HEIGHT > 32:
+				MAP_HEIGHT = 32
 			SCREEN_HEIGHT = MAP_HEIGHT + MESSAGE_HEIGHT + 3
 			PLAYER_STATS_HEIGHT = SCREEN_HEIGHT - 2
 			MESSAGE_Y = MAP_HEIGHT + 2
@@ -163,7 +170,7 @@ class Game(object):
 			worldmap = worldgen.World()
 			current_map = map.Map('Wilderness', 'WD', 0, (worldmap.player_positiony * WORLDMAP_WIDTH) + worldmap.player_positionx, typ='Forest')
 			for i in range(len(border_maps)):
-				border_maps[i] = map.Map('Wilderness', 'WD', 0, (worldmap.player_positiony * WORLDMAP_WIDTH) + worldmap.player_positionx + cardinal[i], typ='Forest')
+				border_maps[i] = map.Map('Wilderness', 'WD', 0, (worldmap.player_positiony * WORLDMAP_WIDTH) + worldmap.player_positionx + cardinal[i], typ=util.find_terrain_type((worldmap.player_positiony * WORLDMAP_WIDTH) + worldmap.player_positionx + cardinal[i]))
 			util.combine_maps()
 			self.play_game()
 

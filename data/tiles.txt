@@ -122,3 +122,11 @@ tile_type "dirt" {
 	back_color = "0,0,96"
 	article = ""
 }
+
+tile_type "sand" {
+	type = "sand"
+	icon = "."
+	icon_color = "255,255,0"
+	back_color = "0,0,96"
+	article = ""
+}

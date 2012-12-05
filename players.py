@@ -64,7 +64,7 @@ class Player(object):
 		self.item_degradation()
 
 	def item_degradation(self):
-		for i in range(0, len(self.inventory)):
+		for i in xrange(len(self.inventory)):
 			if self.inventory[i].type == "corpse" and (self.turns - self.inventory[i].turn_spawned > 500):
 				game.message.new('An item in your inventory just rotted away.', self.turns, libtcod.red)
 				self.inventory.pop(i)
@@ -84,7 +84,7 @@ class Player(object):
 
 	def find_weapon_type(self):
 		weapon_type = 8
-		for i in range(0, len(self.equipment)):
+		for i in range(len(self.equipment)):
 			if "weapon_sword" in self.equipment[i].flags:
 				return 0
 			if "weapon_axe" in self.equipment[i].flags:
@@ -192,7 +192,7 @@ class Player(object):
 		if attacker != 1 and defender != 50 and ((attacker + self.attack_rating()) >= (defender + target.entity.defense_rating) or attacker == 50 or defender == 1):
 		#if dice != 1 and (dice >= thac0 or dice == 20):
 			damage = 0
-			for i in range(0, len(self.equipment)):
+			for i in range(len(self.equipment)):
 				if self.equipment[i].type == "weapon":
 					damage = self.equipment[i].dice.roll_dice()
 			if damage == 0:
@@ -217,7 +217,7 @@ class Player(object):
 	def score(self):
 		score, skills = 0, 0
 		score += (self.strength + self.dexterity + self.intelligence + self.wisdom + self.endurance + self.karma) / 5
-		for i in range(0, len(self.combat_skills)):
+		for i in range(len(self.combat_skills)):
 			skills += self.combat_skills[i].level
 		score += skills / 20
 		score += self.xp / 5
@@ -356,7 +356,7 @@ def show_stats(stats, text, attr=-1, roll=-1):
 	libtcod.console_print(stats, 2, 11, 'Karma:         ')
 
 	if not attr == -1:
-		for i in range(0, 5):
+		for i in range(5):
 			libtcod.console_print_ex(stats, 18, i + 5, libtcod.BKGND_SET, libtcod.RIGHT, str(BASE_STATS[attr][i]))
 
 	if not roll == -1:
@@ -367,7 +367,7 @@ def show_stats(stats, text, attr=-1, roll=-1):
 		stat.append(libtcod.random_get_int(game.rnd, 0, 6))
 		stat.append(libtcod.random_get_int(game.rnd, 0, 6))
 		stat.append(libtcod.random_get_int(game.rnd, 0, 19))
-		for i in range(0, 5):
+		for i in range(5):
 			libtcod.console_print(stats, 24, i + 5, str(stat[i]))
 			libtcod.console_print_ex(stats, 31, i + 5, libtcod.BKGND_SET, libtcod.RIGHT, ' ' + str(BASE_STATS[attr][i] + stat[i]))
 		libtcod.console_print_ex(stats, 31, 11, libtcod.BKGND_SET, libtcod.RIGHT, ' ' + str(stat[5]))
@@ -396,7 +396,7 @@ def show_stats(stats, text, attr=-1, roll=-1):
 		game.player.health = game.player.max_health
 		game.player.mana = game.player.max_mana
 
-	for i in range(0, game.SCREEN_HEIGHT):
+	for i in range(game.SCREEN_HEIGHT):
 		libtcod.console_print(stats, 0, i, chr(179))
 	libtcod.console_blit(stats, 0, 0, 35, game.SCREEN_HEIGHT, 0, game.SCREEN_WIDTH - 35, 0)
 	libtcod.console_flush()

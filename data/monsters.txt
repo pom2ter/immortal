@@ -13,7 +13,7 @@ monster_type "rat" {
 	xp = 6
 	corpse = 10
 	corpse_rat
-	ai_friendly
+	ai_neutral
 }
 
 monster_type "kobold" {
@@ -171,4 +171,92 @@ monster_type "zombie" {
 	damage = "1d6"
 	xp = 12
 	ai_hostile
+}
+
+monster_type "wolf" {
+	type = "animal"
+	unidentified_name = "wolf"
+	icon = "w"
+	icon_color = "159,159,159"
+	dark_color = "79,79,79"
+	article = "a "
+	level = 1
+	attack_rating = 12
+	defense_rating = 8
+	health = 8
+	damage = "1d6"
+	xp = 10
+	corpse = 20
+	corpse_wolf
+	ai_hostile
+}
+
+monster_type "bandit" {
+	type = "human"
+	unidentified_name = "bandit"
+	icon = "@"
+	icon_color = "0,255,0"
+	dark_color = "0,127,0"
+	article = "a "
+	level = 1
+	attack_rating = 13
+	defense_rating = 7
+	health = 8
+	damage = "1d6"
+	xp = 12
+	corpse = 20
+	ai_hostile
+	corpse_human
+}
+
+monster_type "bear" {
+	type = "animal"
+	unidentified_name = "bear"
+	icon = "b"
+	icon_color = "127,101,63"
+	dark_color = "63,50,31"
+	article = "a "
+	level = 2
+	attack_rating = 15
+	defense_rating = 10
+	health = 12
+	damage = "1d8"
+	xp = 20
+	corpse = 10
+	ai_neutral
+	corpse_bear
+}
+
+monster_type "giant spider" {
+	type = "insect"
+	unidentified_name = "giant spider"
+	icon = "s"
+	icon_color = "0,0,128"
+	dark_color = "0,0,64"
+	article = "a "
+	level = 1
+	attack_rating = 10
+	defense_rating = 6
+	health = 8
+	damage = "1d6"
+	xp = 10
+	ai_hostile
+}
+
+monster_type "cutpurse" {
+	type = "human"
+	unidentified_name = "cutpurse"
+	icon = "@"
+	icon_color = "0,191,191"
+	dark_color = "0,95,95"
+	article = "a "
+	level = 1
+	attack_rating = 8
+	defense_rating = 5
+	health = 6
+	damage = "1d4"
+	xp = 8
+	corpse = 15
+	ai_neutral
+	corpse_human
 }

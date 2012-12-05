@@ -14,6 +14,7 @@ class World(object):
 		self.map_image_small = 0
 		self.player_positionx = 0
 		self.player_positiony = 0
+		self.dungeons = []
 		self.generate()
 
 	def generate(self):
@@ -29,12 +30,13 @@ class World(object):
 		self.smooth_edges()
 		self.set_land_mass(libtcod.random_get_float(self.rnd, 0.35, 0.45), self.sandheight)
 		#libtcod.heightmap_rain_erosion(game.hm, (game.WORLDMAP_WIDTH * game.WORLDMAP_HEIGHT) / 7, 0.70, 0.01, self.rnd)
+		self.place_dungeons()
 		self.create_map_images()
 
 	def add_landmass(self):
 		# create some hills
 		#t0 = libtcod.sys_elapsed_seconds()
-		for i in range(0, game.WORLDMAP_WIDTH / 2):
+		for i in range(game.WORLDMAP_WIDTH / 2):
 			radius = libtcod.random_get_float(self.rnd, 50 * (1.0 - 0.7), 50 * (1.0 + 0.7))
 			x = libtcod.random_get_int(self.rnd, 0, game.WORLDMAP_WIDTH)
 			y = libtcod.random_get_int(self.rnd, 0, game.WORLDMAP_HEIGHT)
@@ -46,8 +48,8 @@ class World(object):
 		#print "Adding Hills: ", t1 - t0
 
 		# reduce mountainous regions
-#		for x in range(0, game.WORLDMAP_WIDTH):
-#			for y in range(0, game.WORLDMAP_HEIGHT):
+#		for x in range(game.WORLDMAP_WIDTH):
+#			for y in range(game.WORLDMAP_HEIGHT):
 #				h = libtcod.heightmap_get_value(game.hm, x, y)
 #				if h > self.sandheight:
 #					coef = (h - self.sandheight) / (1.0 - self.sandheight)
@@ -57,8 +59,8 @@ class World(object):
 	def smooth_edges(self):
 		# smooth edges so that land doesnt touch the map borders
 		#t0 = libtcod.sys_elapsed_seconds()
-		for x in range(0, game.WORLDMAP_WIDTH):
-			for y in range(0, game.WORLDMAP_HEIGHT):
+		for x in range(game.WORLDMAP_WIDTH):
+			for y in range(game.WORLDMAP_HEIGHT):
 				ix = x * 0.04
 				if x > game.WORLDMAP_WIDTH / 2:
 					ix = (game.WORLDMAP_WIDTH - x - 1) * 0.04
@@ -81,8 +83,8 @@ class World(object):
 	def set_land_mass(self, landmass, waterlevel):
 		#t0 = libtcod.sys_elapsed_seconds()
 		heightcount = [0] * 256
-		for x in range(0, game.WORLDMAP_WIDTH):
-			for y in range(0, game.WORLDMAP_HEIGHT):
+		for x in range(game.WORLDMAP_WIDTH):
+			for y in range(game.WORLDMAP_HEIGHT):
 				h = int(libtcod.heightmap_get_value(game.hm, x, y) * 255)
 				heightcount[h] += 1
 
@@ -94,8 +96,8 @@ class World(object):
 		landcoef = (1.0 - waterlevel) / (1.0 - newwaterlevel)
 		watercoef = waterlevel / newwaterlevel
 
-		for x in range(0, game.WORLDMAP_WIDTH):
-			for y in range(0, game.WORLDMAP_HEIGHT):
+		for x in range(game.WORLDMAP_WIDTH):
+			for y in range(game.WORLDMAP_HEIGHT):
 				h = libtcod.heightmap_get_value(game.hm, x, y)
 				if h > newwaterlevel:
 					h = waterlevel + (h - newwaterlevel) * landcoef
@@ -105,12 +107,21 @@ class World(object):
 		#t1 = libtcod.sys_elapsed_seconds()
 		#print "Fixing Landmass: ", t1 - t0
 
+	def place_dungeons(self):
+		number_of_dungeons = libtcod.random_get_int(game.rnd, 9, 16)
+		while len(self.dungeons) != number_of_dungeons:
+			x = libtcod.random_get_int(game.rnd, 0, game.WORLDMAP_WIDTH)
+			y = libtcod.random_get_int(game.rnd, 0, game.WORLDMAP_HEIGHT)
+			cellheight = int(libtcod.heightmap_get_value(game.hm, x, y) * 1000)
+			if cellheight in range(250, 699):
+				self.dungeons.append((len(self.dungeons) + 1, 'Dungeon', 'Dng', x, y))
+
 	def create_map_images(self, mode=0):
 		#t0 = libtcod.sys_elapsed_seconds()
 		con = libtcod.console_new(game.WORLDMAP_WIDTH, game.WORLDMAP_HEIGHT)
 		self.map_image_small = libtcod.image_new(game.WORLDMAP_WIDTH, game.WORLDMAP_HEIGHT)
-		for x in range(0, game.WORLDMAP_WIDTH):
-			for y in range(0, game.WORLDMAP_HEIGHT):
+		for x in range(game.WORLDMAP_WIDTH):
+			for y in range(game.WORLDMAP_HEIGHT):
 				if mode == 0:
 					cellheight = libtcod.heightmap_get_value(game.hm, x, y)
 				else:
@@ -152,6 +163,15 @@ class World(object):
 			if int(self.hm_list[start] * 1000) in range(250, 699):
 				self.player_positionx = start % game.WORLDMAP_WIDTH
 				self.player_positiony = start / game.WORLDMAP_WIDTH
+				starter_dungeon = libtcod.random_get_int(self.rnd, 0, 4)
+				if starter_dungeon == 1:
+					self.dungeons.append((len(self.dungeons) + 1, 'Starter Dungeon', 'SD', self.player_positionx, self.player_positiony - 1))
+				elif starter_dungeon == 2:
+					self.dungeons.append((len(self.dungeons) + 1, 'Starter Dungeon', 'SD', self.player_positionx + 1, self.player_positiony))
+				elif starter_dungeon == 3:
+					self.dungeons.append((len(self.dungeons) + 1, 'Starter Dungeon', 'SD', self.player_positionx, self.player_positiony + 1))
+				else:
+					self.dungeons.append((len(self.dungeons) + 1, 'Starter Dungeon', 'SD', self.player_positionx - 1, self.player_positiony))
 				#libtcod.image_put_pixel(self.map_image_small, self.player_positionx, self.player_positiony, libtcod.white)
 
 		self.map_image_big = libtcod.image_from_console(con)

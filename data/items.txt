@@ -111,6 +111,78 @@ item_type "helmet" {
 	armor_head
 }
 
+item_type "leather armor" {
+	type = "armor"
+	unidentified_name = "leather armor"
+	icon = "["
+	icon_color = "127,127,127"
+	dark_color = "42,42,42"
+	level = 1
+	weight = 10.0
+	cost = 25
+	article = "a "
+	equippable
+	armor_body
+}
+
+item_type "leather boots" {
+	type = "armor"
+	unidentified_name = "leather boots"
+	icon = "["
+	icon_color = "127,127,127"
+	dark_color = "42,42,42"
+	level = 1
+	weight = 2.5
+	cost = 5
+	article = "some "
+	equippable
+	armor_feet
+}
+
+item_type "mace" {
+	type = "weapon"
+	unidentified_name = "mace"
+	icon = "("
+	icon_color = "255,255,255"
+	dark_color = "85,85,85"
+	level = 1
+	weight = 10.0
+	cost = 10
+	dices = "1d6+1"
+	article = "a "
+	equippable
+	weapon_mace
+}
+
+item_type "hand axe" {
+	type = "weapon"
+	unidentified_name = "hand axe"
+	icon = "("
+	icon_color = "255,255,255"
+	dark_color = "85,85,85"
+	level = 1
+	weight = 5.0
+	cost = 10
+	dices = "1d6"
+	article = "a "
+	equippable
+	weapon_axe
+}
+
+item_type "studded leather armor" {
+	type = "armor"
+	unidentified_name = "studded leather armor"
+	icon = "["
+	icon_color = "127,127,127"
+	dark_color = "42,42,42"
+	level = 2
+	weight = 20.0
+	cost = 25
+	article = "a "
+	equippable
+	armor_body
+}
+
 item_type "goblin corpse" {
 	type = "corpse"
 	unidentified_name = "goblin corpse"
@@ -199,5 +271,44 @@ item_type "orc corpse" {
 	article = "a "
 	consumable
 	corpse_orc
+	usable
+}
+
+item_type "human corpse" {
+	type = "corpse"
+	unidentified_name = "human corpse"
+	icon = "%"
+	icon_color = "127,101,63"
+	dark_color = "64,50,32"
+	weight = 10.0
+	article = "a "
+	consumable
+	corpse_human
+	usable
+}
+
+item_type "wolf corpse" {
+	type = "corpse"
+	unidentified_name = "wolf corpse"
+	icon = "%"
+	icon_color = "127,101,63"
+	dark_color = "64,50,32"
+	weight = 10.0
+	article = "a "
+	consumable
+	corpse_wolf
+	usable
+}
+
+item_type "bear corpse" {
+	type = "corpse"
+	unidentified_name = "bear corpse"
+	icon = "%"
+	icon_color = "127,101,63"
+	dark_color = "64,50,32"
+	weight = 20.0
+	article = "a "
+	consumable
+	corpse_bear
 	usable
 }

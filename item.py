@@ -89,8 +89,11 @@ class ItemList(object):
 		libtcod.struct_add_flag(item_type_struct, 'consumable')
 		libtcod.struct_add_flag(item_type_struct, 'weapon_dagger')
 		libtcod.struct_add_flag(item_type_struct, 'weapon_sword')
+		libtcod.struct_add_flag(item_type_struct, 'weapon_mace')
+		libtcod.struct_add_flag(item_type_struct, 'weapon_axe')
 		libtcod.struct_add_flag(item_type_struct, 'armor_head')
 		libtcod.struct_add_flag(item_type_struct, 'armor_body')
+		libtcod.struct_add_flag(item_type_struct, 'armor_feet')
 		libtcod.struct_add_flag(item_type_struct, 'corpse_goblin')
 		libtcod.struct_add_flag(item_type_struct, 'corpse_kobold')
 		libtcod.struct_add_flag(item_type_struct, 'corpse_orc')
@@ -98,6 +101,9 @@ class ItemList(object):
 		libtcod.struct_add_flag(item_type_struct, 'corpse_bat')
 		libtcod.struct_add_flag(item_type_struct, 'corpse_dog')
 		libtcod.struct_add_flag(item_type_struct, 'corpse_lizard')
+		libtcod.struct_add_flag(item_type_struct, 'corpse_human')
+		libtcod.struct_add_flag(item_type_struct, 'corpse_wolf')
+		libtcod.struct_add_flag(item_type_struct, 'corpse_bear')
 		libtcod.parser_run(parser, "data/items.txt", ItemListener())
 
 	def add_to_list(self, item=None):

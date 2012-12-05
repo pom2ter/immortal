@@ -133,6 +133,8 @@ def player_move(dx, dy):
 				py = game.current_map.map_height / 3
 				if (game.char.y / py) == 0 or (game.char.x / px) == 0 or (game.char.y / py) == 2 or (game.char.x / px) == 2:
 					level = game.current_map.location_level + coordx[game.char.x / px] + coordy[game.char.y / py]
+					game.worldmap.player_positionx += dx
+					game.worldmap.player_positiony += dy
 					util.change_maps(0, level)
 		util.items_at_feet()
 		game.fov_recompute = True
@@ -193,29 +195,68 @@ def attack():
 
 # climb up/down stairs
 def climb_stairs(direction):
+	decombine, combine = False, False
+	location_id = game.current_map.location_id
+	location_name = game.current_map.location_name
+	location_abbr = game.current_map.location_abbr
+
 	if (direction == 'up' and game.current_map.tiles[game.char.x][game.char.y].icon != "<") or (direction == 'down' and game.current_map.tiles[game.char.x][game.char.y].icon != ">"):
 		game.message.new('You see no stairs going in that direction!', game.player.turns)
 	else:
 		if direction == 'down':
-			level = game.current_map.location_level + 1
-			game.message.new('You climb down the stairs.', game.player.turns)
+			if game.current_map.location_id > 0:
+				level = game.current_map.location_level + 1
+				game.message.new('You climb down the stairs.', game.player.turns)
+			else:
+				decombine = True
+				level = 1
+				for (id, name, abbr, x, y) in game.worldmap.dungeons:
+					if y * game.WORLDMAP_WIDTH + x == game.current_map.location_level:
+						location_id = id
+						location_name = name
+						location_abbr = abbr
+				game.message.new('You enter the ' + location_name + '.', game.player.turns)
 		else:
-			level = game.current_map.location_level - 1
-			game.message.new('You climb up the stairs.', game.player.turns)
-		game.old_maps.append(game.current_map)
-		generate = True
-		for i in range(len(game.old_maps) - 1):
-			if game.old_maps[i].location_id == game.current_map.location_id and game.old_maps[i].location_level == level:
-				game.current_map = game.old_maps[i]
-				if direction == 'down':
-					(game.char.x, game.char.y) = game.current_map.up_staircase
-				else:
-					(game.char.x, game.char.y) = game.current_map.down_staircase
-				game.old_maps.pop(i)
-				generate = False
-				break
-		if generate:
-			game.current_map = map.Map(game.current_map.location_name, game.current_map.location_abbr, game.current_map.location_id, level)
+			if game.current_map.location_level > 1:
+				level = game.current_map.location_level - 1
+				game.message.new('You climb up the stairs.', game.player.turns)
+			else:
+				combine = True
+				(level, game.char.x, game.char.y) = game.current_map.overworld_position
+				location_id = 0
+				location_name = 'Wilderness'
+				location_abbr = 'WD'
+				game.message.new('You return to the ' + location_name + '.', game.player.turns)
+
+		if decombine:
+			util.decombine_maps()
+			game.old_maps.append(game.current_map)
+			op = (game.current_map.location_level, game.char.x, game.char.y)
+			for i in range(len(game.border_maps)):
+				game.old_maps.append(game.border_maps[i])
+		else:
+			game.old_maps.append(game.current_map)
+
+		if not combine:
+			generate = True
+			for i in xrange(len(game.old_maps)):
+				if game.old_maps[i].location_id == location_id and game.old_maps[i].location_level == level:
+					game.current_map = game.old_maps[i]
+					if direction == 'down':
+						(game.char.x, game.char.y) = game.current_map.up_staircase
+					else:
+						(game.char.x, game.char.y) = game.current_map.down_staircase
+					game.old_maps.pop(i)
+					generate = False
+					break
+			if generate:
+				game.current_map = map.Map(location_name, location_abbr, location_id, level)
+		else:
+			util.load_old_maps(location_id, level)
+			util.combine_maps()
+
+		if decombine:
+			game.current_map.overworld_position = op
 		game.player.add_turn()
 		game.fov_recompute = True
 
@@ -269,7 +310,7 @@ def equip_item():
 	else:
 		filter = []
 		itempos = []
-		for i in range(0, len(game.player.inventory)):
+		for i in range(len(game.player.inventory)):
 			if game.player.inventory[i].is_equippable():
 				filter.append(game.player.inventory[i])
 				itempos.append(i)
@@ -339,7 +380,7 @@ def look():
 		py = dy + game.cury
 
 		#create a list with the names of all objects at the cursor coordinates
-		if dx in range(0, game.MAP_WIDTH - 1) and dy in range(0, game.MAP_HEIGHT - 1) and game.current_map.explored[px][py]:
+		if dx in range(game.MAP_WIDTH - 1) and dy in range(game.MAP_HEIGHT - 1) and game.current_map.explored[px][py]:
 			names = [obj for obj in game.current_map.objects if obj.x == px and obj.y == py]
 			prefix = 'you see '
 			if not libtcod.map_is_in_fov(game.fov_map, px, py):
@@ -353,7 +394,7 @@ def look():
 				text = prefix + game.current_map.tiles[px][py].article + game.current_map.tiles[px][py].name
 			elif len(names) > 1:
 				text = prefix
-				for i in range(0, len(names)):
+				for i in range(len(names)):
 					if i == len(names) - 1:
 						text += ' and '
 					elif i > 0:
@@ -417,7 +458,7 @@ def options_menu():
 # pick up an item
 def pickup_item():
 	nb_items, itempos = [], []
-	for i in range(0, len(game.current_map.objects)):
+	for i in range(len(game.current_map.objects)):
 		if game.current_map.objects[i].x == game.char.x and game.current_map.objects[i].y == game.char.y and game.current_map.objects[i].can_be_pickup:
 			game.current_map.objects[i].item.turn_spawned = game.current_map.objects[i].first_appearance
 			nb_items.append(game.current_map.objects[i].item)
@@ -535,7 +576,7 @@ def ztats_skills(con, width, height):
 	libtcod.console_set_default_foreground(con, libtcod.white)
 	libtcod.console_set_default_background(con, libtcod.black)
 	libtcod.console_print(con, 2, 2, 'Combat Skills')
-	for i in range(0, len(game.player.combat_skills)):
+	for i in range(len(game.player.combat_skills)):
 		libtcod.console_print(con, 2, i + 4, game.player.combat_skills[i].name)
 		libtcod.console_print(con, 15, i + 4, str(game.player.combat_skills[i].level))
 
@@ -554,7 +595,7 @@ def ztats_equipment(con, width, height):
 	libtcod.console_print(con, 2, 8, 'Ring       :')
 	libtcod.console_print(con, 2, 9, 'Gauntlets  :')
 	libtcod.console_print(con, 2, 10, 'Boots      :')
-	for i in range(0, len(game.player.equipment)):
+	for i in range(len(game.player.equipment)):
 		if "armor_head" in game.player.equipment[i].flags:
 			y = 2
 		if "armor_neck" in game.player.equipment[i].flags:
@@ -580,7 +621,7 @@ def ztats_inventory(con, width, height):
 	util.text_box(con, 0, 0, width, height, 'Inventory')
 	libtcod.console_set_default_foreground(con, libtcod.white)
 	libtcod.console_set_default_background(con, libtcod.black)
-	for i in range(0, len(game.player.inventory)):
+	for i in range(len(game.player.inventory)):
 		libtcod.console_print(con, 2, i + 2, game.player.inventory[i].name)
 		libtcod.console_print_ex(con, width - 3, i + 2, libtcod.BKGND_SET, libtcod.RIGHT, str(game.player.inventory[i].weight) + ' lbs')
 

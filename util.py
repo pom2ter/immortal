@@ -165,18 +165,14 @@ def msg_box(typ, header=None, footer=None, contents=None, box_width=60, box_heig
 		libtcod.image_blit_2x(game.worldmap.map_image_small, box, 1, 1)
 		mapposx = game.worldmap.player_positionx * (float(game.SCREEN_WIDTH - 2) / float(game.WORLDMAP_WIDTH))
 		mapposy = game.worldmap.player_positiony * (float(game.SCREEN_HEIGHT - 2) / float(game.WORLDMAP_HEIGHT))
-		print game.worldmap.player_positionx, game.worldmap.player_positiony
-		if int(mapposx) == int(round(mapposx)):
-			if int(mapposy) == int(round(mapposy)):
-				char = chr(226)
-			else:
-				char = chr(232)
-		else:
-			if int(mapposy) == int(round(mapposy)):
-				char = chr(227)
-			else:
-				char = chr(229)
+		char = find_map_position(mapposx, mapposy)
 		while not keypress:
+			libtcod.console_set_default_foreground(box, libtcod.black)
+			for (id, name, abbr, x, y) in game.worldmap.dungeons:
+				dmapposx = x * (float(game.SCREEN_WIDTH - 2) / float(game.WORLDMAP_WIDTH))
+				dmapposy = y * (float(game.SCREEN_HEIGHT - 2) / float(game.WORLDMAP_HEIGHT))
+				dchar = find_map_position(dmapposx, dmapposy)
+				libtcod.console_print_ex(box, int(dmapposx) + 1, int(dmapposy) + 1, libtcod.BKGND_NONE, libtcod.LEFT, dchar)
 			color, lerp, descending = color_lerp(lerp, descending, light=libtcod.red)
 			libtcod.console_set_default_foreground(box, color)
 			libtcod.console_print_ex(box, int(mapposx) + 1, int(mapposy) + 1, libtcod.BKGND_NONE, libtcod.LEFT, char)
@@ -186,6 +182,20 @@ def msg_box(typ, header=None, footer=None, contents=None, box_width=60, box_heig
 			if ev == libtcod.EVENT_KEY_PRESS:
 				break
 	return choice
+
+
+def find_map_position(mapposx, mapposy):
+	if int(mapposx) == int(round(mapposx)):
+		if int(mapposy) == int(round(mapposy)):
+			char = chr(226)
+		else:
+			char = chr(232)
+	else:
+		if int(mapposy) == int(round(mapposy)):
+			char = chr(227)
+		else:
+			char = chr(229)
+	return char
 
 
 #######################################
@@ -208,7 +218,7 @@ def change_settings(box, width, height, options, blitmap=False):
 	libtcod.console_print(box, 2, 5, 'Font: ')
 
 	while not confirm and not cancel:
-		for i in range(0, len(fonts)):
+		for i in range(len(fonts)):
 			libtcod.console_set_default_background(box, libtcod.black)
 			if current == i:
 				color, lerp, descending = color_lerp(lerp, descending)
@@ -265,96 +275,6 @@ def color_lerp(lerp, descending, base=libtcod.black, light=libtcod.light_blue):
 	return color, lerp, descending
 
 
-def change_maps(did, dlevel):
-	coord = [dlevel - game.WORLDMAP_WIDTH - 1, dlevel - game.WORLDMAP_WIDTH, dlevel - game.WORLDMAP_WIDTH + 1, dlevel - 1, dlevel + 1, dlevel + game.WORLDMAP_WIDTH - 1, dlevel + game.WORLDMAP_WIDTH, dlevel + game.WORLDMAP_WIDTH + 1, dlevel]
-	game.message.new('Loading/Generating maps...', game.player.turns)
-	render_map()
-	libtcod.console_flush()
-
-	decombine_maps()
-	game.old_maps.append(game.current_map)
-	for i in range(len(game.border_maps)):
-		game.old_maps.append(game.border_maps[i])
-
-	for j in range(len(coord)):
-		generate = True
-		for i in xrange(len(game.old_maps)):
-			if game.old_maps[i].location_id == did and game.old_maps[i].location_level == coord[j]:
-				temp_map = game.old_maps[i]
-				game.old_maps.pop(i)
-				generate = False
-				break
-		if generate:
-			temp_map = map.Map(game.current_map.location_name, game.current_map.location_abbr, did, coord[j], game.current_map.map_width, game.current_map.map_height, game.current_map.type)
-		if j == len(coord) - 1:
-			game.current_map = temp_map
-		else:
-			game.border_maps[j] = temp_map
-
-	combine_maps()
-	initialize_fov()
-	game.fov_recompute = True
-
-
-def combine_maps():
-	mapid = [[0, 1, 2], [3, 0, 4], [5, 6, 7]]
-	super_map = map.Map(game.current_map.location_name, game.current_map.location_abbr, game.current_map.location_id, game.current_map.location_level, game.current_map.map_width * 3, game.current_map.map_height * 3, game.current_map.type, True)
-	game.char.x += game.current_map.map_width
-	game.char.y += game.current_map.map_height
-	super_map.objects.append(game.char)
-	for i in range(0, 3):
-		for j in range(0, 3):
-			if i == 1 and j == 1:
-				current = game.current_map
-			else:
-				current = game.border_maps[mapid[i][j]]
-			for x in range(0, game.current_map.map_width):
-				for y in range(0, game.current_map.map_height):
-					super_map.tiles[x + (j * game.current_map.map_width)][y + (i * game.current_map.map_height)] = current.tiles[x][y]
-					super_map.explored[x + (j * game.current_map.map_width)][y + (i * game.current_map.map_height)] = current.explored[x][y]
-			for obj in current.objects:
-				if obj.name != 'player':
-					obj.x = obj.x + (j * game.current_map.map_width)
-					obj.y = obj.y + (i * game.current_map.map_height)
-					super_map.objects.append(obj)
-	game.current_backup = game.current_map
-	game.current_map = super_map
-
-
-def decombine_maps():
-	mapid = [[0, 1, 2], [3, 0, 4], [5, 6, 7]]
-	super_map = game.current_map
-	for i in range(0, 3):
-		for j in range(0, 3):
-			if i == 1 and j == 1:
-				current = game.current_backup
-			else:
-				current = game.border_maps[mapid[i][j]]
-			for x in range(0, current.map_width):
-				for y in range(0, current.map_height):
-					current.tiles[x][y] = super_map.tiles[x + (j * current.map_width)][y + (i * current.map_height)]
-					current.explored[x][y] = super_map.explored[x + (j * current.map_width)][y + (i * current.map_height)]
-			current.objects = []
-			current.objects.append(game.char)
-			for obj in super_map.objects:
-				if obj.name != 'player' and obj.x / (super_map.map_width / 3) == j and obj.y / (super_map.map_height / 3) == i:
-					obj.x = obj.x - (j * (super_map.map_width / 3))
-					obj.y = obj.y - (i * (super_map.map_height / 3))
-					current.objects.append(obj)
-			if i == 1 and j == 1:
-				game.current_map = current
-			else:
-				game.border_maps[mapid[i][j]] = current
-	if game.char.x >= game.current_map.map_width * 2:
-		game.char.x -= game.current_map.map_width * 2
-	elif game.char.x >= game.current_map.map_width:
-		game.char.x -= game.current_map.map_width
-	if game.char.y >= game.current_map.map_height * 2:
-		game.char.y -= game.current_map.map_height * 2
-	elif game.char.y >= game.current_map.map_height:
-		game.char.y -= game.current_map.map_height
-
-
 # death screens and final score
 def death():
 	libtcod.console_clear(0)
@@ -379,12 +299,18 @@ def death():
 	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 8, libtcod.BKGND_SET, libtcod.CENTER, game.player.name)
 	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 10, libtcod.BKGND_SET, libtcod.CENTER, 'Killed by')
 	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 11, libtcod.BKGND_SET, libtcod.CENTER, game.killer)
-	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 12, libtcod.BKGND_SET, libtcod.CENTER, 'on level ' + str(game.current_map.location_level) + ' in the')
+	if game.current_map.location_id == 0:
+		libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 12, libtcod.BKGND_SET, libtcod.CENTER, 'in the')
+	else:
+		libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 12, libtcod.BKGND_SET, libtcod.CENTER, 'on level ' + str(game.current_map.location_level) + ' in the')
 	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 13, libtcod.BKGND_SET, libtcod.CENTER, game.current_map.location_name)
 
 	score = game.player.score()
 	line1 = game.player.name + ', the level ' + str(game.player.level) + ' ' + game.player.gender + ' ' + game.player.race + ' ' + game.player.profession + ','
-	line2 = 'was killed by ' + game.killer + ' on level ' + str(game.current_map.location_level) + ' in the ' + game.current_map.location_name + ' (' + str(game.player.turns) + ' turns)'
+	if game.current_map.location_id == 0:
+		line2 = 'was killed by ' + game.killer + ' in the ' + game.current_map.location_name + ' (' + str(game.player.turns) + ' turns)'
+	else:
+		line2 = 'was killed by ' + game.killer + ' on level ' + str(game.current_map.location_level) + ' in the ' + game.current_map.location_name + ' (' + str(game.player.turns) + ' turns)'
 	libtcod.console_print(0, 2, 20, 'Final score')
 	libtcod.console_print(0, 2, 22, str(score))
 	libtcod.console_print(0, 8, 22, line1)
@@ -407,7 +333,7 @@ def get_names_under_mouse():
 	(x, y) = (game.mouse.cx - game.MAP_X, game.mouse.cy - 1)
 	px = x + game.curx
 	py = y + game.cury
-	if x in range(0, game.MAP_WIDTH - 1) and y in range(0, game.MAP_HEIGHT - 1) and game.current_map.explored[px][py]:
+	if x in range(game.MAP_WIDTH - 1) and y in range(game.MAP_HEIGHT - 1) and game.current_map.explored[px][py]:
 		names = [obj for obj in game.current_map.objects if obj.x == px and obj.y == py]
 		prefix = 'you see '
 		if not libtcod.map_is_in_fov(game.fov_map, px, py):
@@ -422,7 +348,7 @@ def get_names_under_mouse():
 
 		if len(names) > 1:
 			string = prefix
-			for i in range(0, len(names)):
+			for i in range(len(names)):
 				if i == len(names) - 1:
 					string += ' and '
 				elif i > 0:
@@ -475,6 +401,113 @@ def save_high_scores():
 
 
 #######################################
+# map functions
+#######################################
+
+def change_maps(did, dlevel):
+	game.message.new('Loading/Generating maps...', game.player.turns)
+	render_map()
+	libtcod.console_flush()
+
+	decombine_maps()
+	game.old_maps.append(game.current_map)
+	for i in range(len(game.border_maps)):
+		game.old_maps.append(game.border_maps[i])
+
+	load_old_maps(did, dlevel)
+	combine_maps()
+	initialize_fov()
+	game.fov_recompute = True
+
+
+def load_old_maps(did, dlevel):
+	coord = [dlevel - game.WORLDMAP_WIDTH - 1, dlevel - game.WORLDMAP_WIDTH, dlevel - game.WORLDMAP_WIDTH + 1, dlevel - 1, dlevel + 1, dlevel + game.WORLDMAP_WIDTH - 1, dlevel + game.WORLDMAP_WIDTH, dlevel + game.WORLDMAP_WIDTH + 1, dlevel]
+	game.rnd = libtcod.random_new()
+	for j in range(len(coord)):
+		generate = True
+		for i in xrange(len(game.old_maps)):
+			if game.old_maps[i].location_id == did and game.old_maps[i].location_level == coord[j]:
+				temp_map = game.old_maps[i]
+				game.old_maps.pop(i)
+				generate = False
+				break
+		if generate:
+			temp_map = map.Map(game.current_map.location_name, game.current_map.location_abbr, did, coord[j], game.current_map.map_width, game.current_map.map_height, find_terrain_type(coord[j]))
+		if j == len(coord) - 1:
+			game.current_map = temp_map
+		else:
+			game.border_maps[j] = temp_map
+
+
+def combine_maps():
+	mapid = [[0, 1, 2], [3, 0, 4], [5, 6, 7]]
+	super_map = map.Map(game.current_map.location_name, game.current_map.location_abbr, game.current_map.location_id, game.current_map.location_level, game.current_map.map_width * 3, game.current_map.map_height * 3, game.current_map.type, True)
+	game.char.x += game.current_map.map_width
+	game.char.y += game.current_map.map_height
+	super_map.objects.append(game.char)
+	for i in range(3):
+		for j in range(3):
+			if i == 1 and j == 1:
+				current = game.current_map
+			else:
+				current = game.border_maps[mapid[i][j]]
+			for x in range(game.current_map.map_width):
+				for y in range(game.current_map.map_height):
+					super_map.tiles[x + (j * game.current_map.map_width)][y + (i * game.current_map.map_height)] = current.tiles[x][y]
+					super_map.explored[x + (j * game.current_map.map_width)][y + (i * game.current_map.map_height)] = current.explored[x][y]
+			for obj in current.objects:
+				if obj.name != 'player':
+					obj.x = obj.x + (j * game.current_map.map_width)
+					obj.y = obj.y + (i * game.current_map.map_height)
+					super_map.objects.append(obj)
+	game.current_backup = game.current_map
+	game.current_map = super_map
+
+
+def decombine_maps():
+	mapid = [[0, 1, 2], [3, 0, 4], [5, 6, 7]]
+	super_map = game.current_map
+	for i in range(3):
+		for j in range(3):
+			if i == 1 and j == 1:
+				current = game.current_backup
+			else:
+				current = game.border_maps[mapid[i][j]]
+			for x in range(current.map_width):
+				for y in range(current.map_height):
+					current.tiles[x][y] = super_map.tiles[x + (j * current.map_width)][y + (i * current.map_height)]
+					current.explored[x][y] = super_map.explored[x + (j * current.map_width)][y + (i * current.map_height)]
+			current.objects = []
+			current.objects.append(game.char)
+			for obj in super_map.objects:
+				if obj.name != 'player' and obj.x / (super_map.map_width / 3) == j and obj.y / (super_map.map_height / 3) == i:
+					obj.x = obj.x - (j * (super_map.map_width / 3))
+					obj.y = obj.y - (i * (super_map.map_height / 3))
+					current.objects.append(obj)
+			if i == 1 and j == 1:
+				game.current_map = current
+			else:
+				game.border_maps[mapid[i][j]] = current
+	if game.char.x >= game.current_map.map_width * 2:
+		game.char.x -= game.current_map.map_width * 2
+	elif game.char.x >= game.current_map.map_width:
+		game.char.x -= game.current_map.map_width
+	if game.char.y >= game.current_map.map_height * 2:
+		game.char.y -= game.current_map.map_height * 2
+	elif game.char.y >= game.current_map.map_height:
+		game.char.y -= game.current_map.map_height
+
+
+def find_terrain_type(coord):
+	heightmap = game.worldmap.hm_list[coord]
+	for i in range(len(game.terrain)):
+		if heightmap >= game.terrain[i]['elevation']:
+			terrain = game.terrain[i]['name']
+			break
+	return terrain
+
+
+#######################################
 # main screen functions
 #######################################
 
@@ -513,12 +546,12 @@ def render_bar(con, x, y, total_width, name, value, maximum, bar_color, back_col
 
 def render_gui(color):
 	buffer = libtcod.ConsoleBuffer(game.SCREEN_WIDTH, game.SCREEN_HEIGHT)
-	for i in range(0, game.SCREEN_WIDTH):
+	for i in range(game.SCREEN_WIDTH):
 		buffer.set_fore(i, 0, color.r, color.g, color.b, chr(205))
 		buffer.set_fore(i, game.SCREEN_HEIGHT - 1, color.r, color.g, color.b, chr(205))
 	for i in range(game.MAP_X, game.SCREEN_WIDTH):
 		buffer.set_fore(i, game.MESSAGE_Y - 1, color.r, color.g, color.b, chr(205))
-	for i in range(0, game.SCREEN_HEIGHT):
+	for i in range(game.SCREEN_HEIGHT):
 		buffer.set_fore(0, i, color.r, color.g, color.b, chr(186))
 		buffer.set_fore(game.MAP_X - 1, i, color.r, color.g, color.b, chr(186))
 		buffer.set_fore(game.SCREEN_WIDTH - 1, i, color.r, color.g, color.b, chr(186))
@@ -550,7 +583,7 @@ def render_player_stats_panel():
 	render_bar(game.ps, 0, 6, game.PLAYER_STATS_WIDTH, 'MP', game.player.mana, game.player.max_mana, libtcod.blue, libtcod.darker_blue)
 	libtcod.console_print(game.ps, 0, 0, game.player.name)
 	libtcod.console_print(game.ps, 0, 1, game.player.race + " " + game.player.profession)
-	libtcod.console_print(game.ps, 0, 3, game.current_map.location_abbr + '-' + str(game.current_map.location_level))
+	libtcod.console_print(game.ps, 0, 3, game.current_map.location_abbr + '-' + str(game.current_map.location_level) + "     ")
 	libtcod.console_print(game.ps, 0, 8, "LV: " + str(game.player.level))
 	libtcod.console_print(game.ps, 0, 9, "XP: " + str(game.player.xp))
 	libtcod.console_print(game.ps, 0, 10, "Str: " + str(game.player.strength) + ' ')
@@ -665,7 +698,7 @@ def render_map():
 		(mx, my) = (game.mouse.cx - game.MAP_X, game.mouse.cy - 1)
 		px = mx + game.curx
 		py = my + game.cury
-		if mx in range(0, game.MAP_WIDTH) and my in range(0, game.MAP_HEIGHT):
+		if mx in range(game.MAP_WIDTH) and my in range(game.MAP_HEIGHT):
 			game.path_dx = px
 			game.path_dy = py
 			libtcod.console_set_char_background(game.con, mx, my, libtcod.white, libtcod.BKGND_SET)
@@ -678,6 +711,9 @@ def render_map():
 				game.path_dy = 0
 			if not game.current_map.tiles[game.path_dx][game.path_dy].blocked:
 				game.path_recalculate = True
+		else:
+			game.path_dx = 0
+			game.path_dy = 0
 
 	#draw all objects in the list, except the player. we want it to
 	#always appear over all other objects! so it's drawn later.
