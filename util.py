@@ -42,7 +42,7 @@ def choices(con, width, height, options, typ, posx=0, posy=0, default=0, blitmap
 					libtcod.console_set_default_background(con, libtcod.black)
 				if typ == 'inventory':
 					textl = options[y].unidentified_name
-					textr = str(options[y].weight) + ' lbs'
+					textr = str(round(options[y].weight, 1)) + ' lbs'
 				else:
 					textl = options[y]
 					textr = ''

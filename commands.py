@@ -587,31 +587,32 @@ def ztats_equipment(con, width, height):
 	libtcod.console_set_default_foreground(con, libtcod.white)
 	libtcod.console_set_default_background(con, libtcod.black)
 	libtcod.console_print(con, 2, 2, 'Head       :')
-	libtcod.console_print(con, 2, 3, 'Neck       :')
-	libtcod.console_print(con, 2, 4, 'Body       :')
-	libtcod.console_print(con, 2, 5, 'Right Hand :')
-	libtcod.console_print(con, 2, 6, 'Left Hand  :')
-	libtcod.console_print(con, 2, 7, 'Ring       :')
+	libtcod.console_print(con, 2, 3, 'Cloak      :')
+	libtcod.console_print(con, 2, 4, 'Neck       :')
+	libtcod.console_print(con, 2, 5, 'Body       :')
+	libtcod.console_print(con, 2, 6, 'Right Hand :')
+	libtcod.console_print(con, 2, 7, 'Left Hand  :')
 	libtcod.console_print(con, 2, 8, 'Ring       :')
-	libtcod.console_print(con, 2, 9, 'Gauntlets  :')
-	libtcod.console_print(con, 2, 10, 'Boots      :')
+	libtcod.console_print(con, 2, 9, 'Ring       :')
+	libtcod.console_print(con, 2, 10, 'Gauntlets  :')
+	libtcod.console_print(con, 2, 11, 'Boots      :')
 	for i in range(len(game.player.equipment)):
 		if "armor_head" in game.player.equipment[i].flags:
 			y = 2
 		if "armor_neck" in game.player.equipment[i].flags:
-			y = 3
-		if "armor_body" in game.player.equipment[i].flags:
 			y = 4
-		if "armor_ring" in game.player.equipment[i].flags:
-			y = 7
-		if "armor_hands" in game.player.equipment[i].flags:
-			y = 9
-		if "armor_feet" in game.player.equipment[i].flags:
-			y = 10
-		if game.player.equipment[i].type == "weapon":
+		if "armor_body" in game.player.equipment[i].flags:
 			y = 5
-		if game.player.equipment[i].type == "shield":
+		if "armor_ring" in game.player.equipment[i].flags:
+			y = 8
+		if "armor_hands" in game.player.equipment[i].flags:
+			y = 10
+		if "armor_feet" in game.player.equipment[i].flags:
+			y = 11
+		if game.player.equipment[i].type == "weapon":
 			y = 6
+		if game.player.equipment[i].type == "shield":
+			y = 7
 		libtcod.console_print(con, 12, y, ': ' + game.player.equipment[i].name)
 		libtcod.console_print_ex(con, width - 3, y, libtcod.BKGND_SET, libtcod.RIGHT, str(game.player.equipment[i].weight) + ' lbs')
 
@@ -623,7 +624,7 @@ def ztats_inventory(con, width, height):
 	libtcod.console_set_default_background(con, libtcod.black)
 	for i in range(len(game.player.inventory)):
 		libtcod.console_print(con, 2, i + 2, game.player.inventory[i].name)
-		libtcod.console_print_ex(con, width - 3, i + 2, libtcod.BKGND_SET, libtcod.RIGHT, str(game.player.inventory[i].weight) + ' lbs')
+		libtcod.console_print_ex(con, width - 3, i + 2, libtcod.BKGND_SET, libtcod.RIGHT, str(round(game.player.inventory[i].weight, 1)) + ' lbs')
 
 
 # character sheet

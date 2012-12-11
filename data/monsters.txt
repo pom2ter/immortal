@@ -1,5 +1,5 @@
 monster_type "rat" {
-	type = "animal"
+	type = "rodent"
 	unidentified_name = "rat"
 	icon = "r"
 	icon_color = "128,0,0"
@@ -122,7 +122,7 @@ monster_type "skeleton" {
 }
 
 monster_type "scrawny dog" {
-	type = "animal"
+	type = "canine"
 	unidentified_name = "dog"
 	icon = "d"
 	icon_color = "191,191,191"
@@ -230,12 +230,12 @@ monster_type "bear" {
 monster_type "giant spider" {
 	type = "insect"
 	unidentified_name = "giant spider"
-	icon = "s"
+	icon = "S"
 	icon_color = "0,0,128"
 	dark_color = "0,0,64"
 	article = "a "
 	level = 1
-	attack_rating = 10
+	attack_rating = 8
 	defense_rating = 6
 	health = 8
 	damage = "1d6"
@@ -258,5 +258,89 @@ monster_type "cutpurse" {
 	xp = 8
 	corpse = 15
 	ai_neutral
+	corpse_human
+}
+
+monster_type "scrawny cat" {
+	type = "feline"
+	unidentified_name = "scrawny cat"
+	icon = "c"
+	icon_color = "0,191,191"
+	dark_color = "0,95,95"
+	article = "a "
+	level = 1
+	attack_rating = 4
+	defense_rating = 4
+	health = 4
+	damage = "1d4"
+	xp = 4
+	corpse = 10
+	ai_neutral
+	corpse_cat
+}
+
+monster_type "large snake" {
+	type = "snake"
+	unidentified_name = "large snake"
+	icon = "s"
+	icon_color = "0,191,191"
+	dark_color = "0,95,95"
+	article = "a "
+	level = 1
+	attack_rating = 5
+	defense_rating = 6
+	health = 7
+	damage = "1d4+1"
+	xp = 6
+	ai_neutral
+}
+
+monster_type "large yellow snake" {
+	type = "snake"
+	unidentified_name = "large yellow snake"
+	icon = "s"
+	icon_color = "255,255,0"
+	dark_color = "127,127,0"
+	article = "a "
+	level = 2
+	attack_rating = 8
+	defense_rating = 8
+	health = 10
+	damage = "1d6"
+	xp = 10
+	ai_neutral
+}
+
+monster_type "cave spider" {
+	type = "insect"
+	unidentified_name = "cave spider"
+	icon = "S"
+	icon_color = "128,112,64"
+	dark_color = "64,56,32"
+	article = "a "
+	level = 2
+	attack_rating = 10
+	defense_rating = 8
+	health = 10
+	damage = "1d6"
+	xp = 12
+	ai_hostile
+}
+
+monster_type "soldier" {
+	type = "human"
+	unidentified_name = "soldier"
+	icon = "@"
+	icon_color = "95,95,95"
+	dark_color = "47,47,47"
+	article = "a "
+	level = 3
+	attack_rating = 16
+	defense_rating = 12
+	health = 15
+	damage = "2d6+1"
+	xp = 20
+	corpse = 20
+	ai_hostile
 	corpse_human
 }

@@ -57,6 +57,8 @@ class Monster(object):
 				d = game.items.get_item("wolf corpse")
 			elif "corpse_bear" in self.flags:
 				d = game.items.get_item("bear corpse")
+			elif "corpse_cat" in self.flags:
+				d = game.items.get_item("cat corpse")
 			drop = map.Object(x, y, d.icon, d.name, d.color, True, item=d)
 			game.current_map.objects.append(drop)
 		drop_chance = libtcod.random_get_int(game.rnd, 1, 100)
@@ -175,6 +177,7 @@ class MonsterList(object):
 		libtcod.struct_add_flag(monster_type_struct, 'corpse_kobold')
 		libtcod.struct_add_flag(monster_type_struct, 'corpse_orc')
 		libtcod.struct_add_flag(monster_type_struct, 'corpse_rat')
+		libtcod.struct_add_flag(monster_type_struct, 'corpse_cat')
 		libtcod.struct_add_flag(monster_type_struct, 'corpse_bat')
 		libtcod.struct_add_flag(monster_type_struct, 'corpse_dog')
 		libtcod.struct_add_flag(monster_type_struct, 'corpse_lizard')

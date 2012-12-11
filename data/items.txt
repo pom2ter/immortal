@@ -1,43 +1,3 @@
-item_type "potion of minor healing" {
-	type = "potion"
-	unidentified_name = "potion"
-	icon = "!"
-	icon_color = "255,0,0"
-	dark_color = "85,0,0"
-	level = 1
-	weight = 0.5
-	cost = 50
-	dices = "1d8+1"
-	article = "a "
-	healing
-	usable
-}
-
-item_type "potion of mana" {
-	type = "potion"
-	unidentified_name = "potion"
-	icon = "!"
-	icon_color = "0,0,255"
-	dark_color = "0,0,85"
-	level = 1
-	weight = 0.5
-	cost = 50
-	dices = "1d8+1"
-	article = "a "
-	mana_healing
-	usable
-}
-
-item_type "gold" {
-	type = "money"
-	unidentified_name = "gold"
-	icon = "$"
-	icon_color = "229,191,0"
-	dark_color = "76,64,0"
-	level = 1
-	article = "some "
-}
-
 item_type "dagger" {
 	type = "weapon"
 	unidentified_name = "dagger"
@@ -83,6 +43,81 @@ item_type "long sword" {
 	weapon_sword
 }
 
+item_type "mace" {
+	type = "weapon"
+	unidentified_name = "mace"
+	icon = "("
+	icon_color = "255,255,255"
+	dark_color = "85,85,85"
+	level = 1
+	weight = 10.0
+	cost = 10
+	dices = "1d6+1"
+	article = "a "
+	equippable
+	weapon_mace
+}
+
+item_type "hand axe" {
+	type = "weapon"
+	unidentified_name = "hand axe"
+	icon = "("
+	icon_color = "255,255,255"
+	dark_color = "85,85,85"
+	level = 1
+	weight = 5.0
+	cost = 10
+	dices = "1d6"
+	article = "a "
+	equippable
+	weapon_axe
+}
+
+item_type "quarterstaff" {
+	type = "weapon"
+	unidentified_name = "quarterstaff"
+	icon = "("
+	icon_color = "255,255,255"
+	dark_color = "85,85,85"
+	level = 1
+	weight = 5.0
+	cost = 10
+	dices = "1d4"
+	article = "a "
+	equippable
+	weapon_staff
+}
+
+item_type "bow" {
+	type = "weapon"
+	unidentified_name = "bow"
+	icon = "("
+	icon_color = "255,255,255"
+	dark_color = "85,85,85"
+	level = 1
+	weight = 2.0
+	cost = 10
+	dices = "1d6"
+	article = "a "
+	equippable
+	weapon_bow
+}
+
+item_type "spear" {
+	type = "weapon"
+	unidentified_name = "spear"
+	icon = "("
+	icon_color = "255,255,255"
+	dark_color = "85,85,85"
+	level = 1
+	weight = 8.0
+	cost = 10
+	dices = "1d6"
+	article = "a "
+	equippable
+	weapon_polearm
+}
+
 item_type "robes" {
 	type = "armor"
 	unidentified_name = "robes"
@@ -125,50 +160,6 @@ item_type "leather armor" {
 	armor_body
 }
 
-item_type "leather boots" {
-	type = "armor"
-	unidentified_name = "leather boots"
-	icon = "["
-	icon_color = "127,127,127"
-	dark_color = "42,42,42"
-	level = 1
-	weight = 2.5
-	cost = 5
-	article = "some "
-	equippable
-	armor_feet
-}
-
-item_type "mace" {
-	type = "weapon"
-	unidentified_name = "mace"
-	icon = "("
-	icon_color = "255,255,255"
-	dark_color = "85,85,85"
-	level = 1
-	weight = 10.0
-	cost = 10
-	dices = "1d6+1"
-	article = "a "
-	equippable
-	weapon_mace
-}
-
-item_type "hand axe" {
-	type = "weapon"
-	unidentified_name = "hand axe"
-	icon = "("
-	icon_color = "255,255,255"
-	dark_color = "85,85,85"
-	level = 1
-	weight = 5.0
-	cost = 10
-	dices = "1d6"
-	article = "a "
-	equippable
-	weapon_axe
-}
-
 item_type "studded leather armor" {
 	type = "armor"
 	unidentified_name = "studded leather armor"
@@ -183,6 +174,121 @@ item_type "studded leather armor" {
 	armor_body
 }
 
+item_type "leather boots" {
+	type = "armor"
+	unidentified_name = "leather boots"
+	icon = "["
+	icon_color = "127,127,127"
+	dark_color = "42,42,42"
+	level = 1
+	weight = 2.5
+	cost = 5
+	article = "some "
+	equippable
+	armor_feet
+}
+
+item_type "leather gloves" {
+	type = "armor"
+	unidentified_name = "leather gloves"
+	icon = "["
+	icon_color = "127,127,127"
+	dark_color = "42,42,42"
+	level = 1
+	weight = 2.0
+	cost = 5
+	article = "some "
+	equippable
+	armor_hands
+}
+
+item_type "potion of minor healing" {
+	type = "potion"
+	unidentified_name = "potion"
+	icon = "!"
+	icon_color = "255,0,0"
+	dark_color = "85,0,0"
+	level = 1
+	weight = 0.5
+	cost = 50
+	dices = "1d8+1"
+	article = "a "
+	charge = 1
+	healing
+	usable
+}
+
+item_type "potion of major healing" {
+	type = "potion"
+	unidentified_name = "potion"
+	icon = "!"
+	icon_color = "255,115,115"
+	dark_color = "85,38,38"
+	level = 2
+	weight = 0.5
+	cost = 200
+	dices = "2d12+1"
+	article = "a "
+	charge = 1
+	healing
+	usable
+}
+
+item_type "potion of mana" {
+	type = "potion"
+	unidentified_name = "potion"
+	icon = "!"
+	icon_color = "0,0,255"
+	dark_color = "0,0,85"
+	level = 1
+	weight = 0.5
+	cost = 50
+	dices = "1d8+1"
+	article = "a "
+	charge = 1
+	mana_healing
+	usable
+}
+
+item_type "torch" {
+	type = "tool"
+	unidentified_name = "torch"
+	icon = "]"
+	icon_color = "0,0,255"
+	dark_color = "0,0,85"
+	level = 1
+	weight = 0.1
+	cost = 5
+	charge = 1000
+	article = "a "
+	usable
+}
+
+item_type "ration" {
+	type = "food"
+	unidentified_name = "ration"
+	icon = "%"
+	icon_color = "0,0,255"
+	dark_color = "0,0,85"
+	level = 1
+	weight = 2
+	cost = 5
+	article = "some "
+	charge = 1
+	usable
+	consumable
+}
+
+item_type "gold" {
+	type = "money"
+	unidentified_name = "gold"
+	icon = "$"
+	icon_color = "229,191,0"
+	dark_color = "76,64,0"
+	level = 1
+	article = "some "
+}
+
 item_type "goblin corpse" {
 	type = "corpse"
 	unidentified_name = "goblin corpse"
@@ -191,6 +297,7 @@ item_type "goblin corpse" {
 	dark_color = "64,50,32"
 	weight = 10.0
 	article = "a "
+	charge = 1
 	consumable
 	corpse_goblin
 	usable
@@ -204,6 +311,7 @@ item_type "kobold corpse" {
 	dark_color = "64,50,32"
 	weight = 10.0
 	article = "a "
+	charge = 1
 	consumable
 	corpse_kobold
 	usable
@@ -217,6 +325,7 @@ item_type "rat corpse" {
 	dark_color = "64,50,32"
 	weight = 5.0
 	article = "a "
+	charge = 1
 	consumable
 	corpse_rat
 	usable
@@ -230,6 +339,7 @@ item_type "lizard corpse" {
 	dark_color = "64,50,32"
 	weight = 5.0
 	article = "a "
+	charge = 1
 	consumable
 	corpse_lizard
 	usable
@@ -243,6 +353,7 @@ item_type "bat corpse" {
 	dark_color = "64,50,32"
 	weight = 5.0
 	article = "a "
+	charge = 1
 	consumable
 	corpse_bat
 	usable
@@ -256,6 +367,7 @@ item_type "dog corpse" {
 	dark_color = "64,50,32"
 	weight = 5.0
 	article = "a "
+	charge = 1
 	consumable
 	corpse_dog
 	usable
@@ -269,6 +381,7 @@ item_type "orc corpse" {
 	dark_color = "64,50,32"
 	weight = 10.0
 	article = "a "
+	charge = 1
 	consumable
 	corpse_orc
 	usable
@@ -282,6 +395,7 @@ item_type "human corpse" {
 	dark_color = "64,50,32"
 	weight = 10.0
 	article = "a "
+	charge = 1
 	consumable
 	corpse_human
 	usable
@@ -295,6 +409,7 @@ item_type "wolf corpse" {
 	dark_color = "64,50,32"
 	weight = 10.0
 	article = "a "
+	charge = 1
 	consumable
 	corpse_wolf
 	usable
@@ -308,7 +423,22 @@ item_type "bear corpse" {
 	dark_color = "64,50,32"
 	weight = 20.0
 	article = "a "
+	charge = 1
 	consumable
 	corpse_bear
+	usable
+}
+
+item_type "cat corpse" {
+	type = "corpse"
+	unidentified_name = "cat corpse"
+	icon = "%"
+	icon_color = "127,101,63"
+	dark_color = "64,50,32"
+	weight = 2.0
+	article = "a "
+	charge = 1
+	consumable
+	corpse_cat
 	usable
 }

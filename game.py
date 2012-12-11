@@ -4,16 +4,16 @@ import pickle
 import os
 import ctypes
 from players import *
-from messages import *
 from item import *
 from monster import *
-import worldgen
-import map
-import commands
 import util
+import commands
+import map
+import worldgen
+import messages
 
 VERSION = 'v0.2.3'
-BUILD = '35'
+BUILD = '36'
 
 #size of the gui windows
 MAP_WIDTH = 70
@@ -106,9 +106,9 @@ terrain = [{'name': 'Mountain Peak', 'type': 'dirt', 'elevation': 0.950}, {'name
 
 class Game(object):
 	def __init__(self):
-		global img, font_width, font_height, rnd, con, panel, ps, fov_noise, savefiles, items, tiles, monsters
+		global img, font_width, font_height, message, rnd, con, panel, ps, fov_noise, savefiles, items, tiles, monsters
 		self.load_settings()
-		#img = libtcod.image_load('title_screen2.png')
+		img = libtcod.image_load('title.png')
 		if font == 'large':
 			libtcod.console_set_custom_font('font-large.png', libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_ASCII_INROW)
 			font_width = 17
@@ -117,6 +117,7 @@ class Game(object):
 			libtcod.console_set_custom_font('font-small.png', libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_TCOD)
 		self.init_root_console()
 		#libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, 'Immortal ' + VERSION, False)
+		libtcod.image_scale(img, SCREEN_WIDTH * 2, SCREEN_HEIGHT * 2)
 
 		libtcod.sys_set_fps(500)
 		rnd = libtcod.random_new()
@@ -161,7 +162,7 @@ class Game(object):
 	def new_game(self):
 		global message, player, char, game_state, worldmap, current_map
 		cardinal = [-(WORLDMAP_WIDTH - 1), -(WORLDMAP_WIDTH), -(WORLDMAP_WIDTH + 1), -1, 1, WORLDMAP_WIDTH - 1, WORLDMAP_WIDTH, WORLDMAP_WIDTH + 1]
-		message = Message()
+		message = messages.Message()
 		player = Player()
 		char = map.Object(50, 50, player.icon, 'player', player.icon_color, blocks=True)
 		game_state = create_character()
@@ -272,7 +273,7 @@ class Game(object):
 		contents = open('data/help.txt', 'r').read()
 		util.msg_box('text', 'Help', contents=contents, box_width=40, box_height=25)
 
-	# loading and changin game settings
+	# loading and changing game settings
 	def settings(self):
 		util.msg_box('settings', 'Settings', contents=font, box_width=40, box_height=8, center=True)
 		self.load_settings()
@@ -307,19 +308,20 @@ class Game(object):
 		global player_action
 		player_action = None
 		choice = 0
-		#libtcod.console_credits()
 		while not libtcod.console_is_window_closed():
-			libtcod.console_set_default_foreground(0, libtcod.light_yellow)
-			libtcod.console_set_default_background(0, libtcod.black)
 			libtcod.console_clear(0)
-			#libtcod.image_blit_2x(img, 0, 0, 0)
-			#libtcod.image_blit(img, 0, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, libtcod.BKGND_SET, 1.0, 1.0, 0.0)
-			contents = ['Start a new game', 'Load a saved game', 'Help', 'Settings', 'High Scores', 'Quit']
-			libtcod.console_print_ex(0, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - len(contents), libtcod.BKGND_SET, libtcod.CENTER, 'Immortal ' + VERSION)
-			libtcod.console_print_ex(0, SCREEN_WIDTH / 2, SCREEN_HEIGHT - 2, libtcod.BKGND_SET, libtcod.CENTER, 'By Potatoman')
+			libtcod.image_blit_2x(img, 0, 0, 0)
+			contents = ['Start a new game', 'Load a saved game', 'Help', 'Change settings', 'View high scores', 'Quit game']
+			libtcod.console_set_default_foreground(0, libtcod.light_yellow)
+			libtcod.console_print_ex(0, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, libtcod.BKGND_NONE, libtcod.CENTER, 'Immortal')
+			libtcod.console_set_default_foreground(0, libtcod.black)
+			libtcod.console_print_ex(0, 1, SCREEN_HEIGHT - 2, libtcod.BKGND_NONE, libtcod.LEFT, VERSION)
+			libtcod.console_set_default_foreground(0, libtcod.light_yellow)
+			libtcod.console_print_ex(0, SCREEN_WIDTH / 2, SCREEN_HEIGHT - 2, libtcod.BKGND_NONE, libtcod.CENTER, 'By Mr.Potatoman')
 			if choice == -1:
 				choice = 0
-			choice = util.msg_box('main_menu', header=None, contents=contents, box_width=21, box_height=len(contents) + 2, default=choice)
+			#choice = util.msg_box('main_menu', header=None, contents=contents, box_width=21, box_height=len(contents) + 2, default=choice)
+			choice = messages.box(None, None, ((SCREEN_WIDTH - 4) - len(max(contents, key=len))) / 2, SCREEN_HEIGHT - 18, len(max(contents, key=len)) + 4, len(contents) + 2, contents)
 
 			if choice == 0:  # start new game
 				self.new_game()

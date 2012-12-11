@@ -1,15 +1,25 @@
 import libtcodpy as libtcod
 import game
 import util
+import messages
 
 RACES = ["Human", "Elf", "Dwarf", "Halfling"]
-CLASSES = ["Fighter", "Rogue", "Priest", "Mage"]
+CLASSES = ["Fighter", "Rogue", "Priest", "Mage", "Explorer"]
 GENDER = ["Male", "Female"]
 COMBAT_SKILLS = ['Sword', 'Axe', 'Mace', 'Dagger', 'Polearm', 'Staff', 'Bow', 'Missile', 'Hands']
-BASE_STATS = [[9, 9, 9, 9, 9], [12, 9, 7, 8, 11], [10, 12, 8, 9, 8], [10, 8, 9, 12, 8], [7, 9, 13, 10, 8],
-				[7, 9, 11, 10, 8], [10, 9, 9, 9, 10], [8, 12, 10, 10, 7], [8, 8, 11, 13, 7], [5, 9, 15, 11, 7],
-				[11, 7, 7, 8, 12], [14, 7, 5, 7, 14], [12, 10, 6, 8, 11], [12, 6, 7, 11, 11], [9, 7, 11, 9, 11],
-				[8, 10, 8, 10, 9], [11, 10, 6, 9, 11], [9, 13, 7, 10, 8], [9, 9, 8, 13, 8], [6, 10, 12, 11, 8],
+RACE_DESC = ["Humans are the most common race in the Realm. They are average at everything and thus don't have any racial bonuses or penalties.",
+			"Elves are more dedicated to magic than combat. They have bonuses to intelligence and wisdow but penalties to strength and endurance.",
+			"Dwarves are the strongest (but stupidest) people in the Realm. They are primarily used has 'tanks'. They have a bonus to strength and endurance and a penalty to everything else.",
+			"Halfling are a small, friendly and clever folk, known for their thieving prowess. They have a bonus to dexterity and intelligence but a penalty to strength and wisdom."]
+CLASS_DESC = ["Fighters are master of arms especially melee weapons but their magic skills are very limited. Their primary attribute is strength. This is the perfect class for dwarves. They start with moderate knowledge in all combat skills except ranged weapons.",
+			"Rogues uses stealth to survive rather than weapons or magic. Their primary attribute is dexterity. This is a good class for halflings. They start with moderate knowledge in thieving skills.",
+			"Priests are decent fighters that can use defensive and curative magic. Their primary attribute is wisdom. They start with some knowledge in both combat and magic skills.",
+			"Mages are the opposite of fighters; great with magic, weak with weapons (except staves). Their primary attribute is intelligence. This is a good class for elves. They start with moderate knowledge in all magic skills.",
+			"An explorer is basically a classless character so he doesnt have any specialties but gains more skill points per level to compensate. This 'class' is for those who likes to fine-tune their character from the very beginning."]
+BASE_STATS = [[9, 9, 9, 9, 9], [12, 9, 7, 8, 11], [10, 12, 8, 9, 8], [10, 8, 9, 12, 8], [7, 9, 13, 10, 8], [9, 9, 9, 9, 9],
+				[7, 9, 11, 10, 8], [10, 9, 9, 9, 10], [8, 12, 10, 10, 7], [8, 8, 11, 13, 7], [5, 9, 15, 11, 7], [7, 9, 11, 10, 8],
+				[11, 7, 7, 8, 12], [14, 7, 5, 7, 14], [12, 10, 6, 8, 11], [12, 6, 7, 11, 11], [9, 7, 11, 9, 11], [11, 7, 7, 8, 12],
+				[8, 10, 10, 8, 9], [11, 10, 8, 7, 11], [9, 13, 9, 8, 8], [9, 9, 10, 11, 8], [6, 10, 14, 9, 8], [8, 10, 10, 8, 9]
 				]
 EXPERIENCE_TABLES = [0, 10, 250, 500, 800, 1250, 1750, 2450, 3250, 4150, 5200, 6400, 7800, 9400, 11200, 13200, 16400, 18800, 21400, 24200, 27000]
 FIGHTER_HP_GAIN = 10
@@ -20,6 +30,8 @@ PRIEST_HP_GAIN = 7
 PRIEST_MP_GAIN = 8
 MAGE_HP_GAIN = 5
 MAGE_MP_GAIN = 10
+EXPLORER_HP_GAIN = 6
+EXPLORER_MP_GAIN = 6
 
 
 class Player(object):
@@ -175,6 +187,10 @@ class Player(object):
 			hp_increase = libtcod.random_get_int(game.rnd, 2, MAGE_HP_GAIN)
 			mp_increase = libtcod.random_get_int(game.rnd, 2, MAGE_MP_GAIN)
 			self.stat_gain(10, 15, 50, 20, 5)
+		if self.profession == "Explorer":
+			hp_increase = libtcod.random_get_int(game.rnd, 2, MAGE_HP_GAIN)
+			mp_increase = libtcod.random_get_int(game.rnd, 2, MAGE_MP_GAIN)
+			self.stat_gain(20, 20, 20, 20, 20)
 		self.base_health += hp_increase
 		self.base_mana += mp_increase
 		self.health += hp_increase
@@ -215,11 +231,9 @@ class Player(object):
 		self.add_turn()
 
 	def score(self):
-		score, skills = 0, 0
+		score = 0
 		score += (self.strength + self.dexterity + self.intelligence + self.wisdom + self.endurance + self.karma) / 5
-		for i in range(len(self.combat_skills)):
-			skills += self.combat_skills[i].level
-		score += skills / 20
+		score += sum(c.level for c in self.combat_skills) / 20
 		score += self.xp / 5
 		score += (self.level - 1) * 50
 		score += self.turns / 50
@@ -248,100 +262,124 @@ class Skill(object):
 			game.message.new('Your ' + self.name + ' skill increased to ' + str(self.level) + '!', game.player.turns, libtcod.light_green)
 
 
+def character_description(typ, id):
+	libtcod.console_set_default_foreground(0, libtcod.white)
+	libtcod.console_set_default_background(0, libtcod.black)
+	libtcod.console_rect(0, 0, 10, 50, 10, True, libtcod.BKGND_SET)
+	if typ == 'race':
+		libtcod.console_print_rect(0, 1, 11, 45, 10, RACE_DESC[id])
+	if typ == 'class':
+		libtcod.console_print_rect(0, 1, 11, 45, 10, CLASS_DESC[id])
+
+
+def chargen_choices(posx, posy, width, options, typ):
+	choice = False
+	current = 0
+	key = libtcod.Key()
+	mouse = libtcod.Mouse()
+	lerp = 1.0
+	descending = True
+
+	while not choice:
+		if typ == 'race':
+			character_description('race', current)
+		if typ == 'class':
+			character_description('class', current)
+		ev = libtcod.sys_check_for_event(libtcod.EVENT_ANY, key, mouse)
+		libtcod.console_set_default_foreground(0, libtcod.grey)
+		libtcod.console_set_default_background(0, libtcod.black)
+
+		for y in range(len(options)):
+			if y == current:
+				libtcod.console_set_default_foreground(0, libtcod.white)
+				color, lerp, descending = util.color_lerp(lerp, descending)
+				libtcod.console_set_default_background(0, color)
+			else:
+				libtcod.console_set_default_foreground(0, libtcod.grey)
+				libtcod.console_set_default_background(0, libtcod.black)
+			libtcod.console_rect(0, posx, y + posy, width, 1, True, libtcod.BKGND_SET)
+			libtcod.console_print_ex(0, posx + 2, y + posy, libtcod.BKGND_SET, libtcod.LEFT, options[y])
+		libtcod.console_flush()
+
+		if key.vk == libtcod.KEY_DOWN and ev == libtcod.EVENT_KEY_PRESS:
+			current = (current + 1) % len(options)
+			lerp = 1.0
+			descending = True
+		elif key.vk == libtcod.KEY_UP and ev == libtcod.EVENT_KEY_PRESS:
+			current = (current - 1) % len(options)
+			lerp = 1.0
+			descending = True
+		elif key.vk == libtcod.KEY_ENTER and ev == libtcod.EVENT_KEY_PRESS:
+			choice = True
+	return current
+
+
 def create_character():
 	cancel = False
-	key = libtcod.Key()
 	while not cancel:
 		cs_width = game.SCREEN_WIDTH - 35
 		cs = libtcod.console_new(cs_width, game.SCREEN_HEIGHT)
 		stats = libtcod.console_new(35, game.SCREEN_HEIGHT)
-		show_stats(stats, "")
+		show_stats_panel(stats, "")
 
-		libtcod.console_print(cs, 0, 0, 'CHARACTER GENERATION')
-		libtcod.console_print(cs, 0, 2, 'Enter a name for your character: _' + game.player.name)
+		libtcod.console_print(cs, 1, 1, 'CHARACTER GENERATION')
+		libtcod.console_print(cs, 1, 3, 'Enter a name for your character: _' + game.player.name)
 		libtcod.console_blit(cs, 0, 0, cs_width, game.SCREEN_HEIGHT, 0, 0, 0)
 		libtcod.console_flush()
 
-		game.player.name = game.message.input('chargen', cs, 33, 2, stats)
-		show_stats(stats, "")
+		game.player.name = messages.input('chargen', cs, 34, 3, stats)
+		show_stats_panel(stats, "")
 		libtcod.console_rect(cs, 0, 2, cs_width, game.SCREEN_HEIGHT, True, libtcod.BKGND_SET)
-		libtcod.console_print(cs, 0, 2, 'Select a gender:')
-		libtcod.console_print(cs, 0, 4, '1) Male')
-		libtcod.console_print(cs, 0, 5, '2) Female')
+		libtcod.console_print(cs, 1, 3, 'Select a gender:')
 		libtcod.console_blit(cs, 0, 0, cs_width, game.SCREEN_HEIGHT, 0, 0, 0)
-		libtcod.console_flush()
+		game.player.gender = GENDER[chargen_choices(1, 5, 10, GENDER, None)]
 
-		gender_choice = False
-		while not gender_choice:
-			libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, key, libtcod.Mouse(), True)
-			index = key.c - ord('1')
-			if index >= 0 and index < len(GENDER):
-				game.player.gender = GENDER[index]
-				gender_choice = True
-
-		show_stats(stats, game.player.gender, 0)
+		show_stats_panel(stats, game.player.gender, 0)
 		libtcod.console_rect(cs, 0, 2, cs_width, game.SCREEN_HEIGHT, True, libtcod.BKGND_SET)
-		libtcod.console_print(cs, 0, 2, 'Select a race:')
-		libtcod.console_print(cs, 15, 3, 'Modifiers')
-		libtcod.console_print(cs, 0, 4, '1) Human       None')
-		libtcod.console_print(cs, 0, 5, '2) Elf         +2 Int, +1 Wis, -2 Str, -1 End')
-		libtcod.console_print(cs, 0, 6, '3) Dwarf       +2 Str, +3 End, -2 Dex, -2 Int, -1 Wis')
-		libtcod.console_print(cs, 0, 7, '4) Halfling    +1 Dex, +1 Wis, -1 Str, -1 Int')
+		libtcod.console_print(cs, 1, 3, 'Select a race:')
+		libtcod.console_print(cs, 16, 4, 'Modifiers')
+		libtcod.console_print(cs, 16, 5, 'None')
+		libtcod.console_print(cs, 16, 6, '+2 Int, +1 Wis, -2 Str, -1 End')
+		libtcod.console_print(cs, 16, 7, '+2 Str, +3 End, -2 Dex, -2 Int, -1 Wis')
+		libtcod.console_print(cs, 16, 8, '+1 Dex, +1 Int, -1 Str, -1 Wis')
 		libtcod.console_blit(cs, 0, 0, cs_width, game.SCREEN_HEIGHT, 0, 0, 0)
-		libtcod.console_flush()
+		index = chargen_choices(1, 5, 12, RACES, 'race')
+		game.player.race = RACES[index]
 
-		race_choice = False
-		while not race_choice:
-			libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, key, libtcod.Mouse(), True)
-			index = key.c - ord('1')
-			if index >= 0 and index < len(RACES):
-				game.player.race = RACES[index]
-				race_choice = True
-
-		show_stats(stats, game.player.gender + " " + game.player.race, index * 5)
+		show_stats_panel(stats, game.player.gender + " " + game.player.race, index * 5)
 		libtcod.console_rect(cs, 0, 2, cs_width, game.SCREEN_HEIGHT, True, libtcod.BKGND_SET)
-		libtcod.console_print(cs, 0, 2, 'Select a class:')
-		libtcod.console_print(cs, 15, 3, 'Modifiers')
-		libtcod.console_print(cs, 0, 4, '1) Fighter     +3 Str, +2 End, -2 Int, -1 Wis')
-		libtcod.console_print(cs, 0, 5, '2) Rogue       +3 Dex, +1 Str, -1 Int, -1 End')
-		libtcod.console_print(cs, 0, 6, '3) Priest      +3 Wis, +1 Str, -1 Dex, -1 End')
-		libtcod.console_print(cs, 0, 7, '4) Mage        +4 Int, +1 Wis, -2 Str, -1 End')
+		libtcod.console_print(cs, 1, 3, 'Select a class:')
+		libtcod.console_print(cs, 16, 4, 'Modifiers')
+		libtcod.console_print(cs, 16, 5, '+3 Str, +2 End, -2 Int, -1 Wis')
+		libtcod.console_print(cs, 16, 6, '+3 Dex, +1 Str, -1 Int, -1 End')
+		libtcod.console_print(cs, 16, 7, '+3 Wis, +1 Str, -1 Dex, -1 End')
+		libtcod.console_print(cs, 16, 8, '+4 Int, +1 Wis, -2 Str, -1 End')
+		libtcod.console_print(cs, 16, 9, 'None')
 		libtcod.console_blit(cs, 0, 0, cs_width, game.SCREEN_HEIGHT, 0, 0, 0)
-		libtcod.console_flush()
+		indexr = chargen_choices(1, 5, 12, CLASSES, 'class')
+		game.player.profession = CLASSES[indexr]
 
-		class_choice = False
-		while not class_choice:
-			libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, key, libtcod.Mouse(), True)
-			indexr = key.c - ord('1')
-			if indexr >= 0 and indexr < len(CLASSES):
-				game.player.profession = CLASSES[indexr]
-				class_choice = True
-
-		show_stats(stats, game.player.gender + " " + game.player.race + " " + game.player.profession, (index * 5) + indexr + 1, 0)
-		libtcod.console_print(cs, 0, 11, '(r)eroll')
-		libtcod.console_print(cs, 0, 12, '(k)eep character and start game')
-		libtcod.console_print(cs, 0, 13, '(c)ancel and restart')
-		libtcod.console_print(cs, 0, 14, '<ESC> Return to main menu')
+		show_stats_panel(stats, game.player.gender + " " + game.player.race + " " + game.player.profession, (index * 5) + indexr + 1, 0)
+		libtcod.console_rect(cs, 0, 2, cs_width, game.SCREEN_HEIGHT, True, libtcod.BKGND_SET)
+		libtcod.console_print(cs, 1, 3, 'Options:')
 		libtcod.console_blit(cs, 0, 0, cs_width, game.SCREEN_HEIGHT, 0, 0, 0)
-		libtcod.console_flush()
-
 		final_choice = False
 		while not final_choice:
-			libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, key, libtcod.Mouse(), True)
-			if key.vk == libtcod.KEY_ESCAPE:
-				final_choice = True
-				return "quit"
-			if chr(key.c) == 'r':
-				show_stats(stats, game.player.gender + " " + game.player.race + " " + game.player.profession, (index * 5) + indexr + 1, 0)
-			if chr(key.c) == 'k':
+			choice = chargen_choices(1, 5, 33, ['Reroll stats', 'Keep character and start game', 'Cancel and restart', 'Return to main menu'], None)
+			if choice == 0:
+				show_stats_panel(stats, game.player.gender + " " + game.player.race + " " + game.player.profession, (index * 5) + indexr + 1, 0)
+			if choice == 1:
 				final_choice = True
 				return "playing"
-			if chr(key.c) == 'c':
+			if choice == 2:
 				game.player.name = ""
 				final_choice = True
+			if choice == 3:
+				final_choice = True
+				return "quit"
 
 
-def show_stats(stats, text, attr=-1, roll=-1):
+def show_stats_panel(stats, text, attr=-1, roll=-1):
 	libtcod.console_set_default_foreground(stats, libtcod.light_red)
 	libtcod.console_print(stats, 2, 1, game.player.name)
 	libtcod.console_set_default_foreground(stats, libtcod.light_yellow)
@@ -366,7 +404,7 @@ def show_stats(stats, text, attr=-1, roll=-1):
 		stat.append(libtcod.random_get_int(game.rnd, 0, 6))
 		stat.append(libtcod.random_get_int(game.rnd, 0, 6))
 		stat.append(libtcod.random_get_int(game.rnd, 0, 6))
-		stat.append(libtcod.random_get_int(game.rnd, 0, 19))
+		stat.append(libtcod.random_get_int(game.rnd, 0, 20))
 		for i in range(5):
 			libtcod.console_print(stats, 24, i + 5, str(stat[i]))
 			libtcod.console_print_ex(stats, 31, i + 5, libtcod.BKGND_SET, libtcod.RIGHT, ' ' + str(BASE_STATS[attr][i] + stat[i]))
@@ -377,26 +415,65 @@ def show_stats(stats, text, attr=-1, roll=-1):
 		game.player.wisdom = BASE_STATS[attr][3] + stat[3]
 		game.player.endurance = BASE_STATS[attr][4] + stat[4]
 		game.player.karma = stat[5]
-		game.player.gold = libtcod.random_get_int(game.rnd, 1, 50)
-
-		if game.player.profession == "Fighter":
-			game.player.base_health = libtcod.random_get_int(game.rnd, 2, FIGHTER_HP_GAIN)
-			game.player.base_mana = libtcod.random_get_int(game.rnd, 2, FIGHTER_MP_GAIN)
-		if game.player.profession == "Rogue":
-			game.player.base_health = libtcod.random_get_int(game.rnd, 2, ROGUE_HP_GAIN)
-			game.player.base_mana = libtcod.random_get_int(game.rnd, 2, ROGUE_MP_GAIN)
-		if game.player.profession == "Priest":
-			game.player.base_health = libtcod.random_get_int(game.rnd, 2, PRIEST_HP_GAIN)
-			game.player.base_mana = libtcod.random_get_int(game.rnd, 2, PRIEST_MP_GAIN)
-		if game.player.profession == "Mage":
-			game.player.base_health = libtcod.random_get_int(game.rnd, 2, MAGE_HP_GAIN)
-			game.player.base_mana = libtcod.random_get_int(game.rnd, 2, MAGE_MP_GAIN)
-		game.player.set_max_health()
-		game.player.set_max_mana()
-		game.player.health = game.player.max_health
-		game.player.mana = game.player.max_mana
+		starting_stats()
 
 	for i in range(game.SCREEN_HEIGHT):
 		libtcod.console_print(stats, 0, i, chr(179))
 	libtcod.console_blit(stats, 0, 0, 35, game.SCREEN_HEIGHT, 0, game.SCREEN_WIDTH - 35, 0)
 	libtcod.console_flush()
+
+
+def starting_stats():
+	game.player.inventory = []
+	game.player.gold = libtcod.random_get_int(game.rnd, 1, 50)
+	if game.player.profession == "Fighter":
+		game.player.base_health = libtcod.random_get_int(game.rnd, 2, FIGHTER_HP_GAIN)
+		game.player.base_mana = libtcod.random_get_int(game.rnd, 2, FIGHTER_MP_GAIN)
+		game.items.get_item("short sword").pick_up(0, True)
+		game.items.get_item("leather armor").pick_up(0, True)
+		game.player.combat_skills[0].level = 20
+		game.player.combat_skills[1].level = 20
+		game.player.combat_skills[2].level = 10
+		game.player.combat_skills[3].level = 15
+		game.player.combat_skills[4].level = 20
+		game.player.combat_skills[8].level = 5
+
+	if game.player.profession == "Rogue":
+		game.player.base_health = libtcod.random_get_int(game.rnd, 2, ROGUE_HP_GAIN)
+		game.player.base_mana = libtcod.random_get_int(game.rnd, 2, ROGUE_MP_GAIN)
+		game.items.get_item("dagger").pick_up(0, True)
+		game.items.get_item("leather armor").pick_up(0, True)
+		game.player.combat_skills[3].level = 15
+		game.player.combat_skills[6].level = 5
+		game.player.combat_skills[7].level = 5
+		game.player.combat_skills[8].level = 5
+
+	if game.player.profession == "Priest":
+		game.player.base_health = libtcod.random_get_int(game.rnd, 2, PRIEST_HP_GAIN)
+		game.player.base_mana = libtcod.random_get_int(game.rnd, 2, PRIEST_MP_GAIN)
+		game.items.get_item("mace").pick_up(0, True)
+		game.items.get_item("leather armor").pick_up(0, True)
+		game.player.combat_skills[0].level = 5
+		game.player.combat_skills[2].level = 15
+		game.player.combat_skills[3].level = 5
+		game.player.combat_skills[5].level = 5
+
+	if game.player.profession == "Mage":
+		game.player.base_health = libtcod.random_get_int(game.rnd, 2, MAGE_HP_GAIN)
+		game.player.base_mana = libtcod.random_get_int(game.rnd, 2, MAGE_MP_GAIN)
+		game.items.get_item("quarterstaff").pick_up(0, True)
+		game.items.get_item("robes").pick_up(0, True)
+		game.player.combat_skills[5].level = 15
+
+	if game.player.profession == "Explorer":
+		game.player.base_health = libtcod.random_get_int(game.rnd, 2, EXPLORER_HP_GAIN)
+		game.player.base_mana = libtcod.random_get_int(game.rnd, 2, EXPLORER_MP_GAIN)
+		game.items.get_item("dagger").pick_up(0, True)
+		game.items.get_item("leather armor").pick_up(0, True)
+
+	game.items.get_item("torch").pick_up(0, True)
+	game.items.get_item("ration").pick_up(0, True)
+	game.player.set_max_health()
+	game.player.set_max_mana()
+	game.player.health = game.player.max_health
+	game.player.mana = game.player.max_mana
