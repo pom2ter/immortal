@@ -37,13 +37,13 @@ def handle_keys():
 				state = options_menu()
 				if state == 'save':
 					if save_game():
-						return 'save'
-				if state == 'exit':
+						return state
+				if state == 'quit':
 					if quit_game():
-						return 'exit'
+						return state
 			elif (key.lctrl or key.rctrl) and chr(key.c) == 'x':
 				if quit_game():
-					return 'exit'
+					return 'quit'
 			elif (key.lctrl or key.rctrl) and chr(key.c) == 's':
 				if save_game():
 					return 'save'
@@ -82,6 +82,7 @@ def handle_keys():
 				return 'didnt-take-turn'
 
 
+# function that returns some coordinates when player needs to input a direction
 def key_check(key, dx, dy):
 	if key.vk == libtcod.KEY_UP or key.vk == libtcod.KEY_KP8:
 		dy -= 1
@@ -106,6 +107,7 @@ def key_check(key, dx, dy):
 	return dx, dy
 
 
+# moves the player to new coordinates or attacks an enemy
 def player_move(dx, dy):
 	#the coordinates the player is moving to/attacking
 	x = game.char.x + dx
@@ -145,8 +147,8 @@ def attack():
 	game.message.new('Attack... (Arrow keys to move cursor, ENTER to attack, ESC to exit)', game.player.turns)
 	util.render_map()
 	target = None
-	dx = game.char.x
-	dy = game.char.y
+	dx = game.char.x - game.curx
+	dy = game.char.y - game.cury
 	key = libtcod.Key()
 
 	while not libtcod.console_is_window_closed():
@@ -169,17 +171,19 @@ def attack():
 			dx -= 1
 		if dy == game.MAP_HEIGHT:
 			dy -= 1
+		px = dx + game.curx
+		py = dy + game.cury
 
 		if key.vk == libtcod.KEY_ENTER:
 			for obj in game.current_map.objects:
-				if obj.entity and obj.x == dx and obj.y == dy:
+				if obj.entity and obj.x == px and obj.y == py:
 					target = obj
-			if not game.current_map.explored[dx][dy]:
+			if not game.current_map.explored[px][py]:
 				game.message.new("You can't fight darkness.", game.player.turns)
 			elif target is None:
 				game.message.new('There is no one here.', game.player.turns)
 			else:
-				if abs(dx - game.char.x) > 1 or abs(dy - game.char.y) > 1:
+				if abs(px - game.char.x) > 1 or abs(py - game.char.y) > 1:
 					game.message.new('Target is out of range.', game.player.turns)
 					target = None
 			break
@@ -290,7 +294,7 @@ def drop_item():
 		choice = util.msg_box('drop', 'Drop an item', 'Up/down to select, ENTER to drop, ESC to exit', game.player.inventory, box_height=max(16, len(game.player.inventory) + 4), blitmap=True)
 		if choice != -1:
 			obj = map.Object(game.char.x, game.char.y, game.player.inventory[choice].icon, game.player.inventory[choice].name, game.player.inventory[choice].color, True, item=game.player.inventory[choice])
-			obj.first_appearance = game.player.inventory[choice].turn_spawned
+			obj.first_appearance = game.player.inventory[choice].turn_created
 			game.message.new('You drop the ' + obj.name, game.player.turns, libtcod.red)
 			game.current_map.objects.append(obj)
 			obj.send_to_back()
@@ -301,10 +305,7 @@ def drop_item():
 
 # equip an item
 def equip_item():
-	equippable = False
-	for item in game.player.inventory:
-		if item.is_equippable():
-			equippable = True
+	equippable = any(item.is_equippable() for item in game.player.inventory)
 	if not equippable:
 		game.message.new("You don't have any equippable items.", game.player.turns)
 	else:
@@ -323,7 +324,7 @@ def equip_item():
 # help screen
 def help():
 	contents = open('data/help.txt', 'r').read()
-	util.msg_box('text', 'Help', contents=contents, box_width=40, box_height=25, blitmap=True)
+	util.msg_box('text', 'Help', contents=contents, box_width=40, box_height=26, blitmap=True)
 	game.redraw_gui = True
 
 
@@ -441,7 +442,7 @@ def open_door(x=None, y=None):
 
 # ingame options menu
 def options_menu():
-	choice = util.msg_box('options', 'Menu', contents=['Help', 'Settings', 'High scores', 'Save and quit game', 'Quit without saving'], box_width=23, box_height=7, blitmap=True)
+	choice = util.msg_box('options', 'Menu', contents=['Read the manual', 'Change settings', 'View high scores', 'Save and quit game', 'Quit without saving'], box_width=23, box_height=7, blitmap=True)
 	if choice == 0:
 		help()
 	if choice == 1:
@@ -451,7 +452,7 @@ def options_menu():
 	if choice == 3:
 		return 'save'
 	if choice == 4:
-		return 'exit'
+		return 'quit'
 	return
 
 
@@ -460,19 +461,19 @@ def pickup_item():
 	nb_items, itempos = [], []
 	for i in range(len(game.current_map.objects)):
 		if game.current_map.objects[i].x == game.char.x and game.current_map.objects[i].y == game.char.y and game.current_map.objects[i].can_be_pickup:
-			game.current_map.objects[i].item.turn_spawned = game.current_map.objects[i].first_appearance
+			game.current_map.objects[i].item.turn_created = game.current_map.objects[i].first_appearance
 			nb_items.append(game.current_map.objects[i].item)
 			itempos.append(i)
 
 	if len(nb_items) == 0:
 		game.message.new('There is nothing to pick up.', game.player.turns)
 	elif len(nb_items) == 1:
-		nb_items[0].pick_up(nb_items[0].turn_spawned)
+		nb_items[0].pick_up(nb_items[0].turn_created)
 		game.current_map.objects.pop(itempos[0])
 	else:
 		choice = util.msg_box('pickup', 'Get an item', 'Up/down to select, ENTER to get, ESC to exit', nb_items, box_height=max(16, len(nb_items) + 4), blitmap=True)
 		if choice != -1:
-			nb_items[choice].pick_up(nb_items[choice].turn_spawned)
+			nb_items[choice].pick_up(nb_items[choice].turn_created)
 			game.current_map.objects.pop(itempos[choice])
 		game.redraw_gui = True
 
@@ -487,8 +488,6 @@ def quit_game():
 
 	libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, key, libtcod.Mouse(), True)
 	if chr(key.c) == 'y' or chr(key.c) == 'Y':
-		if game.player.name.lower() in game.savefiles:
-			os.remove('saves/' + game.player.name.lower())
 		return True
 	return False
 
@@ -520,7 +519,7 @@ def save_game():
 
 # show a miniature world map
 def show_worldmap():
-	util.msg_box('map', 'World Map', box_width=game.SCREEN_WIDTH, box_height=game.SCREEN_HEIGHT)
+	util.msg_box('map', 'World Map', 'Red dot - You, Black dots - Dungeons, S - Save map', box_width=game.SCREEN_WIDTH, box_height=game.SCREEN_HEIGHT)
 	game.redraw_gui = True
 
 
@@ -567,7 +566,7 @@ def ztats_attributes(con, width, height):
 
 	libtcod.console_print(con, 2, 11, 'Attack Rating     : ' + str(game.player.attack_rating()))
 	libtcod.console_print(con, 2, 12, 'Defense Rating    : ' + str(game.player.defense_rating()))
-	libtcod.console_print(con, 2, 13, 'Carrying Capacity : ' + str(game.player.carrying_capacity()) + 'lbs')
+	libtcod.console_print(con, 2, 13, 'Carrying Capacity : ' + str(game.player.weight_carried()) + ' / ' + str(game.player.max_carrying_capacity()) + ' lbs')
 
 
 # character sheet for skills
@@ -596,15 +595,19 @@ def ztats_equipment(con, width, height):
 	libtcod.console_print(con, 2, 9, 'Ring       :')
 	libtcod.console_print(con, 2, 10, 'Gauntlets  :')
 	libtcod.console_print(con, 2, 11, 'Boots      :')
+	ring = 0
 	for i in range(len(game.player.equipment)):
 		if "armor_head" in game.player.equipment[i].flags:
 			y = 2
+		if "armor_cloak" in game.player.equipment[i].flags:
+			y = 3
 		if "armor_neck" in game.player.equipment[i].flags:
 			y = 4
 		if "armor_body" in game.player.equipment[i].flags:
 			y = 5
 		if "armor_ring" in game.player.equipment[i].flags:
-			y = 8
+			ring += 1
+			y = 7 + ring
 		if "armor_hands" in game.player.equipment[i].flags:
 			y = 10
 		if "armor_feet" in game.player.equipment[i].flags:
@@ -613,7 +616,7 @@ def ztats_equipment(con, width, height):
 			y = 6
 		if game.player.equipment[i].type == "shield":
 			y = 7
-		libtcod.console_print(con, 12, y, ': ' + game.player.equipment[i].name)
+		libtcod.console_print(con, 13, y, ': ' + game.player.equipment[i].name)
 		libtcod.console_print_ex(con, width - 3, y, libtcod.BKGND_SET, libtcod.RIGHT, str(game.player.equipment[i].weight) + ' lbs')
 
 

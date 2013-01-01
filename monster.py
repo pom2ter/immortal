@@ -24,41 +24,52 @@ class Monster(object):
 		self.corpse = corpse
 		self.flags = flags
 
+	# monster attacks the enemy
+	def attack(self):
+		attacker = util.roll_dice(1, 50, 1, 0)
+		defender = util.roll_dice(1, 50, 1, 0)
+		if attacker != 1 and defender != 50 and ((attacker + self.attack_rating) >= (defender + game.player.defense_rating()) or attacker == 50 or defender == 1):
+			damage = self.damage.roll_dice()
+			game.message.new(self.article.capitalize() + self.name + ' hits you for ' + str(damage) + ' pts of damage', game.player.turns, libtcod.light_red)
+			game.player.take_damage(damage)
+			game.hp_anim.append([game.char, str(damage), libtcod.red, 0])
+			if game.player.death():
+				game.message.new('You die...', game.player.turns, libtcod.light_orange)
+				game.message.new('*** Press space ***', game.player.turns)
+				game.killer = self.article + self.name
+				game.game_state = "death"
+		else:
+			game.message.new(self.article.capitalize() + self.name + ' attacks you but misses.', game.player.turns)
+
+	# monster becomes hostile
+	def becomes_hostile(self):
+		self.flags.append("ai_hostile")
+		self.flags[:] = (value for value in self.flags if value != "ai_neutral" and value != "ai_friendly")
+
+	# returns true if monster is dead
+	def death(self):
+		if self.health < 1:
+			return True
+		return False
+
+	# determines monster distance to player
+	def distance_to_player(self, player, x, y):
+		#return the distance relative to the player
+		dx = player.x - x
+		dy = player.y - y
+		return math.sqrt(dx ** 2 + dy ** 2)
+
+	# returns true if monster is hostile
 	def is_hostile(self):
 		if "ai_hostile" in self.flags:
 			return True
 		return False
 
-	def becomes_hostile(self):
-		self.flags.append("ai_hostile")
-		self.flags[:] = (value for value in self.flags if value != "ai_neutral" and value != "ai_friendly")
-
+	# see if monster drops an item or a corpse when dying
 	def loot(self, x, y):
-		#see if monster drops an item or a corpse when dying
 		corpse = libtcod.random_get_int(game.rnd, 1, 100)
 		if corpse <= self.corpse:
-			if "corpse_goblin" in self.flags:
-				d = game.items.get_item("goblin corpse")
-			elif "corpse_kobold" in self.flags:
-				d = game.items.get_item("kobold corpse")
-			elif "corpse_rat" in self.flags:
-				d = game.items.get_item("rat corpse")
-			elif "corpse_lizard" in self.flags:
-				d = game.items.get_item("lizard corpse")
-			elif "corpse_bat" in self.flags:
-				d = game.items.get_item("bat corpse")
-			elif "corpse_dog" in self.flags:
-				d = game.items.get_item("dog corpse")
-			elif "corpse_orc" in self.flags:
-				d = game.items.get_item("orc corpse")
-			elif "corpse_human" in self.flags:
-				d = game.items.get_item("human corpse")
-			elif "corpse_wolf" in self.flags:
-				d = game.items.get_item("wolf corpse")
-			elif "corpse_bear" in self.flags:
-				d = game.items.get_item("bear corpse")
-			elif "corpse_cat" in self.flags:
-				d = game.items.get_item("cat corpse")
+			d = game.items.get_item(self.unidentified_name + " corpse")
 			drop = map.Object(x, y, d.icon, d.name, d.color, True, item=d)
 			game.current_map.objects.append(drop)
 		drop_chance = libtcod.random_get_int(game.rnd, 1, 100)
@@ -75,12 +86,7 @@ class Monster(object):
 			drop = map.Object(x, y, d.icon, d.name, d.color, True, item=d)
 			game.current_map.objects.append(drop)
 
-	def distance_to_player(self, player, x, y):
-		#return the distance relative to the player
-		dx = player.x - x
-		dy = player.y - y
-		return math.sqrt(dx ** 2 + dy ** 2)
-
+	# monster move towards player
 	def move_towards_player(self, player, x, y):
 		#vector from this object to the target, and distance
 		dx = player.x - x
@@ -96,6 +102,11 @@ class Monster(object):
 			dx, dy = libtcod.random_get_int(game.rnd, -1, 1), libtcod.random_get_int(game.rnd, -1, 1)
 		return dx, dy
 
+	# monster takes damage
+	def take_damage(self, damage):
+		self.health -= damage
+
+	# monster takes its turn
 	def take_turn(self, x, y):
 		if self.is_hostile() and libtcod.map_is_in_fov(game.fov_map, x, y):
 			#move towards player if far away
@@ -131,22 +142,6 @@ class Monster(object):
 					dy = 0
 		return x + dx, y + dy
 
-	def attack(self):
-		attacker = util.roll_dice(1, 50, 1, 0)
-		defender = util.roll_dice(1, 50, 1, 0)
-		if attacker != 1 and defender != 50 and ((attacker + self.attack_rating) >= (defender + game.player.defense_rating()) or attacker == 50 or defender == 1):
-			damage = self.damage.roll_dice()
-			game.message.new('The ' + self.name + ' hits you for ' + str(damage) + ' pts of damage', game.player.turns, libtcod.light_red)
-			game.player.health -= damage
-			game.hp_anim.append([game.char, str(-damage), libtcod.red, 0])
-			if game.player.health < 1:
-				game.message.new('You die...', game.player.turns, libtcod.light_orange)
-				game.message.new('*** Press space ***', game.player.turns)
-				game.killer = self.article + self.name
-				game.game_state = "death"
-		else:
-			game.message.new('The ' + self.name + ' attack but misses.', game.player.turns)
-
 
 class MonsterList(object):
 	def __init__(self):
@@ -173,42 +168,32 @@ class MonsterList(object):
 		libtcod.struct_add_flag(monster_type_struct, 'ai_neutral')
 		libtcod.struct_add_flag(monster_type_struct, 'ai_hostile')
 		libtcod.struct_add_flag(monster_type_struct, 'flying')
-		libtcod.struct_add_flag(monster_type_struct, 'corpse_goblin')
-		libtcod.struct_add_flag(monster_type_struct, 'corpse_kobold')
-		libtcod.struct_add_flag(monster_type_struct, 'corpse_orc')
-		libtcod.struct_add_flag(monster_type_struct, 'corpse_rat')
-		libtcod.struct_add_flag(monster_type_struct, 'corpse_cat')
-		libtcod.struct_add_flag(monster_type_struct, 'corpse_bat')
-		libtcod.struct_add_flag(monster_type_struct, 'corpse_dog')
-		libtcod.struct_add_flag(monster_type_struct, 'corpse_lizard')
-		libtcod.struct_add_flag(monster_type_struct, 'corpse_human')
-		libtcod.struct_add_flag(monster_type_struct, 'corpse_wolf')
-		libtcod.struct_add_flag(monster_type_struct, 'corpse_bear')
 		libtcod.parser_run(parser, "data/monsters.txt", MonsterListener())
 
+	# add monster to the list
 	def add_to_list(self, monster=None):
 		if not monster == None:
 			self.list.append(monster)
 
+	# get a monster from the list
 	def get_monster(self, name):
 		for monster in self.list:
-			if name in monster.name:
+			if name == monster.name:
 				return monster
 		return None
 
+	# choose a random monster based on its level
 	def get_monster_by_level(self, level):
 		mst = libtcod.random_get_int(game.rnd, 0, len(self.list) - 1)
 		while self.list[mst].level > level:
 			mst = libtcod.random_get_int(game.rnd, 0, len(self.list) - 1)
 		return self.list[mst]
 
+	# returns the number of monsters on the map
 	def number_of_monsters_on_map(self):
-		number = 0
-		for obj in game.current_map.objects:
-			if obj.entity != None:
-				number += 1
-		return number
+		return sum(obj.entity != None for obj in game.current_map.objects)
 
+	# spawn a monster
 	def spawn(self):
 		if self.number_of_monsters_on_map() < game.current_map.max_monsters:
 			number = libtcod.random_get_int(game.rnd, 1, 100)

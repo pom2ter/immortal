@@ -43,6 +43,8 @@ def choices(con, width, height, options, typ, posx=0, posy=0, default=0, blitmap
 				if typ == 'inventory':
 					textl = options[y].unidentified_name
 					textr = str(round(options[y].weight, 1)) + ' lbs'
+					if options[y].duration > 0:
+						textl += ' (' + str(options[y].duration) + ' turns left)'
 				else:
 					textl = options[y]
 					textr = ''
@@ -166,21 +168,27 @@ def msg_box(typ, header=None, footer=None, contents=None, box_width=60, box_heig
 		mapposx = game.worldmap.player_positionx * (float(game.SCREEN_WIDTH - 2) / float(game.WORLDMAP_WIDTH))
 		mapposy = game.worldmap.player_positiony * (float(game.SCREEN_HEIGHT - 2) / float(game.WORLDMAP_HEIGHT))
 		char = find_map_position(mapposx, mapposy)
+		libtcod.console_set_default_foreground(box, libtcod.black)
+		for (id, name, abbr, x, y) in game.worldmap.dungeons:
+			dmapposx = x * (float(game.SCREEN_WIDTH - 2) / float(game.WORLDMAP_WIDTH))
+			dmapposy = y * (float(game.SCREEN_HEIGHT - 2) / float(game.WORLDMAP_HEIGHT))
+			dchar = find_map_position(dmapposx, dmapposy)
+			libtcod.console_print_ex(box, int(dmapposx) + 1, int(dmapposy) + 1, libtcod.BKGND_NONE, libtcod.LEFT, dchar)
 		while not keypress:
-			libtcod.console_set_default_foreground(box, libtcod.black)
-			for (id, name, abbr, x, y) in game.worldmap.dungeons:
-				dmapposx = x * (float(game.SCREEN_WIDTH - 2) / float(game.WORLDMAP_WIDTH))
-				dmapposy = y * (float(game.SCREEN_HEIGHT - 2) / float(game.WORLDMAP_HEIGHT))
-				dchar = find_map_position(dmapposx, dmapposy)
-				libtcod.console_print_ex(box, int(dmapposx) + 1, int(dmapposy) + 1, libtcod.BKGND_NONE, libtcod.LEFT, dchar)
 			color, lerp, descending = color_lerp(lerp, descending, light=libtcod.red)
 			libtcod.console_set_default_foreground(box, color)
 			libtcod.console_print_ex(box, int(mapposx) + 1, int(mapposy) + 1, libtcod.BKGND_NONE, libtcod.LEFT, char)
 			libtcod.console_blit(box, 0, 0, box_width, box_height, 0, (game.SCREEN_WIDTH - box_width) / 2, (game.SCREEN_HEIGHT - box_height) / 2, 1.0, 1.0)
 			libtcod.console_flush()
-			ev = libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS, libtcod.Key(), libtcod.Mouse())
+			key = libtcod.Key()
+			ev = libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS, key, libtcod.Mouse())
 			if ev == libtcod.EVENT_KEY_PRESS:
-				break
+				if chr(key.c) == 's':
+					libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, game.SCREEN_HEIGHT / 2, libtcod.BKGND_DARKEN, libtcod.CENTER, ' Saving map... ')
+					libtcod.console_flush()
+					game.worldmap.create_map_images(2)
+				else:
+					break
 	return choice
 
 
@@ -259,6 +267,7 @@ def change_settings(box, width, height, options, blitmap=False):
 		f.close()
 
 
+# color fading in/out
 def color_lerp(lerp, descending, base=libtcod.black, light=libtcod.light_blue):
 	color = base
 	if descending:
@@ -276,7 +285,9 @@ def color_lerp(lerp, descending, base=libtcod.black, light=libtcod.light_blue):
 
 
 # death screens and final score
-def death():
+def death(quit=False):
+	libtcod.console_set_default_foreground(0, libtcod.white)
+	libtcod.console_set_default_background(0, libtcod.black)
 	libtcod.console_clear(0)
 	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 1, libtcod.BKGND_SET, libtcod.CENTER, 'Summary for ' + game.player.name)
 	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 3, libtcod.BKGND_SET, libtcod.CENTER, '_________________')
@@ -297,8 +308,13 @@ def death():
 
 	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 6, libtcod.BKGND_SET, libtcod.CENTER, 'R I P')
 	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 8, libtcod.BKGND_SET, libtcod.CENTER, game.player.name)
-	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 10, libtcod.BKGND_SET, libtcod.CENTER, 'Killed by')
-	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 11, libtcod.BKGND_SET, libtcod.CENTER, game.killer)
+	if quit:
+		libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 10, libtcod.BKGND_SET, libtcod.CENTER, 'quitted the game')
+		line2 = 'quitted the game'
+	else:
+		libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 10, libtcod.BKGND_SET, libtcod.CENTER, 'Killed by')
+		libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 11, libtcod.BKGND_SET, libtcod.CENTER, game.killer)
+		line2 = 'was killed by ' + game.killer
 	if game.current_map.location_id == 0:
 		libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 12, libtcod.BKGND_SET, libtcod.CENTER, 'in the')
 	else:
@@ -308,9 +324,9 @@ def death():
 	score = game.player.score()
 	line1 = game.player.name + ', the level ' + str(game.player.level) + ' ' + game.player.gender + ' ' + game.player.race + ' ' + game.player.profession + ','
 	if game.current_map.location_id == 0:
-		line2 = 'was killed by ' + game.killer + ' in the ' + game.current_map.location_name + ' (' + str(game.player.turns) + ' turns)'
+		line2 += ' in the ' + game.current_map.location_name + ' (' + str(game.player.turns) + ' turns)'
 	else:
-		line2 = 'was killed by ' + game.killer + ' on level ' + str(game.current_map.location_level) + ' in the ' + game.current_map.location_name + ' (' + str(game.player.turns) + ' turns)'
+		line2 += ' on level ' + str(game.current_map.location_level) + ' in the ' + game.current_map.location_name + ' (' + str(game.player.turns) + ' turns)'
 	libtcod.console_print(0, 2, 20, 'Final score')
 	libtcod.console_print(0, 2, 22, str(score))
 	libtcod.console_print(0, 8, 22, line1)
@@ -329,7 +345,6 @@ def death():
 
 # return a string with the names of all objects under the mouse
 def get_names_under_mouse():
-	#create a list with the names of all objects at the mouse's coordinates and in FOV
 	(x, y) = (game.mouse.cx - game.MAP_X, game.mouse.cy - 1)
 	px = x + game.curx
 	py = y + game.cury
@@ -390,10 +405,12 @@ def mouse_auto_move():
 	return True
 
 
+# returns the roll of a die
 def roll_dice(nb_dices, nb_faces, multiplier, bonus):
 	return libtcod.random_get_int(game.rnd, nb_dices, nb_dices * nb_faces * multiplier) + bonus
 
 
+# save changes to the highscores
 def save_high_scores():
 	f = open('data/highscores.dat', 'wb')
 	pickle.dump(game.highscore, f)
@@ -404,6 +421,7 @@ def save_high_scores():
 # map functions
 #######################################
 
+# main functions for the building of overworld maps
 def change_maps(did, dlevel):
 	game.message.new('Loading/Generating maps...', game.player.turns)
 	render_map()
@@ -417,9 +435,11 @@ def change_maps(did, dlevel):
 	load_old_maps(did, dlevel)
 	combine_maps()
 	initialize_fov()
+	del game.message.log[len(game.message.log) - 1]
 	game.fov_recompute = True
 
 
+# check to see if new map already exist
 def load_old_maps(did, dlevel):
 	coord = [dlevel - game.WORLDMAP_WIDTH - 1, dlevel - game.WORLDMAP_WIDTH, dlevel - game.WORLDMAP_WIDTH + 1, dlevel - 1, dlevel + 1, dlevel + game.WORLDMAP_WIDTH - 1, dlevel + game.WORLDMAP_WIDTH, dlevel + game.WORLDMAP_WIDTH + 1, dlevel]
 	game.rnd = libtcod.random_new()
@@ -439,6 +459,7 @@ def load_old_maps(did, dlevel):
 			game.border_maps[j] = temp_map
 
 
+# combine some overworld maps into a super map
 def combine_maps():
 	mapid = [[0, 1, 2], [3, 0, 4], [5, 6, 7]]
 	super_map = map.Map(game.current_map.location_name, game.current_map.location_abbr, game.current_map.location_id, game.current_map.location_level, game.current_map.map_width * 3, game.current_map.map_height * 3, game.current_map.type, True)
@@ -455,6 +476,7 @@ def combine_maps():
 				for y in range(game.current_map.map_height):
 					super_map.tiles[x + (j * game.current_map.map_width)][y + (i * game.current_map.map_height)] = current.tiles[x][y]
 					super_map.explored[x + (j * game.current_map.map_width)][y + (i * game.current_map.map_height)] = current.explored[x][y]
+					super_map.animation[x + (j * game.current_map.map_width)][y + (i * game.current_map.map_height)] = current.animation[x][y]
 			for obj in current.objects:
 				if obj.name != 'player':
 					obj.x = obj.x + (j * game.current_map.map_width)
@@ -464,6 +486,7 @@ def combine_maps():
 	game.current_map = super_map
 
 
+# decombine the super map into their respective overworld map
 def decombine_maps():
 	mapid = [[0, 1, 2], [3, 0, 4], [5, 6, 7]]
 	super_map = game.current_map
@@ -477,6 +500,7 @@ def decombine_maps():
 				for y in range(current.map_height):
 					current.tiles[x][y] = super_map.tiles[x + (j * current.map_width)][y + (i * current.map_height)]
 					current.explored[x][y] = super_map.explored[x + (j * current.map_width)][y + (i * current.map_height)]
+					current.animation[x][y] = super_map.animation[x + (j * current.map_width)][y + (i * current.map_height)]
 			current.objects = []
 			current.objects.append(game.char)
 			for obj in super_map.objects:
@@ -498,6 +522,7 @@ def decombine_maps():
 		game.char.y -= game.current_map.map_height
 
 
+# find terrain type base on elevation
 def find_terrain_type(coord):
 	heightmap = game.worldmap.hm_list[coord]
 	for i in range(len(game.terrain)):
@@ -511,6 +536,7 @@ def find_terrain_type(coord):
 # main screen functions
 #######################################
 
+# initialize the field of vision
 def initialize_fov(update=False):
 	if not update:
 		game.fov_map = libtcod.map_new(game.current_map.map_width, game.current_map.map_height)
@@ -526,6 +552,7 @@ def initialize_fov(update=False):
 	game.path_recalculate = True
 
 
+# render the hp and mana bar
 def render_bar(con, x, y, total_width, name, value, maximum, bar_color, back_color):
 	#render a bar (HP, experience, etc). first calculate the width of the bar
 	bar_width = int(float(value) / maximum * total_width)
@@ -544,6 +571,7 @@ def render_bar(con, x, y, total_width, name, value, maximum, bar_color, back_col
 	libtcod.console_print_ex(con, x + total_width / 2, y, libtcod.BKGND_NONE, libtcod.CENTER, ' ' + name + ': ' + str(value) + '/' + str(maximum) + ' ')
 
 
+# render the gui of the main screen
 def render_gui(color):
 	buffer = libtcod.ConsoleBuffer(game.SCREEN_WIDTH, game.SCREEN_HEIGHT)
 	for i in range(game.SCREEN_WIDTH):
@@ -599,13 +627,32 @@ def render_player_stats_panel():
 # floating text animations for damage and healing
 def render_floating_text_animations():
 	for i, (obj, line, color, turn) in enumerate(reversed(game.hp_anim)):
-		new_color = libtcod.color_lerp(libtcod.black, color, 1 - ((turn / 25) * 0.2))
+		new_color = libtcod.color_lerp(libtcod.black, color, 1 - ((turn / 20) * 0.2))
 		libtcod.console_set_default_foreground(game.con, new_color)
 		x, y = obj.x, obj.y
-		libtcod.console_print_ex(game.con, x - game.curx, y - game.cury - (turn / 25), libtcod.BKGND_NONE, libtcod.CENTER, line)
+		libtcod.console_print_ex(game.con, x - game.curx, y - game.cury - (turn / 20), libtcod.BKGND_NONE, libtcod.CENTER, line)
 		game.hp_anim[len(game.hp_anim) - i - 1] = (obj, line, color, turn + 1)
-		if turn > 100:
+		if turn > 80:
 			game.hp_anim.pop(len(game.hp_anim) - i - 1)
+
+
+def render_tiles_animations(x, y, icon, light, dark):
+	z = libtcod.random_get_int(game.rnd, 1, 70)
+	if z == 70:
+		l = libtcod.random_get_int(game.rnd, 0, 1)
+		if l == 0:
+			if game.current_map.animation[x][y] >= 0.1:
+				game.current_map.animation[x][y] -= 0.1
+			else:
+				game.current_map.animation[x][y] += 0.1
+		else:
+			if game.current_map.animation[x][y] <= 1.0:
+				game.current_map.animation[x][y] += 0.1
+			else:
+				game.current_map.animation[x][y] -= 0.1
+	front = libtcod.color_lerp(light, icon, game.current_map.animation[x][y])
+	back = libtcod.color_lerp(dark, light, game.current_map.animation[x][y])
+	return front, back
 
 
 # determine the current viewport for the map panel
@@ -623,6 +670,7 @@ def find_map_viewport():
 			game.cury = game.current_map.map_height - game.MAP_HEIGHT
 
 
+# master function of the game, everything pass through here on every turn
 def render_map():
 	# recompute FOV if needed (the player moved or something)
 	libtcod.console_clear(game.con)
@@ -630,7 +678,7 @@ def render_map():
 	if game.fov_recompute:
 		initialize_fov(True)
 		game.fov_recompute = False
-		if game.TORCH_RADIUS > 0:
+		if game.fov_torch:
 			libtcod.map_compute_fov(game.fov_map, game.char.x, game.char.y, game.TORCH_RADIUS, game.FOV_LIGHT_WALLS, game.FOV_ALGO)
 		else:
 			libtcod.map_compute_fov(game.fov_map, game.char.x, game.char.y, game.FOV_RADIUS, game.FOV_LIGHT_WALLS, game.FOV_ALGO)
@@ -658,12 +706,16 @@ def render_map():
 			visible = libtcod.map_is_in_fov(game.fov_map, px, py)
 			if not visible:
 				if game.current_map.explored[px][py]:
-					libtcod.console_put_char_ex(game.con, x, y, game.current_map.tiles[px][py].icon, game.current_map.tiles[px][py].dark_color, libtcod.black)
+					libtcod.console_put_char_ex(game.con, x, y, game.current_map.tiles[px][py].icon, game.current_map.tiles[px][py].dark_color, game.current_map.tiles[px][py].dark_back_color)
 			else:
 				if not game.fov_torch:
-					libtcod.console_put_char_ex(game.con, x, y, game.current_map.tiles[px][py].icon, game.current_map.tiles[px][py].color, libtcod.black)
+					if game.current_map.tiles[px][py].is_animate():
+						(front, back) = render_tiles_animations(px, py, game.current_map.tiles[px][py].color, game.current_map.tiles[px][py].back_color, game.current_map.tiles[px][py].anim_color)
+						libtcod.console_put_char_ex(game.con, x, y, game.current_map.tiles[px][py].icon, front, back)
+					else:
+						libtcod.console_put_char_ex(game.con, x, y, game.current_map.tiles[px][py].icon, game.current_map.tiles[px][py].color, game.current_map.tiles[px][py].back_color)
 				else:
-					base = libtcod.black
+					base = game.current_map.tiles[px][py].back_color
 					light = libtcod.gold
 					r = float(px - game.char.x + dx) * (px - game.char.x + dx) + (py - game.char.y + dy) * (py - game.char.y + dy)
 					if r < game.SQUARED_TORCH_RADIUS:
@@ -715,8 +767,7 @@ def render_map():
 			game.path_dx = 0
 			game.path_dy = 0
 
-	#draw all objects in the list, except the player. we want it to
-	#always appear over all other objects! so it's drawn later.
+	# draw all objects in the map, except the player who his drawn last
 	for object in reversed(game.current_map.objects):
 		if object != game.char:
 			object.draw(game.con)

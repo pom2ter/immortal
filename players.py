@@ -21,7 +21,7 @@ BASE_STATS = [[9, 9, 9, 9, 9], [12, 9, 7, 8, 11], [10, 12, 8, 9, 8], [10, 8, 9, 
 				[11, 7, 7, 8, 12], [14, 7, 5, 7, 14], [12, 10, 6, 8, 11], [12, 6, 7, 11, 11], [9, 7, 11, 9, 11], [11, 7, 7, 8, 12],
 				[8, 10, 10, 8, 9], [11, 10, 8, 7, 11], [9, 13, 9, 8, 8], [9, 9, 10, 11, 8], [6, 10, 14, 9, 8], [8, 10, 10, 8, 9]
 				]
-EXPERIENCE_TABLES = [0, 10, 250, 500, 800, 1250, 1750, 2450, 3250, 4150, 5200, 6400, 7800, 9400, 11200, 13200, 16400, 18800, 21400, 24200, 27000]
+EXPERIENCE_TABLES = [0, 100, 250, 500, 800, 1250, 1750, 2450, 3250, 4150, 5200, 6400, 7800, 9400, 11200, 13200, 16400, 18800, 21400, 24200, 27000]
 FIGHTER_HP_GAIN = 10
 FIGHTER_MP_GAIN = 2
 ROGUE_HP_GAIN = 8
@@ -60,6 +60,7 @@ class Player(object):
 		self.equipment = []
 		self.turns = 0
 		self.gold = 0
+		self.mks = 0
 		self.combat_skills = [Skill('Sword', 0, 0), Skill('Axe', 0, 0), Skill('Mace', 0, 0), Skill('Dagger', 0, 0), Skill('Polearm', 0, 0),
 								Skill('Staff', 0, 0), Skill('Bow', 0, 0), Skill('Missile', 0, 0), Skill('Hands', 0, 0)]
 
@@ -73,27 +74,99 @@ class Player(object):
 				self.health = self.max_health
 			else:
 				game.hp_anim.append([game.char, '1', libtcod.green, 0])
-		self.item_degradation()
+		self.item_expiration()
+		self.item_is_active()
 
-	def item_degradation(self):
-		for i in xrange(len(self.inventory)):
-			if self.inventory[i].type == "corpse" and (self.turns - self.inventory[i].turn_spawned > 500):
-				game.message.new('An item in your inventory just rotted away.', self.turns, libtcod.red)
-				self.inventory.pop(i)
-				break
+	# attack an enemy
+	def attack(self, target):
+		if not target.entity.is_hostile():
+			target.entity.becomes_hostile()
+		#thac0 = 20 - (self.attack_rating() - target.entity.defense_rating)
+		#dice = util.roll_dice(1, 20, 1, 0)
+		attacker = util.roll_dice(1, 50, 1, 0)
+		defender = util.roll_dice(1, 50, 1, 0)
+		if attacker != 1 and defender != 50 and ((attacker + self.attack_rating()) >= (defender + target.entity.defense_rating) or attacker == 50 or defender == 1):
+		#if dice != 1 and (dice >= thac0 or dice == 20):
+			damage = 0
+			for i in range(len(self.equipment)):
+				if self.equipment[i].type == "weapon":
+					damage = self.equipment[i].dice.roll_dice()
+			if damage == 0:
+				damage = util.roll_dice(1, 4, 1, 0)
+			target.entity.take_damage(damage)
+			game.hp_anim.append([target, str(-damage), libtcod.light_yellow, 0])
+			game.message.new('You hit ' + target.entity.article + target.entity.name + ' for ' + str(damage) + ' pts of damage.', self.turns, libtcod.light_yellow)
+			if target.entity.death():
+				game.message.new('The ' + target.entity.name + ' dies!', self.turns, libtcod.light_orange)
+				self.gain_xp(target.entity.xp)
+				self.mks += 1
+				target.entity.loot(target.x, target.y)
+				target.delete()
+			self.combat_skills[self.find_weapon_type()].gain_xp(2)
+		else:
+			game.message.new('You missed the ' + target.entity.name + '.', self.turns)
+			self.combat_skills[self.find_weapon_type()].gain_xp(1)
+		self.add_turn()
 
+	# calculates your attack rating
+	def attack_rating(self):
+		ar = self.strength
+		ar += self.dexterity * 0.25
+		ar += self.karma * 0.25
+		ar += self.combat_skills[self.find_weapon_type()].level * 0.2
+		return ar
+
+	# returns true when dead
+	def death(self):
+		if self.health < 1:
+			return True
+		return False
+
+	# calculates your defense rating
+	def defense_rating(self):
+		dr = self.dexterity
+		dr += self.wisdom * 0.25
+		dr += self.karma * 0.25
+		return dr
+
+	# equips an item
 	def equip(self, item):
+		if self.inventory[item].type == "armor":
+			for flags in self.inventory[item].flags:
+				if "armor_" in flags:
+					flag = flags
+			switch = any(flag in obj.flags for obj in self.equipment)
+		elif self.inventory[item].type == "ring":
+			switch = False
+			if sum("armor_ring" in obj.flags for obj in self.equipment) > 1:
+				switch = True
+		else:
+			switch = any(self.inventory[item].type in obj.type for obj in self.equipment)
+
+		if switch:
+			for obj in reversed(self.equipment):
+				if self.inventory[item].type == "armor":
+					if flag in obj.flags:
+						self.inventory.append(obj)
+						self.equipment.remove(obj)
+						old = obj
+				else:
+					if obj.type == self.inventory[item].type:
+						self.inventory.append(obj)
+						self.equipment.remove(obj)
+						old = obj
+						if obj.type == "ring":
+							break
+
 		self.equipment.append(self.inventory[item])
 		self.add_turn()
-		game.message.new("You equip the " + self.inventory[item].unidentified_name, self.turns, libtcod.green)
+		if switch:
+			game.message.new("You unequip the " + old.unidentified_name + " before equipping the " + self.inventory[item].unidentified_name, self.turns, libtcod.green)
+		else:
+			game.message.new("You equip the " + self.inventory[item].unidentified_name, self.turns, libtcod.green)
 		self.inventory.pop(item)
 
-	def unequip(self, item):
-		self.inventory.append(self.equipment[item])
-		self.add_turn()
-		game.message.new("You unequip the " + self.equipment[item].unidentified_name, self.turns, libtcod.red)
-		self.equipment.pop(item)
-
+	# returns the weapon type
 	def find_weapon_type(self):
 		weapon_type = 8
 		for i in range(len(self.equipment)):
@@ -115,60 +188,7 @@ class Player(object):
 				return 7
 		return weapon_type
 
-	def attack_rating(self):
-		ar = self.strength
-		ar += self.dexterity * 0.25
-		ar += self.karma * 0.25
-		ar += self.combat_skills[self.find_weapon_type()].level * 0.2
-		return ar
-
-	def defense_rating(self):
-		dr = self.dexterity
-		dr += self.wisdom * 0.25
-		dr += self.karma * 0.25
-		return dr
-
-	def carrying_capacity(self):
-		cc = self.strength * 2.5
-		cc += self.endurance * 1.25
-		cc += self.karma * 0.5
-		return cc
-
-	def health_bonus(self):
-		hb = self.endurance
-		hb += self.karma * 0.25
-		return int(hb)
-
-	def mana_bonus(self):
-		mb = self.intelligence
-		mb += self.wisdom * 0.75
-		mb += self.karma * 0.25
-		return int(mb)
-
-	def set_max_health(self):
-		self.max_health = self.base_health + self.health_bonus()
-		if self.health > self.max_health:
-			self.health = self.max_health
-
-	def set_max_mana(self):
-		self.max_mana = self.base_mana + self.mana_bonus()
-		if self.mana > self.max_mana:
-			self.mana = self.max_mana
-
-	def stat_gain(self, st, dx, iq, wi, en):
-		fate = libtcod.random_get_int(game.rnd, 1, 100)
-		if fate <= st:
-			self.strength += 1
-		elif fate <= st + dx:
-			self.dexterity += 1
-		elif fate <= st + dx + iq:
-			self.intelligence += 1
-		elif fate <= st + dx + iq + wi:
-			self.wisdom += 1
-		elif fate <= st + dx + iq + wi + en:
-			self.endurance += 1
-		self.carrying_capacity()
-
+	# stuff to do when you gain a level
 	def gain_level(self):
 		self.level += 1
 		if self.profession == "Fighter":
@@ -198,38 +218,64 @@ class Player(object):
 		self.set_max_health()
 		self.set_max_mana()
 
-	def attack(self, target):
-		if not target.entity.is_hostile():
-			target.entity.becomes_hostile()
-		#thac0 = 20 - (self.attack_rating() - target.entity.defense_rating)
-		#dice = util.roll_dice(1, 20, 1, 0)
-		attacker = util.roll_dice(1, 50, 1, 0)
-		defender = util.roll_dice(1, 50, 1, 0)
-		if attacker != 1 and defender != 50 and ((attacker + self.attack_rating()) >= (defender + target.entity.defense_rating) or attacker == 50 or defender == 1):
-		#if dice != 1 and (dice >= thac0 or dice == 20):
-			damage = 0
-			for i in range(len(self.equipment)):
-				if self.equipment[i].type == "weapon":
-					damage = self.equipment[i].dice.roll_dice()
-			if damage == 0:
-				damage = util.roll_dice(1, 4, 1, 0)
-			game.message.new('You hit the ' + target.entity.name + ' for ' + str(damage) + ' pts of damage.', self.turns, libtcod.light_yellow)
-			target.entity.health -= damage
-			game.hp_anim.append([target, str(-damage), libtcod.light_yellow, 0])
-			if target.entity.health < 1:
-				game.message.new('The ' + target.entity.name + ' dies!', self.turns, libtcod.light_orange)
-				self.xp += target.entity.xp
-				if self.xp >= EXPERIENCE_TABLES[self.level]:
-					self.gain_level()
-					game.message.new('You are now level ' + str(self.level) + '!', self.turns, libtcod.green)
-				target.entity.loot(target.x, target.y)
-				target.delete()
-			self.combat_skills[self.find_weapon_type()].gain_xp(2)
-		else:
-			game.message.new('You missed the ' + target.entity.name + '.', self.turns)
-			self.combat_skills[self.find_weapon_type()].gain_xp(1)
-		self.add_turn()
+	# raises your xp
+	def gain_xp(self, xp):
+		self.xp += xp
+		if self.xp >= EXPERIENCE_TABLES[self.level]:
+			self.gain_level()
+			game.message.new('You are now level ' + str(self.level) + '!', self.turns, libtcod.green)
 
+	# heals the amount of health
+	def heal_health(self, hp):
+		self.health += hp
+		if self.health > self.max_health:
+			self.health = self.max_health
+
+	# heals the amount of mana
+	def heal_mana(self, mp):
+		self.mana += mp
+		if self.mana > self.max_mana:
+			self.mana = self.max_mana
+
+	# calculates your health bonus
+	def health_bonus(self):
+		hb = self.endurance
+		hb += self.karma * 0.25
+		return int(hb)
+
+	# finds out if something in your inventory has expired
+	def item_expiration(self):
+		for i in range(len(self.inventory) - 1, 0, -1):
+			if self.inventory[i].is_expired():
+				game.message.new('An item in your inventory just rotted away.', self.turns, libtcod.red)
+				self.inventory.pop(i)
+
+	# finds out if an active item in your inventory has expired
+	def item_is_active(self):
+		for i in range(len(self.inventory) - 1, 0, -1):
+			if self.inventory[i].is_active():
+				game.message.new('An item in your inventory just rotted away.', self.turns, libtcod.red)
+				self.inventory.pop(i)
+		for i in range(len(self.equipment) - 1, 0, -1):
+			if self.equipment[i].is_active():
+				game.message.new('An item in your inventory just rotted away.', self.turns, libtcod.red)
+				self.equipment.pop(i)
+
+	# calculates your mana bonus
+	def mana_bonus(self):
+		mb = self.intelligence
+		mb += self.wisdom * 0.75
+		mb += self.karma * 0.25
+		return int(mb)
+
+	# calculates your max carrying capacity
+	def max_carrying_capacity(self):
+		cc = self.strength * 2.5
+		cc += self.endurance * 1.25
+		cc += self.karma * 0.5
+		return round(cc, 2)
+
+	# calculates your total score
 	def score(self):
 		score = 0
 		score += (self.strength + self.dexterity + self.intelligence + self.wisdom + self.endurance + self.karma) / 5
@@ -238,7 +284,51 @@ class Player(object):
 		score += (self.level - 1) * 50
 		score += self.turns / 50
 		score += len(game.old_maps) * 10
+		score += self.mks * 10
 		return score
+
+	# set your max health
+	def set_max_health(self):
+		self.max_health = self.base_health + self.health_bonus()
+		if self.health > self.max_health:
+			self.health = self.max_health
+
+	# set your max mana
+	def set_max_mana(self):
+		self.max_mana = self.base_mana + self.mana_bonus()
+		if self.mana > self.max_mana:
+			self.mana = self.max_mana
+
+	# stat gain when you raise a level
+	def stat_gain(self, st, dx, iq, wi, en):
+		fate = libtcod.random_get_int(game.rnd, 1, 100)
+		if fate <= st:
+			self.strength += 1
+		elif fate <= st + dx:
+			self.dexterity += 1
+		elif fate <= st + dx + iq:
+			self.intelligence += 1
+		elif fate <= st + dx + iq + wi:
+			self.wisdom += 1
+		elif fate <= st + dx + iq + wi + en:
+			self.endurance += 1
+
+	# reduce your health
+	def take_damage(self, damage):
+		self.health -= damage
+
+	# unequip an item
+	def unequip(self, item):
+		self.inventory.append(self.equipment[item])
+		self.add_turn()
+		game.message.new("You unequip the " + self.equipment[item].unidentified_name, self.turns, libtcod.red)
+		self.equipment.pop(item)
+
+	# return carried weight
+	def weight_carried(self):
+		weight = sum(item.weight for item in self.inventory)
+		weight += sum(item.weight for item in self.equipment)
+		return round(weight, 2)
 
 
 class Skill(object):
@@ -247,6 +337,14 @@ class Skill(object):
 		self.level = level
 		self.xp = xp
 
+	# raises your skill level
+	def gain_level(self):
+		if self.level < 100:
+			self.level += 1
+			self.xp = 0
+			game.message.new('Your ' + self.name + ' skill increased to ' + str(self.level) + '!', game.player.turns, libtcod.light_green)
+
+	# raises your skill xp
 	def gain_xp(self, xp):
 		if self.level < 100:
 			self.xp += xp
@@ -255,13 +353,8 @@ class Skill(object):
 				self.level += 1
 				game.message.new('Your ' + self.name + ' skill increased to ' + str(self.level) + '!', game.player.turns, libtcod.light_green)
 
-	def gain_level(self):
-		if self.level < 100:
-			self.level += 1
-			self.xp = 0
-			game.message.new('Your ' + self.name + ' skill increased to ' + str(self.level) + '!', game.player.turns, libtcod.light_green)
 
-
+# output races and classes description during character generation
 def character_description(typ, id):
 	libtcod.console_set_default_foreground(0, libtcod.white)
 	libtcod.console_set_default_background(0, libtcod.black)
@@ -272,7 +365,8 @@ def character_description(typ, id):
 		libtcod.console_print_rect(0, 1, 11, 45, 10, CLASS_DESC[id])
 
 
-def chargen_choices(posx, posy, width, options, typ):
+# output all options during character generation
+def chargen_options(posx, posy, width, options, typ):
 	choice = False
 	current = 0
 	key = libtcod.Key()
@@ -314,6 +408,7 @@ def chargen_choices(posx, posy, width, options, typ):
 	return current
 
 
+# main function for character generation
 def create_character():
 	cancel = False
 	while not cancel:
@@ -332,7 +427,7 @@ def create_character():
 		libtcod.console_rect(cs, 0, 2, cs_width, game.SCREEN_HEIGHT, True, libtcod.BKGND_SET)
 		libtcod.console_print(cs, 1, 3, 'Select a gender:')
 		libtcod.console_blit(cs, 0, 0, cs_width, game.SCREEN_HEIGHT, 0, 0, 0)
-		game.player.gender = GENDER[chargen_choices(1, 5, 10, GENDER, None)]
+		game.player.gender = GENDER[chargen_options(1, 5, 10, GENDER, None)]
 
 		show_stats_panel(stats, game.player.gender, 0)
 		libtcod.console_rect(cs, 0, 2, cs_width, game.SCREEN_HEIGHT, True, libtcod.BKGND_SET)
@@ -343,7 +438,7 @@ def create_character():
 		libtcod.console_print(cs, 16, 7, '+2 Str, +3 End, -2 Dex, -2 Int, -1 Wis')
 		libtcod.console_print(cs, 16, 8, '+1 Dex, +1 Int, -1 Str, -1 Wis')
 		libtcod.console_blit(cs, 0, 0, cs_width, game.SCREEN_HEIGHT, 0, 0, 0)
-		index = chargen_choices(1, 5, 12, RACES, 'race')
+		index = chargen_options(1, 5, 12, RACES, 'race')
 		game.player.race = RACES[index]
 
 		show_stats_panel(stats, game.player.gender + " " + game.player.race, index * 5)
@@ -356,7 +451,7 @@ def create_character():
 		libtcod.console_print(cs, 16, 8, '+4 Int, +1 Wis, -2 Str, -1 End')
 		libtcod.console_print(cs, 16, 9, 'None')
 		libtcod.console_blit(cs, 0, 0, cs_width, game.SCREEN_HEIGHT, 0, 0, 0)
-		indexr = chargen_choices(1, 5, 12, CLASSES, 'class')
+		indexr = chargen_options(1, 5, 12, CLASSES, 'class')
 		game.player.profession = CLASSES[indexr]
 
 		show_stats_panel(stats, game.player.gender + " " + game.player.race + " " + game.player.profession, (index * 5) + indexr + 1, 0)
@@ -365,7 +460,7 @@ def create_character():
 		libtcod.console_blit(cs, 0, 0, cs_width, game.SCREEN_HEIGHT, 0, 0, 0)
 		final_choice = False
 		while not final_choice:
-			choice = chargen_choices(1, 5, 33, ['Reroll stats', 'Keep character and start game', 'Cancel and restart', 'Return to main menu'], None)
+			choice = chargen_options(1, 5, 33, ['Reroll stats', 'Keep character and start game', 'Cancel and restart', 'Return to main menu'], None)
 			if choice == 0:
 				show_stats_panel(stats, game.player.gender + " " + game.player.race + " " + game.player.profession, (index * 5) + indexr + 1, 0)
 			if choice == 1:
@@ -379,6 +474,7 @@ def create_character():
 				return "quit"
 
 
+# output the stats panel
 def show_stats_panel(stats, text, attr=-1, roll=-1):
 	libtcod.console_set_default_foreground(stats, libtcod.light_red)
 	libtcod.console_print(stats, 2, 1, game.player.name)
@@ -423,6 +519,7 @@ def show_stats_panel(stats, text, attr=-1, roll=-1):
 	libtcod.console_flush()
 
 
+# starting stats and equipment after character generation
 def starting_stats():
 	game.player.inventory = []
 	game.player.gold = libtcod.random_get_int(game.rnd, 1, 50)

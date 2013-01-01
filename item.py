@@ -3,7 +3,7 @@ import game
 
 
 class Item(object):
-	def __init__(self, typ, name, unid_name, icon, color, dark_color, level, weight, cost, dice, article, charge, flags):
+	def __init__(self, typ, name, unid_name, icon, color, dark_color, level, weight, cost, dice, article, charge, duration, expiration, flags):
 		self.type = typ
 		self.name = name
 		self.unidentified_name = unid_name
@@ -17,13 +17,35 @@ class Item(object):
 		self.article = article
 		self.charges = charge
 		self.flags = flags
-		self.turn_spawned = 0
+		self.turn_created = 0
+		self.duration = duration
+		self.expiration = expiration
+		self.active = False
 
+	# return true if item is active
+	def is_active(self):
+		if self.active:
+			self.duration -= 1
+			if self.duration == 0:
+				return True
+		return False
+
+	# return true if item can be equipped
 	def is_equippable(self):
 		if "equippable" in self.flags:
 			return True
 		return False
 
+	# return true if item 'expiration date' has been reached
+	def is_expired(self):
+		#print self.expiration
+		if self.expiration > 1:
+			self.expiration -= 1
+			if self.expiration == 0:
+				return True
+		return False
+
+	# picks up the item
 	def pick_up(self, ts, silent=False):
 		if self.type == "money":
 			gold = libtcod.random_get_int(game.rnd, 1, 100)
@@ -32,12 +54,13 @@ class Item(object):
 			game.player.gold += gold
 		else:
 			if not silent:
-				game.message.new('You pick up a ' + self.unidentified_name, game.player.turns, libtcod.green)
-			self.turn_spawned = ts
+				game.message.new('You pick up ' + self.article + self.unidentified_name, game.player.turns, libtcod.green)
+			self.turn_created = ts
 			game.player.inventory.append(self)
 		if not silent:
 			game.player.add_turn()
 
+	# use the item
 	def use(self, pos):
 		if "usable" in self.flags:
 			if "healing" in self.flags:
@@ -45,24 +68,32 @@ class Item(object):
 					game.message.new("You are already at max health.", game.player.turns)
 				else:
 					heal = self.dice.roll_dice()
-					game.player.health += heal
+					game.player.heal_health(heal)
 					game.hp_anim.append([game.char, str(heal), libtcod.green, 0])
-					if game.player.health > game.player.max_health:
-						game.player.health = game.player.max_health
 					game.message.new("You gain " + str(heal) + " hit points.", game.player.turns, libtcod.green)
+
 			if "mana_healing" in self.flags:
 				if game.player.mana == game.player.max_mana:
 					game.message.new("Your mana is already at maximum.", game.player.turns)
 				else:
 					heal = self.dice.roll_dice()
-					game.player.mana += heal
+					game.player.heal_mana(heal)
 					game.hp_anim.append([game.char, str(heal), libtcod.green, 0])
-					if game.player.mana > game.player.max_mana:
-						game.player.mana = game.player.max_mana
 					game.message.new("You gain " + str(heal) + " mana points.", game.player.turns, libtcod.green)
-			self.charges -= 1
-			if self.charges <= 0:
-				game.player.inventory.pop(pos)
+
+			if "torchlight" in self.flags:
+				if self.active:
+					game.fov_torch = False
+					self.active = False
+				else:
+					game.fov_torch = True
+					self.active = True
+				game.fov_recompute = True
+
+			if self.charges > 0:
+				self.charges -= 1
+				if self.charges == 0:
+					game.player.inventory.pop(pos)
 			game.player.add_turn()
 		else:
 			game.message.new("You can't use that item.", game.player.turns)
@@ -87,11 +118,14 @@ class ItemList(object):
 		libtcod.struct_add_property(item_type_struct, 'dices', libtcod.TYPE_DICE, False)
 		libtcod.struct_add_property(item_type_struct, 'article', libtcod.TYPE_STRING, True)
 		libtcod.struct_add_property(item_type_struct, 'charge', libtcod.TYPE_INT, False)
+		libtcod.struct_add_property(item_type_struct, 'duration', libtcod.TYPE_INT, False)
+		libtcod.struct_add_property(item_type_struct, 'expiration', libtcod.TYPE_INT, False)
 		libtcod.struct_add_flag(item_type_struct, 'healing')
 		libtcod.struct_add_flag(item_type_struct, 'mana_healing')
 		libtcod.struct_add_flag(item_type_struct, 'usable')
 		libtcod.struct_add_flag(item_type_struct, 'equippable')
 		libtcod.struct_add_flag(item_type_struct, 'consumable')
+		libtcod.struct_add_flag(item_type_struct, 'torchlight')
 		libtcod.struct_add_flag(item_type_struct, 'weapon_dagger')
 		libtcod.struct_add_flag(item_type_struct, 'weapon_sword')
 		libtcod.struct_add_flag(item_type_struct, 'weapon_mace')
@@ -99,10 +133,13 @@ class ItemList(object):
 		libtcod.struct_add_flag(item_type_struct, 'weapon_staff')
 		libtcod.struct_add_flag(item_type_struct, 'weapon_polearm')
 		libtcod.struct_add_flag(item_type_struct, 'weapon_bow')
+		libtcod.struct_add_flag(item_type_struct, 'armor_shield')
 		libtcod.struct_add_flag(item_type_struct, 'armor_head')
+		libtcod.struct_add_flag(item_type_struct, 'armor_cloak')
 		libtcod.struct_add_flag(item_type_struct, 'armor_body')
 		libtcod.struct_add_flag(item_type_struct, 'armor_hands')
 		libtcod.struct_add_flag(item_type_struct, 'armor_feet')
+		libtcod.struct_add_flag(item_type_struct, 'armor_ring')
 		libtcod.struct_add_flag(item_type_struct, 'corpse_goblin')
 		libtcod.struct_add_flag(item_type_struct, 'corpse_kobold')
 		libtcod.struct_add_flag(item_type_struct, 'corpse_orc')
@@ -114,18 +151,24 @@ class ItemList(object):
 		libtcod.struct_add_flag(item_type_struct, 'corpse_human')
 		libtcod.struct_add_flag(item_type_struct, 'corpse_wolf')
 		libtcod.struct_add_flag(item_type_struct, 'corpse_bear')
+		libtcod.struct_add_flag(item_type_struct, 'corpse_troll')
+		libtcod.struct_add_flag(item_type_struct, 'corpse_gnoll')
+		libtcod.struct_add_flag(item_type_struct, 'corpse_hound')
 		libtcod.parser_run(parser, "data/items.txt", ItemListener())
 
+	# add an item to the list
 	def add_to_list(self, item=None):
-		if not item == None:
+		if item != None:
 			self.list.append(item)
 
+	# get an item from the list
 	def get_item(self, name):
 		for item in self.list:
-			if name in item.name:
+			if name == item.name:
 				return item
 		return None
 
+	# choose a random item based on its level
 	def get_item_by_level(self, level):
 		item = libtcod.random_get_int(game.rnd, 0, len(self.list) - 1)
 		while (self.list[item].level > level) or (self.list[item].type == "corpse"):
@@ -140,13 +183,14 @@ class Dice(object):
 		self.multiplier = multi
 		self.bonus = bonus
 
+	# throws some dice
 	def roll_dice(self):
 		return libtcod.random_get_int(game.rnd, self.nb_dices, self.nb_dices * self.nb_faces * int(self.multiplier)) + int(self.bonus)
 
 
 class ItemListener(object):
 	def new_struct(self, struct, name):
-		self.temp_item = Item('', '', '', '', [0, 0, 0], [0, 0, 0], 0, 0, 0, Dice(0, 0, 0, 0), '', 0, [])
+		self.temp_item = Item('', '', '', '', [0, 0, 0], [0, 0, 0], 0, 0, 0, Dice(0, 0, 0, 0), '', 0, 0, 0, [])
 		self.temp_item.name = name
 		return True
 
@@ -183,6 +227,10 @@ class ItemListener(object):
 				self.temp_item.article = value
 			if name == "charge":
 				self.temp_item.charges = value
+			if name == "duration":
+				self.temp_item.duration = value
+			if name == "expiration":
+				self.temp_item.expiration = value
 			if name == "unidentified_name":
 				self.temp_item.unidentified_name = value
 		return True

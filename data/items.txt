@@ -9,6 +9,7 @@ item_type "dagger" {
 	cost = 10
 	dices = "1d4"
 	article = "a "
+	expiration = 1000
 	equippable
 	weapon_dagger
 }
@@ -103,6 +104,21 @@ item_type "bow" {
 	weapon_bow
 }
 
+item_type "sling" {
+	type = "weapon"
+	unidentified_name = "sling"
+	icon = "("
+	icon_color = "255,255,255"
+	dark_color = "85,85,85"
+	level = 1
+	weight = 2.0
+	cost = 5
+	dices = "1d4"
+	article = "a "
+	equippable
+	weapon_bow
+}
+
 item_type "spear" {
 	type = "weapon"
 	unidentified_name = "spear"
@@ -118,6 +134,48 @@ item_type "spear" {
 	weapon_polearm
 }
 
+item_type "shield" {
+	type = "shield"
+	unidentified_name = "shield"
+	icon = "["
+	icon_color = "127,127,127"
+	dark_color = "42,42,42"
+	level = 1
+	weight = 10.0
+	cost = 20
+	article = "a "
+	equippable
+	armor_shield
+}
+
+item_type "helmet" {
+	type = "armor"
+	unidentified_name = "helmet"
+	icon = "["
+	icon_color = "127,127,127"
+	dark_color = "42,42,42"
+	level = 1
+	weight = 6.0
+	cost = 10
+	article = "an "
+	equippable
+	armor_head
+}
+
+item_type "cape" {
+	type = "armor"
+	unidentified_name = "cape"
+	icon = "["
+	icon_color = "127,127,127"
+	dark_color = "42,42,42"
+	level = 1
+	weight = 4.0
+	cost = 15
+	article = "a "
+	equippable
+	armor_cloak
+}
+
 item_type "robes" {
 	type = "armor"
 	unidentified_name = "robes"
@@ -130,20 +188,6 @@ item_type "robes" {
 	article = "some "
 	equippable
 	armor_body
-}
-
-item_type "helmet" {
-	type = "armor"
-	unidentified_name = "helmet"
-	icon = "["
-	icon_color = "127,127,127"
-	dark_color = "42,42,42"
-	level = 1
-	weight = 1.0
-	cost = 10
-	article = "an "
-	equippable
-	armor_head
 }
 
 item_type "leather armor" {
@@ -200,6 +244,34 @@ item_type "leather gloves" {
 	article = "some "
 	equippable
 	armor_hands
+}
+
+item_type "ring of protection" {
+	type = "ring"
+	unidentified_name = "ring"
+	icon = "o"
+	icon_color = "115,255,255"
+	dark_color = "38,85,85"
+	level = 1
+	weight = 0.5
+	cost = 50
+	article = "a "
+	equippable
+	armor_ring
+}
+
+item_type "ring of regeneration" {
+	type = "ring"
+	unidentified_name = "ring"
+	icon = "o"
+	icon_color = "255,0,0"
+	dark_color = "85,0,0"
+	level = 1
+	weight = 0.5
+	cost = 50
+	article = "a "
+	equippable
+	armor_ring
 }
 
 item_type "potion of minor healing" {
@@ -259,9 +331,10 @@ item_type "torch" {
 	level = 1
 	weight = 0.1
 	cost = 5
-	charge = 1000
+	duration = 1000
 	article = "a "
 	usable
+	torchlight
 }
 
 item_type "ration" {
@@ -275,6 +348,7 @@ item_type "ration" {
 	cost = 5
 	article = "some "
 	charge = 1
+	expiration = 5000
 	usable
 	consumable
 }
@@ -289,31 +363,93 @@ item_type "gold" {
 	article = "some "
 }
 
-item_type "goblin corpse" {
-	type = "corpse"
-	unidentified_name = "goblin corpse"
-	icon = "%"
-	icon_color = "127,101,63"
-	dark_color = "64,50,32"
-	weight = 10.0
-	article = "a "
-	charge = 1
-	consumable
-	corpse_goblin
-	usable
-}
-
 item_type "kobold corpse" {
 	type = "corpse"
 	unidentified_name = "kobold corpse"
 	icon = "%"
 	icon_color = "127,101,63"
 	dark_color = "64,50,32"
-	weight = 10.0
+	weight = 20.0
 	article = "a "
 	charge = 1
+	expiration = 500
 	consumable
 	corpse_kobold
+	usable
+}
+
+item_type "goblin corpse" {
+	type = "corpse"
+	unidentified_name = "goblin corpse"
+	icon = "%"
+	icon_color = "127,101,63"
+	dark_color = "64,50,32"
+	weight = 20.0
+	article = "a "
+	charge = 1
+	expiration = 500
+	consumable
+	corpse_goblin
+	usable
+}
+
+item_type "gnoll corpse" {
+	type = "corpse"
+	unidentified_name = "gnoll corpse"
+	icon = "%"
+	icon_color = "127,101,63"
+	dark_color = "64,50,32"
+	weight = 35.0
+	article = "a "
+	charge = 1
+	expiration = 500
+	consumable
+	corpse_gnoll
+	usable
+}
+
+item_type "orc corpse" {
+	type = "corpse"
+	unidentified_name = "orc corpse"
+	icon = "%"
+	icon_color = "127,101,63"
+	dark_color = "64,50,32"
+	weight = 30.0
+	article = "a "
+	charge = 1
+	expiration = 500
+	consumable
+	corpse_orc
+	usable
+}
+
+item_type "troll corpse" {
+	type = "corpse"
+	unidentified_name = "troll corpse"
+	icon = "%"
+	icon_color = "127,101,63"
+	dark_color = "64,50,32"
+	weight = 75.0
+	article = "a "
+	charge = 1
+	expiration = 500
+	consumable
+	corpse_troll
+	usable
+}
+
+item_type "bat corpse" {
+	type = "corpse"
+	unidentified_name = "bat corpse"
+	icon = "%"
+	icon_color = "127,101,63"
+	dark_color = "64,50,32"
+	weight = 2.0
+	article = "a "
+	charge = 1
+	expiration = 500
+	consumable
+	corpse_bat
 	usable
 }
 
@@ -323,9 +459,10 @@ item_type "rat corpse" {
 	icon = "%"
 	icon_color = "127,101,63"
 	dark_color = "64,50,32"
-	weight = 5.0
+	weight = 2.0
 	article = "a "
 	charge = 1
+	expiration = 500
 	consumable
 	corpse_rat
 	usable
@@ -340,78 +477,9 @@ item_type "lizard corpse" {
 	weight = 5.0
 	article = "a "
 	charge = 1
+	expiration = 500
 	consumable
 	corpse_lizard
-	usable
-}
-
-item_type "bat corpse" {
-	type = "corpse"
-	unidentified_name = "bat corpse"
-	icon = "%"
-	icon_color = "127,101,63"
-	dark_color = "64,50,32"
-	weight = 5.0
-	article = "a "
-	charge = 1
-	consumable
-	corpse_bat
-	usable
-}
-
-item_type "dog corpse" {
-	type = "corpse"
-	unidentified_name = "dog corpse"
-	icon = "%"
-	icon_color = "127,101,63"
-	dark_color = "64,50,32"
-	weight = 5.0
-	article = "a "
-	charge = 1
-	consumable
-	corpse_dog
-	usable
-}
-
-item_type "orc corpse" {
-	type = "corpse"
-	unidentified_name = "orc corpse"
-	icon = "%"
-	icon_color = "127,101,63"
-	dark_color = "64,50,32"
-	weight = 10.0
-	article = "a "
-	charge = 1
-	consumable
-	corpse_orc
-	usable
-}
-
-item_type "human corpse" {
-	type = "corpse"
-	unidentified_name = "human corpse"
-	icon = "%"
-	icon_color = "127,101,63"
-	dark_color = "64,50,32"
-	weight = 10.0
-	article = "a "
-	charge = 1
-	consumable
-	corpse_human
-	usable
-}
-
-item_type "wolf corpse" {
-	type = "corpse"
-	unidentified_name = "wolf corpse"
-	icon = "%"
-	icon_color = "127,101,63"
-	dark_color = "64,50,32"
-	weight = 10.0
-	article = "a "
-	charge = 1
-	consumable
-	corpse_wolf
 	usable
 }
 
@@ -421,9 +489,10 @@ item_type "bear corpse" {
 	icon = "%"
 	icon_color = "127,101,63"
 	dark_color = "64,50,32"
-	weight = 20.0
+	weight = 100.0
 	article = "a "
 	charge = 1
+	expiration = 500
 	consumable
 	corpse_bear
 	usable
@@ -438,7 +507,69 @@ item_type "cat corpse" {
 	weight = 2.0
 	article = "a "
 	charge = 1
+	expiration = 500
 	consumable
 	corpse_cat
 	usable
 }
+
+item_type "dog corpse" {
+	type = "corpse"
+	unidentified_name = "dog corpse"
+	icon = "%"
+	icon_color = "127,101,63"
+	dark_color = "64,50,32"
+	weight = 5.0
+	article = "a "
+	charge = 1
+	expiration = 500
+	consumable
+	corpse_dog
+	usable
+}
+
+item_type "wolf corpse" {
+	type = "corpse"
+	unidentified_name = "wolf corpse"
+	icon = "%"
+	icon_color = "127,101,63"
+	dark_color = "64,50,32"
+	weight = 22.5
+	article = "a "
+	charge = 1
+	expiration = 500
+	consumable
+	corpse_wolf
+	usable
+}
+
+item_type "hound corpse" {
+	type = "corpse"
+	unidentified_name = "hound corpse"
+	icon = "%"
+	icon_color = "127,101,63"
+	dark_color = "64,50,32"
+	weight = 15.0
+	article = "a "
+	charge = 1
+	expiration = 500
+	consumable
+	corpse_hound
+	usable
+}
+
+item_type "human corpse" {
+	type = "corpse"
+	unidentified_name = "human corpse"
+	icon = "%"
+	icon_color = "127,101,63"
+	dark_color = "64,50,32"
+	weight = 35.0
+	article = "a "
+	charge = 1
+	expiration = 500
+	consumable
+	corpse_human
+	usable
+}
+

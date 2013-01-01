@@ -8,6 +8,7 @@ CTRL-X = Quit game
 ESC = Menu screen
 ? = Help screen
 
+a = Attack someone
 c = Close door
 d = Drop item
 e = Equip item
