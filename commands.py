@@ -288,18 +288,24 @@ def close_door():
 
 # drop an item
 def drop_item():
+	qty = 1
 	if len(game.player.inventory) == 0:
 		game.message.new('Your inventory is empty.', game.player.turns)
 	else:
-		choice = util.msg_box('drop', 'Drop an item', 'Up/down to select, ENTER to drop, ESC to exit', game.player.inventory, box_height=max(16, len(game.player.inventory) + 4), blitmap=True)
+		output = util.item_stacking(game.player.inventory)
+		choice = util.msg_box('drop', 'Drop an item', 'Up/down to select, ENTER to drop, ESC to exit', output, box_height=max(16, len(output) + 4), blitmap=True)
 		if choice != -1:
-			obj = map.Object(game.char.x, game.char.y, game.player.inventory[choice].icon, game.player.inventory[choice].name, game.player.inventory[choice].color, True, item=game.player.inventory[choice])
-			obj.first_appearance = game.player.inventory[choice].turn_created
-			game.message.new('You drop the ' + obj.name, game.player.turns, libtcod.red)
-			game.current_map.objects.append(obj)
-			obj.send_to_back()
-			game.player.inventory.pop(choice)
-			game.player.add_turn()
+			if output[choice].quantity > 1:
+				libtcod.console_print(0, game.PLAYER_STATS_WIDTH + 2, 1, 'Drop how many: _')
+				libtcod.console_flush()
+				qty = game.messages.input('', 0, game.PLAYER_STATS_WIDTH + 17, 1)
+				if qty == '' or not qty.isdigit():
+					choice = -1
+				elif int(qty) < 1 or int(qty) > output[choice].quantity:
+					choice = -1
+		util.reset_quantity(game.player.inventory)
+		if choice != -1:
+			game.player.drop_item(output[choice], int(qty))
 	game.redraw_gui = True
 
 
@@ -309,15 +315,11 @@ def equip_item():
 	if not equippable:
 		game.message.new("You don't have any equippable items.", game.player.turns)
 	else:
-		filter = []
-		itempos = []
-		for i in range(len(game.player.inventory)):
-			if game.player.inventory[i].is_equippable():
-				filter.append(game.player.inventory[i])
-				itempos.append(i)
-		choice = util.msg_box('equip', 'Wear/Equip an item', 'Up/down to select, ENTER to equip, ESC to exit', filter, box_height=max(16, len(filter) + 4), blitmap=True)
+		output = util.item_stacking(game.player.inventory, True)
+		choice = util.msg_box('equip', 'Wear/Equip an item', 'Up/down to select, ENTER to equip, ESC to exit', output, box_height=max(16, len(output) + 4), blitmap=True)
+		util.reset_quantity(game.player.inventory)
 		if choice != -1:
-			game.player.equip(itempos[choice])
+			game.player.equip_item(output[choice])
 	game.redraw_gui = True
 
 
@@ -331,9 +333,17 @@ def help():
 # highscore screen
 def highscores():
 	if os.path.exists('data/highscores.dat'):
-		util.msg_box('highscore', 'High scores', contents=game.highscore, box_width=game.SCREEN_WIDTH, box_height=game.SCREEN_HEIGHT)
+#		util.msg_box('highscore', 'High scores', contents=game.highscore, box_width=game.SCREEN_WIDTH, box_height=game.SCREEN_HEIGHT)
+		contents = []
+		for (score, line1, line2) in game.highscore:
+			contents.append(str(score).ljust(6) + line1)
+			contents.append("      " + line2)
+			contents.append(" ")
+		game.messages.box('High scores', None, 0, 0, game.SCREEN_WIDTH, game.SCREEN_HEIGHT, contents, input=False)
 	else:
-		util.msg_box('text', 'High scores', contents="The high scores file is empty.", box_width=41, box_height=5, center=True)
+#		util.msg_box('text', 'High scores', contents="The high scores file is empty.", box_width=41, box_height=5, center=True)
+		contents = ["The high scores file is empty."]
+		game.messages.box('High scores', None, (game.SCREEN_WIDTH - (len(max(contents, key=len)) + 18)) / 2, (game.SCREEN_HEIGHT - (len(contents) + 4)) / 2, len(max(contents, key=len)) + 18, len(contents) + 4, contents, input=False, align=libtcod.CENTER)
 	game.redraw_gui = True
 
 
@@ -342,9 +352,12 @@ def inventory():
 	if len(game.player.inventory) == 0:
 		game.message.new('Your inventory is empty.', game.player.turns)
 	else:
-		choice = util.msg_box('inv', 'Inventory', 'Up/down to select, ENTER to use, ESC to exit', game.player.inventory, box_height=max(16, len(game.player.inventory) + 4), blitmap=True)
+		output = util.item_stacking(game.player.inventory)
+#		choice = util.msg_box('inv', 'Inventory', 'Up/down to select, ENTER to use, ESC to exit', output, box_height=max(16, len(output) + 4), blitmap=True)
+		choice = game.messages.box('Inventory', 'Up/down to select, ENTER to use, ESC to exit', game.PLAYER_STATS_WIDTH + ((game.MAP_WIDTH - 56) / 2), ((game.MAP_HEIGHT + 1) - max(16, len(output) + 4)) / 2, 60, max(16, len(output) + 4), output, inv=True, step=2, mouse_exit=True)
+		util.reset_quantity(game.player.inventory)
 		if choice != -1:
-			game.player.inventory[choice].use(choice)
+			output[choice].use()
 	game.redraw_gui = True
 
 
@@ -471,10 +484,26 @@ def pickup_item():
 		nb_items[0].pick_up(nb_items[0].turn_created)
 		game.current_map.objects.pop(itempos[0])
 	else:
-		choice = util.msg_box('pickup', 'Get an item', 'Up/down to select, ENTER to get, ESC to exit', nb_items, box_height=max(16, len(nb_items) + 4), blitmap=True)
+		qty = 1
+		output = util.item_stacking(nb_items)
+		choice = util.msg_box('pickup', 'Get an item', 'Up/down to select, ENTER to get, ESC to exit', output, box_height=max(16, len(output) + 4), blitmap=True)
 		if choice != -1:
-			nb_items[choice].pick_up(nb_items[choice].turn_created)
-			game.current_map.objects.pop(itempos[choice])
+			if output[choice].quantity > 1:
+				libtcod.console_print(0, game.PLAYER_STATS_WIDTH + 2, 1, 'Pickup how many: _')
+				libtcod.console_flush()
+				qty = game.messages.input('', 0, game.PLAYER_STATS_WIDTH + 19, 1)
+				if qty == '' or not qty.isdigit():
+					choice = -1
+				elif int(qty) < 1 or int(qty) > output[choice].quantity:
+					choice = -1
+		if choice != -1:
+			x = 0
+			for i in range(len(nb_items) - 1, -1, -1):
+				if nb_items[i] == output[choice] and x < int(qty):
+					nb_items[i].pick_up(nb_items[i].turn_created)
+					game.current_map.objects.pop(itempos[i])
+					x += 1
+		util.reset_quantity(nb_items)
 		game.redraw_gui = True
 
 
@@ -534,9 +563,11 @@ def use_item():
 	if len(game.player.inventory) == 0:
 		game.message.new('Your inventory is empty.', game.player.turns)
 	else:
-		choice = util.msg_box('use', 'Use an item', 'Up/down to select, ENTER to use, ESC to exit', game.player.inventory, box_height=max(16, len(game.player.inventory) + 4), blitmap=True)
+		output = util.item_stacking(game.player.inventory)
+		choice = util.msg_box('use', 'Use an item', 'Up/down to select, ENTER to use, ESC to exit', output, box_height=max(16, len(output) + 4), blitmap=True)
+		util.reset_quantity(game.player.inventory)
 		if choice != -1:
-			game.player.inventory[choice].use(choice)
+			output[choice].use()
 	game.redraw_gui = True
 
 
@@ -625,9 +656,21 @@ def ztats_inventory(con, width, height):
 	util.text_box(con, 0, 0, width, height, 'Inventory')
 	libtcod.console_set_default_foreground(con, libtcod.white)
 	libtcod.console_set_default_background(con, libtcod.black)
-	for i in range(len(game.player.inventory)):
-		libtcod.console_print(con, 2, i + 2, game.player.inventory[i].name)
-		libtcod.console_print_ex(con, width - 3, i + 2, libtcod.BKGND_SET, libtcod.RIGHT, str(round(game.player.inventory[i].weight, 1)) + ' lbs')
+	output = util.item_stacking(game.player.inventory)
+	for i in range(len(output)):
+		if output[i].is_identified():
+			if output[i].quantity > 1:
+				text_left = str(output[i].quantity) + ' ' + output[i].plural
+			else:
+				text_left = output[i].name
+		else:
+			text_left = output[i].unidentified_name
+		if output[i].duration > 0:
+			text_left += ' (' + str(output[i].duration) + ' turns left)'
+		text_right = str(round(output[i].weight * output[i].quantity, 1)) + ' lbs'
+		libtcod.console_print(con, 2, i + 2, text_left)
+		libtcod.console_print_ex(con, width - 3, i + 2, libtcod.BKGND_SET, libtcod.RIGHT, text_right)
+	util.reset_quantity(game.player.inventory)
 
 
 # character sheet

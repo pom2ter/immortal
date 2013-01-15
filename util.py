@@ -41,8 +41,14 @@ def choices(con, width, height, options, typ, posx=0, posy=0, default=0, blitmap
 					libtcod.console_set_default_foreground(con, libtcod.grey)
 					libtcod.console_set_default_background(con, libtcod.black)
 				if typ == 'inventory':
-					textl = options[y].unidentified_name
-					textr = str(round(options[y].weight, 1)) + ' lbs'
+					if options[y].is_identified():
+						if options[y].quantity > 1:
+							textl = str(options[y].quantity) + ' ' + options[y].plural
+						else:
+							textl = options[y].name
+					else:
+						textl = options[y].unidentified_name
+					textr = str(round(options[y].weight * options[y].quantity, 1)) + ' lbs'
 					if options[y].duration > 0:
 						textl += ' (' + str(options[y].duration) + ' turns left)'
 				else:
@@ -382,6 +388,38 @@ def get_names_under_mouse():
 		return ''
 
 
+# stack items if possible
+def item_stacking(inv, equip=False):
+	output = []
+	for x in inv:
+		if x not in output:
+			output.append(x)
+		else:
+			for y in output:
+				if x == y:
+					y.quantity += 1
+	if equip:
+		output = [x for x in output if x.is_equippable()]
+	return output
+
+
+# return formatted string for inventory listing
+def inventory_output(inv):
+	if inv.is_identified():
+		if inv.quantity > 1:
+			text_left = str(inv.quantity) + ' ' + inv.plural
+		else:
+			text_left = inv.name
+	else:
+		text_left = inv.unidentified_name
+	if inv.duration > 0:
+		text_left += ' (' + str(inv.duration) + ' turns left)'
+	if inv.active:
+		text_left += ' *in use*'
+	text_right = str(round(inv.weight * inv.quantity, 1)) + ' lbs'
+	return text_left, text_right
+
+
 # output names of items you pass by
 def items_at_feet():
 	objects = [obj for obj in game.current_map.objects if obj.item and obj.x == game.char.x and obj.y == game.char.y]
@@ -403,6 +441,12 @@ def mouse_auto_move():
 			game.mouse_move = False
 			return False
 	return True
+
+
+# reset item quantities to 1
+def reset_quantity(inv):
+	for x in inv:
+		x.quantity = 1
 
 
 # returns the roll of a die

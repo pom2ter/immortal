@@ -1,6 +1,7 @@
 item_type "dagger" {
 	type = "weapon"
 	unidentified_name = "dagger"
+	plural = "daggers"
 	icon = "("
 	icon_color = "255,255,255"
 	dark_color = "85,85,85"
@@ -17,6 +18,7 @@ item_type "dagger" {
 item_type "short sword" {
 	type = "weapon"
 	unidentified_name = "short sword"
+	plural = "short swords"
 	icon = "("
 	icon_color = "255,255,255"
 	dark_color = "85,85,85"
@@ -32,6 +34,7 @@ item_type "short sword" {
 item_type "long sword" {
 	type = "weapon"
 	unidentified_name = "long sword"
+	plural = "long swords"
 	icon = "("
 	icon_color = "255,255,255"
 	dark_color = "85,85,85"
@@ -47,6 +50,7 @@ item_type "long sword" {
 item_type "mace" {
 	type = "weapon"
 	unidentified_name = "mace"
+	plural = "maces"
 	icon = "("
 	icon_color = "255,255,255"
 	dark_color = "85,85,85"
@@ -62,6 +66,7 @@ item_type "mace" {
 item_type "hand axe" {
 	type = "weapon"
 	unidentified_name = "hand axe"
+	plural = "hand axes"
 	icon = "("
 	icon_color = "255,255,255"
 	dark_color = "85,85,85"
@@ -77,6 +82,7 @@ item_type "hand axe" {
 item_type "quarterstaff" {
 	type = "weapon"
 	unidentified_name = "quarterstaff"
+	plural = "quarterstaves"
 	icon = "("
 	icon_color = "255,255,255"
 	dark_color = "85,85,85"
@@ -92,6 +98,7 @@ item_type "quarterstaff" {
 item_type "bow" {
 	type = "weapon"
 	unidentified_name = "bow"
+	plural = "bows"
 	icon = "("
 	icon_color = "255,255,255"
 	dark_color = "85,85,85"
@@ -107,6 +114,7 @@ item_type "bow" {
 item_type "sling" {
 	type = "weapon"
 	unidentified_name = "sling"
+	plural = "slings"
 	icon = "("
 	icon_color = "255,255,255"
 	dark_color = "85,85,85"
@@ -122,6 +130,7 @@ item_type "sling" {
 item_type "spear" {
 	type = "weapon"
 	unidentified_name = "spear"
+	plural = "spears"
 	icon = "("
 	icon_color = "255,255,255"
 	dark_color = "85,85,85"
@@ -137,6 +146,7 @@ item_type "spear" {
 item_type "shield" {
 	type = "shield"
 	unidentified_name = "shield"
+	plural = "shields"
 	icon = "["
 	icon_color = "127,127,127"
 	dark_color = "42,42,42"
@@ -151,6 +161,7 @@ item_type "shield" {
 item_type "helmet" {
 	type = "armor"
 	unidentified_name = "helmet"
+	plural = "helmets"
 	icon = "["
 	icon_color = "127,127,127"
 	dark_color = "42,42,42"
@@ -165,6 +176,7 @@ item_type "helmet" {
 item_type "cape" {
 	type = "armor"
 	unidentified_name = "cape"
+	plural = "capes"
 	icon = "["
 	icon_color = "127,127,127"
 	dark_color = "42,42,42"
@@ -179,6 +191,7 @@ item_type "cape" {
 item_type "robes" {
 	type = "armor"
 	unidentified_name = "robes"
+	plural = "robes"
 	icon = "["
 	icon_color = "0,0,255"
 	dark_color = "0,0,85"
@@ -193,6 +206,7 @@ item_type "robes" {
 item_type "leather armor" {
 	type = "armor"
 	unidentified_name = "leather armor"
+	plural = "leather armors"
 	icon = "["
 	icon_color = "127,127,127"
 	dark_color = "42,42,42"
@@ -207,6 +221,7 @@ item_type "leather armor" {
 item_type "studded leather armor" {
 	type = "armor"
 	unidentified_name = "studded leather armor"
+	plural = "studded leather armors"
 	icon = "["
 	icon_color = "127,127,127"
 	dark_color = "42,42,42"
@@ -221,6 +236,7 @@ item_type "studded leather armor" {
 item_type "leather boots" {
 	type = "armor"
 	unidentified_name = "leather boots"
+	plural = "leather boots"
 	icon = "["
 	icon_color = "127,127,127"
 	dark_color = "42,42,42"
@@ -235,6 +251,7 @@ item_type "leather boots" {
 item_type "leather gloves" {
 	type = "armor"
 	unidentified_name = "leather gloves"
+	plural = "leather gloves"
 	icon = "["
 	icon_color = "127,127,127"
 	dark_color = "42,42,42"
@@ -249,6 +266,7 @@ item_type "leather gloves" {
 item_type "ring of protection" {
 	type = "ring"
 	unidentified_name = "ring"
+	plural = "rings of protection"
 	icon = "o"
 	icon_color = "115,255,255"
 	dark_color = "38,85,85"
@@ -263,6 +281,7 @@ item_type "ring of protection" {
 item_type "ring of regeneration" {
 	type = "ring"
 	unidentified_name = "ring"
+	plural = "rings of regeneration"
 	icon = "o"
 	icon_color = "255,0,0"
 	dark_color = "85,0,0"
@@ -277,6 +296,7 @@ item_type "ring of regeneration" {
 item_type "potion of minor healing" {
 	type = "potion"
 	unidentified_name = "potion"
+	plural = "potions of minor healing"
 	icon = "!"
 	icon_color = "255,0,0"
 	dark_color = "85,0,0"
@@ -293,6 +313,7 @@ item_type "potion of minor healing" {
 item_type "potion of major healing" {
 	type = "potion"
 	unidentified_name = "potion"
+	plural = "potions of major healing"
 	icon = "!"
 	icon_color = "255,115,115"
 	dark_color = "85,38,38"
@@ -309,6 +330,7 @@ item_type "potion of major healing" {
 item_type "potion of mana" {
 	type = "potion"
 	unidentified_name = "potion"
+	plural = "potions of mana"
 	icon = "!"
 	icon_color = "0,0,255"
 	dark_color = "0,0,85"
@@ -325,6 +347,7 @@ item_type "potion of mana" {
 item_type "torch" {
 	type = "tool"
 	unidentified_name = "torch"
+	plural = "torches"
 	icon = "]"
 	icon_color = "0,0,255"
 	dark_color = "0,0,85"
@@ -340,6 +363,7 @@ item_type "torch" {
 item_type "ration" {
 	type = "food"
 	unidentified_name = "ration"
+	plural = "rations"
 	icon = "%"
 	icon_color = "0,0,255"
 	dark_color = "0,0,85"
@@ -356,6 +380,7 @@ item_type "ration" {
 item_type "gold" {
 	type = "money"
 	unidentified_name = "gold"
+	plural = "gold"
 	icon = "$"
 	icon_color = "229,191,0"
 	dark_color = "76,64,0"
@@ -366,6 +391,7 @@ item_type "gold" {
 item_type "kobold corpse" {
 	type = "corpse"
 	unidentified_name = "kobold corpse"
+	plural = "kobold corpses"
 	icon = "%"
 	icon_color = "127,101,63"
 	dark_color = "64,50,32"
@@ -381,6 +407,7 @@ item_type "kobold corpse" {
 item_type "goblin corpse" {
 	type = "corpse"
 	unidentified_name = "goblin corpse"
+	plural = "goblin corpses"
 	icon = "%"
 	icon_color = "127,101,63"
 	dark_color = "64,50,32"
@@ -396,6 +423,7 @@ item_type "goblin corpse" {
 item_type "gnoll corpse" {
 	type = "corpse"
 	unidentified_name = "gnoll corpse"
+	plural = "gnoll corpses"
 	icon = "%"
 	icon_color = "127,101,63"
 	dark_color = "64,50,32"
@@ -411,6 +439,7 @@ item_type "gnoll corpse" {
 item_type "orc corpse" {
 	type = "corpse"
 	unidentified_name = "orc corpse"
+	plural = "orc corpses"
 	icon = "%"
 	icon_color = "127,101,63"
 	dark_color = "64,50,32"
@@ -426,6 +455,7 @@ item_type "orc corpse" {
 item_type "troll corpse" {
 	type = "corpse"
 	unidentified_name = "troll corpse"
+	plural = "troll corpses"
 	icon = "%"
 	icon_color = "127,101,63"
 	dark_color = "64,50,32"
@@ -441,6 +471,7 @@ item_type "troll corpse" {
 item_type "bat corpse" {
 	type = "corpse"
 	unidentified_name = "bat corpse"
+	plural = "bat corpses"
 	icon = "%"
 	icon_color = "127,101,63"
 	dark_color = "64,50,32"
@@ -456,6 +487,7 @@ item_type "bat corpse" {
 item_type "rat corpse" {
 	type = "corpse"
 	unidentified_name = "rat corpse"
+	plural = "rat corpses"
 	icon = "%"
 	icon_color = "127,101,63"
 	dark_color = "64,50,32"
@@ -471,6 +503,7 @@ item_type "rat corpse" {
 item_type "lizard corpse" {
 	type = "corpse"
 	unidentified_name = "lizard corpse"
+	plural = "lizard corpses"
 	icon = "%"
 	icon_color = "127,101,63"
 	dark_color = "64,50,32"
@@ -486,6 +519,7 @@ item_type "lizard corpse" {
 item_type "bear corpse" {
 	type = "corpse"
 	unidentified_name = "bear corpse"
+	plural = "bear corpses"
 	icon = "%"
 	icon_color = "127,101,63"
 	dark_color = "64,50,32"
@@ -501,6 +535,7 @@ item_type "bear corpse" {
 item_type "cat corpse" {
 	type = "corpse"
 	unidentified_name = "cat corpse"
+	plural = "cat corpses"
 	icon = "%"
 	icon_color = "127,101,63"
 	dark_color = "64,50,32"
@@ -516,6 +551,7 @@ item_type "cat corpse" {
 item_type "dog corpse" {
 	type = "corpse"
 	unidentified_name = "dog corpse"
+	plural = "dog corpses"
 	icon = "%"
 	icon_color = "127,101,63"
 	dark_color = "64,50,32"
@@ -531,6 +567,7 @@ item_type "dog corpse" {
 item_type "wolf corpse" {
 	type = "corpse"
 	unidentified_name = "wolf corpse"
+	plural = "wolf corpses"
 	icon = "%"
 	icon_color = "127,101,63"
 	dark_color = "64,50,32"
@@ -546,6 +583,7 @@ item_type "wolf corpse" {
 item_type "hound corpse" {
 	type = "corpse"
 	unidentified_name = "hound corpse"
+	plural = "hound corpses"
 	icon = "%"
 	icon_color = "127,101,63"
 	dark_color = "64,50,32"
@@ -561,6 +599,7 @@ item_type "hound corpse" {
 item_type "human corpse" {
 	type = "corpse"
 	unidentified_name = "human corpse"
+	plural = "human corpses"
 	icon = "%"
 	icon_color = "127,101,63"
 	dark_color = "64,50,32"

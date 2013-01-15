@@ -1,6 +1,8 @@
 import libtcodpy as libtcod
+import copy
 import game
 import util
+import map
 import messages
 
 RACES = ["Human", "Elf", "Dwarf", "Halfling"]
@@ -76,6 +78,7 @@ class Player(object):
 				game.hp_anim.append([game.char, '1', libtcod.green, 0])
 		self.item_expiration()
 		self.item_is_active()
+		game.fov_torch = any("torchlight" in x.flags and x.active for x in game.player.inventory)
 
 	# attack an enemy
 	def attack(self, target):
@@ -129,8 +132,32 @@ class Player(object):
 		dr += self.karma * 0.25
 		return dr
 
+	# drops an item
+	def drop_item(self, item, qty=1):
+		for i in range(qty):
+			for j in xrange(len(self.inventory)):
+				if self.inventory[j].name == item.name:
+					pos = j
+					break
+			obj = map.Object(game.char.x, game.char.y, self.inventory[pos].icon, self.inventory[pos].name, self.inventory[pos].color, True, item=self.inventory[pos])
+			obj.first_appearance = self.inventory[pos].turn_created
+			game.current_map.objects.append(obj)
+			obj.send_to_back()
+			self.inventory.pop(pos)
+
+		if qty == 1:
+			game.message.new('You drop ' + obj.item.article + obj.item.name, game.player.turns, libtcod.red)
+		else:
+			game.message.new('You drop ' + str(qty) + ' ' + obj.item.plural, game.player.turns, libtcod.red)
+		game.player.add_turn()
+
 	# equips an item
-	def equip(self, item):
+	def equip_item(self, item):
+		for i in xrange(len(self.inventory)):
+			if self.inventory[i].name == item.name:
+				item = i
+				break
+
 		if self.inventory[item].type == "armor":
 			for flags in self.inventory[item].flags:
 				if "armor_" in flags:
@@ -422,7 +449,7 @@ def create_character():
 		libtcod.console_blit(cs, 0, 0, cs_width, game.SCREEN_HEIGHT, 0, 0, 0)
 		libtcod.console_flush()
 
-		game.player.name = messages.input('chargen', cs, 34, 3, stats)
+		game.player.name = messages.input('chargen', cs, 34, 3, stats, min=3, max=17)
 		show_stats_panel(stats, "")
 		libtcod.console_rect(cs, 0, 2, cs_width, game.SCREEN_HEIGHT, True, libtcod.BKGND_SET)
 		libtcod.console_print(cs, 1, 3, 'Select a gender:')
@@ -526,8 +553,8 @@ def starting_stats():
 	if game.player.profession == "Fighter":
 		game.player.base_health = libtcod.random_get_int(game.rnd, 2, FIGHTER_HP_GAIN)
 		game.player.base_mana = libtcod.random_get_int(game.rnd, 2, FIGHTER_MP_GAIN)
-		game.items.get_item("short sword").pick_up(0, True)
-		game.items.get_item("leather armor").pick_up(0, True)
+		game.player.inventory.append(copy.deepcopy(game.items.get_item("short sword")))
+		game.player.inventory.append(copy.deepcopy(game.items.get_item("leather armor")))
 		game.player.combat_skills[0].level = 20
 		game.player.combat_skills[1].level = 20
 		game.player.combat_skills[2].level = 10
@@ -538,8 +565,8 @@ def starting_stats():
 	if game.player.profession == "Rogue":
 		game.player.base_health = libtcod.random_get_int(game.rnd, 2, ROGUE_HP_GAIN)
 		game.player.base_mana = libtcod.random_get_int(game.rnd, 2, ROGUE_MP_GAIN)
-		game.items.get_item("dagger").pick_up(0, True)
-		game.items.get_item("leather armor").pick_up(0, True)
+		game.player.inventory.append(copy.deepcopy(game.items.get_item("dagger")))
+		game.player.inventory.append(copy.deepcopy(game.items.get_item("leather armor")))
 		game.player.combat_skills[3].level = 15
 		game.player.combat_skills[6].level = 5
 		game.player.combat_skills[7].level = 5
@@ -548,8 +575,8 @@ def starting_stats():
 	if game.player.profession == "Priest":
 		game.player.base_health = libtcod.random_get_int(game.rnd, 2, PRIEST_HP_GAIN)
 		game.player.base_mana = libtcod.random_get_int(game.rnd, 2, PRIEST_MP_GAIN)
-		game.items.get_item("mace").pick_up(0, True)
-		game.items.get_item("leather armor").pick_up(0, True)
+		game.player.inventory.append(copy.deepcopy(game.items.get_item("mace")))
+		game.player.inventory.append(copy.deepcopy(game.items.get_item("leather armor")))
 		game.player.combat_skills[0].level = 5
 		game.player.combat_skills[2].level = 15
 		game.player.combat_skills[3].level = 5
@@ -558,18 +585,20 @@ def starting_stats():
 	if game.player.profession == "Mage":
 		game.player.base_health = libtcod.random_get_int(game.rnd, 2, MAGE_HP_GAIN)
 		game.player.base_mana = libtcod.random_get_int(game.rnd, 2, MAGE_MP_GAIN)
-		game.items.get_item("quarterstaff").pick_up(0, True)
-		game.items.get_item("robes").pick_up(0, True)
+		game.player.inventory.append(copy.deepcopy(game.items.get_item("quarterstaff")))
+		game.player.inventory.append(copy.deepcopy(game.items.get_item("robes")))
 		game.player.combat_skills[5].level = 15
 
 	if game.player.profession == "Explorer":
 		game.player.base_health = libtcod.random_get_int(game.rnd, 2, EXPLORER_HP_GAIN)
 		game.player.base_mana = libtcod.random_get_int(game.rnd, 2, EXPLORER_MP_GAIN)
-		game.items.get_item("dagger").pick_up(0, True)
-		game.items.get_item("leather armor").pick_up(0, True)
+		game.player.inventory.append(copy.deepcopy(game.items.get_item("dagger")))
+		game.player.inventory.append(copy.deepcopy(game.items.get_item("leather armor")))
 
-	game.items.get_item("torch").pick_up(0, True)
-	game.items.get_item("ration").pick_up(0, True)
+	game.player.inventory.append(copy.deepcopy(game.items.get_item("torch")))
+	game.player.inventory.append(copy.deepcopy(game.items.get_item("torch")))
+	game.player.inventory.append(copy.deepcopy(game.items.get_item("ration")))
+	game.player.inventory.append(copy.deepcopy(game.items.get_item("torch")))
 	game.player.set_max_health()
 	game.player.set_max_mana()
 	game.player.health = game.player.max_health

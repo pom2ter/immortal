@@ -1,7 +1,6 @@
 import libtcodpy as libtcod
 import game
 import os
-import time
 
 
 class World(object):

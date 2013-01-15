@@ -13,7 +13,7 @@ import worldgen
 import messages
 
 VERSION = 'v0.3.0'
-BUILD = '37'
+BUILD = '38'
 
 #size of the gui windows
 MAP_WIDTH = 70
@@ -208,7 +208,9 @@ class Game(object):
 				monsters.spawn()
 				for object in reversed(current_map.objects):
 					if object.item != None:
-						if object.item.is_expired():
+						if object.item.is_active():
+							object.delete()
+						if object.item.is_expired() or ((game.player.turns >= (object.first_appearance + object.item.expiration)) and object.item.expiration > 0):
 							object.delete()
 					if object.entity != None:
 						object.x, object.y = object.entity.take_turn(object.x, object.y)
@@ -346,7 +348,7 @@ class Game(object):
 			libtcod.console_print_ex(0, 10, 8, libtcod.BKGND_NONE, libtcod.LEFT, "#.# ##    #.# ##    #.# ##    #.# ##    #.#    #.#    ##    #.# ##    ###")
 			libtcod.console_print_ex(0, 10, 9, libtcod.BKGND_NONE, libtcod.LEFT, "##' ##    ##' ##    ##' `#######' `#    ##'    ##'    ##    ##' `#######'")
 			libtcod.console_print_ex(0, 1, SCREEN_HEIGHT - 2, libtcod.BKGND_NONE, libtcod.LEFT, VERSION)
-			libtcod.console_print_ex(0, SCREEN_WIDTH / 2, SCREEN_HEIGHT - 2, libtcod.BKGND_NONE, libtcod.CENTER, 'Copyright (c) 2012 - Mr.Potatoman')
+			libtcod.console_print_ex(0, SCREEN_WIDTH / 2, SCREEN_HEIGHT - 2, libtcod.BKGND_NONE, libtcod.CENTER, 'Copyright (c) 2012-13 -- Mr.Potatoman')
 			contents = ['Start a new game', 'Load a saved game', 'Read the manual', 'Change settings', 'View high scores', 'Quit game']
 			if choice == -1:
 				choice = 0

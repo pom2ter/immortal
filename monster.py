@@ -54,7 +54,6 @@ class Monster(object):
 
 	# determines monster distance to player
 	def distance_to_player(self, player, x, y):
-		#return the distance relative to the player
 		dx = player.x - x
 		dy = player.y - y
 		return math.sqrt(dx ** 2 + dy ** 2)

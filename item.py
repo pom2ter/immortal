@@ -3,10 +3,11 @@ import game
 
 
 class Item(object):
-	def __init__(self, typ, name, unid_name, icon, color, dark_color, level, weight, cost, dice, article, charge, duration, expiration, flags):
+	def __init__(self, typ, name, unid_name, plural, icon, color, dark_color, level, weight, cost, dice, article, charge, duration, expiration, flags):
 		self.type = typ
 		self.name = name
 		self.unidentified_name = unid_name
+		self.plural = plural
 		self.icon = icon
 		self.color = libtcod.Color(color[0], color[1], color[2])
 		self.dark_color = libtcod.Color(dark_color[0], dark_color[1], dark_color[2])
@@ -20,7 +21,12 @@ class Item(object):
 		self.turn_created = 0
 		self.duration = duration
 		self.expiration = expiration
+		self.cur_expiration = 0
+		self.quantity = 1
 		self.active = False
+
+	def __eq__(self, other):
+		return self.name == other.name and self.charges == other.charges and self.flags == other.flags and self.duration == other.duration and self.cur_expiration == other.cur_expiration and self.active == other.active
 
 	# return true if item is active
 	def is_active(self):
@@ -38,12 +44,17 @@ class Item(object):
 
 	# return true if item 'expiration date' has been reached
 	def is_expired(self):
-		#print self.expiration
-		if self.expiration > 1:
-			self.expiration -= 1
-			if self.expiration == 0:
+		if self.cur_expiration >= 1:
+			self.cur_expiration -= 1
+			if self.cur_expiration == 0:
 				return True
 		return False
+
+	# return true if item is identified, always returns true for now
+	def is_identified(self):
+		if "identified" in self.flags:
+			return True
+		return True
 
 	# picks up the item
 	def pick_up(self, ts, silent=False):
@@ -61,7 +72,7 @@ class Item(object):
 			game.player.add_turn()
 
 	# use the item
-	def use(self, pos):
+	def use(self):
 		if "usable" in self.flags:
 			if "healing" in self.flags:
 				if game.player.health == game.player.max_health:
@@ -83,17 +94,19 @@ class Item(object):
 
 			if "torchlight" in self.flags:
 				if self.active:
-					game.fov_torch = False
 					self.active = False
+					game.fov_torch = any("torchlight" in x.flags and x.active for x in game.player.inventory)
+					game.message.new("You extenguish the " + self.name, game.player.turns, libtcod.gold)
 				else:
 					game.fov_torch = True
 					self.active = True
+					game.message.new("You light the " + self.name, game.player.turns, libtcod.gold)
 				game.fov_recompute = True
 
 			if self.charges > 0:
 				self.charges -= 1
 				if self.charges == 0:
-					game.player.inventory.pop(pos)
+					game.player.inventory.remove(self)
 			game.player.add_turn()
 		else:
 			game.message.new("You can't use that item.", game.player.turns)
@@ -109,6 +122,7 @@ class ItemList(object):
 		item_type_struct = libtcod.parser_new_struct(parser, 'item_type')
 		libtcod.struct_add_property(item_type_struct, 'type', libtcod.TYPE_STRING, True)
 		libtcod.struct_add_property(item_type_struct, 'unidentified_name', libtcod.TYPE_STRING, True)
+		libtcod.struct_add_property(item_type_struct, 'plural', libtcod.TYPE_STRING, True)
 		libtcod.struct_add_property(item_type_struct, 'icon', libtcod.TYPE_STRING, True)
 		libtcod.struct_add_property(item_type_struct, 'icon_color', libtcod.TYPE_COLOR, True)
 		libtcod.struct_add_property(item_type_struct, 'dark_color', libtcod.TYPE_COLOR, True)
@@ -190,7 +204,7 @@ class Dice(object):
 
 class ItemListener(object):
 	def new_struct(self, struct, name):
-		self.temp_item = Item('', '', '', '', [0, 0, 0], [0, 0, 0], 0, 0, 0, Dice(0, 0, 0, 0), '', 0, 0, 0, [])
+		self.temp_item = Item('', '', '', '', '', [0, 0, 0], [0, 0, 0], 0, 0, 0, Dice(0, 0, 0, 0), '', 0, 0, 0, [])
 		self.temp_item.name = name
 		return True
 
@@ -231,8 +245,11 @@ class ItemListener(object):
 				self.temp_item.duration = value
 			if name == "expiration":
 				self.temp_item.expiration = value
+				self.temp_item.cur_expiration = value
 			if name == "unidentified_name":
 				self.temp_item.unidentified_name = value
+			if name == "plural":
+				self.temp_item.plural = value
 		return True
 
 	def end_struct(self, struct, name):
