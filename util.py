@@ -198,20 +198,6 @@ def msg_box(typ, header=None, footer=None, contents=None, box_width=60, box_heig
 	return choice
 
 
-def find_map_position(mapposx, mapposy):
-	if int(mapposx) == int(round(mapposx)):
-		if int(mapposy) == int(round(mapposy)):
-			char = chr(226)
-		else:
-			char = chr(232)
-	else:
-		if int(mapposy) == int(round(mapposy)):
-			char = chr(227)
-		else:
-			char = chr(229)
-	return char
-
-
 #######################################
 # miscellanous functions
 #######################################
@@ -349,6 +335,21 @@ def death(quit=False):
 		os.remove('saves/' + game.player.name.lower())
 
 
+# returns a particular point on the map
+def find_map_position(mapposx, mapposy):
+	if int(mapposx) == int(round(mapposx)):
+		if int(mapposy) == int(round(mapposy)):
+			char = chr(226)
+		else:
+			char = chr(232)
+	else:
+		if int(mapposy) == int(round(mapposy)):
+			char = chr(227)
+		else:
+			char = chr(229)
+	return char
+
+
 # return a string with the names of all objects under the mouse
 def get_names_under_mouse():
 	(x, y) = (game.mouse.cx - game.MAP_X, game.mouse.cy - 1)
@@ -459,6 +460,37 @@ def save_high_scores():
 	f = open('data/highscores.dat', 'wb')
 	pickle.dump(game.highscore, f)
 	f.close()
+
+
+# show the worldmap
+def showmap(box, box_width, box_height):
+	lerp, choice = 1.0, -1
+	descending, keypress = True, False
+	libtcod.image_blit_2x(game.worldmap.map_image_small, box, 1, 1)
+	mapposx = game.worldmap.player_positionx * (float(game.SCREEN_WIDTH - 2) / float(game.WORLDMAP_WIDTH))
+	mapposy = game.worldmap.player_positiony * (float(game.SCREEN_HEIGHT - 2) / float(game.WORLDMAP_HEIGHT))
+	char = find_map_position(mapposx, mapposy)
+	libtcod.console_set_default_foreground(box, libtcod.black)
+	for (id, name, abbr, x, y) in game.worldmap.dungeons:
+		dmapposx = x * (float(game.SCREEN_WIDTH - 2) / float(game.WORLDMAP_WIDTH))
+		dmapposy = y * (float(game.SCREEN_HEIGHT - 2) / float(game.WORLDMAP_HEIGHT))
+		dchar = find_map_position(dmapposx, dmapposy)
+		libtcod.console_print_ex(box, int(dmapposx) + 1, int(dmapposy) + 1, libtcod.BKGND_NONE, libtcod.LEFT, dchar)
+	while not keypress:
+		color, lerp, descending = color_lerp(lerp, descending, light=libtcod.red)
+		libtcod.console_set_default_foreground(box, color)
+		libtcod.console_print_ex(box, int(mapposx) + 1, int(mapposy) + 1, libtcod.BKGND_NONE, libtcod.LEFT, char)
+		libtcod.console_blit(box, 0, 0, box_width, box_height, 0, (game.SCREEN_WIDTH - box_width) / 2, (game.SCREEN_HEIGHT - box_height) / 2, 1.0, 1.0)
+		libtcod.console_flush()
+		key = libtcod.Key()
+		ev = libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS, key, libtcod.Mouse())
+		if ev == libtcod.EVENT_KEY_PRESS:
+			if chr(key.c) == 's':
+				libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, game.SCREEN_HEIGHT / 2, libtcod.BKGND_DARKEN, libtcod.CENTER, ' Saving map... ')
+				libtcod.console_flush()
+				game.worldmap.create_map_images(2)
+			else:
+				break
 
 
 #######################################

@@ -34,7 +34,7 @@ class Message(object):
 def box(header, footer, startx, starty, width, height, contents, default=0, input=True, color=libtcod.green, align=libtcod.LEFT, nokeypress=False, inv=False, step=1, mouse_exit=False):
 	box = libtcod.console_new(width, height)
 	if color != None:
-		box_gui(box, 0, 0, width, height, header, color)
+		box_gui(box, 0, 0, width, height, color)
 	if header != None:
 		libtcod.console_set_default_foreground(box, libtcod.black)
 		libtcod.console_set_default_background(box, color)
@@ -64,7 +64,7 @@ def box(header, footer, startx, starty, width, height, contents, default=0, inpu
 
 
 # outline of the text box
-def box_gui(con, x1, y1, x2, y2, header=None, color=libtcod.green):
+def box_gui(con, x1, y1, x2, y2, color=libtcod.green):
 	buffer = libtcod.ConsoleBuffer(x2 - x1, y2 - y1)
 	for i in range(x1, x2):
 		buffer.set_fore(i, y1, color.r, color.g, color.b, chr(205))
@@ -107,15 +107,15 @@ def box_options(con, posx, posy, width, height, options, default, inv, step, mou
 			else:
 				text_left = options[y]
 				text_right = ''
-			libtcod.console_rect(con, 1, y + step, width, 1, True, libtcod.BKGND_SET)
-			libtcod.console_print_ex(con, 2, y + step, libtcod.BKGND_SET, libtcod.LEFT, text_left)
-			libtcod.console_print_ex(con, width - 1, y + step, libtcod.BKGND_SET, libtcod.RIGHT, text_right)
+			libtcod.console_rect(con, step, y + step, width - ((step - 1) * 2), 1, True, libtcod.BKGND_SET)
+			libtcod.console_print_ex(con, 1 + step, y + step, libtcod.BKGND_SET, libtcod.LEFT, text_left)
+			libtcod.console_print_ex(con, width - step, y + step, libtcod.BKGND_SET, libtcod.RIGHT, text_right)
 
 		libtcod.console_blit(con, 0, 0, width + 2, height + 2, 0, posx, posy, 1.0, 0.9)
 		libtcod.console_flush()
 
 		(mx, my) = (mouse.cx, mouse.cy)
-		if my in range(posy + step, height + posy + step) and mx in range(posx + 1, width + posx + 1):
+		if my in range(posy + step, height + posy + step) and mx in range(posx + step, width + posx + 2 - step):
 			mpos = my - posy - step
 			if mpos <= len(options) - 1:
 				current = mpos
@@ -131,7 +131,7 @@ def box_options(con, posx, posy, width, height, options, default, inv, step, mou
 		elif (key.vk == libtcod.KEY_ESCAPE and ev == libtcod.EVENT_KEY_PRESS) or (mouse_exit and mouse.lbutton_pressed and mx == width + posx - 2 and my == posy):
 			current = -1
 			choice = -1
-		elif (key.vk == libtcod.KEY_ENTER and ev == libtcod.EVENT_KEY_PRESS) or (mouse.lbutton_pressed and my in range(posy + step, height + posy + step) and mx in range(posx + 1, width + posx + 1) and (my - posy - step) <= len(options) - 1):
+		elif (key.vk == libtcod.KEY_ENTER and ev == libtcod.EVENT_KEY_PRESS) or (mouse.lbutton_pressed and my in range(posy + step, height + posy + step) and mx in range(posx + step, width + posx + 2 - step) and (my - posy - step) <= len(options) - 1):
 			choice = True
 	return current
 

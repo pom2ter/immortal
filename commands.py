@@ -293,7 +293,8 @@ def drop_item():
 		game.message.new('Your inventory is empty.', game.player.turns)
 	else:
 		output = util.item_stacking(game.player.inventory)
-		choice = util.msg_box('drop', 'Drop an item', 'Up/down to select, ENTER to drop, ESC to exit', output, box_height=max(16, len(output) + 4), blitmap=True)
+#		choice = util.msg_box('drop', 'Drop an item', 'Up/down to select, ENTER to drop, ESC to exit', output, box_height=max(16, len(output) + 4), blitmap=True)
+		choice = game.messages.box('Drop item', 'Up/down to select, ENTER to drop, ESC to exit', game.PLAYER_STATS_WIDTH + ((game.MAP_WIDTH - 56) / 2), ((game.MAP_HEIGHT + 1) - max(16, len(output) + 4)) / 2, 60, max(16, len(output) + 4), output, inv=True, step=2, mouse_exit=True)
 		if choice != -1:
 			if output[choice].quantity > 1:
 				libtcod.console_print(0, game.PLAYER_STATS_WIDTH + 2, 1, 'Drop how many: _')
@@ -316,7 +317,8 @@ def equip_item():
 		game.message.new("You don't have any equippable items.", game.player.turns)
 	else:
 		output = util.item_stacking(game.player.inventory, True)
-		choice = util.msg_box('equip', 'Wear/Equip an item', 'Up/down to select, ENTER to equip, ESC to exit', output, box_height=max(16, len(output) + 4), blitmap=True)
+#		choice = util.msg_box('equip', 'Wear/Equip an item', 'Up/down to select, ENTER to equip, ESC to exit', output, box_height=max(16, len(output) + 4), blitmap=True)
+		choice = game.messages.box('Wear/Equip an item', 'Up/down to select, ENTER to equip, ESC to exit', game.PLAYER_STATS_WIDTH + ((game.MAP_WIDTH - 56) / 2), ((game.MAP_HEIGHT + 1) - max(16, len(output) + 4)) / 2, 60, max(16, len(output) + 4), output, inv=True, step=2, mouse_exit=True)
 		util.reset_quantity(game.player.inventory)
 		if choice != -1:
 			game.player.equip_item(output[choice])
@@ -326,7 +328,9 @@ def equip_item():
 # help screen
 def help():
 	contents = open('data/help.txt', 'r').read()
-	util.msg_box('text', 'Help', contents=contents, box_width=40, box_height=26, blitmap=True)
+	contents = contents.split("\n")
+#	util.msg_box('text', 'Help', contents=contents, box_width=40, box_height=26, blitmap=True)
+	game.messages.box('Help', None, game.PLAYER_STATS_WIDTH + ((game.MAP_WIDTH - (len(max(contents, key=len)) + 20)) / 2), ((game.MAP_HEIGHT + 1) - max(16, len(contents) + 4)) / 2, len(max(contents, key=len)) + 20, len(contents) + 4, contents, input=False)
 	game.redraw_gui = True
 
 
@@ -455,7 +459,9 @@ def open_door(x=None, y=None):
 
 # ingame options menu
 def options_menu():
-	choice = util.msg_box('options', 'Menu', contents=['Read the manual', 'Change settings', 'View high scores', 'Save and quit game', 'Quit without saving'], box_width=23, box_height=7, blitmap=True)
+#	choice = util.msg_box('options', 'Menu', contents=['Read the manual', 'Change settings', 'View high scores', 'Save and quit game', 'Quit without saving'], box_width=23, box_height=7, blitmap=True)
+	contents = ['Read the manual', 'Change settings', 'View high scores', 'Save and quit game', 'Quit without saving']
+	choice = game.messages.box('Menu', None, game.PLAYER_STATS_WIDTH + (((game.MAP_WIDTH + 3) - (len(max(contents, key=len)) + 4)) / 2), ((game.MAP_HEIGHT + 1) - (len(contents) + 2)) / 2, len(max(contents, key=len)) + 4, len(contents) + 2, contents, mouse_exit=True)
 	if choice == 0:
 		help()
 	if choice == 1:
@@ -486,7 +492,8 @@ def pickup_item():
 	else:
 		qty = 1
 		output = util.item_stacking(nb_items)
-		choice = util.msg_box('pickup', 'Get an item', 'Up/down to select, ENTER to get, ESC to exit', output, box_height=max(16, len(output) + 4), blitmap=True)
+#		choice = util.msg_box('pickup', 'Get an item', 'Up/down to select, ENTER to get, ESC to exit', output, box_height=max(16, len(output) + 4), blitmap=True)
+		choice = game.messages.box('Get an item', 'Up/down to select, ENTER to get, ESC to exit', game.PLAYER_STATS_WIDTH + ((game.MAP_WIDTH - 56) / 2), ((game.MAP_HEIGHT + 1) - max(16, len(output) + 4)) / 2, 60, max(16, len(output) + 4), output, inv=True, step=2, mouse_exit=True)
 		if choice != -1:
 			if output[choice].quantity > 1:
 				libtcod.console_print(0, game.PLAYER_STATS_WIDTH + 2, 1, 'Pickup how many: _')
@@ -526,7 +533,8 @@ def remove_item():
 	if len(game.player.equipment) == 0:
 		game.message.new("You don't have any equipped items.", game.player.turns)
 	else:
-		choice = util.msg_box('remove', 'Remove/Unequip an item', 'Up/down to select, ENTER to remove, ESC to exit', game.player.equipment, box_height=max(16, len(game.player.equipment) + 4), blitmap=True)
+#		choice = util.msg_box('remove', 'Remove/Unequip an item', 'Up/down to select, ENTER to remove, ESC to exit', game.player.equipment, box_height=max(16, len(game.player.equipment) + 4), blitmap=True)
+		choice = game.messages.box('Remove/Unequip an item', 'Up/down to select, ENTER to remove, ESC to exit', game.PLAYER_STATS_WIDTH + ((game.MAP_WIDTH - 56) / 2), ((game.MAP_HEIGHT + 1) - max(16, len(game.player.equipment) + 4)) / 2, 60, max(16, len(game.player.equipment) + 4), game.player.equipment, inv=True, step=2, mouse_exit=True)
 		if choice != -1:
 			game.player.unequip(choice)
 	game.redraw_gui = True
@@ -548,13 +556,30 @@ def save_game():
 
 # show a miniature world map
 def show_worldmap():
-	util.msg_box('map', 'World Map', 'Red dot - You, Black dots - Dungeons, S - Save map', box_width=game.SCREEN_WIDTH, box_height=game.SCREEN_HEIGHT)
+#	util.msg_box('map', 'World Map', 'Red dot - You, Black dots - Dungeons, S - Save map', box_width=game.SCREEN_WIDTH, box_height=game.SCREEN_HEIGHT)
+	box = libtcod.console_new(game.SCREEN_WIDTH, game.SCREEN_HEIGHT)
+	game.messages.box_gui(box, 0, 0, game.SCREEN_WIDTH, game.SCREEN_HEIGHT, libtcod.green)
+	libtcod.console_set_default_foreground(box, libtcod.black)
+	libtcod.console_set_default_background(box, libtcod.green)
+	libtcod.console_print_ex(box, game.SCREEN_WIDTH / 2, 0, libtcod.BKGND_SET, libtcod.CENTER, ' World Map ')
+	libtcod.console_set_default_foreground(box, libtcod.green)
+	libtcod.console_set_default_background(box, libtcod.black)
+	libtcod.console_print_ex(box, game.SCREEN_WIDTH / 2, game.SCREEN_HEIGHT - 1, libtcod.BKGND_SET, libtcod.CENTER, '[ Red dot - You, Black dots - Dungeons, S - Save map ]')
+	libtcod.console_set_default_foreground(box, libtcod.white)
+	util.showmap(box, game.SCREEN_WIDTH, game.SCREEN_HEIGHT)
 	game.redraw_gui = True
 
 
 # settings screen
 def settings():
-	util.msg_box('settings', 'Settings', contents=game.font, box_width=40, box_height=8, center=True, blitmap=True)
+#	util.msg_box('settings', 'Settings', contents=game.font, box_width=40, box_height=8, center=True, blitmap=True)
+	box = libtcod.console_new(40, 8)
+	game.messages.box_gui(box, 0, 0, 40, 8, libtcod.green)
+	libtcod.console_set_default_foreground(box, libtcod.black)
+	libtcod.console_set_default_background(box, libtcod.green)
+	libtcod.console_print_ex(box, 20, 0, libtcod.BKGND_SET, libtcod.CENTER, ' Settings ')
+	libtcod.console_set_default_foreground(box, libtcod.white)
+	util.change_settings(box, 40, 8, game.font, blitmap=True)
 	game.redraw_gui = True
 
 
@@ -564,7 +589,8 @@ def use_item():
 		game.message.new('Your inventory is empty.', game.player.turns)
 	else:
 		output = util.item_stacking(game.player.inventory)
-		choice = util.msg_box('use', 'Use an item', 'Up/down to select, ENTER to use, ESC to exit', output, box_height=max(16, len(output) + 4), blitmap=True)
+#		choice = util.msg_box('use', 'Use an item', 'Up/down to select, ENTER to use, ESC to exit', output, box_height=max(16, len(output) + 4), blitmap=True)
+		choice = game.messages.box('Use an item', 'Up/down to select, ENTER to use, ESC to exit', game.PLAYER_STATS_WIDTH + ((game.MAP_WIDTH - 56) / 2), ((game.MAP_HEIGHT + 1) - max(16, len(output) + 4)) / 2, 60, max(16, len(output) + 4), output, inv=True, step=2, mouse_exit=True)
 		util.reset_quantity(game.player.inventory)
 		if choice != -1:
 			output[choice].use()

@@ -13,7 +13,7 @@ import worldgen
 import messages
 
 VERSION = 'v0.3.0'
-BUILD = '38'
+BUILD = '39'
 
 #size of the gui windows
 MAP_WIDTH = 70
@@ -261,7 +261,8 @@ class Game(object):
 				pl = file['player']
 				desc.append(savefiles[i] + ', a level ' + str(pl.level) + ' ' + pl.gender + ' ' + pl.race + ' ' + pl.profession)
 				file.close()
-			choice = util.msg_box('save', 'Saved games', contents=desc, box_height=max(16, len(savefiles) + 4))
+#			choice = util.msg_box('save', 'Saved games', contents=desc, box_height=max(16, len(savefiles) + 4))
+			choice = messages.box('Saved games', None, (SCREEN_WIDTH - (max(60, len(max(desc, key=len)) + 20))) / 2, ((SCREEN_HEIGHT + 1) - max(16, len(desc) + 4)) / 2, max(60, len(max(desc, key=len)) + 20), max(16, len(desc) + 4), desc, step=2, mouse_exit=True)
 			if choice != -1:
 				file = shelve.open('saves/' + savefiles[choice], 'r')
 				worldmap = file['worldmap']
@@ -288,7 +289,14 @@ class Game(object):
 
 	# loading and changing game settings
 	def settings(self):
-		util.msg_box('settings', 'Settings', contents=font, box_width=40, box_height=8, center=True)
+#		util.msg_box('settings', 'Settings', contents=font, box_width=40, box_height=8, center=True)
+		box = libtcod.console_new(40, 8)
+		messages.box_gui(box, 0, 0, 40, 8, libtcod.green)
+		libtcod.console_set_default_foreground(box, libtcod.black)
+		libtcod.console_set_default_background(box, libtcod.green)
+		libtcod.console_print_ex(box, 20, 0, libtcod.BKGND_SET, libtcod.CENTER, ' Settings ')
+		libtcod.console_set_default_foreground(box, libtcod.white)
+		util.change_settings(box, 40, 8, font, blitmap=False)
 		self.load_settings()
 
 	def load_settings(self):
