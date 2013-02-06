@@ -33,7 +33,7 @@ class Monster(object):
 			game.message.new(self.article.capitalize() + self.name + ' hits you for ' + str(damage) + ' pts of damage', game.player.turns, libtcod.light_red)
 			game.player.take_damage(damage)
 			game.hp_anim.append([game.char, str(damage), libtcod.red, 0])
-			if game.player.death():
+			if game.player.is_dead():
 				game.message.new('You die...', game.player.turns, libtcod.light_orange)
 				game.message.new('*** Press space ***', game.player.turns)
 				game.killer = self.article + self.name
@@ -46,17 +46,17 @@ class Monster(object):
 		self.flags.append("ai_hostile")
 		self.flags[:] = (value for value in self.flags if value != "ai_neutral" and value != "ai_friendly")
 
-	# returns true if monster is dead
-	def death(self):
-		if self.health < 1:
-			return True
-		return False
-
 	# determines monster distance to player
 	def distance_to_player(self, player, x, y):
 		dx = player.x - x
 		dy = player.y - y
 		return math.sqrt(dx ** 2 + dy ** 2)
+
+	# returns true if monster is dead
+	def is_dead(self):
+		if self.health < 1:
+			return True
+		return False
 
 	# returns true if monster is hostile
 	def is_hostile(self):

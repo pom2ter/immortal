@@ -11,9 +11,10 @@ import commands
 import map
 import worldgen
 import messages
+import debug as dbg
 
 VERSION = 'v0.3.0'
-BUILD = '39'
+BUILD = '40'
 
 #size of the gui windows
 MAP_WIDTH = 70
@@ -49,7 +50,6 @@ SQUARED_TORCH_RADIUS = TORCH_RADIUS * TORCH_RADIUS
 fov_recompute = True
 fov_torch = False
 fov_map = None
-fov_noise = None
 fov_torchx = 0.0
 
 #dijkstra
@@ -57,11 +57,6 @@ path_dijk = None
 path_recalculate = False
 path_dx = 0
 path_dy = 0
-
-#different windows
-con = 0
-panel = 0
-ps = 0
 
 #worldmap
 worldmap = None
@@ -79,18 +74,15 @@ old_maps = []
 
 #miscellaneous variables
 char = None
-savefiles = []
 times_saved = 0
 player_move = False
 mouse_move = False
 mouse = libtcod.Mouse()
-rnd = None
 killer = None
 highscore = []
 redraw_gui = True
 font = 'small'
 hp_anim = []
-img = None
 font_width = 12
 font_height = 12
 curx = 0
@@ -103,11 +95,15 @@ terrain = [{'name': 'Mountain Peak', 'type': 'dirt', 'elevation': 0.950}, {'name
 		{'name': 'Ocean', 'type': 'very deep water', 'elevation': 0.000}, {'name': 'Dungeon', 'type': 'wall', 'elevation': 0.000}
 		]
 
+months = ['Phoenix', 'Manticore', 'Hydra', 'Golem', 'Centaur', 'Siren', 'Dragon', 'Werewolf', 'Gargoyle', 'Kraken', 'Basilisk', 'Unicorn']
+
 
 class Game(object):
 	def __init__(self):
-		global img, font_width, font_height, message, rnd, con, panel, ps, fov_noise, savefiles, items, tiles, monsters
+		global debug, img, font_width, font_height, rnd, con, panel, ps, fov_noise, savefiles, items, tiles, monsters
 		self.load_settings()
+		debug = dbg.Debug()
+		debug.enable = True
 		img = libtcod.image_load('title.png')
 		if font == 'large':
 			libtcod.console_set_custom_font('font-large.png', libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_ASCII_INROW)
@@ -160,14 +156,13 @@ class Game(object):
 
 	# new game setup
 	def new_game(self):
-		global message, player, char, game_state, worldmap, current_map
+		global message, player, char, game_state, worldmap, current_map, gametime
 		cardinal = [-(WORLDMAP_WIDTH - 1), -(WORLDMAP_WIDTH), -(WORLDMAP_WIDTH + 1), -1, 1, WORLDMAP_WIDTH - 1, WORLDMAP_WIDTH, WORLDMAP_WIDTH + 1]
 		message = messages.Message()
 		player = Player()
 		char = map.Object(libtcod.random_get_int(game.rnd, 40, 80), libtcod.random_get_int(game.rnd, 26, 46), player.icon, 'player', player.icon_color, blocks=True)
 		game_state = create_character()
 		if game_state == 'playing':
-#			util.msg_box('text', contents='Generating world map...', center=True, box_width=50, box_height=5)
 			contents = ["Generating world map..."]
 			messages.box(None, None, (SCREEN_WIDTH - (len(max(contents, key=len)) + 20)) / 2, (SCREEN_HEIGHT - (len(contents) + 4)) / 2, len(max(contents, key=len)) + 20, len(contents) + 4, contents, input=False, align=libtcod.CENTER, nokeypress=True)
 			worldmap = worldgen.World()
@@ -176,6 +171,7 @@ class Game(object):
 				border_maps[i] = map.Map('Wilderness', 'WD', 0, (worldmap.player_positiony * WORLDMAP_WIDTH) + worldmap.player_positionx + cardinal[i], typ=util.find_terrain_type((worldmap.player_positiony * WORLDMAP_WIDTH) + worldmap.player_positionx + cardinal[i]))
 			util.combine_maps()
 			message.new("Welcome to Immortal, " + player.name + '!', player.turns, libtcod.Color(96, 212, 238))
+			gametime = Time()
 			self.play_game()
 
 	# main game loop
@@ -193,7 +189,7 @@ class Game(object):
 			libtcod.console_flush()
 
 			# player movement
-			player_action = commands.handle_keys()
+			player_action = commands.keyboard_commands()
 			if player_action == 'save':
 				self.save_game()
 				break
@@ -239,6 +235,7 @@ class Game(object):
 		file['maps'] = old_maps
 		file['player'] = player
 		file['messages'] = message
+		file['gametime'] = gametime
 		file['fov_torch'] = fov_torch
 		file['game_state'] = game_state
 		file['times_saved'] = times_saved + 1
@@ -246,9 +243,8 @@ class Game(object):
 
 	# load the game using the shelve module
 	def load_game(self):
-		global worldmap, current_map, current_backup, border_maps, old_maps, player, message, fov_torch, game_state, times_saved, char, redraw_gui
+		global worldmap, current_map, current_backup, border_maps, old_maps, player, message, gametime, fov_torch, game_state, times_saved, char, redraw_gui
 		if len(savefiles) == 0:
-#			util.msg_box('text', 'Saved games', contents='There are no saved games.', center=True, box_height=5)
 			contents = ["There are no saved games."]
 			messages.box('Saved games', None, (SCREEN_WIDTH - (len(max(contents, key=len)) + 20)) / 2, (SCREEN_HEIGHT - (len(contents) + 4)) / 2, len(max(contents, key=len)) + 20, len(contents) + 4, contents, input=False, align=libtcod.CENTER)
 		else:
@@ -261,7 +257,6 @@ class Game(object):
 				pl = file['player']
 				desc.append(savefiles[i] + ', a level ' + str(pl.level) + ' ' + pl.gender + ' ' + pl.race + ' ' + pl.profession)
 				file.close()
-#			choice = util.msg_box('save', 'Saved games', contents=desc, box_height=max(16, len(savefiles) + 4))
 			choice = messages.box('Saved games', None, (SCREEN_WIDTH - (max(60, len(max(desc, key=len)) + 20))) / 2, ((SCREEN_HEIGHT + 1) - max(16, len(desc) + 4)) / 2, max(60, len(max(desc, key=len)) + 20), max(16, len(desc) + 4), desc, step=2, mouse_exit=True)
 			if choice != -1:
 				file = shelve.open('saves/' + savefiles[choice], 'r')
@@ -272,6 +267,7 @@ class Game(object):
 				old_maps = file['maps']
 				player = file['player']
 				message = file['messages']
+				gametime = file['gametime']
 				fov_torch = file['fov_torch']
 				game_state = file['game_state']
 				times_saved = file['times_saved']
@@ -284,12 +280,10 @@ class Game(object):
 	def help(self):
 		contents = open('data/help.txt', 'r').read()
 		contents = contents.split("\n")
-#		util.msg_box('text', 'Help', contents=contents, box_width=40, box_height=26)
 		messages.box('Help', None, (SCREEN_WIDTH - (len(max(contents, key=len)) + 20)) / 2, (SCREEN_HEIGHT - (len(contents) + 4)) / 2, len(max(contents, key=len)) + 20, len(contents) + 4, contents, input=False)
 
 	# loading and changing game settings
 	def settings(self):
-#		util.msg_box('settings', 'Settings', contents=font, box_width=40, box_height=8, center=True)
 		box = libtcod.console_new(40, 8)
 		messages.box_gui(box, 0, 0, 40, 8, libtcod.green)
 		libtcod.console_set_default_foreground(box, libtcod.black)
@@ -313,7 +307,6 @@ class Game(object):
 	def show_high_scores(self):
 		if os.path.exists('data/highscores.dat'):
 			self.load_high_scores()
-#			util.msg_box('highscore', 'High scores', contents=highscore, box_width=SCREEN_WIDTH, box_height=SCREEN_HEIGHT)
 			contents = []
 			for (score, line1, line2) in highscore:
 				contents.append(str(score).ljust(6) + line1)
@@ -321,7 +314,6 @@ class Game(object):
 				contents.append(" ")
 			messages.box('High scores', None, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, contents, input=False)
 		else:
-#			util.msg_box('text', 'High scores', contents="The high scores file is empty.", box_width=41, box_height=5, center=True)
 			contents = ["The high scores file is empty."]
 			messages.box('High scores', None, (SCREEN_WIDTH - (len(max(contents, key=len)) + 18)) / 2, (SCREEN_HEIGHT - (len(contents) + 4)) / 2, len(max(contents, key=len)) + 18, len(contents) + 4, contents, input=False, align=libtcod.CENTER)
 
@@ -360,7 +352,6 @@ class Game(object):
 			contents = ['Start a new game', 'Load a saved game', 'Read the manual', 'Change settings', 'View high scores', 'Quit game']
 			if choice == -1:
 				choice = 0
-#			choice = util.msg_box('main_menu', header=None, contents=contents, box_width=21, box_height=len(contents) + 2, default=choice)
 			choice = messages.box(None, None, ((SCREEN_WIDTH - 4) - len(max(contents, key=len))) / 2, ((SCREEN_HEIGHT + 4) - len(contents)) / 2, len(max(contents, key=len)) + 4, len(contents) + 2, contents, choice)
 
 			if choice == 0:  # start new game

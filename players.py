@@ -68,6 +68,7 @@ class Player(object):
 
 	def add_turn(self):
 		self.turns += 1
+		game.gametime.update(5)
 		game.player_move = True
 		game.redraw_gui = True
 		if self.turns % (50 - self.endurance) == 0:
@@ -99,7 +100,7 @@ class Player(object):
 			target.entity.take_damage(damage)
 			game.hp_anim.append([target, str(-damage), libtcod.light_yellow, 0])
 			game.message.new('You hit ' + target.entity.article + target.entity.name + ' for ' + str(damage) + ' pts of damage.', self.turns, libtcod.light_yellow)
-			if target.entity.death():
+			if target.entity.is_dead():
 				game.message.new('The ' + target.entity.name + ' dies!', self.turns, libtcod.light_orange)
 				self.gain_xp(target.entity.xp)
 				self.mks += 1
@@ -118,12 +119,6 @@ class Player(object):
 		ar += self.karma * 0.25
 		ar += self.combat_skills[self.find_weapon_type()].level * 0.2
 		return ar
-
-	# returns true when dead
-	def death(self):
-		if self.health < 1:
-			return True
-		return False
 
 	# calculates your defense rating
 	def defense_rating(self):
@@ -270,6 +265,12 @@ class Player(object):
 		hb += self.karma * 0.25
 		return int(hb)
 
+	# returns true when dead
+	def is_dead(self):
+		if self.health < 1:
+			return True
+		return False
+
 	# finds out if something in your inventory has expired
 	def item_expiration(self):
 		for i in range(len(self.inventory) - 1, 0, -1):
@@ -379,6 +380,55 @@ class Skill(object):
 				self.xp = 0
 				self.level += 1
 				game.message.new('Your ' + self.name + ' skill increased to ' + str(self.level) + '!', game.player.turns, libtcod.light_green)
+
+
+class Time(object):
+	def __init__(self):
+		self.day = libtcod.random_get_int(game.rnd, 1, 30)
+		self.month = libtcod.random_get_int(game.rnd, 1, 12)
+		self.year = libtcod.random_get_int(game.rnd, 500, 1000)
+		self.hour = 12
+		self.minute = 0
+
+	# update the game time
+	def update(self, min=1):
+		self.minute += min
+		if self.minute >= 60:
+			self.minute -= 60
+			self.hour += 1
+		if self.hour >= 24:
+			self.hour -= 24
+			self.day += 1
+		if self.day > 30:
+			self.day -= 30
+			self.month += 1
+		if self.month > 12:
+			self.month -= 12
+			self.year += 1
+
+	# returns a formatted string of the game time
+	def time_to_text(self):
+		if self.hour > 11:
+			hour = self.hour - 12
+			if hour == 0:
+				hour = 12
+			time = str(hour) + ':' + str(self.minute).rjust(2, "0") + ' pm'
+		else:
+			if hour == 0:
+				hour = 12
+			time = str(hour) + ':' + str(self.minute).rjust(2, "0") + ' am'
+		if self.day == 1:
+			suffix = "st"
+		elif self.day == 2:
+			suffix = "nd"
+		elif self.day == 3:
+			suffix = "rd"
+		else:
+			suffix = "th"
+		string = "The time is " + time
+		string += ", on the " + str(self.day) + suffix + " day of the month of the " + game.months[self.month - 1]
+		string += ", in the year " + str(self.year)
+		return string
 
 
 # output races and classes description during character generation

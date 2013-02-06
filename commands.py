@@ -5,81 +5,91 @@ import util
 import map
 
 
-def handle_keys():
+# handles all the keyboard input commands
+def keyboard_commands():
 	key = libtcod.Key()
 	ev = libtcod.sys_check_for_event(libtcod.EVENT_ANY, key, game.mouse)
 	if ev == libtcod.EVENT_KEY_PRESS:
+		key_char = chr(key.c)
 		if key.vk == libtcod.KEY_ENTER and key.lalt:
 			libtcod.console_set_fullscreen(not libtcod.console_is_fullscreen())
-
-		if game.game_state == 'playing':
-			if key.vk == libtcod.KEY_UP or key.vk == libtcod.KEY_KP8:
-				player_move(0, -1)
-			elif key.vk == libtcod.KEY_DOWN or key.vk == libtcod.KEY_KP2:
-				player_move(0, 1)
-			elif key.vk == libtcod.KEY_LEFT or key.vk == libtcod.KEY_KP4:
-				player_move(-1, 0)
-			elif key.vk == libtcod.KEY_RIGHT or key.vk == libtcod.KEY_KP6:
-				player_move(1, 0)
-			elif key.vk == libtcod.KEY_KP7:
-				player_move(-1, -1)
-			elif key.vk == libtcod.KEY_KP9:
-				player_move(1, -1)
-			elif key.vk == libtcod.KEY_KP1:
-				player_move(-1, 1)
-			elif key.vk == libtcod.KEY_KP3:
-				player_move(1, 1)
-			elif key.vk == libtcod.KEY_SPACE or key.vk == libtcod.KEY_KP5:
-				wait_turn()
-			elif key.vk == libtcod.KEY_TAB:
-				show_worldmap()
-			elif key.vk == libtcod.KEY_ESCAPE:
-				state = options_menu()
-				if state == 'save':
-					if save_game():
-						return state
-				if state == 'quit':
-					if quit_game():
-						return state
-			elif (key.lctrl or key.rctrl) and chr(key.c) == 'x':
+		elif key.vk == libtcod.KEY_TAB:
+			show_worldmap()
+		elif key.vk == libtcod.KEY_ESCAPE:
+			state = options_menu()
+			if state == 'save':
+				if save_game():
+					return state
+			if state == 'quit':
 				if quit_game():
-					return 'quit'
-			elif (key.lctrl or key.rctrl) and chr(key.c) == 's':
+					return state
+
+		elif key.vk == libtcod.KEY_UP or key.vk == libtcod.KEY_KP8:
+			player_move(0, -1)
+		elif key.vk == libtcod.KEY_DOWN or key.vk == libtcod.KEY_KP2:
+			player_move(0, 1)
+		elif key.vk == libtcod.KEY_LEFT or key.vk == libtcod.KEY_KP4:
+			player_move(-1, 0)
+		elif key.vk == libtcod.KEY_RIGHT or key.vk == libtcod.KEY_KP6:
+			player_move(1, 0)
+		elif key.vk == libtcod.KEY_KP7:
+			player_move(-1, -1)
+		elif key.vk == libtcod.KEY_KP9:
+			player_move(1, -1)
+		elif key.vk == libtcod.KEY_KP1:
+			player_move(-1, 1)
+		elif key.vk == libtcod.KEY_KP3:
+			player_move(1, 1)
+		elif key.vk == libtcod.KEY_SPACE or key.vk == libtcod.KEY_KP5:
+			wait_turn()
+
+		elif (key.lctrl or key.rctrl) and key.c != 0:
+			if key_char == 'd':
+				game.debug.menu()
+			elif key_char == 'e':
+				show_time()
+			elif key_char == 's':
 				if save_game():
 					return 'save'
+			elif key_char == 'x':
+				if quit_game():
+					return 'quit'
 			else:
-				key_char = chr(key.c)
+				game.message.new('Invalid command', game.player.turns)
+		elif (key.lalt or key.ralt) and key.c != 0:
+			game.message.new('Invalid command', game.player.turns)
 
-				if key_char == 'a':
-					attack()
-				if key_char == 'c':
-					close_door()
-				if key_char == 'd':
-					drop_item()
-				if key_char == 'e':
-					equip_item()
-				if key_char == 'g':
-					pickup_item()
-				if key_char == 'i':
-					inventory()
-				if key_char == 'l':
-					look()
-				if key_char == 'o':
-					open_door()
-				if key_char == 'r':
-					remove_item()
-				if key_char == 'u':
-					use_item()
-				if key_char == 'z':
-					ztats()
-				if key_char == '<':
-					climb_stairs('up')
-				if key_char == '>':
-					climb_stairs('down')
-				if key_char == '?':
-					help()
-
-				return 'didnt-take-turn'
+		elif key.c != 0:
+			if key_char == 'a':
+				attack()
+			elif key_char == 'c':
+				close_door()
+			elif key_char == 'd':
+				drop_item()
+			elif key_char == 'e':
+				equip_item()
+			elif key_char == 'g':
+				pickup_item()
+			elif key_char == 'i':
+				inventory()
+			elif key_char == 'l':
+				look()
+			elif key_char == 'o':
+				open_door()
+			elif key_char == 'r':
+				remove_item()
+			elif key_char == 'u':
+				use_item()
+			elif key_char == 'z':
+				ztats()
+			elif key_char == '<':
+				climb_stairs('up')
+			elif key_char == '>':
+				climb_stairs('down')
+			elif key_char == '?':
+				help()
+			else:
+				game.message.new('Invalid command', game.player.turns)
 
 
 # function that returns some coordinates when player needs to input a direction
@@ -554,6 +564,11 @@ def save_game():
 	return False
 
 
+# print current time
+def show_time():
+	game.message.new(game.gametime.time_to_text(), game.player.turns)
+
+
 # show a miniature world map
 def show_worldmap():
 #	util.msg_box('map', 'World Map', 'Red dot - You, Black dots - Dungeons, S - Save map', box_width=game.SCREEN_WIDTH, box_height=game.SCREEN_HEIGHT)
@@ -601,6 +616,7 @@ def use_item():
 def wait_turn():
 	game.message.new("Time passes...", game.player.turns)
 	game.player.add_turn()
+	game.fov_recompute = True
 
 
 # character sheet for stats

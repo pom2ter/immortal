@@ -350,6 +350,20 @@ def find_map_position(mapposx, mapposy):
 	return char
 
 
+# change fov radius base on time of day
+def fov_radius():
+	game.FOV_RADIUS = 9
+	if game.gametime.hour == 20:
+		game.FOV_RADIUS = 9 - (game.gametime.minute / 10)
+	if game.gametime.hour == 6:
+		game.FOV_RADIUS = 3 + (game.gametime.minute / 10)
+	if game.gametime.hour >= 21 or game.gametime.hour < 6 or game.current_map.location_id != 0:
+		game.FOV_RADIUS = 3
+	if game.fov_torch:
+		if game.FOV_RADIUS < game.TORCH_RADIUS:
+			game.FOV_RADIUS = game.TORCH_RADIUS
+
+
 # return a string with the names of all objects under the mouse
 def get_names_under_mouse():
 	(x, y) = (game.mouse.cx - game.MAP_X, game.mouse.cy - 1)
@@ -499,8 +513,9 @@ def showmap(box, box_width, box_height):
 
 # main functions for the building of overworld maps
 def change_maps(did, dlevel):
-	game.message.new('Loading/Generating maps...', game.player.turns)
 	render_map()
+	libtcod.console_print(game.con, 0, 0, 'Loading/Generating map chunks...')
+	libtcod.console_blit(game.con, 0, 0, game.MAP_WIDTH, game.MAP_HEIGHT, 0, game.MAP_X, game.MAP_Y)
 	libtcod.console_flush()
 
 	decombine_maps()
@@ -511,7 +526,6 @@ def change_maps(did, dlevel):
 	load_old_maps(did, dlevel)
 	combine_maps()
 	initialize_fov()
-	del game.message.log[len(game.message.log) - 1]
 	game.fov_recompute = True
 
 
@@ -751,13 +765,11 @@ def render_map():
 	# recompute FOV if needed (the player moved or something)
 	libtcod.console_clear(game.con)
 	find_map_viewport()
+	fov_radius()
 	if game.fov_recompute:
 		initialize_fov(True)
 		game.fov_recompute = False
-		if game.fov_torch:
-			libtcod.map_compute_fov(game.fov_map, game.char.x, game.char.y, game.TORCH_RADIUS, game.FOV_LIGHT_WALLS, game.FOV_ALGO)
-		else:
-			libtcod.map_compute_fov(game.fov_map, game.char.x, game.char.y, game.FOV_RADIUS, game.FOV_LIGHT_WALLS, game.FOV_ALGO)
+		libtcod.map_compute_fov(game.fov_map, game.char.x, game.char.y, game.FOV_RADIUS, game.FOV_LIGHT_WALLS, game.FOV_ALGO)
 
 	# 'torch' animation
 	if game.fov_torch:
@@ -850,6 +862,7 @@ def render_map():
 	game.char.draw(game.con)
 
 	libtcod.console_print(game.con, 0, 0, get_names_under_mouse())
-	libtcod.console_print(game.con, game.MAP_WIDTH - 9, 0, '(%3d fps)' % libtcod.sys_get_fps())
+	if game.debug.enable:
+		libtcod.console_print_ex(game.con, game.SCREEN_WIDTH - 20, 0, libtcod.BKGND_SET, libtcod.RIGHT, str(game.gametime.hour) + ':' + str(game.gametime.minute).rjust(2, '0') + ' (%3d fps)' % libtcod.sys_get_fps())
 	render_floating_text_animations()
 	libtcod.console_blit(game.con, 0, 0, game.MAP_WIDTH, game.MAP_HEIGHT, 0, game.MAP_X, game.MAP_Y)
