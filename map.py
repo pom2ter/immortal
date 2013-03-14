@@ -2,6 +2,7 @@ import libtcodpy as libtcod
 import math
 import copy
 import game
+import util
 
 
 class Map(object):
@@ -36,7 +37,7 @@ class Map(object):
 			x = libtcod.random_get_int(game.rnd, 0, self.map_width - w - 1)
 			y = libtcod.random_get_int(game.rnd, 0, self.map_height - h - 1)
 
-			#"Rect" class makes rectangles easier to work with
+			#'Rect' class makes rectangles easier to work with
 			new_room = Rect(x, y, w, h)
 
 			#run through the other rooms and see if they intersect with this one
@@ -48,7 +49,7 @@ class Map(object):
 
 			if not failed:
 				#this means there are no intersections, so this room is valid
-				#"paint" it to the map's tiles
+				#'paint' it to the map's tiles
 				self.create_room(new_room)
 
 				#center coordinates of new room, will be useful later
@@ -140,20 +141,22 @@ class Map(object):
 					x = libtcod.random_get_int(game.rnd, 0, self.map_width - 1)
 					y = libtcod.random_get_int(game.rnd, 0, self.map_height - 1)
 				self.tiles[x][y] = game.tiles.get_tile(icons[j])
+				if self.tiles[x][y].is_animate():
+					self.tiles[x][y] = copy.deepcopy(game.tiles.get_tile(icons[j]))
+					self.tiles[x][y].lerp = round(libtcod.random_get_float(game.rnd, 0, 1), 1)
 				if icons[j] == 'shallow water':
-					self.animation[x][y] = round(libtcod.random_get_float(game.rnd, 0, 1), 1)
 					if x + 1 <= self.map_width - 1:
-						self.tiles[x + 1][y] = game.tiles.get_tile(icons[j])
-						self.animation[x + 1][y] = round(libtcod.random_get_float(game.rnd, 0, 1), 1)
+						self.tiles[x + 1][y] = copy.deepcopy(game.tiles.get_tile(icons[j]))
+						self.tiles[x + 1][y].lerp = round(libtcod.random_get_float(game.rnd, 0, 1), 1)
 					if x - 1 >= 0:
-						self.tiles[x - 1][y] = game.tiles.get_tile(icons[j])
-						self.animation[x - 1][y] = round(libtcod.random_get_float(game.rnd, 0, 1), 1)
+						self.tiles[x - 1][y] = copy.deepcopy(game.tiles.get_tile(icons[j]))
+						self.tiles[x - 1][y].lerp = round(libtcod.random_get_float(game.rnd, 0, 1), 1)
 					if y + 1 <= self.map_height - 1:
-						self.tiles[x][y + 1] = game.tiles.get_tile(icons[j])
-						self.animation[x][y + 1] = round(libtcod.random_get_float(game.rnd, 0, 1), 1)
+						self.tiles[x][y + 1] = copy.deepcopy(game.tiles.get_tile(icons[j]))
+						self.tiles[x][y + 1].lerp = round(libtcod.random_get_float(game.rnd, 0, 1), 1)
 					if y - 1 >= 0:
-						self.tiles[x][y - 1] = game.tiles.get_tile(icons[j])
-						self.animation[x][y - 1] = round(libtcod.random_get_float(game.rnd, 0, 1), 1)
+						self.tiles[x][y - 1] = copy.deepcopy(game.tiles.get_tile(icons[j]))
+						self.tiles[x][y - 1].lerp = round(libtcod.random_get_float(game.rnd, 0, 1), 1)
 
 		# place dungeons on map
 		for (id, name, abbr, x, y) in game.worldmap.dungeons:
@@ -201,15 +204,13 @@ class Map(object):
 			self.tiles[x][y] = game.tiles.get_tile('floor')
 
 	# returns true if tile is blocked
-	def is_blocked(self, x, y):
-		#first test the map tile
+	def is_blocked(self, x, y, inc_obj=True):
 		if self.tiles[x][y].blocked:
 			return True
-
-		#now check for any blocking objects
-		for obj in self.objects:
-			if obj.blocks and obj.x == x and obj.y == y:
-				return True
+		if inc_obj:
+			for obj in self.objects:
+				if obj.blocks and obj.x == x and obj.y == y:
+					return True
 		return False
 
 	# place doors in dungeon level
@@ -224,7 +225,7 @@ class Map(object):
 	def place_monsters(self):
 		x = libtcod.random_get_int(game.rnd, 0, self.map_width - 1)
 		y = libtcod.random_get_int(game.rnd, 0, self.map_height - 1)
-		while (self.is_blocked(x, y) or self.tiles[x][y].type in ['deep water', 'very deep water']):
+		while (self.is_blocked(x, y) or self.tiles[x][y].name in ['deep water', 'very deep water']):
 			x = libtcod.random_get_int(game.rnd, 0, self.map_width - 1)
 			y = libtcod.random_get_int(game.rnd, 0, self.map_height - 1)
 
@@ -251,13 +252,13 @@ class Map(object):
 		for i in range(num_items):
 			x = libtcod.random_get_int(game.rnd, 0, self.map_width - 1)
 			y = libtcod.random_get_int(game.rnd, 0, self.map_height - 1)
-			while (self.is_blocked(x, y) or self.tiles[x][y].type in ['deep water', 'very deep water']):
+			while (self.is_blocked(x, y) or self.tiles[x][y].name in ['deep water', 'very deep water']):
 				x = libtcod.random_get_int(game.rnd, 0, self.map_width - 1)
 				y = libtcod.random_get_int(game.rnd, 0, self.map_height - 1)
 
 			dice = libtcod.random_get_int(game.rnd, 1, 100)
 			if dice <= 10:
-				d = game.items.get_item("gold")
+				d = game.items.get_item('gold')
 			elif dice <= 60:
 				d = game.items.get_item_by_level(1)
 			elif dice <= 90:
@@ -269,7 +270,7 @@ class Map(object):
 
 	# places up and down stairs on dungeon level
 	def place_stairs(self, rooms):
-		#place stairs going up based on character position
+		# place stairs going up based on character position
 		if self.location_level > 1:
 			self.tiles[game.char.x][game.char.y] = game.tiles.get_tile('stairs going up')
 			self.up_staircase = (game.char.x, game.char.y)
@@ -281,11 +282,26 @@ class Map(object):
 			game.char.x = x
 			game.char.y = y
 
-		#place stairs going down in a random spot
+		# place stairs going down in a random spot
 		stairs = libtcod.random_get_int(game.rnd, 1, len(rooms) - 1)
 		(x, y) = rooms[stairs].center()
 		self.tiles[x][y] = game.tiles.get_tile('stairs going down')
 		self.down_staircase = (x, y)
+
+	# place up to 3 traps in a dungeon level
+	def place_traps(self):
+		traps = libtcod.random_get_int(game.rnd, 1, 3)
+		for i in range(0, traps):
+			x = libtcod.random_get_int(game.rnd, 0, self.map_width - 1)
+			y = libtcod.random_get_int(game.rnd, 0, self.map_height - 1)
+			while (self.tiles[x][y].type != 'floor'):
+				x = libtcod.random_get_int(game.rnd, 0, self.map_width - 1)
+				y = libtcod.random_get_int(game.rnd, 0, self.map_height - 1)
+			self.tiles[x][y] = copy.deepcopy(game.tiles.find_trap())
+			temp_tile = game.tiles.get_tile('floor')
+			self.tiles[x][y].icon = temp_tile.icon
+			self.tiles[x][y].color = temp_tile.color
+			self.tiles[x][y].dark_color = libtcod.color_lerp(libtcod.black, temp_tile.color, 0.3)
 
 	# main function for generating a map
 	def generate(self, empty=False):
@@ -293,7 +309,7 @@ class Map(object):
 		self.objects = [game.char]
 		self.tiles = [[game.tiles.get_tile(default_block_tiles[self.type]) for y in range(self.map_height)] for x in range(self.map_width)]
 		self.explored = [[False for y in range(self.map_height)] for x in range(self.map_width)]
-		self.animation = [[0.0 for y in range(self.map_height)] for x in range(self.map_width)]
+		self.animation = [[None for y in range(self.map_height)] for x in range(self.map_width)]
 		game.fov_noise = libtcod.noise_new(1, 1.0, 1.0)
 		game.fov_torchx = 0.0
 
@@ -302,6 +318,7 @@ class Map(object):
 				rooms = self.create_dungeon()
 				self.place_doors()
 				self.place_objects()
+				self.place_traps()
 				self.place_stairs(rooms)
 			elif not self.type in ['Ocean', 'Mountains', 'Mountain Peak']:
 				self.create_outdoor_map(default_block_tiles[self.type])
@@ -309,7 +326,7 @@ class Map(object):
 
 
 class Tile(object):
-	#a tile of the map and its properties
+	# a tile of the map and its properties
 	def __init__(self, icon, name, color, dark_color, back_color, dark_back_color, anim_color, blocked, block_sight=None, article=None, flags=None, typ=None):
 		self.blocked = blocked
 		self.icon = icon
@@ -319,18 +336,25 @@ class Tile(object):
 		self.back_color = libtcod.Color(back_color[0], back_color[1], back_color[2])
 		self.dark_back_color = libtcod.Color(dark_back_color[0], dark_back_color[1], dark_back_color[2])
 		self.anim_color = libtcod.Color(anim_color[0], anim_color[1], anim_color[2])
+		self.lerp = 1.0
 		self.article = article
 		self.flags = flags
 		self.type = typ
 
-		#by default, if a tile is blocked, it also blocks sight
+		# by default, if a tile is blocked, it also blocks sight
 		if block_sight is None:
 			block_sight = blocked
 		self.block_sight = block_sight
 
 	# returns true if this tile animates
 	def is_animate(self):
-		if "anim" in self.flags:
+		if 'anim' in self.flags:
+			return True
+		return False
+
+	# returns true if this tile is invisible
+	def is_invisible(self):
+		if 'invisible' in self.flags:
 			return True
 		return False
 
@@ -353,11 +377,17 @@ class TileList(object):
 		libtcod.struct_add_flag(tile_type_struct, 'blocked')
 		libtcod.struct_add_flag(tile_type_struct, 'block_sight')
 		libtcod.struct_add_flag(tile_type_struct, 'anim')
-		libtcod.parser_run(parser, "data/tiles.txt", TileListener())
+		libtcod.struct_add_flag(tile_type_struct, 'invisible')
+		libtcod.struct_add_flag(tile_type_struct, 'fx_teleport')
+		libtcod.struct_add_flag(tile_type_struct, 'fx_stuck')
+		libtcod.struct_add_flag(tile_type_struct, 'fx_poison_gas')
+		libtcod.struct_add_flag(tile_type_struct, 'fx_sleep_gas')
+		libtcod.struct_add_flag(tile_type_struct, 'fx_fireball')
+		libtcod.parser_run(parser, 'data/tiles.txt', TileListener())
 
 	# add a tile to the list
 	def add_to_list(self, tile=None):
-		if not tile == None:
+		if tile is not None:
 			if 'blocked' in tile.flags:
 				tile.blocked = True
 			if 'block_sight' in tile.flags:
@@ -370,6 +400,13 @@ class TileList(object):
 			if name == tile.name:
 				return tile
 		return None
+
+	# get a trap tile from the list
+	def find_trap(self):
+		tile = libtcod.random_get_int(game.rnd, 0, len(self.list) - 1)
+		while self.list[tile].type != 'trap':
+			tile = libtcod.random_get_int(game.rnd, 0, len(self.list) - 1)
+		return self.list[tile]
 
 
 class TileListener(object):
@@ -387,10 +424,6 @@ class TileListener(object):
 			self.temp_tile.color.r = value.r
 			self.temp_tile.color.g = value.g
 			self.temp_tile.color.b = value.b
-		elif name == 'dark_color':
-			self.temp_tile.dark_color.r = value.r
-			self.temp_tile.dark_color.g = value.g
-			self.temp_tile.dark_color.b = value.b
 		elif name == 'back_color':
 			self.temp_tile.back_color.r = value.r
 			self.temp_tile.back_color.g = value.g
@@ -400,11 +433,11 @@ class TileListener(object):
 			self.temp_tile.anim_color.g = value.g
 			self.temp_tile.anim_color.b = value.b
 		else:
-			if name == "type":
+			if name == 'type':
 				self.temp_tile.type = value
-			if name == "icon":
+			if name == 'icon':
 				self.temp_tile.icon = value
-			if name == "article":
+			if name == 'article':
 				self.temp_tile.article = value
 		return True
 
@@ -420,7 +453,7 @@ class TileListener(object):
 
 
 class Rect(object):
-	#a rectangle on the map. used to characterize a room.
+	# a rectangle on the map. used to characterize a room.
 	def __init__(self, x, y, w, h):
 		self.x1 = x
 		self.y1 = y
@@ -449,10 +482,10 @@ class Object(object):
 		self.name = name
 		self.color = color
 		self.can_be_pickup = pickup
-		self.first_appearance = game.player.turns
+		self.first_appearance = game.turns
 		self.blocks = blocks
 
-		if entity != None:
+		if entity is not None:
 			self.entity = copy.deepcopy(entity)
 		else:
 			self.entity = entity
@@ -463,7 +496,7 @@ class Object(object):
 		if self.ai:  # let the AI component know who owns it
 			self.ai.owner = self
 
-		if item != None:
+		if item is not None:
 			self.item = copy.deepcopy(item)
 		else:
 			self.item = item
@@ -475,10 +508,9 @@ class Object(object):
 		if not map.is_blocked(self.x + dx, self.y + dy):
 			self.x += dx
 			self.y += dy
-			game.path_recalculate = True
-			game.player.add_turn()
+			util.add_turn()
 		elif map.tiles[self.x + dx][self.y + dy].type == 'wall':
-			game.message.new('The wall laughs at your attempt to pass through it.', game.player.turns)
+			game.message.new('The wall laughs at your attempt to pass through it.', game.turns)
 
 	# vector from this object to the target, and distance
 	def move_towards(self, target_x, target_y):
@@ -528,3 +560,110 @@ class Object(object):
 	# return coordinates of object
 	def coordinates(self):
 		return self.x, self.y
+
+
+# main functions for the building of overworld maps
+def change_maps(did, dlevel):
+	util.render_map()
+	util.loadgen_message()
+	decombine_maps()
+	game.old_maps.append(game.current_map)
+	for i in range(len(game.border_maps)):
+		game.old_maps.append(game.border_maps[i])
+	load_old_maps(did, dlevel)
+	combine_maps()
+	util.initialize_fov()
+	game.fov_recompute = True
+
+
+# check to see if destination map already exist, if so fetch it, if not generate it
+def load_old_maps(did, dlevel):
+	coord = [dlevel - game.WORLDMAP_WIDTH - 1, dlevel - game.WORLDMAP_WIDTH, dlevel - game.WORLDMAP_WIDTH + 1, dlevel - 1, dlevel + 1, dlevel + game.WORLDMAP_WIDTH - 1, dlevel + game.WORLDMAP_WIDTH, dlevel + game.WORLDMAP_WIDTH + 1, dlevel]
+	game.rnd = libtcod.random_new()
+	for j in range(len(coord)):
+		generate = True
+		for i in xrange(len(game.old_maps)):
+			if game.old_maps[i].location_id == did and game.old_maps[i].location_level == coord[j]:
+				temp_map = game.old_maps[i]
+				game.old_maps.pop(i)
+				generate = False
+				break
+		if generate:
+			temp_map = Map(game.current_map.location_name, game.current_map.location_abbr, did, coord[j], game.current_map.map_width, game.current_map.map_height, find_terrain_type(coord[j]))
+		if j == len(coord) - 1:
+			game.current_map = temp_map
+		else:
+			game.border_maps[j] = temp_map
+
+
+# combine some overworld maps into a super map
+def combine_maps():
+	mapid = [[0, 1, 2], [3, 0, 4], [5, 6, 7]]
+	super_map = Map(game.current_map.location_name, game.current_map.location_abbr, game.current_map.location_id, game.current_map.location_level, game.current_map.map_width * 3, game.current_map.map_height * 3, game.current_map.type, True)
+	game.char.x += game.current_map.map_width
+	game.char.y += game.current_map.map_height
+	super_map.objects.append(game.char)
+	for i in range(3):
+		for j in range(3):
+			if i == 1 and j == 1:
+				current = game.current_map
+			else:
+				current = game.border_maps[mapid[i][j]]
+			for x in range(game.current_map.map_width):
+				for y in range(game.current_map.map_height):
+					super_map.tiles[x + (j * game.current_map.map_width)][y + (i * game.current_map.map_height)] = current.tiles[x][y]
+					super_map.explored[x + (j * game.current_map.map_width)][y + (i * game.current_map.map_height)] = current.explored[x][y]
+					super_map.animation[x + (j * game.current_map.map_width)][y + (i * game.current_map.map_height)] = current.animation[x][y]
+			for obj in current.objects:
+				if obj.name != 'player':
+					obj.x = obj.x + (j * game.current_map.map_width)
+					obj.y = obj.y + (i * game.current_map.map_height)
+					super_map.objects.append(obj)
+	game.current_backup = game.current_map
+	game.current_map = super_map
+
+
+# decombine the super map into their respective overworld map
+def decombine_maps():
+	mapid = [[0, 1, 2], [3, 0, 4], [5, 6, 7]]
+	super_map = game.current_map
+	for i in range(3):
+		for j in range(3):
+			if i == 1 and j == 1:
+				current = game.current_backup
+			else:
+				current = game.border_maps[mapid[i][j]]
+			for x in range(current.map_width):
+				for y in range(current.map_height):
+					current.tiles[x][y] = super_map.tiles[x + (j * current.map_width)][y + (i * current.map_height)]
+					current.explored[x][y] = super_map.explored[x + (j * current.map_width)][y + (i * current.map_height)]
+					current.animation[x][y] = super_map.animation[x + (j * current.map_width)][y + (i * current.map_height)]
+			current.objects = []
+			current.objects.append(game.char)
+			for obj in super_map.objects:
+				if obj.name != 'player' and obj.x / (super_map.map_width / 3) == j and obj.y / (super_map.map_height / 3) == i:
+					obj.x = obj.x - (j * (super_map.map_width / 3))
+					obj.y = obj.y - (i * (super_map.map_height / 3))
+					current.objects.append(obj)
+			if i == 1 and j == 1:
+				game.current_map = current
+			else:
+				game.border_maps[mapid[i][j]] = current
+	if game.char.x >= game.current_map.map_width * 2:
+		game.char.x -= game.current_map.map_width * 2
+	elif game.char.x >= game.current_map.map_width:
+		game.char.x -= game.current_map.map_width
+	if game.char.y >= game.current_map.map_height * 2:
+		game.char.y -= game.current_map.map_height * 2
+	elif game.char.y >= game.current_map.map_height:
+		game.char.y -= game.current_map.map_height
+
+
+# find terrain type base on elevation
+def find_terrain_type(coord):
+	heightmap = game.worldmap.hm_list[coord]
+	for i in range(len(game.terrain)):
+		if heightmap >= game.terrain[i]['elevation']:
+			terrain = game.terrain[i]['name']
+			break
+	return terrain

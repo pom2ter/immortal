@@ -5,9 +5,9 @@ import util
 import map
 import messages
 
-RACES = ["Human", "Elf", "Dwarf", "Halfling"]
-CLASSES = ["Fighter", "Rogue", "Priest", "Mage", "Explorer"]
-GENDER = ["Male", "Female"]
+RACES = ['Human', 'Elf', 'Dwarf', 'Halfling']
+CLASSES = ['Fighter', 'Rogue', 'Priest', 'Mage', 'Explorer']
+GENDER = ['Male', 'Female']
 COMBAT_SKILLS = ['Sword', 'Axe', 'Mace', 'Dagger', 'Polearm', 'Staff', 'Bow', 'Missile', 'Hands']
 RACE_DESC = ["Humans are the most common race in the Realm. They are average at everything and thus don't have any racial bonuses or penalties.",
 			"Elves are more dedicated to magic than combat. They have bonuses to intelligence and wisdow but penalties to strength and endurance.",
@@ -21,8 +21,7 @@ CLASS_DESC = ["Fighters are master of arms especially melee weapons but their ma
 BASE_STATS = [[9, 9, 9, 9, 9], [12, 9, 7, 8, 11], [10, 12, 8, 9, 8], [10, 8, 9, 12, 8], [7, 9, 13, 10, 8], [9, 9, 9, 9, 9],
 				[7, 9, 11, 10, 8], [10, 9, 9, 9, 10], [8, 12, 10, 10, 7], [8, 8, 11, 13, 7], [5, 9, 15, 11, 7], [7, 9, 11, 10, 8],
 				[11, 7, 7, 8, 12], [14, 7, 5, 7, 14], [12, 10, 6, 8, 11], [12, 6, 7, 11, 11], [9, 7, 11, 9, 11], [11, 7, 7, 8, 12],
-				[8, 10, 10, 8, 9], [11, 10, 8, 7, 11], [9, 13, 9, 8, 8], [9, 9, 10, 11, 8], [6, 10, 14, 9, 8], [8, 10, 10, 8, 9]
-				]
+				[8, 10, 10, 8, 9], [11, 10, 8, 7, 11], [9, 13, 9, 8, 8], [9, 9, 10, 11, 8], [6, 10, 14, 9, 8], [8, 10, 10, 8, 9]]
 EXPERIENCE_TABLES = [0, 100, 250, 500, 800, 1250, 1750, 2450, 3250, 4150, 5200, 6400, 7800, 9400, 11200, 13200, 16400, 18800, 21400, 24200, 27000]
 FIGHTER_HP_GAIN = 10
 FIGHTER_MP_GAIN = 2
@@ -60,57 +59,42 @@ class Player(object):
 		self.base_mana = 0
 		self.inventory = []
 		self.equipment = []
-		self.turns = 0
 		self.gold = 0
 		self.mks = 0
 		self.combat_skills = [Skill('Sword', 0, 0), Skill('Axe', 0, 0), Skill('Mace', 0, 0), Skill('Dagger', 0, 0), Skill('Polearm', 0, 0),
 								Skill('Staff', 0, 0), Skill('Bow', 0, 0), Skill('Missile', 0, 0), Skill('Hands', 0, 0)]
-
-	def add_turn(self):
-		self.turns += 1
-		game.gametime.update(5)
-		game.player_move = True
-		game.redraw_gui = True
-		if self.turns % (50 - self.endurance) == 0:
-			self.health += 1
-			if self.health > self.max_health:
-				self.health = self.max_health
-			else:
-				game.hp_anim.append([game.char, '1', libtcod.green, 0])
-		self.item_expiration()
-		self.item_is_active()
-		game.fov_torch = any("torchlight" in x.flags and x.active for x in game.player.inventory)
+		self.thieving_skills = [Skill('Detect Traps', 0, 0, 'detect_trap'), Skill('Disarm Traps', 0, 0)]
+		self.flags = []
 
 	# attack an enemy
 	def attack(self, target):
 		if not target.entity.is_hostile():
 			target.entity.becomes_hostile()
 		#thac0 = 20 - (self.attack_rating() - target.entity.defense_rating)
-		#dice = util.roll_dice(1, 20, 1, 0)
-		attacker = util.roll_dice(1, 50, 1, 0)
-		defender = util.roll_dice(1, 50, 1, 0)
-		if attacker != 1 and defender != 50 and ((attacker + self.attack_rating()) >= (defender + target.entity.defense_rating) or attacker == 50 or defender == 1):
+		#dice = util.roll_dice(1, 20)
+		attacker = util.roll_dice(1, 50)
+		defender = util.roll_dice(1, 50)
+		if (attacker != 1 and defender != 50 and ((attacker + self.attack_rating()) >= (defender + target.entity.defense_rating) or attacker == 50 or defender == 1)) or target.entity.is_disabled():
 		#if dice != 1 and (dice >= thac0 or dice == 20):
 			damage = 0
 			for i in range(len(self.equipment)):
-				if self.equipment[i].type == "weapon":
+				if self.equipment[i].type == 'weapon':
 					damage = self.equipment[i].dice.roll_dice()
 			if damage == 0:
-				damage = util.roll_dice(1, 4, 1, 0)
-			target.entity.take_damage(damage)
-			game.hp_anim.append([target, str(-damage), libtcod.light_yellow, 0])
-			game.message.new('You hit ' + target.entity.article + target.entity.name + ' for ' + str(damage) + ' pts of damage.', self.turns, libtcod.light_yellow)
+				damage = util.roll_dice(1, 4)
+			game.message.new('You hit ' + target.entity.article + target.entity.name + ' for ' + str(damage) + ' pts of damage.', game.turns, libtcod.light_yellow)
+			target.entity.take_damage(target.x, target.y, damage, 'player')
 			if target.entity.is_dead():
-				game.message.new('The ' + target.entity.name + ' dies!', self.turns, libtcod.light_orange)
+				game.message.new('The ' + target.entity.name + ' dies!', game.turns, libtcod.light_orange)
 				self.gain_xp(target.entity.xp)
 				self.mks += 1
 				target.entity.loot(target.x, target.y)
 				target.delete()
 			self.combat_skills[self.find_weapon_type()].gain_xp(2)
 		else:
-			game.message.new('You missed the ' + target.entity.name + '.', self.turns)
+			game.message.new('You missed the ' + target.entity.name + '.', game.turns)
 			self.combat_skills[self.find_weapon_type()].gain_xp(1)
-		self.add_turn()
+		util.add_turn()
 
 	# calculates your attack rating
 	def attack_rating(self):
@@ -119,6 +103,32 @@ class Player(object):
 		ar += self.karma * 0.25
 		ar += self.combat_skills[self.find_weapon_type()].level * 0.2
 		return ar
+
+	# returns true if player can move
+	def can_move(self):
+		if 'stuck' in self.flags:
+			return False
+		return True
+
+	# checks player condition each turn
+	def check_condition(self):
+		if 'stuck' in self.flags:
+			dice = libtcod.random_get_int(game.rnd, 1, 100)
+			if self.strength + (self.karma / 2) >= dice:
+				game.message.new('You can move freely again!', game.turns)
+				self.flags.remove('stuck')
+		if 'poison' in self.flags:
+			dice = libtcod.random_get_int(game.rnd, 1, 100)
+			if self.endurance + (self.karma / 2) >= dice:
+				game.message.new('You are no longer poisoned.', game.turns)
+				self.flags.remove('poison')
+			else:
+				self.take_damage(1, 'poison')
+		if 'sleep' in self.flags:
+			dice = libtcod.random_get_int(game.rnd, 1, 100)
+			if self.wisdom + (self.karma / 2) >= dice:
+				game.message.new('You wake up.', game.turns)
+				self.flags.remove('sleep')
 
 	# calculates your defense rating
 	def defense_rating(self):
@@ -141,10 +151,15 @@ class Player(object):
 			self.inventory.pop(pos)
 
 		if qty == 1:
-			game.message.new('You drop ' + obj.item.article + obj.item.name, game.player.turns, libtcod.red)
+			game.message.new('You drop ' + obj.item.article + obj.item.name, game.turns, libtcod.red)
 		else:
-			game.message.new('You drop ' + str(qty) + ' ' + obj.item.plural, game.player.turns, libtcod.red)
-		game.player.add_turn()
+			game.message.new('You drop ' + str(qty) + ' ' + obj.item.plural, game.turns, libtcod.red)
+		if game.current_map.tiles[game.char.x][game.char.y].type == 'trap':
+			if self.is_above_ground():
+				util.spring_trap(game.char.x, game.char.y, obj.item.article.capitalize() + obj.item.name)
+			else:
+				util.spring_trap(game.char.x, game.char.y)
+		util.add_turn()
 
 	# equips an item
 	def equip_item(self, item):
@@ -153,21 +168,21 @@ class Player(object):
 				item = i
 				break
 
-		if self.inventory[item].type == "armor":
+		if self.inventory[item].type == 'armor':
 			for flags in self.inventory[item].flags:
-				if "armor_" in flags:
+				if 'armor_' in flags:
 					flag = flags
 			switch = any(flag in obj.flags for obj in self.equipment)
-		elif self.inventory[item].type == "ring":
+		elif self.inventory[item].type == 'ring':
 			switch = False
-			if sum("armor_ring" in obj.flags for obj in self.equipment) > 1:
+			if sum('armor_ring' in obj.flags for obj in self.equipment) > 1:
 				switch = True
 		else:
 			switch = any(self.inventory[item].type in obj.type for obj in self.equipment)
 
 		if switch:
 			for obj in reversed(self.equipment):
-				if self.inventory[item].type == "armor":
+				if self.inventory[item].type == 'armor':
 					if flag in obj.flags:
 						self.inventory.append(obj)
 						self.equipment.remove(obj)
@@ -177,59 +192,59 @@ class Player(object):
 						self.inventory.append(obj)
 						self.equipment.remove(obj)
 						old = obj
-						if obj.type == "ring":
+						if obj.type == 'ring':
 							break
 
 		self.equipment.append(self.inventory[item])
-		self.add_turn()
+		util.add_turn()
 		if switch:
-			game.message.new("You unequip the " + old.unidentified_name + " before equipping the " + self.inventory[item].unidentified_name, self.turns, libtcod.green)
+			game.message.new('You unequip the ' + old.unidentified_name + ' before equipping the ' + self.inventory[item].unidentified_name, game.turns, libtcod.green)
 		else:
-			game.message.new("You equip the " + self.inventory[item].unidentified_name, self.turns, libtcod.green)
+			game.message.new('You equip the ' + self.inventory[item].unidentified_name, game.turns, libtcod.green)
 		self.inventory.pop(item)
 
 	# returns the weapon type
 	def find_weapon_type(self):
 		weapon_type = 8
 		for i in range(len(self.equipment)):
-			if "weapon_sword" in self.equipment[i].flags:
+			if 'weapon_sword' in self.equipment[i].flags:
 				return 0
-			if "weapon_axe" in self.equipment[i].flags:
+			if 'weapon_axe' in self.equipment[i].flags:
 				return 1
-			if "weapon_mace" in self.equipment[i].flags:
+			if 'weapon_mace' in self.equipment[i].flags:
 				return 2
-			if "weapon_dagger" in self.equipment[i].flags:
+			if 'weapon_dagger' in self.equipment[i].flags:
 				return 3
-			if "weapon_polearm" in self.equipment[i].flags:
+			if 'weapon_polearm' in self.equipment[i].flags:
 				return 4
-			if "weapon_staff" in self.equipment[i].flags:
+			if 'weapon_staff' in self.equipment[i].flags:
 				return 5
-			if "weapon_bow" in self.equipment[i].flags:
+			if 'weapon_bow' in self.equipment[i].flags:
 				return 6
-			if "weapon_missile" in self.equipment[i].flags:
+			if 'weapon_missile' in self.equipment[i].flags:
 				return 7
 		return weapon_type
 
 	# stuff to do when you gain a level
 	def gain_level(self):
 		self.level += 1
-		if self.profession == "Fighter":
+		if self.profession == 'Fighter':
 			hp_increase = libtcod.random_get_int(game.rnd, 2, FIGHTER_HP_GAIN)
 			mp_increase = libtcod.random_get_int(game.rnd, 2, FIGHTER_MP_GAIN)
 			self.stat_gain(50, 15, 5, 10, 20)
-		if self.profession == "Rogue":
+		if self.profession == 'Rogue':
 			hp_increase = libtcod.random_get_int(game.rnd, 2, ROGUE_HP_GAIN)
 			mp_increase = libtcod.random_get_int(game.rnd, 2, ROGUE_MP_GAIN)
 			self.stat_gain(20, 50, 10, 10, 10)
-		if self.profession == "Priest":
+		if self.profession == 'Priest':
 			hp_increase = libtcod.random_get_int(game.rnd, 2, PRIEST_HP_GAIN)
 			mp_increase = libtcod.random_get_int(game.rnd, 2, PRIEST_MP_GAIN)
 			self.stat_gain(20, 10, 10, 50, 10)
-		if self.profession == "Mage":
+		if self.profession == 'Mage':
 			hp_increase = libtcod.random_get_int(game.rnd, 2, MAGE_HP_GAIN)
 			mp_increase = libtcod.random_get_int(game.rnd, 2, MAGE_MP_GAIN)
 			self.stat_gain(10, 15, 50, 20, 5)
-		if self.profession == "Explorer":
+		if self.profession == 'Explorer':
 			hp_increase = libtcod.random_get_int(game.rnd, 2, MAGE_HP_GAIN)
 			mp_increase = libtcod.random_get_int(game.rnd, 2, MAGE_MP_GAIN)
 			self.stat_gain(20, 20, 20, 20, 20)
@@ -245,19 +260,25 @@ class Player(object):
 		self.xp += xp
 		if self.xp >= EXPERIENCE_TABLES[self.level]:
 			self.gain_level()
-			game.message.new('You are now level ' + str(self.level) + '!', self.turns, libtcod.green)
+			game.message.new('You are now level ' + str(self.level) + '!', game.turns, libtcod.green)
 
 	# heals the amount of health
 	def heal_health(self, hp):
+		old_health = self.health
 		self.health += hp
 		if self.health > self.max_health:
 			self.health = self.max_health
+		if old_health < self.health:
+			game.hp_anim.append([game.char.x, game.char.y, str(self.health - old_health), libtcod.green, 0])
 
 	# heals the amount of mana
 	def heal_mana(self, mp):
+		old_mana = self.mana
 		self.mana += mp
 		if self.mana > self.max_mana:
 			self.mana = self.max_mana
+		if old_mana < self.mana:
+			game.hp_anim.append([game.char.x, game.char.y, str(self.mana - old_mana), libtcod.green, 0])
 
 	# calculates your health bonus
 	def health_bonus(self):
@@ -265,9 +286,21 @@ class Player(object):
 		hb += self.karma * 0.25
 		return int(hb)
 
+	# returns true if player is not touching the ground
+	def is_above_ground(self):
+		if 'levitate' in self.flags:
+			return True
+		return False
+
 	# returns true when dead
 	def is_dead(self):
 		if self.health < 1:
+			return True
+		return False
+
+	# returns true if player is disabled
+	def is_disabled(self):
+		if 'sleep' in self.flags:
 			return True
 		return False
 
@@ -275,18 +308,18 @@ class Player(object):
 	def item_expiration(self):
 		for i in range(len(self.inventory) - 1, 0, -1):
 			if self.inventory[i].is_expired():
-				game.message.new('An item in your inventory just rotted away.', self.turns, libtcod.red)
+				game.message.new('An item in your inventory just rotted away.', game.turns, libtcod.red)
 				self.inventory.pop(i)
 
 	# finds out if an active item in your inventory has expired
 	def item_is_active(self):
 		for i in range(len(self.inventory) - 1, 0, -1):
 			if self.inventory[i].is_active():
-				game.message.new('An item in your inventory just rotted away.', self.turns, libtcod.red)
+				game.message.new('An item in your inventory just rotted away.', game.turns, libtcod.red)
 				self.inventory.pop(i)
 		for i in range(len(self.equipment) - 1, 0, -1):
 			if self.equipment[i].is_active():
-				game.message.new('An item in your inventory just rotted away.', self.turns, libtcod.red)
+				game.message.new('An item in your inventory just rotted away.', game.turns, libtcod.red)
 				self.equipment.pop(i)
 
 	# calculates your mana bonus
@@ -308,9 +341,10 @@ class Player(object):
 		score = 0
 		score += (self.strength + self.dexterity + self.intelligence + self.wisdom + self.endurance + self.karma) / 5
 		score += sum(c.level for c in self.combat_skills) / 20
+		score += sum(c.level for c in self.thieving_skills) / 20
 		score += self.xp / 5
 		score += (self.level - 1) * 50
-		score += self.turns / 50
+		score += game.turns / 50
 		score += len(game.old_maps) * 10
 		score += self.mks * 10
 		return score
@@ -342,14 +376,24 @@ class Player(object):
 			self.endurance += 1
 
 	# reduce your health
-	def take_damage(self, damage):
+	def take_damage(self, damage, source):
 		self.health -= damage
+		game.hp_anim.append([game.char.x, game.char.y, str(damage), libtcod.red, 0])
+		if self.is_dead():
+			game.message.new('You die...', game.turns, libtcod.light_orange)
+			game.message.new('*** Press space ***', game.turns)
+			game.killer = source
+			game.game_state = 'death'
+		elif source != 'poison':
+			if "sleep" in self.flags:
+				game.message.new('You wake up.', game.turns)
+				self.flags.remove('sleep')
 
 	# unequip an item
 	def unequip(self, item):
 		self.inventory.append(self.equipment[item])
-		self.add_turn()
-		game.message.new("You unequip the " + self.equipment[item].unidentified_name, self.turns, libtcod.red)
+		util.add_turn()
+		game.message.new('You unequip the ' + self.equipment[item].unidentified_name, game.turns, libtcod.red)
 		self.equipment.pop(item)
 
 	# return carried weight
@@ -360,17 +404,29 @@ class Player(object):
 
 
 class Skill(object):
-	def __init__(self, name, level, xp):
+	def __init__(self, name, level, xp, flag=None):
 		self.name = name
 		self.level = level
 		self.xp = xp
+		self.flag = flag
+
+	# set a skill active
+	def active(self):
+		if self.flag is None:
+			game.message.new("You can't use this skill that way.", game.turns)
+		elif self.flag in game.player.flags:
+			game.player.flags.remove(self.flag)
+			game.message.new('The ' + self.name + ' skill is now inactive', game.turns)
+		else:
+			game.player.flags.append(self.flag)
+			game.message.new('The ' + self.name + ' skill is now active', game.turns)
 
 	# raises your skill level
 	def gain_level(self):
 		if self.level < 100:
 			self.level += 1
 			self.xp = 0
-			game.message.new('Your ' + self.name + ' skill increased to ' + str(self.level) + '!', game.player.turns, libtcod.light_green)
+			game.message.new('Your ' + self.name + ' skill increased to ' + str(self.level) + '!', game.turns, libtcod.light_green)
 
 	# raises your skill xp
 	def gain_xp(self, xp):
@@ -379,7 +435,7 @@ class Skill(object):
 			if self.xp >= (self.level + 1) * 5:
 				self.xp = 0
 				self.level += 1
-				game.message.new('Your ' + self.name + ' skill increased to ' + str(self.level) + '!', game.player.turns, libtcod.light_green)
+				game.message.new('Your ' + self.name + ' skill increased to ' + str(self.level) + '!', game.turns, libtcod.light_green)
 
 
 class Time(object):
@@ -412,22 +468,22 @@ class Time(object):
 			hour = self.hour - 12
 			if hour == 0:
 				hour = 12
-			time = str(hour) + ':' + str(self.minute).rjust(2, "0") + ' pm'
+			time = str(hour) + ':' + str(self.minute).rjust(2, '0') + ' pm'
 		else:
 			if hour == 0:
 				hour = 12
-			time = str(hour) + ':' + str(self.minute).rjust(2, "0") + ' am'
+			time = str(hour) + ':' + str(self.minute).rjust(2, '0') + ' am'
 		if self.day == 1:
-			suffix = "st"
+			suffix = 'st'
 		elif self.day == 2:
-			suffix = "nd"
+			suffix = 'nd'
 		elif self.day == 3:
-			suffix = "rd"
+			suffix = 'rd'
 		else:
-			suffix = "th"
-		string = "The time is " + time
-		string += ", on the " + str(self.day) + suffix + " day of the month of the " + game.months[self.month - 1]
-		string += ", in the year " + str(self.year)
+			suffix = 'th'
+		string = 'The time is ' + time
+		string += ', on the ' + str(self.day) + suffix + ' day of the month of the ' + game.months[self.month - 1]
+		string += ', in the year ' + str(self.year)
 		return string
 
 
@@ -492,7 +548,7 @@ def create_character():
 		cs_width = game.SCREEN_WIDTH - 35
 		cs = libtcod.console_new(cs_width, game.SCREEN_HEIGHT)
 		stats = libtcod.console_new(35, game.SCREEN_HEIGHT)
-		show_stats_panel(stats, "")
+		show_stats_panel(stats, '')
 
 		libtcod.console_print(cs, 1, 1, 'CHARACTER GENERATION')
 		libtcod.console_print(cs, 1, 3, 'Enter a name for your character: _' + game.player.name)
@@ -500,7 +556,7 @@ def create_character():
 		libtcod.console_flush()
 
 		game.player.name = messages.input('chargen', cs, 34, 3, stats, min=3, max=17)
-		show_stats_panel(stats, "")
+		show_stats_panel(stats, '')
 		libtcod.console_rect(cs, 0, 2, cs_width, game.SCREEN_HEIGHT, True, libtcod.BKGND_SET)
 		libtcod.console_print(cs, 1, 3, 'Select a gender:')
 		libtcod.console_blit(cs, 0, 0, cs_width, game.SCREEN_HEIGHT, 0, 0, 0)
@@ -518,7 +574,7 @@ def create_character():
 		index = chargen_options(1, 5, 12, RACES, 'race')
 		game.player.race = RACES[index]
 
-		show_stats_panel(stats, game.player.gender + " " + game.player.race, index * 5)
+		show_stats_panel(stats, game.player.gender + ' ' + game.player.race, index * 5)
 		libtcod.console_rect(cs, 0, 2, cs_width, game.SCREEN_HEIGHT, True, libtcod.BKGND_SET)
 		libtcod.console_print(cs, 1, 3, 'Select a class:')
 		libtcod.console_print(cs, 16, 4, 'Modifiers')
@@ -531,7 +587,7 @@ def create_character():
 		indexr = chargen_options(1, 5, 12, CLASSES, 'class')
 		game.player.profession = CLASSES[indexr]
 
-		show_stats_panel(stats, game.player.gender + " " + game.player.race + " " + game.player.profession, (index * 5) + indexr + 1, 0)
+		show_stats_panel(stats, game.player.gender + ' ' + game.player.race + ' ' + game.player.profession, (index * 5) + indexr + 1, 0)
 		libtcod.console_rect(cs, 0, 2, cs_width, game.SCREEN_HEIGHT, True, libtcod.BKGND_SET)
 		libtcod.console_print(cs, 1, 3, 'Options:')
 		libtcod.console_blit(cs, 0, 0, cs_width, game.SCREEN_HEIGHT, 0, 0, 0)
@@ -539,19 +595,19 @@ def create_character():
 		while not final_choice:
 			choice = chargen_options(1, 5, 33, ['Reroll stats', 'Keep character and start game', 'Cancel and restart', 'Return to main menu'], None)
 			if choice == 0:
-				show_stats_panel(stats, game.player.gender + " " + game.player.race + " " + game.player.profession, (index * 5) + indexr + 1, 0)
+				show_stats_panel(stats, game.player.gender + ' ' + game.player.race + ' ' + game.player.profession, (index * 5) + indexr + 1, 0)
 			if choice == 1:
 				final_choice = True
-				return "playing"
+				return 'playing'
 			if choice == 2:
 				game.player.name = ""
 				final_choice = True
 			if choice == 3:
 				final_choice = True
-				return "quit"
+				return 'quit'
 
 
-# output the stats panel
+# output the stats panel during character generation
 def show_stats_panel(stats, text, attr=-1, roll=-1):
 	libtcod.console_set_default_foreground(stats, libtcod.light_red)
 	libtcod.console_print(stats, 2, 1, game.player.name)
@@ -600,11 +656,11 @@ def show_stats_panel(stats, text, attr=-1, roll=-1):
 def starting_stats():
 	game.player.inventory = []
 	game.player.gold = libtcod.random_get_int(game.rnd, 1, 50)
-	if game.player.profession == "Fighter":
+	if game.player.profession == 'Fighter':
 		game.player.base_health = libtcod.random_get_int(game.rnd, 2, FIGHTER_HP_GAIN)
 		game.player.base_mana = libtcod.random_get_int(game.rnd, 2, FIGHTER_MP_GAIN)
-		game.player.inventory.append(copy.deepcopy(game.items.get_item("short sword")))
-		game.player.inventory.append(copy.deepcopy(game.items.get_item("leather armor")))
+		game.player.inventory.append(copy.deepcopy(game.items.get_item('short sword')))
+		game.player.inventory.append(copy.deepcopy(game.items.get_item('leather armor')))
 		game.player.combat_skills[0].level = 20
 		game.player.combat_skills[1].level = 20
 		game.player.combat_skills[2].level = 10
@@ -612,43 +668,45 @@ def starting_stats():
 		game.player.combat_skills[4].level = 20
 		game.player.combat_skills[8].level = 5
 
-	if game.player.profession == "Rogue":
+	if game.player.profession == 'Rogue':
 		game.player.base_health = libtcod.random_get_int(game.rnd, 2, ROGUE_HP_GAIN)
 		game.player.base_mana = libtcod.random_get_int(game.rnd, 2, ROGUE_MP_GAIN)
-		game.player.inventory.append(copy.deepcopy(game.items.get_item("dagger")))
-		game.player.inventory.append(copy.deepcopy(game.items.get_item("leather armor")))
+		game.player.inventory.append(copy.deepcopy(game.items.get_item('dagger')))
+		game.player.inventory.append(copy.deepcopy(game.items.get_item('leather armor')))
 		game.player.combat_skills[3].level = 15
 		game.player.combat_skills[6].level = 5
 		game.player.combat_skills[7].level = 5
 		game.player.combat_skills[8].level = 5
+		game.player.thieving_skills[0].level = 15
+		game.player.thieving_skills[1].level = 15
 
-	if game.player.profession == "Priest":
+	if game.player.profession == 'Priest':
 		game.player.base_health = libtcod.random_get_int(game.rnd, 2, PRIEST_HP_GAIN)
 		game.player.base_mana = libtcod.random_get_int(game.rnd, 2, PRIEST_MP_GAIN)
-		game.player.inventory.append(copy.deepcopy(game.items.get_item("mace")))
-		game.player.inventory.append(copy.deepcopy(game.items.get_item("leather armor")))
+		game.player.inventory.append(copy.deepcopy(game.items.get_item('mace')))
+		game.player.inventory.append(copy.deepcopy(game.items.get_item('leather armor')))
 		game.player.combat_skills[0].level = 5
 		game.player.combat_skills[2].level = 15
 		game.player.combat_skills[3].level = 5
 		game.player.combat_skills[5].level = 5
 
-	if game.player.profession == "Mage":
+	if game.player.profession == 'Mage':
 		game.player.base_health = libtcod.random_get_int(game.rnd, 2, MAGE_HP_GAIN)
 		game.player.base_mana = libtcod.random_get_int(game.rnd, 2, MAGE_MP_GAIN)
-		game.player.inventory.append(copy.deepcopy(game.items.get_item("quarterstaff")))
-		game.player.inventory.append(copy.deepcopy(game.items.get_item("robes")))
+		game.player.inventory.append(copy.deepcopy(game.items.get_item('quarterstaff')))
+		game.player.inventory.append(copy.deepcopy(game.items.get_item('robes')))
 		game.player.combat_skills[5].level = 15
 
-	if game.player.profession == "Explorer":
+	if game.player.profession == 'Explorer':
 		game.player.base_health = libtcod.random_get_int(game.rnd, 2, EXPLORER_HP_GAIN)
 		game.player.base_mana = libtcod.random_get_int(game.rnd, 2, EXPLORER_MP_GAIN)
-		game.player.inventory.append(copy.deepcopy(game.items.get_item("dagger")))
-		game.player.inventory.append(copy.deepcopy(game.items.get_item("leather armor")))
+		game.player.inventory.append(copy.deepcopy(game.items.get_item('dagger')))
+		game.player.inventory.append(copy.deepcopy(game.items.get_item('leather armor')))
 
-	game.player.inventory.append(copy.deepcopy(game.items.get_item("torch")))
-	game.player.inventory.append(copy.deepcopy(game.items.get_item("torch")))
-	game.player.inventory.append(copy.deepcopy(game.items.get_item("ration")))
-	game.player.inventory.append(copy.deepcopy(game.items.get_item("torch")))
+	game.player.inventory.append(copy.deepcopy(game.items.get_item('torch')))
+	game.player.inventory.append(copy.deepcopy(game.items.get_item('torch')))
+	game.player.inventory.append(copy.deepcopy(game.items.get_item('ration')))
+	game.player.inventory.append(copy.deepcopy(game.items.get_item('torch')))
 	game.player.set_max_health()
 	game.player.set_max_mana()
 	game.player.health = game.player.max_health

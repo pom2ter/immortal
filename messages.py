@@ -12,8 +12,12 @@ class Message(object):
 	# remove old messages if needed
 	def delete(self):
 		for (line, color, turn) in reversed(self.log):
-			if game.player.turns - turn > 10:
+			if game.turns - turn > 10:
 				self.log.remove((line, color, turn))
+
+	# empty message log
+	def empty(self):
+		self.log = []
 
 	# add a new message to the queue
 	def new(self, new_msg, turn, color=libtcod.white):
@@ -33,15 +37,19 @@ class Message(object):
 # main function for the text box
 def box(header, footer, startx, starty, width, height, contents, default=0, input=True, color=libtcod.green, align=libtcod.LEFT, nokeypress=False, inv=False, step=1, mouse_exit=False):
 	box = libtcod.console_new(width, height)
-	if color != None:
+	if startx == 'center_screenx':
+		startx = (game.SCREEN_WIDTH - (len(max(contents, key=len)) + 16)) / 2
+	if starty == 'center_screeny':
+		starty = (game.SCREEN_HEIGHT - (len(contents) + 4)) / 2
+	if color is not None:
 		box_gui(box, 0, 0, width, height, color)
-	if header != None:
+	if header is not None:
 		libtcod.console_set_default_foreground(box, libtcod.black)
 		libtcod.console_set_default_background(box, color)
 		libtcod.console_print_ex(box, width / 2, 0, libtcod.BKGND_SET, libtcod.CENTER, ' ' + header + ' ')
 	libtcod.console_set_default_foreground(box, color)
 	libtcod.console_set_default_background(box, libtcod.black)
-	if footer != None:
+	if footer is not None:
 		libtcod.console_print_ex(box, width / 2, height - 1, libtcod.BKGND_SET, libtcod.CENTER, '[ ' + footer + ' ]')
 	if mouse_exit:
 		libtcod.console_print_ex(box, width - 5, 0, libtcod.BKGND_SET, libtcod.LEFT, '[x]')
@@ -142,7 +150,7 @@ def input(typ, con, posx, posy, con2=None, min=0, max=100):
 	x = 0
 	done = False
 	key = libtcod.Key()
-	while done == False:
+	while done is False:
 		libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, key, libtcod.Mouse(), True)
 		if key.vk == libtcod.KEY_BACKSPACE and x > 0:
 			libtcod.console_set_char(con, x + posx - 1, posy, chr(95))
@@ -152,14 +160,12 @@ def input(typ, con, posx, posy, con2=None, min=0, max=100):
 			x -= 1
 		elif key.vk == libtcod.KEY_ENTER:
 			if not len(command) in range(min, max):
-#				util.msg_box('text', 'Error', contents='Names must be between 3 to 16 characters!', center=True, box_width=50, box_height=5)
 				contents = ['Names must be between ' + str(min) + ' to ' + str(max - 1) + ' characters!']
-				game.messages.box('Error', None, (game.SCREEN_WIDTH - 50) / 2, (game.SCREEN_HEIGHT - (len(contents) + 4)) / 2, 50, len(contents) + 4, contents, input=False, align=libtcod.CENTER)
+				game.messages.box('Error', None, 'center_screenx', 'center_screeny', 51, len(contents) + 4, contents, input=False, align=libtcod.CENTER)
 			elif typ == 'chargen':
 				if command.lower() in game.savefiles:
-#					util.msg_box('text', 'Error', contents='Name already exist!', center=True, box_width=50, box_height=5)
 					contents = ['Name already exist!']
-					game.messages.box('Error', None, (game.SCREEN_WIDTH - 50) / 2, (game.SCREEN_HEIGHT - (len(contents) + 4)) / 2, 50, len(contents) + 4, contents, input=False, align=libtcod.CENTER)
+					game.messages.box('Error', None, 'center_screenx', 'center_screeny', 51, len(contents) + 4, contents, input=False, align=libtcod.CENTER)
 				else:
 					done = True
 			else:
@@ -173,7 +179,7 @@ def input(typ, con, posx, posy, con2=None, min=0, max=100):
 			x += 1
 
 		libtcod.console_blit(con, 0, 0, game.SCREEN_WIDTH - 35, game.SCREEN_HEIGHT, 0, 0, 0)
-		if not con2 == None:
+		if con2 is not None:
 			libtcod.console_blit(con2, 0, 0, 35, game.SCREEN_HEIGHT, 0, game.SCREEN_WIDTH - 35, 0)
 		libtcod.console_flush()
 	return command

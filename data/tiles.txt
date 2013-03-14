@@ -163,3 +163,53 @@ tile_type "high mountains" {
 	blocked
 	block_sight
 }
+
+tile_type "fireball trap" {
+	type = "trap"
+	icon = "^"	
+	icon_color = "191,0,0"
+	dark_color = "64,0,0"
+	article = "a "
+	invisible
+	fx_fireball
+}
+
+tile_type "poison gas trap" {
+	type = "trap"
+	icon = "^"	
+	icon_color = "127,255,0"
+	dark_color = "42,85,0"
+	article = "a "
+	invisible
+	fx_poison_gas
+}
+
+tile_type "sleeping gas trap" {
+	type = "trap"
+	icon = "^"	
+	icon_color = "255,255,255"
+	dark_color = "85,85,85"
+	article = "a "
+	invisible
+	fx_sleep_gas
+}
+
+tile_type "teleport trap" {
+	type = "trap"
+	icon = "^"	
+	icon_color = "115,220,255"
+	dark_color = "38,73,85"
+	article = "a "
+	invisible
+	fx_teleport
+}
+
+tile_type "bear trap" {
+	type = "trap"
+	icon = "^"	
+	icon_color = "159,159,159"
+	dark_color = "53,53,53"
+	article = "a "
+	invisible
+	fx_stuck
+}

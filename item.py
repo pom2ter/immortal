@@ -1,5 +1,6 @@
 import libtcodpy as libtcod
 import game
+import util
 
 
 class Item(object):
@@ -25,6 +26,7 @@ class Item(object):
 		self.quantity = 1
 		self.active = False
 
+	# return true (equal) if conditions are met
 	def __eq__(self, other):
 		return self.name == other.name and self.charges == other.charges and self.flags == other.flags and self.duration == other.duration and self.cur_expiration == other.cur_expiration and self.active == other.active
 
@@ -38,7 +40,7 @@ class Item(object):
 
 	# return true if item can be equipped
 	def is_equippable(self):
-		if "equippable" in self.flags:
+		if 'equippable' in self.flags:
 			return True
 		return False
 
@@ -52,64 +54,62 @@ class Item(object):
 
 	# return true if item is identified, always returns true for now
 	def is_identified(self):
-		if "identified" in self.flags:
+		if 'identified' in self.flags:
 			return True
 		return True
 
 	# picks up the item
 	def pick_up(self, ts, silent=False):
-		if self.type == "money":
+		if self.type == 'money':
 			gold = libtcod.random_get_int(game.rnd, 1, 100)
 			if not silent:
-				game.message.new('You pick up ' + str(gold) + ' gold pieces', game.player.turns, libtcod.gold)
+				game.message.new('You pick up ' + str(gold) + ' gold pieces', game.turns, libtcod.gold)
 			game.player.gold += gold
 		else:
 			if not silent:
-				game.message.new('You pick up ' + self.article + self.unidentified_name, game.player.turns, libtcod.green)
+				game.message.new('You pick up ' + self.article + self.unidentified_name, game.turns, libtcod.green)
 			self.turn_created = ts
 			game.player.inventory.append(self)
 		if not silent:
-			game.player.add_turn()
+			util.add_turn()
 
 	# use the item
 	def use(self):
-		if "usable" in self.flags:
-			if "healing" in self.flags:
+		if 'usable' in self.flags:
+			if 'healing' in self.flags:
 				if game.player.health == game.player.max_health:
-					game.message.new("You are already at max health.", game.player.turns)
+					game.message.new('You are already at max health.', game.turns)
 				else:
 					heal = self.dice.roll_dice()
 					game.player.heal_health(heal)
-					game.hp_anim.append([game.char, str(heal), libtcod.green, 0])
-					game.message.new("You gain " + str(heal) + " hit points.", game.player.turns, libtcod.green)
+					game.message.new('You gain ' + str(heal) + ' hit points.', game.turns, libtcod.green)
 
-			if "mana_healing" in self.flags:
+			if 'mana_healing' in self.flags:
 				if game.player.mana == game.player.max_mana:
-					game.message.new("Your mana is already at maximum.", game.player.turns)
+					game.message.new('Your mana is already at maximum.', game.turns)
 				else:
 					heal = self.dice.roll_dice()
 					game.player.heal_mana(heal)
-					game.hp_anim.append([game.char, str(heal), libtcod.green, 0])
-					game.message.new("You gain " + str(heal) + " mana points.", game.player.turns, libtcod.green)
+					game.message.new('You gain ' + str(heal) + ' mana points.', game.turns, libtcod.green)
 
-			if "torchlight" in self.flags:
+			if 'torchlight' in self.flags:
 				if self.active:
 					self.active = False
-					game.fov_torch = any("torchlight" in x.flags and x.active for x in game.player.inventory)
-					game.message.new("You extenguish the " + self.name, game.player.turns, libtcod.gold)
+					game.fov_torch = any('torchlight' in x.flags and x.active for x in game.player.inventory)
+					game.message.new('You extenguish the ' + self.name, game.turns, libtcod.gold)
 				else:
 					game.fov_torch = True
 					self.active = True
-					game.message.new("You light the " + self.name, game.player.turns, libtcod.gold)
+					game.message.new('You light the ' + self.name, game.turns, libtcod.gold)
 				game.fov_recompute = True
 
 			if self.charges > 0:
 				self.charges -= 1
 				if self.charges == 0:
 					game.player.inventory.remove(self)
-			game.player.add_turn()
+			util.add_turn()
 		else:
-			game.message.new("You can't use that item.", game.player.turns)
+			game.message.new("You can't use that item.", game.turns)
 
 
 class ItemList(object):
@@ -168,11 +168,11 @@ class ItemList(object):
 		libtcod.struct_add_flag(item_type_struct, 'corpse_troll')
 		libtcod.struct_add_flag(item_type_struct, 'corpse_gnoll')
 		libtcod.struct_add_flag(item_type_struct, 'corpse_hound')
-		libtcod.parser_run(parser, "data/items.txt", ItemListener())
+		libtcod.parser_run(parser, 'data/items.txt', ItemListener())
 
 	# add an item to the list
 	def add_to_list(self, item=None):
-		if item != None:
+		if item is not None:
 			self.list.append(item)
 
 	# get an item from the list
@@ -185,7 +185,7 @@ class ItemList(object):
 	# choose a random item based on its level
 	def get_item_by_level(self, level):
 		item = libtcod.random_get_int(game.rnd, 0, len(self.list) - 1)
-		while (self.list[item].level > level) or (self.list[item].type == "corpse"):
+		while (self.list[item].level > level) or (self.list[item].type == 'corpse'):
 			item = libtcod.random_get_int(game.rnd, 0, len(self.list) - 1)
 		return self.list[item]
 
@@ -227,28 +227,28 @@ class ItemListener(object):
 			self.temp_item.dice.multiplier = value.multiplier
 			self.temp_item.dice.bonus = value.addsub
 		else:
-			if name == "type":
+			if name == 'type':
 				self.temp_item.type = value
-			if name == "cost":
+			if name == 'cost':
 				self.temp_item.cost = value
-			if name == "icon":
+			if name == 'icon':
 				self.temp_item.icon = value
-			if name == "level":
+			if name == 'level':
 				self.temp_item.level = value
-			if name == "weight":
+			if name == 'weight':
 				self.temp_item.weight = value
-			if name == "article":
+			if name == 'article':
 				self.temp_item.article = value
-			if name == "charge":
+			if name == 'charge':
 				self.temp_item.charges = value
-			if name == "duration":
+			if name == 'duration':
 				self.temp_item.duration = value
-			if name == "expiration":
+			if name == 'expiration':
 				self.temp_item.expiration = value
 				self.temp_item.cur_expiration = value
-			if name == "unidentified_name":
+			if name == 'unidentified_name':
 				self.temp_item.unidentified_name = value
-			if name == "plural":
+			if name == 'plural':
 				self.temp_item.plural = value
 		return True
 

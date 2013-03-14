@@ -11,10 +11,11 @@ import commands
 import map
 import worldgen
 import messages
+import effects
 import debug as dbg
 
-VERSION = 'v0.3.0'
-BUILD = '40'
+VERSION = 'v0.3.1'
+BUILD = '41'
 
 #size of the gui windows
 MAP_WIDTH = 70
@@ -54,9 +55,8 @@ fov_torchx = 0.0
 
 #dijkstra
 path_dijk = None
-path_recalculate = False
-path_dx = 0
-path_dy = 0
+path_dx = -1
+path_dy = -1
 
 #worldmap
 worldmap = None
@@ -87,13 +87,14 @@ font_width = 12
 font_height = 12
 curx = 0
 cury = 0
+turns = 0
+traps = []
 
 terrain = [{'name': 'Mountain Peak', 'type': 'dirt', 'elevation': 0.950}, {'name': 'Mountains', 'type': 'dirt', 'elevation': 0.850},
 		{'name': 'Hills', 'type': 'dirt', 'elevation': 0.700}, {'name': 'Forest', 'type': 'grass', 'elevation': 0.250},
 		{'name': 'Plains', 'type': 'grass', 'elevation': 0.175}, {'name': 'Coast', 'type': 'sand', 'elevation': 0.120},
 		{'name': 'Shore', 'type': 'shallow water', 'elevation': 0.110}, {'name': 'Sea', 'type': 'deep water', 'elevation': 0.060},
-		{'name': 'Ocean', 'type': 'very deep water', 'elevation': 0.000}, {'name': 'Dungeon', 'type': 'wall', 'elevation': 0.000}
-		]
+		{'name': 'Ocean', 'type': 'very deep water', 'elevation': 0.000}, {'name': 'Dungeon', 'type': 'wall', 'elevation': 0.000}]
 
 months = ['Phoenix', 'Manticore', 'Hydra', 'Golem', 'Centaur', 'Siren', 'Dragon', 'Werewolf', 'Gargoyle', 'Kraken', 'Basilisk', 'Unicorn']
 
@@ -160,17 +161,17 @@ class Game(object):
 		cardinal = [-(WORLDMAP_WIDTH - 1), -(WORLDMAP_WIDTH), -(WORLDMAP_WIDTH + 1), -1, 1, WORLDMAP_WIDTH - 1, WORLDMAP_WIDTH, WORLDMAP_WIDTH + 1]
 		message = messages.Message()
 		player = Player()
-		char = map.Object(libtcod.random_get_int(game.rnd, 40, 80), libtcod.random_get_int(game.rnd, 26, 46), player.icon, 'player', player.icon_color, blocks=True)
+		char = map.Object(libtcod.random_get_int(rnd, 40, 80), libtcod.random_get_int(rnd, 26, 46), player.icon, 'player', player.icon_color, blocks=True)
 		game_state = create_character()
 		if game_state == 'playing':
-			contents = ["Generating world map..."]
-			messages.box(None, None, (SCREEN_WIDTH - (len(max(contents, key=len)) + 20)) / 2, (SCREEN_HEIGHT - (len(contents) + 4)) / 2, len(max(contents, key=len)) + 20, len(contents) + 4, contents, input=False, align=libtcod.CENTER, nokeypress=True)
+			contents = ['Generating world map...']
+			messages.box(None, None, 'center_screenx', 'center_screeny', len(max(contents, key=len)) + 16, len(contents) + 4, contents, input=False, align=libtcod.CENTER, nokeypress=True)
 			worldmap = worldgen.World()
 			current_map = map.Map('Wilderness', 'WD', 0, (worldmap.player_positiony * WORLDMAP_WIDTH) + worldmap.player_positionx, typ='Forest')
 			for i in range(len(border_maps)):
-				border_maps[i] = map.Map('Wilderness', 'WD', 0, (worldmap.player_positiony * WORLDMAP_WIDTH) + worldmap.player_positionx + cardinal[i], typ=util.find_terrain_type((worldmap.player_positiony * WORLDMAP_WIDTH) + worldmap.player_positionx + cardinal[i]))
-			util.combine_maps()
-			message.new("Welcome to Immortal, " + player.name + '!', player.turns, libtcod.Color(96, 212, 238))
+				border_maps[i] = map.Map('Wilderness', 'WD', 0, (worldmap.player_positiony * WORLDMAP_WIDTH) + worldmap.player_positionx + cardinal[i], typ=map.find_terrain_type((worldmap.player_positiony * WORLDMAP_WIDTH) + worldmap.player_positionx + cardinal[i]))
+			map.combine_maps()
+			message.new('Welcome to Immortal, ' + player.name + '!', turns, libtcod.Color(96, 212, 238))
 			gametime = Time()
 			self.play_game()
 
@@ -189,7 +190,10 @@ class Game(object):
 			libtcod.console_flush()
 
 			# player movement
-			player_action = commands.keyboard_commands()
+			if not game.player.is_disabled():
+				player_action = commands.keyboard_commands()
+			else:
+				util.add_turn()
 			if player_action == 'save':
 				self.save_game()
 				break
@@ -202,14 +206,30 @@ class Game(object):
 			# let monsters take their turn
 			if player_move:
 				monsters.spawn()
-				for object in reversed(current_map.objects):
-					if object.item != None:
-						if object.item.is_active():
-							object.delete()
-						if object.item.is_expired() or ((game.player.turns >= (object.first_appearance + object.item.expiration)) and object.item.expiration > 0):
-							object.delete()
-					if object.entity != None:
-						object.x, object.y = object.entity.take_turn(object.x, object.y)
+				for obj in reversed(current_map.objects):
+					if obj.item is not None:
+						if obj.item.is_active():
+							obj.delete()
+						if obj.item.is_expired() or ((turns >= (obj.first_appearance + obj.item.expiration)) and obj.item.expiration > 0):
+							obj.delete()
+					if obj.entity is not None and game_state != 'death':
+						if not obj.entity.is_disabled():
+							obj.x, obj.y = obj.entity.take_turn(obj.x, obj.y)
+							if game.current_map.tiles[obj.x][obj.y].type == 'trap' and not obj.entity.is_above_ground() and obj.entity.can_move():
+								if game.current_map.tiles[obj.x][obj.y].is_invisible():
+									util.spring_trap(obj.x, obj.y, obj.entity.article.capitalize() + obj.entity.name)
+								elif libtcod.map_is_in_fov(game.fov_map, obj.x, obj.y):
+									game.message.new('The ' + obj.entity.name + ' sidestep the ' + game.current_map.tiles[obj.x][obj.y].name, game.turns)
+						obj.entity.check_condition(obj.x, obj.y)
+						if obj.entity.is_dead():
+							if libtcod.map_is_in_fov(game.fov_map, obj.x, obj.y):
+								game.message.new('The ' + obj.entity.name + ' dies!', game.turns, libtcod.light_orange)
+							else:
+								game.message.new('You hear a dying scream.', game.turns)
+							obj.entity.loot(obj.x, obj.y)
+							obj.delete()
+				if game_state != 'death':
+					effects.check_active_effects()
 				player_move = False
 
 			# death screen summary
@@ -235,6 +255,7 @@ class Game(object):
 		file['maps'] = old_maps
 		file['player'] = player
 		file['messages'] = message
+		file['turns'] = turns
 		file['gametime'] = gametime
 		file['fov_torch'] = fov_torch
 		file['game_state'] = game_state
@@ -243,10 +264,10 @@ class Game(object):
 
 	# load the game using the shelve module
 	def load_game(self):
-		global worldmap, current_map, current_backup, border_maps, old_maps, player, message, gametime, fov_torch, game_state, times_saved, char, redraw_gui
+		global worldmap, current_map, current_backup, border_maps, old_maps, player, message, turns, gametime, fov_torch, game_state, times_saved, char, redraw_gui
 		if len(savefiles) == 0:
-			contents = ["There are no saved games."]
-			messages.box('Saved games', None, (SCREEN_WIDTH - (len(max(contents, key=len)) + 20)) / 2, (SCREEN_HEIGHT - (len(contents) + 4)) / 2, len(max(contents, key=len)) + 20, len(contents) + 4, contents, input=False, align=libtcod.CENTER)
+			contents = ['There are no saved games.']
+			messages.box('Saved games', None, 'center_screenx', 'center_screeny', len(max(contents, key=len)) + 16, len(contents) + 4, contents, input=False, align=libtcod.CENTER)
 		else:
 			desc = []
 			for i in range(len(savefiles)):
@@ -259,6 +280,8 @@ class Game(object):
 				file.close()
 			choice = messages.box('Saved games', None, (SCREEN_WIDTH - (max(60, len(max(desc, key=len)) + 20))) / 2, ((SCREEN_HEIGHT + 1) - max(16, len(desc) + 4)) / 2, max(60, len(max(desc, key=len)) + 20), max(16, len(desc) + 4), desc, step=2, mouse_exit=True)
 			if choice != -1:
+				contents = ['Loading.....']
+				messages.box(None, None, 'center_screenx', 'center_screeny', len(max(contents, key=len)) + 16, len(contents) + 4, contents, input=False, align=libtcod.CENTER, nokeypress=True)
 				file = shelve.open('saves/' + savefiles[choice], 'r')
 				worldmap = file['worldmap']
 				current_map = file['current_map']
@@ -267,6 +290,7 @@ class Game(object):
 				old_maps = file['maps']
 				player = file['player']
 				message = file['messages']
+				turns = file['turns']
 				gametime = file['gametime']
 				fov_torch = file['fov_torch']
 				game_state = file['game_state']
@@ -274,13 +298,16 @@ class Game(object):
 				file.close()
 				char = current_map.objects[0]
 				worldmap.create_map_images(1)
+				message.empty()
+				message.new('Welcome back, ' + player.name + '!', turns, libtcod.Color(96, 212, 238))
+				#print worldmap.dungeons
 				self.play_game()
 
 	# basic help text
 	def help(self):
 		contents = open('data/help.txt', 'r').read()
-		contents = contents.split("\n")
-		messages.box('Help', None, (SCREEN_WIDTH - (len(max(contents, key=len)) + 20)) / 2, (SCREEN_HEIGHT - (len(contents) + 4)) / 2, len(max(contents, key=len)) + 20, len(contents) + 4, contents, input=False)
+		contents = contents.split('\n')
+		messages.box('Help', None, 'center_screenx', 'center_screeny', len(max(contents, key=len)) + 16, len(contents) + 4, contents, input=False)
 
 	# loading and changing game settings
 	def settings(self):
@@ -310,12 +337,12 @@ class Game(object):
 			contents = []
 			for (score, line1, line2) in highscore:
 				contents.append(str(score).ljust(6) + line1)
-				contents.append("      " + line2)
-				contents.append(" ")
+				contents.append('      ' + line2)
+				contents.append(' ')
 			messages.box('High scores', None, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, contents, input=False)
 		else:
-			contents = ["The high scores file is empty."]
-			messages.box('High scores', None, (SCREEN_WIDTH - (len(max(contents, key=len)) + 18)) / 2, (SCREEN_HEIGHT - (len(contents) + 4)) / 2, len(max(contents, key=len)) + 18, len(contents) + 4, contents, input=False, align=libtcod.CENTER)
+			contents = ['The high scores file is empty.']
+			messages.box('High scores', None, 'center_screenx', 'center_screeny', len(max(contents, key=len)) + 16, len(contents) + 4, contents, input=False, align=libtcod.CENTER)
 
 	def load_high_scores(self):
 		global highscore
@@ -326,8 +353,9 @@ class Game(object):
 
 	# reset some variables after saving of quitting current game
 	def reset_game(self):
-		global savefiles, redraw_gui, fov_recompute
+		global savefiles, turns, redraw_gui, fov_recompute
 		savefiles = os.listdir('saves')
+		turns = 0
 		redraw_gui = True
 		fov_recompute = True
 

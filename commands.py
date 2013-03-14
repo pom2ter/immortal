@@ -55,9 +55,9 @@ def keyboard_commands():
 				if quit_game():
 					return 'quit'
 			else:
-				game.message.new('Invalid command', game.player.turns)
+				game.message.new('Invalid command', game.turns)
 		elif (key.lalt or key.ralt) and key.c != 0:
-			game.message.new('Invalid command', game.player.turns)
+			game.message.new('Invalid command', game.turns)
 
 		elif key.c != 0:
 			if key_char == 'a':
@@ -72,6 +72,8 @@ def keyboard_commands():
 				pickup_item()
 			elif key_char == 'i':
 				inventory()
+			elif key_char == 'k':
+				use_skill()
 			elif key_char == 'l':
 				look()
 			elif key_char == 'o':
@@ -83,13 +85,13 @@ def keyboard_commands():
 			elif key_char == 'z':
 				ztats()
 			elif key_char == '<':
-				climb_stairs('up')
+				climb_up_stairs()
 			elif key_char == '>':
-				climb_stairs('down')
+				climb_down_stairs()
 			elif key_char == '?':
 				help()
 			else:
-				game.message.new('Invalid command', game.player.turns)
+				game.message.new('Invalid command', game.turns)
 
 
 # function that returns some coordinates when player needs to input a direction
@@ -133,11 +135,19 @@ def player_move(dx, dy):
 	#attack if target found, move otherwise
 	if target is not None:
 		game.player.attack(target)
+	elif not game.player.can_move():
+		game.message.new("You can't move!", game.turns)
+		util.add_turn()
 	else:
 		if game.current_map.tiles[game.char.x + dx][game.char.y + dy].type == 'door':
 			open_door(dx, dy)
 		else:
 			game.char.move(dx, dy, game.current_map)
+			if game.current_map.tiles[game.char.x][game.char.y].type == 'trap' and not game.player.is_above_ground():
+				if game.current_map.tiles[game.char.x][game.char.y].is_invisible():
+					util.spring_trap(game.char.x, game.char.y)
+				else:
+					game.message.new('You sidestep the ' + game.current_map.tiles[game.char.x][game.char.y].name, game.turns)
 			if game.current_map.location_id == 0:
 				coordx = [-1, 0, 1]
 				coordy = [-(game.WORLDMAP_WIDTH), 0, game.WORLDMAP_WIDTH]
@@ -147,14 +157,14 @@ def player_move(dx, dy):
 					level = game.current_map.location_level + coordx[game.char.x / px] + coordy[game.char.y / py]
 					game.worldmap.player_positionx += dx
 					game.worldmap.player_positiony += dy
-					util.change_maps(0, level)
-		util.items_at_feet()
+					map.change_maps(0, level)
+			util.items_at_feet()
 		game.fov_recompute = True
 
 
 # attack someone (primarily use for ranged weapons)
 def attack():
-	game.message.new('Attack... (Arrow keys to move cursor, ENTER to attack, ESC to exit)', game.player.turns)
+	game.message.new('Attack... (Arrow keys to move cursor, ENTER to attack, ESC to exit)', game.turns)
 	util.render_map()
 	target = None
 	dx = game.char.x - game.curx
@@ -189,12 +199,12 @@ def attack():
 				if obj.entity and obj.x == px and obj.y == py:
 					target = obj
 			if not game.current_map.explored[px][py]:
-				game.message.new("You can't fight darkness.", game.player.turns)
+				game.message.new("You can't fight darkness.", game.turns)
 			elif target is None:
-				game.message.new('There is no one here.', game.player.turns)
+				game.message.new('There is no one here.', game.turns)
 			else:
 				if abs(px - game.char.x) > 1 or abs(py - game.char.y) > 1:
-					game.message.new('Target is out of range.', game.player.turns)
+					game.message.new('Target is out of range.', game.turns)
 					target = None
 			break
 
@@ -207,77 +217,97 @@ def attack():
 		game.player.attack(target)
 
 
-# climb up/down stairs
-def climb_stairs(direction):
-	decombine, combine = False, False
+# climb down some stairs
+def climb_down_stairs():
 	location_id = game.current_map.location_id
 	location_name = game.current_map.location_name
 	location_abbr = game.current_map.location_abbr
+	op = (0, 0, 0)
 
-	if (direction == 'up' and game.current_map.tiles[game.char.x][game.char.y].icon != "<") or (direction == 'down' and game.current_map.tiles[game.char.x][game.char.y].icon != ">"):
-		game.message.new('You see no stairs going in that direction!', game.player.turns)
+	if game.current_map.tiles[game.char.x][game.char.y].icon != '>':
+		game.message.new('You see no stairs going in that direction!', game.turns)
 	else:
-		if direction == 'down':
-			if game.current_map.location_id > 0:
-				level = game.current_map.location_level + 1
-				game.message.new('You climb down the stairs.', game.player.turns)
-			else:
-				decombine = True
-				level = 1
-				for (id, name, abbr, x, y) in game.worldmap.dungeons:
-					if y * game.WORLDMAP_WIDTH + x == game.current_map.location_level:
-						location_id = id
-						location_name = name
-						location_abbr = abbr
-				game.message.new('You enter the ' + location_name + '.', game.player.turns)
+		if game.current_map.location_id > 0:
+			level = game.current_map.location_level + 1
+			game.message.new('You climb down the stairs.', game.turns)
+			game.old_maps.append(game.current_map)
 		else:
-			if game.current_map.location_level > 1:
-				level = game.current_map.location_level - 1
-				game.message.new('You climb up the stairs.', game.player.turns)
-			else:
-				combine = True
-				(level, game.char.x, game.char.y) = game.current_map.overworld_position
-				location_id = 0
-				location_name = 'Wilderness'
-				location_abbr = 'WD'
-				game.message.new('You return to the ' + location_name + '.', game.player.turns)
-
-		if decombine:
-			util.decombine_maps()
+			level = 1
+			for (id, name, abbr, x, y) in game.worldmap.dungeons:
+				if y * game.WORLDMAP_WIDTH + x == game.current_map.location_level:
+					location_id = id
+					location_name = name
+					location_abbr = abbr
+			game.message.new('You enter the ' + location_name + '.', game.turns)
+			map.decombine_maps()
 			game.old_maps.append(game.current_map)
 			op = (game.current_map.location_level, game.char.x, game.char.y)
 			for i in range(len(game.border_maps)):
 				game.old_maps.append(game.border_maps[i])
-		else:
-			game.old_maps.append(game.current_map)
 
+		util.loadgen_message()
+		generate = True
+		for i in xrange(len(game.old_maps)):
+			if game.old_maps[i].location_id == location_id and game.old_maps[i].location_level == level:
+				game.current_map = game.old_maps[i]
+				(game.char.x, game.char.y) = game.current_map.up_staircase
+				game.old_maps.pop(i)
+				generate = False
+				break
+		if generate:
+			game.current_map = map.Map(location_name, location_abbr, location_id, level, 90, 52)
+
+		game.current_map.overworld_position = op
+		util.add_turn()
+		util.initialize_fov()
+		game.fov_recompute = True
+
+
+# climb up some stairs
+def climb_up_stairs():
+	combine = False
+	location_id = game.current_map.location_id
+	location_name = game.current_map.location_name
+	location_abbr = game.current_map.location_abbr
+
+	if game.current_map.tiles[game.char.x][game.char.y].icon != '<':
+		game.message.new('You see no stairs going in that direction!', game.turns)
+	else:
+		if game.current_map.location_level > 1:
+			level = game.current_map.location_level - 1
+			game.message.new('You climb up the stairs.', game.turns)
+		else:
+			combine = True
+			(level, game.char.x, game.char.y) = game.current_map.overworld_position
+			location_id = 0
+			location_name = 'Wilderness'
+			location_abbr = 'WD'
+			game.message.new('You return to the ' + location_name + '.', game.turns)
+
+		game.old_maps.append(game.current_map)
+		util.loadgen_message()
 		if not combine:
 			generate = True
 			for i in xrange(len(game.old_maps)):
 				if game.old_maps[i].location_id == location_id and game.old_maps[i].location_level == level:
 					game.current_map = game.old_maps[i]
-					if direction == 'down':
-						(game.char.x, game.char.y) = game.current_map.up_staircase
-					else:
-						(game.char.x, game.char.y) = game.current_map.down_staircase
+					(game.char.x, game.char.y) = game.current_map.down_staircase
 					game.old_maps.pop(i)
 					generate = False
 					break
 			if generate:
-				game.current_map = map.Map(location_name, location_abbr, location_id, level)
+				game.current_map = map.Map(location_name, location_abbr, location_id, level, 90, 52)
 		else:
-			util.load_old_maps(location_id, level)
-			util.combine_maps()
-
-		if decombine:
-			game.current_map.overworld_position = op
-		game.player.add_turn()
+			map.load_old_maps(location_id, level)
+			map.combine_maps()
+		util.initialize_fov()
+		util.add_turn()
 		game.fov_recompute = True
 
 
 # close door
 def close_door():
-	game.message.new('Close door in which direction?', game.player.turns)
+	game.message.new('Close door in which direction?', game.turns)
 	libtcod.console_flush()
 	dx, dy = 0, 0
 	key = libtcod.Key()
@@ -287,23 +317,22 @@ def close_door():
 
 	if game.current_map.tiles[game.char.x + dx][game.char.y + dy].name == 'opened door':
 		game.current_map.tiles[game.char.x + dx][game.char.y + dy] = game.tiles.get_tile('door')
-		game.player.add_turn()
-		game.message.new('You close the door.', game.player.turns)
+		util.add_turn()
+		game.message.new('You close the door.', game.turns)
 		game.fov_recompute = True
 	elif game.current_map.tiles[game.char.x + dx][game.char.y + dy].name == 'door':
-		game.message.new('That door is already closed!', game.player.turns)
+		game.message.new('That door is already closed!', game.turns)
 	elif dx != 0 or dy != 0:
-		game.message.new('There is no door in that direction!', game.player.turns)
+		game.message.new('There is no door in that direction!', game.turns)
 
 
 # drop an item
 def drop_item():
 	qty = 1
 	if len(game.player.inventory) == 0:
-		game.message.new('Your inventory is empty.', game.player.turns)
+		game.message.new('Your inventory is empty.', game.turns)
 	else:
 		output = util.item_stacking(game.player.inventory)
-#		choice = util.msg_box('drop', 'Drop an item', 'Up/down to select, ENTER to drop, ESC to exit', output, box_height=max(16, len(output) + 4), blitmap=True)
 		choice = game.messages.box('Drop item', 'Up/down to select, ENTER to drop, ESC to exit', game.PLAYER_STATS_WIDTH + ((game.MAP_WIDTH - 56) / 2), ((game.MAP_HEIGHT + 1) - max(16, len(output) + 4)) / 2, 60, max(16, len(output) + 4), output, inv=True, step=2, mouse_exit=True)
 		if choice != -1:
 			if output[choice].quantity > 1:
@@ -324,10 +353,9 @@ def drop_item():
 def equip_item():
 	equippable = any(item.is_equippable() for item in game.player.inventory)
 	if not equippable:
-		game.message.new("You don't have any equippable items.", game.player.turns)
+		game.message.new("You don't have any equippable items.", game.turns)
 	else:
 		output = util.item_stacking(game.player.inventory, True)
-#		choice = util.msg_box('equip', 'Wear/Equip an item', 'Up/down to select, ENTER to equip, ESC to exit', output, box_height=max(16, len(output) + 4), blitmap=True)
 		choice = game.messages.box('Wear/Equip an item', 'Up/down to select, ENTER to equip, ESC to exit', game.PLAYER_STATS_WIDTH + ((game.MAP_WIDTH - 56) / 2), ((game.MAP_HEIGHT + 1) - max(16, len(output) + 4)) / 2, 60, max(16, len(output) + 4), output, inv=True, step=2, mouse_exit=True)
 		util.reset_quantity(game.player.inventory)
 		if choice != -1:
@@ -338,8 +366,7 @@ def equip_item():
 # help screen
 def help():
 	contents = open('data/help.txt', 'r').read()
-	contents = contents.split("\n")
-#	util.msg_box('text', 'Help', contents=contents, box_width=40, box_height=26, blitmap=True)
+	contents = contents.split('\n')
 	game.messages.box('Help', None, game.PLAYER_STATS_WIDTH + ((game.MAP_WIDTH - (len(max(contents, key=len)) + 20)) / 2), ((game.MAP_HEIGHT + 1) - max(16, len(contents) + 4)) / 2, len(max(contents, key=len)) + 20, len(contents) + 4, contents, input=False)
 	game.redraw_gui = True
 
@@ -347,27 +374,24 @@ def help():
 # highscore screen
 def highscores():
 	if os.path.exists('data/highscores.dat'):
-#		util.msg_box('highscore', 'High scores', contents=game.highscore, box_width=game.SCREEN_WIDTH, box_height=game.SCREEN_HEIGHT)
 		contents = []
 		for (score, line1, line2) in game.highscore:
 			contents.append(str(score).ljust(6) + line1)
-			contents.append("      " + line2)
-			contents.append(" ")
+			contents.append('      ' + line2)
+			contents.append(' ')
 		game.messages.box('High scores', None, 0, 0, game.SCREEN_WIDTH, game.SCREEN_HEIGHT, contents, input=False)
 	else:
-#		util.msg_box('text', 'High scores', contents="The high scores file is empty.", box_width=41, box_height=5, center=True)
-		contents = ["The high scores file is empty."]
-		game.messages.box('High scores', None, (game.SCREEN_WIDTH - (len(max(contents, key=len)) + 18)) / 2, (game.SCREEN_HEIGHT - (len(contents) + 4)) / 2, len(max(contents, key=len)) + 18, len(contents) + 4, contents, input=False, align=libtcod.CENTER)
+		contents = ['The high scores file is empty.']
+		game.messages.box('High scores', None, 'center_screenx', 'center_screeny', len(max(contents, key=len)) + 16, len(contents) + 4, contents, input=False, align=libtcod.CENTER)
 	game.redraw_gui = True
 
 
 # see inventory
 def inventory():
 	if len(game.player.inventory) == 0:
-		game.message.new('Your inventory is empty.', game.player.turns)
+		game.message.new('Your inventory is empty.', game.turns)
 	else:
 		output = util.item_stacking(game.player.inventory)
-#		choice = util.msg_box('inv', 'Inventory', 'Up/down to select, ENTER to use, ESC to exit', output, box_height=max(16, len(output) + 4), blitmap=True)
 		choice = game.messages.box('Inventory', 'Up/down to select, ENTER to use, ESC to exit', game.PLAYER_STATS_WIDTH + ((game.MAP_WIDTH - 56) / 2), ((game.MAP_HEIGHT + 1) - max(16, len(output) + 4)) / 2, 60, max(16, len(output) + 4), output, inv=True, step=2, mouse_exit=True)
 		util.reset_quantity(game.player.inventory)
 		if choice != -1:
@@ -377,7 +401,7 @@ def inventory():
 
 # look (with keyboard)
 def look():
-	game.message.new('Looking... (Arrow keys to move cursor, ESC to exit)', game.player.turns)
+	game.message.new('Looking... (Arrow keys to move cursor, ESC to exit)', game.turns)
 	util.render_map()
 	dx = game.char.x - game.curx
 	dy = game.char.y - game.cury
@@ -407,19 +431,22 @@ def look():
 		px = dx + game.curx
 		py = dy + game.cury
 
-		#create a list with the names of all objects at the cursor coordinates
+		# create a list with the names of all objects at the cursor coordinates
 		if dx in range(game.MAP_WIDTH - 1) and dy in range(game.MAP_HEIGHT - 1) and game.current_map.explored[px][py]:
 			names = [obj for obj in game.current_map.objects if obj.x == px and obj.y == py]
 			prefix = 'you see '
 			if not libtcod.map_is_in_fov(game.fov_map, px, py):
 				prefix = 'you remember seeing '
 				for i in range(len(names) - 1, -1, -1):
-					if names[i].entity != None:
+					if names[i].entity is not None:
 						names.pop(i)
 			if (px, py) == (game.char.x, game.char.y):
 				text = 'you see yourself'
 			elif names == []:
-				text = prefix + game.current_map.tiles[px][py].article + game.current_map.tiles[px][py].name
+				if game.current_map.tiles[px][py].is_invisible():
+					text = prefix + 'a floor'
+				else:
+					text = prefix + game.current_map.tiles[px][py].article + game.current_map.tiles[px][py].name
 			elif len(names) > 1:
 				text = prefix
 				for i in range(len(names)):
@@ -427,14 +454,14 @@ def look():
 						text += ' and '
 					elif i > 0:
 						text += ', '
-					if names[i].item != None:
+					if names[i].item is not None:
 						text += names[i].item.article + names[i].item.name
-					if names[i].entity != None:
+					if names[i].entity is not None:
 						text += names[i].entity.article + names[i].entity.name
 			else:
-				if names[0].item != None:
+				if names[0].item is not None:
 					text = prefix + names[0].item.article + names[0].item.name
-				if names[0].entity != None:
+				if names[0].entity is not None:
 					text = prefix + names[0].entity.article + names[0].entity.name
 
 		libtcod.console_set_default_foreground(game.con, libtcod.white)
@@ -447,8 +474,8 @@ def look():
 # open door
 def open_door(x=None, y=None):
 	dx, dy = 0, 0
-	if x == None:
-		game.message.new('Open door in which direction?', game.player.turns)
+	if x is None:
+		game.message.new('Open door in which direction?', game.turns)
 		libtcod.console_flush()
 		key = libtcod.Key()
 		libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, key, libtcod.Mouse(), True)
@@ -458,18 +485,17 @@ def open_door(x=None, y=None):
 
 	if game.current_map.tiles[game.char.x + dx][game.char.y + dy].name == 'door':
 		game.current_map.tiles[game.char.x + dx][game.char.y + dy] = game.tiles.get_tile('opened door')
-		game.player.add_turn()
-		game.message.new('You open the door.', game.player.turns)
+		util.add_turn()
+		game.message.new('You open the door.', game.turns)
 		game.fov_recompute = True
 	elif game.current_map.tiles[game.char.x + dx][game.char.y + dy].name == 'opened door':
-		game.message.new('That door is already opened!', game.player.turns)
+		game.message.new('That door is already opened!', game.turns)
 	elif dx != 0 or dy != 0:
-		game.message.new('There is no door in that direction!', game.player.turns)
+		game.message.new('There is no door in that direction!', game.turns)
 
 
 # ingame options menu
 def options_menu():
-#	choice = util.msg_box('options', 'Menu', contents=['Read the manual', 'Change settings', 'View high scores', 'Save and quit game', 'Quit without saving'], box_width=23, box_height=7, blitmap=True)
 	contents = ['Read the manual', 'Change settings', 'View high scores', 'Save and quit game', 'Quit without saving']
 	choice = game.messages.box('Menu', None, game.PLAYER_STATS_WIDTH + (((game.MAP_WIDTH + 3) - (len(max(contents, key=len)) + 4)) / 2), ((game.MAP_HEIGHT + 1) - (len(contents) + 2)) / 2, len(max(contents, key=len)) + 4, len(contents) + 2, contents, mouse_exit=True)
 	if choice == 0:
@@ -495,14 +521,13 @@ def pickup_item():
 			itempos.append(i)
 
 	if len(nb_items) == 0:
-		game.message.new('There is nothing to pick up.', game.player.turns)
+		game.message.new('There is nothing to pick up.', game.turns)
 	elif len(nb_items) == 1:
 		nb_items[0].pick_up(nb_items[0].turn_created)
 		game.current_map.objects.pop(itempos[0])
 	else:
 		qty = 1
 		output = util.item_stacking(nb_items)
-#		choice = util.msg_box('pickup', 'Get an item', 'Up/down to select, ENTER to get, ESC to exit', output, box_height=max(16, len(output) + 4), blitmap=True)
 		choice = game.messages.box('Get an item', 'Up/down to select, ENTER to get, ESC to exit', game.PLAYER_STATS_WIDTH + ((game.MAP_WIDTH - 56) / 2), ((game.MAP_HEIGHT + 1) - max(16, len(output) + 4)) / 2, 60, max(16, len(output) + 4), output, inv=True, step=2, mouse_exit=True)
 		if choice != -1:
 			if output[choice].quantity > 1:
@@ -541,9 +566,8 @@ def quit_game():
 # remove/unequip an item
 def remove_item():
 	if len(game.player.equipment) == 0:
-		game.message.new("You don't have any equipped items.", game.player.turns)
+		game.message.new("You don't have any equipped items.", game.turns)
 	else:
-#		choice = util.msg_box('remove', 'Remove/Unequip an item', 'Up/down to select, ENTER to remove, ESC to exit', game.player.equipment, box_height=max(16, len(game.player.equipment) + 4), blitmap=True)
 		choice = game.messages.box('Remove/Unequip an item', 'Up/down to select, ENTER to remove, ESC to exit', game.PLAYER_STATS_WIDTH + ((game.MAP_WIDTH - 56) / 2), ((game.MAP_HEIGHT + 1) - max(16, len(game.player.equipment) + 4)) / 2, 60, max(16, len(game.player.equipment) + 4), game.player.equipment, inv=True, step=2, mouse_exit=True)
 		if choice != -1:
 			game.player.unequip(choice)
@@ -566,12 +590,11 @@ def save_game():
 
 # print current time
 def show_time():
-	game.message.new(game.gametime.time_to_text(), game.player.turns)
+	game.message.new(game.gametime.time_to_text(), game.turns)
 
 
 # show a miniature world map
 def show_worldmap():
-#	util.msg_box('map', 'World Map', 'Red dot - You, Black dots - Dungeons, S - Save map', box_width=game.SCREEN_WIDTH, box_height=game.SCREEN_HEIGHT)
 	box = libtcod.console_new(game.SCREEN_WIDTH, game.SCREEN_HEIGHT)
 	game.messages.box_gui(box, 0, 0, game.SCREEN_WIDTH, game.SCREEN_HEIGHT, libtcod.green)
 	libtcod.console_set_default_foreground(box, libtcod.black)
@@ -587,7 +610,6 @@ def show_worldmap():
 
 # settings screen
 def settings():
-#	util.msg_box('settings', 'Settings', contents=game.font, box_width=40, box_height=8, center=True, blitmap=True)
 	box = libtcod.console_new(40, 8)
 	game.messages.box_gui(box, 0, 0, 40, 8, libtcod.green)
 	libtcod.console_set_default_foreground(box, libtcod.black)
@@ -601,10 +623,9 @@ def settings():
 # use an item
 def use_item():
 	if len(game.player.inventory) == 0:
-		game.message.new('Your inventory is empty.', game.player.turns)
+		game.message.new('Your inventory is empty.', game.turns)
 	else:
 		output = util.item_stacking(game.player.inventory)
-#		choice = util.msg_box('use', 'Use an item', 'Up/down to select, ENTER to use, ESC to exit', output, box_height=max(16, len(output) + 4), blitmap=True)
 		choice = game.messages.box('Use an item', 'Up/down to select, ENTER to use, ESC to exit', game.PLAYER_STATS_WIDTH + ((game.MAP_WIDTH - 56) / 2), ((game.MAP_HEIGHT + 1) - max(16, len(output) + 4)) / 2, 60, max(16, len(output) + 4), output, inv=True, step=2, mouse_exit=True)
 		util.reset_quantity(game.player.inventory)
 		if choice != -1:
@@ -612,10 +633,45 @@ def use_item():
 	game.redraw_gui = True
 
 
+# use a skill
+def use_skill():
+	output = [x.name for x in game.player.thieving_skills]
+	choice = game.messages.box('Use a skill', 'Up/down to select, ENTER to use, ESC to exit', game.PLAYER_STATS_WIDTH + ((game.MAP_WIDTH - 56) / 2), ((game.MAP_HEIGHT + 1) - max(16, len(output) + 4)) / 2, 60, max(16, len(output) + 4), output, step=2, mouse_exit=True)
+	if choice != -1:
+		if output[choice] == 'Detect Traps':
+			game.player.thieving_skills[choice].active()
+		if output[choice] == 'Disarm Traps':
+			game.message.new('Disarm trap in which direction?', game.turns)
+			util.render_map()
+			libtcod.console_flush()
+			dx, dy = 0, 0
+			key = libtcod.Key()
+			libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, key, libtcod.Mouse(), True)
+			dx, dy = key_check(key, dx, dy)
+
+			if game.current_map.tiles[game.char.x + dx][game.char.y + dy].type == 'trap':
+				util.add_turn()
+				dice = libtcod.random_get_int(game.rnd, 0, 200)
+				if game.player.thieving_skills[choice].level >= dice:
+					game.current_map.tiles[game.char.x + dx][game.char.y + dy] = game.tiles.get_tile('floor')
+					game.message.new('You disarm the trap.', game.turns)
+					game.player.thieving_skills[choice].gain_xp(5)
+				else:
+					dice = libtcod.random_get_int(game.rnd, 1, 50)
+					if dice > game.player.karma + game.player.dexterity:
+						game.message.new('You inadvertently set off the trap!', game.turns)
+					else:
+						game.message.new('You failed to disarm the trap.', game.turns)
+					game.player.thieving_skills[choice].gain_xp(1)
+			elif dx != 0 or dy != 0:
+				game.message.new('You found no trap in that direction.', game.turns)
+	game.redraw_gui = True
+
+
 # passing one turn
 def wait_turn():
-	game.message.new("Time passes...", game.player.turns)
-	game.player.add_turn()
+	game.message.new('Time passes...', game.turns)
+	util.add_turn()
 	game.fov_recompute = True
 
 
@@ -650,7 +706,11 @@ def ztats_skills(con, width, height):
 	libtcod.console_print(con, 2, 2, 'Combat Skills')
 	for i in range(len(game.player.combat_skills)):
 		libtcod.console_print(con, 2, i + 4, game.player.combat_skills[i].name)
-		libtcod.console_print(con, 15, i + 4, str(game.player.combat_skills[i].level))
+		libtcod.console_print(con, 13, i + 4, str(game.player.combat_skills[i].level))
+	libtcod.console_print(con, 20, 2, 'Thieving Skills')
+	for i in range(len(game.player.thieving_skills)):
+		libtcod.console_print(con, 20, i + 4, game.player.thieving_skills[i].name)
+		libtcod.console_print(con, 34, i + 4, str(game.player.thieving_skills[i].level))
 
 
 # character sheet for equipment
@@ -670,24 +730,24 @@ def ztats_equipment(con, width, height):
 	libtcod.console_print(con, 2, 11, 'Boots      :')
 	ring = 0
 	for i in range(len(game.player.equipment)):
-		if "armor_head" in game.player.equipment[i].flags:
+		if 'armor_head' in game.player.equipment[i].flags:
 			y = 2
-		if "armor_cloak" in game.player.equipment[i].flags:
+		if 'armor_cloak' in game.player.equipment[i].flags:
 			y = 3
-		if "armor_neck" in game.player.equipment[i].flags:
+		if 'armor_neck' in game.player.equipment[i].flags:
 			y = 4
-		if "armor_body" in game.player.equipment[i].flags:
+		if 'armor_body' in game.player.equipment[i].flags:
 			y = 5
-		if "armor_ring" in game.player.equipment[i].flags:
+		if 'armor_ring' in game.player.equipment[i].flags:
 			ring += 1
 			y = 7 + ring
-		if "armor_hands" in game.player.equipment[i].flags:
+		if 'armor_hands' in game.player.equipment[i].flags:
 			y = 10
-		if "armor_feet" in game.player.equipment[i].flags:
+		if 'armor_feet' in game.player.equipment[i].flags:
 			y = 11
-		if game.player.equipment[i].type == "weapon":
+		if game.player.equipment[i].type == 'weapon':
 			y = 6
-		if game.player.equipment[i].type == "shield":
+		if game.player.equipment[i].type == 'shield':
 			y = 7
 		libtcod.console_print(con, 13, y, ': ' + game.player.equipment[i].name)
 		libtcod.console_print_ex(con, width - 3, y, libtcod.BKGND_SET, libtcod.RIGHT, str(game.player.equipment[i].weight) + ' lbs')
@@ -724,7 +784,7 @@ def ztats():
 	key = libtcod.Key()
 	stats = libtcod.console_new(width, height)
 
-	while exit == False:
+	while exit is False:
 		if screen == 0:
 			ztats_attributes(stats, width, height)
 		elif screen == 1:

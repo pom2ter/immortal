@@ -1,206 +1,53 @@
 import libtcodpy as libtcod
 import pickle
 import os
-import map
-import commands
+import copy
 import game
-
-
-#######################################
-# messages functions
-#######################################
-
-def choices(con, width, height, options, typ, posx=0, posy=0, default=0, blitmap=False, mouse_out=False):
-	choice = False
-	current, up, down = default, 0, height
-	max_width = posx + width + posx
-	max_height = posy + height + posy
-	key = libtcod.Key()
-	mouse = libtcod.Mouse()
-	lerp = 1.0
-	descending = True
-
-	while not choice and choice != -1:
-		ev = libtcod.sys_check_for_event(libtcod.EVENT_ANY, key, mouse)
-		libtcod.console_set_default_foreground(con, libtcod.grey)
-		libtcod.console_set_default_background(con, libtcod.black)
-		libtcod.console_rect(con, 1, 1, max_width - 2, max_height - 2, True, libtcod.BKGND_SET)
-		if up != 0:
-			libtcod.console_print_ex(con, max_width - 2, 1, libtcod.BKGND_SET, libtcod.LEFT, chr(136))
-			libtcod.console_print_ex(con, 1, 1, libtcod.BKGND_SET, libtcod.LEFT, chr(136))
-		if down < len(options):
-			libtcod.console_print_ex(con, max_width - 2, max_height - 2, libtcod.BKGND_SET, libtcod.LEFT, chr(142))
-			libtcod.console_print_ex(con, 1, max_height - 2, libtcod.BKGND_SET, libtcod.LEFT, chr(142))
-		for y in range(up, down):
-			if y < len(options):
-				if y == current:
-					libtcod.console_set_default_foreground(con, libtcod.white)
-					color, lerp, descending = color_lerp(lerp, descending)
-					libtcod.console_set_default_background(con, color)
-				else:
-					libtcod.console_set_default_foreground(con, libtcod.grey)
-					libtcod.console_set_default_background(con, libtcod.black)
-				if typ == 'inventory':
-					if options[y].is_identified():
-						if options[y].quantity > 1:
-							textl = str(options[y].quantity) + ' ' + options[y].plural
-						else:
-							textl = options[y].name
-					else:
-						textl = options[y].unidentified_name
-					textr = str(round(options[y].weight * options[y].quantity, 1)) + ' lbs'
-					if options[y].duration > 0:
-						textl += ' (' + str(options[y].duration) + ' turns left)'
-				else:
-					textl = options[y]
-					textr = ''
-				libtcod.console_rect(con, posx, (y - up) + posy, width, 1, True, libtcod.BKGND_SET)
-				libtcod.console_print_ex(con, posx + 1, (y - up) + posy, libtcod.BKGND_SET, libtcod.LEFT, textl)
-				libtcod.console_print_ex(con, width, (y - up) + posy, libtcod.BKGND_SET, libtcod.RIGHT, textr)
-
-		if blitmap:
-			x = ((game.MAP_WIDTH - max_width) / 2) + game.MAP_X
-			y = (game.MAP_HEIGHT - max_height) / 2
-		else:
-			x = (game.SCREEN_WIDTH - max_width) / 2
-			y = (game.SCREEN_HEIGHT - max_height) / 2
-		libtcod.console_blit(con, 0, 0, max_width, max_height, 0, x, y, 1.0, 0.9)
-		libtcod.console_flush()
-
-		(mx, my) = (mouse.cx, mouse.cy)
-		if my in range(y + posy, y + height + posy) and mx in range(x + posx, x + width + posx):
-			mpos = my - (y + posy) + up
-			if mpos <= len(options) - 1:
-				current = mpos
-
-		if key.vk == libtcod.KEY_DOWN and ev == libtcod.EVENT_KEY_PRESS:
-			current = (current + 1) % len(options)
-			if current == down:
-				down += 1
-				up += 1
-			if current == 0:
-				down = height
-				up = 0
-			lerp = 1.0
-			descending = True
-		elif key.vk == libtcod.KEY_UP and ev == libtcod.EVENT_KEY_PRESS:
-			current = (current - 1) % len(options)
-			if current < up:
-				up -= 1
-				down -= 1
-			if current == len(options) - 1:
-				if current > height - 1:
-					up = len(options) - height
-					down = len(options)
-			lerp = 1.0
-			descending = True
-		elif key.vk == libtcod.KEY_ESCAPE and ev == libtcod.EVENT_KEY_PRESS or (mouse_out and mouse.lbutton_pressed and mx == max_width + x - 4 and my == y):
-			current = -1
-			choice = -1
-		elif (key.vk == libtcod.KEY_ENTER and ev == libtcod.EVENT_KEY_PRESS) or (mouse.lbutton_pressed and my in range(y + posy, y + height + posy) and mx in range(x + posx, x + width + posx) and (my - (y + posy) + up) <= len(options) - 1):
-			choice = True
-	return current
-
-
-def text_box(con, x1, y1, x2, y2, header=None, color=libtcod.green):
-	buffer = libtcod.ConsoleBuffer(x2 - x1, y2 - y1)
-	for i in range(x1, x2):
-		buffer.set_fore(i, y1, color.r, color.g, color.b, chr(205))
-		buffer.set_fore(i, y2 - 1, color.r, color.g, color.b, chr(205))
-	for i in range(y1, y2):
-		buffer.set_fore(x1, i, color.r, color.g, color.b, chr(186))
-		buffer.set_fore(x2 - 1, i, color.r, color.g, color.b, chr(186))
-	buffer.set_back(x1, y1, color.r, color.g, color.b)
-	buffer.set_back(x1, y2 - 1, color.r, color.g, color.b)
-	buffer.set_back(x2 - 1, y1, color.r, color.g, color.b)
-	buffer.set_back(x2 - 1, y2 - 1, color.r, color.g, color.b)
-	buffer.blit(con, fill_fore=True, fill_back=True)
-
-	if header != None:
-		libtcod.console_set_default_foreground(con, libtcod.black)
-		libtcod.console_set_default_background(con, color)
-		libtcod.console_print_ex(con, x2 / 2, y1, libtcod.BKGND_SET, libtcod.CENTER, ' ' + header + ' ')
-
-
-def msg_box(typ, header=None, footer=None, contents=None, box_width=60, box_height=5, center=False, default=0, color=libtcod.green, blitmap=False):
-	box = libtcod.console_new(box_width, box_height)
-	text_box(box, 0, 0, box_width, box_height, header, color)
-	libtcod.console_set_default_foreground(box, color)
-	libtcod.console_set_default_background(box, libtcod.black)
-	if footer != None:
-		libtcod.console_print_ex(box, box_width / 2, box_height - 1, libtcod.BKGND_SET, libtcod.CENTER, '[ ' + footer + ' ]')
-	if typ in ['inv', 'drop', 'use', 'remove', 'equip', 'save', 'options']:
-		libtcod.console_print_ex(box, box_width - 5, 0, libtcod.BKGND_SET, libtcod.LEFT, '[x]')
-	libtcod.console_set_default_foreground(box, libtcod.white)
-
-	if typ in ['inv', 'drop', 'use', 'remove', 'equip', 'pickup']:
-		choice = choices(box, box_width - 4, box_height - 4, contents, 'inventory', 2, 2, blitmap=blitmap, mouse_out=True)
-	if typ == 'save':
-		choice = choices(box, box_width - 4, box_height - 4, contents, 'savegames', 2, 2, mouse_out=True)
-	if typ in ['options', 'main_menu']:
-		if typ == 'options':
-			choice = choices(box, box_width - 2, box_height - 2, contents, 'options_menu', 1, 1, default, blitmap=blitmap, mouse_out=True)
-		else:
-			choice = choices(box, box_width - 2, box_height - 2, contents, 'options_menu', 1, 1, default, blitmap=blitmap)
-	if typ == 'settings':
-		change_settings(box, box_width, box_height, contents, blitmap=blitmap)
-		choice = -1
-
-	if typ in ['text', 'highscore']:
-		if typ == 'highscore':
-			for i, (score, line1, line2) in enumerate(game.highscore):
-				libtcod.console_print_ex(box, 2, 2 + (i * 3), libtcod.BKGND_SET, libtcod.LEFT, str(score))
-				libtcod.console_print_ex(box, 8, 2 + (i * 3), libtcod.BKGND_SET, libtcod.LEFT, line1)
-				libtcod.console_print_ex(box, 8, 3 + (i * 3), libtcod.BKGND_SET, libtcod.LEFT, line2)
-		if typ == 'text':
-			for i, line in enumerate(contents.split('\n')):
-				if center:
-					libtcod.console_print_ex(box, box_width / 2, 2 + i, libtcod.BKGND_SET, libtcod.CENTER, line)
-				else:
-					libtcod.console_print_ex(box, 2, 2 + i, libtcod.BKGND_SET, libtcod.LEFT, line)
-		if blitmap:
-			libtcod.console_blit(box, 0, 0, box_width, box_height, 0, ((game.MAP_WIDTH - box_width) / 2) + game.MAP_X, (game.MAP_HEIGHT - box_height) / 2, 1.0, 0.9)
-		else:
-			libtcod.console_blit(box, 0, 0, box_width, box_height, 0, (game.SCREEN_WIDTH - box_width) / 2, (game.SCREEN_HEIGHT - box_height) / 2, 1.0, 0.9)
-		libtcod.console_flush()
-		if contents != "Generating world map...":
-			libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, libtcod.Key(), libtcod.Mouse(), True)
-		choice = -1
-
-	if typ == 'map':
-		lerp, choice = 1.0, -1
-		descending, keypress = True, False
-		libtcod.image_blit_2x(game.worldmap.map_image_small, box, 1, 1)
-		mapposx = game.worldmap.player_positionx * (float(game.SCREEN_WIDTH - 2) / float(game.WORLDMAP_WIDTH))
-		mapposy = game.worldmap.player_positiony * (float(game.SCREEN_HEIGHT - 2) / float(game.WORLDMAP_HEIGHT))
-		char = find_map_position(mapposx, mapposy)
-		libtcod.console_set_default_foreground(box, libtcod.black)
-		for (id, name, abbr, x, y) in game.worldmap.dungeons:
-			dmapposx = x * (float(game.SCREEN_WIDTH - 2) / float(game.WORLDMAP_WIDTH))
-			dmapposy = y * (float(game.SCREEN_HEIGHT - 2) / float(game.WORLDMAP_HEIGHT))
-			dchar = find_map_position(dmapposx, dmapposy)
-			libtcod.console_print_ex(box, int(dmapposx) + 1, int(dmapposy) + 1, libtcod.BKGND_NONE, libtcod.LEFT, dchar)
-		while not keypress:
-			color, lerp, descending = color_lerp(lerp, descending, light=libtcod.red)
-			libtcod.console_set_default_foreground(box, color)
-			libtcod.console_print_ex(box, int(mapposx) + 1, int(mapposy) + 1, libtcod.BKGND_NONE, libtcod.LEFT, char)
-			libtcod.console_blit(box, 0, 0, box_width, box_height, 0, (game.SCREEN_WIDTH - box_width) / 2, (game.SCREEN_HEIGHT - box_height) / 2, 1.0, 1.0)
-			libtcod.console_flush()
-			key = libtcod.Key()
-			ev = libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS, key, libtcod.Mouse())
-			if ev == libtcod.EVENT_KEY_PRESS:
-				if chr(key.c) == 's':
-					libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, game.SCREEN_HEIGHT / 2, libtcod.BKGND_DARKEN, libtcod.CENTER, ' Saving map... ')
-					libtcod.console_flush()
-					game.worldmap.create_map_images(2)
-				else:
-					break
-	return choice
+import commands
+import effects
 
 
 #######################################
 # miscellanous functions
 #######################################
+
+# add a turn and do checks for statuses and stuffies
+def add_turn():
+	game.turns += 1
+	game.gametime.update(1)
+	game.player_move = True
+	game.redraw_gui = True
+
+	if game.turns % (50 - game.player.endurance) == 0:
+		game.player.heal_health(1)
+	if game.turns % (50 - game.player.intelligence) == 0:
+		game.player.heal_mana(1)
+
+	game.player.item_expiration()
+	game.player.item_is_active()
+	game.player.check_condition()
+	game.fov_torch = any('torchlight' in x.flags and x.active for x in game.player.inventory)
+
+	if 'detect_trap' in game.player.flags:
+		game.gametime.update(1)
+		dice = libtcod.random_get_int(game.rnd, 0, 200)
+		if game.player.thieving_skills[0].level >= dice:
+			if len(game.traps) > 0:
+				dice = libtcod.random_get_int(game.rnd, 0, len(game.traps) - 1)
+				for i, (x, y) in enumerate(game.traps):
+					if i == dice:
+						game.current_map.tiles[x][y] = game.tiles.get_tile(game.current_map.tiles[x][y].name)
+						if 'invisible' in game.current_map.tiles[x][y].flags:
+							game.current_map.tiles[x][y].flags.remove('invisible')
+				game.message.new('You detect a trap!', game.turns)
+				game.player.thieving_skills[0].gain_xp(3)
+			else:
+				game.player.thieving_skills[0].gain_xp(1)
+		else:
+			dice = libtcod.random_get_int(game.rnd, 0, 100)
+			if game.player.thieving_skills[0].level >= dice:
+				game.player.thieving_skills[0].gain_xp(1)
+
 
 # change game settings
 def change_settings(box, width, height, options, blitmap=False):
@@ -316,9 +163,9 @@ def death(quit=False):
 	score = game.player.score()
 	line1 = game.player.name + ', the level ' + str(game.player.level) + ' ' + game.player.gender + ' ' + game.player.race + ' ' + game.player.profession + ','
 	if game.current_map.location_id == 0:
-		line2 += ' in the ' + game.current_map.location_name + ' (' + str(game.player.turns) + ' turns)'
+		line2 += ' in the ' + game.current_map.location_name + ' (' + str(game.turns) + ' turns)'
 	else:
-		line2 += ' on level ' + str(game.current_map.location_level) + ' in the ' + game.current_map.location_name + ' (' + str(game.player.turns) + ' turns)'
+		line2 += ' on level ' + str(game.current_map.location_level) + ' in the ' + game.current_map.location_name + ' (' + str(game.turns) + ' turns)'
 	libtcod.console_print(0, 2, 20, 'Final score')
 	libtcod.console_print(0, 2, 22, str(score))
 	libtcod.console_print(0, 8, 22, line1)
@@ -375,11 +222,13 @@ def get_names_under_mouse():
 		if not libtcod.map_is_in_fov(game.fov_map, px, py):
 			prefix = 'you remember seeing '
 			for i in range(len(names) - 1, -1, -1):
-				if names[i].entity != None:
+				if names[i].entity is not None:
 					names.pop(i)
 		if (px, py) == (game.char.x, game.char.y):
 			return 'you see yourself'
 		if names == []:
+			if game.current_map.tiles[px][py].is_invisible():
+				return prefix + 'a floor'
 			return prefix + game.current_map.tiles[px][py].article + game.current_map.tiles[px][py].name
 
 		if len(names) > 1:
@@ -389,15 +238,15 @@ def get_names_under_mouse():
 					string += ' and '
 				elif i > 0:
 					string += ', '
-				if names[i].item != None:
+				if names[i].item is not None:
 					string += names[i].item.article + names[i].item.name
-				if names[i].entity != None:
+				if names[i].entity is not None:
 					string += names[i].entity.article + names[i].entity.name
 			return string
 		else:
-			if names[0].item != None:
+			if names[0].item is not None:
 				return prefix + names[0].item.article + names[0].item.name
-			if names[0].entity != None:
+			if names[0].entity is not None:
 				return prefix + names[0].entity.article + names[0].entity.name
 	else:
 		return ''
@@ -439,20 +288,27 @@ def inventory_output(inv):
 def items_at_feet():
 	objects = [obj for obj in game.current_map.objects if obj.item and obj.x == game.char.x and obj.y == game.char.y]
 	if len(objects) > 1:
-		game.message.new('You see several items at your feet.', game.player.turns)
+		game.message.new('You see several items at your feet.', game.turns)
 	elif len(objects) == 1:
 		if objects[0].item.name == 'gold':
 			commands.pickup_item()
-			game.player.turns -= 1
+			game.turns -= 1
 		else:
-			game.message.new('You see ' + objects[0].item.article + objects[0].item.name, game.player.turns)
+			game.message.new('You see ' + objects[0].item.article + objects[0].item.name, game.turns)
+
+
+# print loading maps message
+def loadgen_message():
+	libtcod.console_print(game.con, 0, 0, 'Loading/Generating map chunks...')
+	libtcod.console_blit(game.con, 0, 0, game.MAP_WIDTH, game.MAP_HEIGHT, 0, game.MAP_X, game.MAP_Y)
+	libtcod.console_flush()
 
 
 # check to see if you can auto-move with mouse
 def mouse_auto_move():
 	for obj in game.current_map.objects:
-		if libtcod.map_is_in_fov(game.fov_map, obj.x, obj.y) and (obj.entity != None):
-			game.message.new("Auto-move aborted: Monster is near", game.player.turns)
+		if libtcod.map_is_in_fov(game.fov_map, obj.x, obj.y) and (obj.entity is not None):
+			game.message.new('Auto-move aborted: Monster is near', game.turns)
 			game.mouse_move = False
 			return False
 	return True
@@ -465,7 +321,7 @@ def reset_quantity(inv):
 
 
 # returns the roll of a die
-def roll_dice(nb_dices, nb_faces, multiplier, bonus):
+def roll_dice(nb_dices, nb_faces, multiplier=1, bonus=0):
 	return libtcod.random_get_int(game.rnd, nb_dices, nb_dices * nb_faces * multiplier) + bonus
 
 
@@ -474,6 +330,16 @@ def save_high_scores():
 	f = open('data/highscores.dat', 'wb')
 	pickle.dump(game.highscore, f)
 	f.close()
+
+
+# set a map properties based on a fully explore map
+def set_full_explore_map():
+	set_map = libtcod.map_new(game.current_map.map_width, game.current_map.map_height)
+	for py in range(game.current_map.map_height):
+		for px in range(game.current_map.map_width):
+			libtcod.map_set_properties(set_map, px, py, not game.current_map.tiles[px][py].block_sight, not game.current_map.is_blocked(px, py, False))
+	path = libtcod.dijkstra_new(set_map)
+	return path
 
 
 # show the worldmap
@@ -507,119 +373,23 @@ def showmap(box, box_width, box_height):
 				break
 
 
-#######################################
-# map functions
-#######################################
-
-# main functions for the building of overworld maps
-def change_maps(did, dlevel):
-	render_map()
-	libtcod.console_print(game.con, 0, 0, 'Loading/Generating map chunks...')
-	libtcod.console_blit(game.con, 0, 0, game.MAP_WIDTH, game.MAP_HEIGHT, 0, game.MAP_X, game.MAP_Y)
-	libtcod.console_flush()
-
-	decombine_maps()
-	game.old_maps.append(game.current_map)
-	for i in range(len(game.border_maps)):
-		game.old_maps.append(game.border_maps[i])
-
-	load_old_maps(did, dlevel)
-	combine_maps()
-	initialize_fov()
-	game.fov_recompute = True
-
-
-# check to see if new map already exist
-def load_old_maps(did, dlevel):
-	coord = [dlevel - game.WORLDMAP_WIDTH - 1, dlevel - game.WORLDMAP_WIDTH, dlevel - game.WORLDMAP_WIDTH + 1, dlevel - 1, dlevel + 1, dlevel + game.WORLDMAP_WIDTH - 1, dlevel + game.WORLDMAP_WIDTH, dlevel + game.WORLDMAP_WIDTH + 1, dlevel]
-	game.rnd = libtcod.random_new()
-	for j in range(len(coord)):
-		generate = True
-		for i in xrange(len(game.old_maps)):
-			if game.old_maps[i].location_id == did and game.old_maps[i].location_level == coord[j]:
-				temp_map = game.old_maps[i]
-				game.old_maps.pop(i)
-				generate = False
-				break
-		if generate:
-			temp_map = map.Map(game.current_map.location_name, game.current_map.location_abbr, did, coord[j], game.current_map.map_width, game.current_map.map_height, find_terrain_type(coord[j]))
-		if j == len(coord) - 1:
-			game.current_map = temp_map
-		else:
-			game.border_maps[j] = temp_map
-
-
-# combine some overworld maps into a super map
-def combine_maps():
-	mapid = [[0, 1, 2], [3, 0, 4], [5, 6, 7]]
-	super_map = map.Map(game.current_map.location_name, game.current_map.location_abbr, game.current_map.location_id, game.current_map.location_level, game.current_map.map_width * 3, game.current_map.map_height * 3, game.current_map.type, True)
-	game.char.x += game.current_map.map_width
-	game.char.y += game.current_map.map_height
-	super_map.objects.append(game.char)
-	for i in range(3):
-		for j in range(3):
-			if i == 1 and j == 1:
-				current = game.current_map
-			else:
-				current = game.border_maps[mapid[i][j]]
-			for x in range(game.current_map.map_width):
-				for y in range(game.current_map.map_height):
-					super_map.tiles[x + (j * game.current_map.map_width)][y + (i * game.current_map.map_height)] = current.tiles[x][y]
-					super_map.explored[x + (j * game.current_map.map_width)][y + (i * game.current_map.map_height)] = current.explored[x][y]
-					super_map.animation[x + (j * game.current_map.map_width)][y + (i * game.current_map.map_height)] = current.animation[x][y]
-			for obj in current.objects:
-				if obj.name != 'player':
-					obj.x = obj.x + (j * game.current_map.map_width)
-					obj.y = obj.y + (i * game.current_map.map_height)
-					super_map.objects.append(obj)
-	game.current_backup = game.current_map
-	game.current_map = super_map
-
-
-# decombine the super map into their respective overworld map
-def decombine_maps():
-	mapid = [[0, 1, 2], [3, 0, 4], [5, 6, 7]]
-	super_map = game.current_map
-	for i in range(3):
-		for j in range(3):
-			if i == 1 and j == 1:
-				current = game.current_backup
-			else:
-				current = game.border_maps[mapid[i][j]]
-			for x in range(current.map_width):
-				for y in range(current.map_height):
-					current.tiles[x][y] = super_map.tiles[x + (j * current.map_width)][y + (i * current.map_height)]
-					current.explored[x][y] = super_map.explored[x + (j * current.map_width)][y + (i * current.map_height)]
-					current.animation[x][y] = super_map.animation[x + (j * current.map_width)][y + (i * current.map_height)]
-			current.objects = []
-			current.objects.append(game.char)
-			for obj in super_map.objects:
-				if obj.name != 'player' and obj.x / (super_map.map_width / 3) == j and obj.y / (super_map.map_height / 3) == i:
-					obj.x = obj.x - (j * (super_map.map_width / 3))
-					obj.y = obj.y - (i * (super_map.map_height / 3))
-					current.objects.append(obj)
-			if i == 1 and j == 1:
-				game.current_map = current
-			else:
-				game.border_maps[mapid[i][j]] = current
-	if game.char.x >= game.current_map.map_width * 2:
-		game.char.x -= game.current_map.map_width * 2
-	elif game.char.x >= game.current_map.map_width:
-		game.char.x -= game.current_map.map_width
-	if game.char.y >= game.current_map.map_height * 2:
-		game.char.y -= game.current_map.map_height * 2
-	elif game.char.y >= game.current_map.map_height:
-		game.char.y -= game.current_map.map_height
-
-
-# find terrain type base on elevation
-def find_terrain_type(coord):
-	heightmap = game.worldmap.hm_list[coord]
-	for i in range(len(game.terrain)):
-		if heightmap >= game.terrain[i]['elevation']:
-			terrain = game.terrain[i]['name']
-			break
-	return terrain
+# someone set off a trap :O
+def spring_trap(x, y, victim='You'):
+	game.current_map.tiles[x][y] = copy.deepcopy(game.tiles.get_tile(game.current_map.tiles[x][y].name))
+	if 'invisible' in game.current_map.tiles[x][y].flags:
+		game.current_map.tiles[x][y].flags.remove('invisible')
+	if libtcod.map_is_in_fov(game.fov_map, x, y):
+		game.message.new(victim + ' sprung a trap!', game.turns)
+	if 'fx_teleport' in game.current_map.tiles[x][y].flags:
+		effects.teleportation(x, y, victim)
+	if 'fx_stuck' in game.current_map.tiles[x][y].flags:
+		effects.stuck(x, y, victim)
+	if 'fx_poison_gas' in game.current_map.tiles[x][y].flags:
+		effects.poison_gas(x, y, 3, 20)
+	if 'fx_sleep_gas' in game.current_map.tiles[x][y].flags:
+		effects.sleeping_gas(x, y, 3, 20)
+	if 'fx_fireball' in game.current_map.tiles[x][y].flags:
+		effects.fireball(x, y, 3)
 
 
 #######################################
@@ -628,6 +398,7 @@ def find_terrain_type(coord):
 
 # initialize the field of vision
 def initialize_fov(update=False):
+	game.traps = []
 	if not update:
 		game.fov_map = libtcod.map_new(game.current_map.map_width, game.current_map.map_height)
 		for y in range(game.current_map.map_height):
@@ -638,8 +409,13 @@ def initialize_fov(update=False):
 			for x in range(game.char.x - game.FOV_RADIUS, game.char.x + game.FOV_RADIUS):
 				if x < game.current_map.map_width and y < game.current_map.map_height:
 					libtcod.map_set_properties(game.fov_map, x, y, not game.current_map.tiles[x][y].block_sight, game.current_map.explored[x][y] and (not game.current_map.is_blocked(x, y)))
+					if libtcod.map_is_in_fov(game.fov_map, x, y):
+						if game.current_map.tiles[x][y].type == 'trap' and game.current_map.tiles[x][y].is_invisible():
+							game.traps.append((x, y))
+	# compute paths using dijkstra algorithm
 	game.path_dijk = libtcod.dijkstra_new(game.fov_map)
-	game.path_recalculate = True
+	libtcod.dijkstra_compute(game.path_dijk, game.char.x, game.char.y)
+	libtcod.dijkstra_path_set(game.path_dijk, game.path_dx, game.path_dy)
 
 
 # render the hp and mana bar
@@ -689,7 +465,7 @@ def render_message_panel():
 	libtcod.console_clear(game.panel)
 	game.message.delete()
 	for y, (line, color, turn) in enumerate(game.message.log):
-		new_color = libtcod.color_lerp(libtcod.darkest_grey, color, 1 - ((game.player.turns - turn) * 0.1))
+		new_color = libtcod.color_lerp(libtcod.darkest_grey, color, 1 - ((game.turns - turn) * 0.1))
 		libtcod.console_set_default_foreground(game.panel, new_color)
 		libtcod.console_print(game.panel, 0, y, line)
 	libtcod.console_blit(game.panel, 0, 0, game.MESSAGE_WIDTH, game.MESSAGE_HEIGHT, 0, game.MESSAGE_X, game.MESSAGE_Y)
@@ -697,52 +473,68 @@ def render_message_panel():
 
 # print the player stats in the panel
 def render_player_stats_panel():
+	libtcod.console_set_default_background(game.ps, libtcod.black)
+	libtcod.console_clear(game.ps)
 	render_bar(game.ps, 0, 5, game.PLAYER_STATS_WIDTH, 'HP', game.player.health, game.player.max_health, libtcod.red, libtcod.darker_red)
 	render_bar(game.ps, 0, 6, game.PLAYER_STATS_WIDTH, 'MP', game.player.mana, game.player.max_mana, libtcod.blue, libtcod.darker_blue)
 	libtcod.console_print(game.ps, 0, 0, game.player.name)
-	libtcod.console_print(game.ps, 0, 1, game.player.race + " " + game.player.profession)
-	libtcod.console_print(game.ps, 0, 3, game.current_map.location_abbr + '-' + str(game.current_map.location_level) + "     ")
-	libtcod.console_print(game.ps, 0, 8, "LV: " + str(game.player.level))
-	libtcod.console_print(game.ps, 0, 9, "XP: " + str(game.player.xp))
-	libtcod.console_print(game.ps, 0, 10, "Str: " + str(game.player.strength) + ' ')
-	libtcod.console_print(game.ps, 0, 11, "Dex: " + str(game.player.dexterity) + ' ')
-	libtcod.console_print(game.ps, 0, 12, "Int: " + str(game.player.intelligence) + ' ')
-	libtcod.console_print(game.ps, 0, 13, "Wis: " + str(game.player.wisdom) + ' ')
-	libtcod.console_print(game.ps, 0, 14, "End: " + str(game.player.endurance) + ' ')
-	libtcod.console_print(game.ps, 0, 15, "Karma: " + str(game.player.karma) + ' ')
-	libtcod.console_print(game.ps, 0, 17, "Turns: " + str(game.player.turns) + ' ')
+	libtcod.console_print(game.ps, 0, 1, game.player.race + ' ' + game.player.profession)
+	libtcod.console_print(game.ps, 0, 3, game.current_map.location_abbr + '-' + str(game.current_map.location_level) + '     ')
+	libtcod.console_print(game.ps, 0, 8, 'LV: ' + str(game.player.level))
+	libtcod.console_print(game.ps, 0, 9, 'XP: ' + str(game.player.xp))
+	libtcod.console_print(game.ps, 0, 10, 'Str: ' + str(game.player.strength) + ' ')
+	libtcod.console_print(game.ps, 0, 11, 'Dex: ' + str(game.player.dexterity) + ' ')
+	libtcod.console_print(game.ps, 0, 12, 'Int: ' + str(game.player.intelligence) + ' ')
+	libtcod.console_print(game.ps, 0, 13, 'Wis: ' + str(game.player.wisdom) + ' ')
+	libtcod.console_print(game.ps, 0, 14, 'End: ' + str(game.player.endurance) + ' ')
+	libtcod.console_print(game.ps, 0, 15, 'Karma: ' + str(game.player.karma) + ' ')
+	libtcod.console_print(game.ps, 0, game.PLAYER_STATS_HEIGHT - 2, 'Turns: ' + str(game.turns) + ' ')
+	libtcod.console_print(game.ps, 0, 17, 'Active skills: ')
+	libtcod.console_print(game.ps, 0, 20, 'Condition: ')
+	libtcod.console_set_default_foreground(game.ps, libtcod.light_sepia)
+	if 'detect_trap' in game.player.flags:
+		libtcod.console_print(game.ps, 0, 18, 'DetTrap')
+
+	cond = ''
+	if 'stuck' in game.player.flags:
+		cond += 'Stuck '
+	if 'poison' in game.player.flags:
+		cond += 'Psnd '
+	if 'sleep' in game.player.flags:
+		cond += 'Sleep '
+	libtcod.console_print(game.ps, 0, 21, cond)
 	libtcod.console_blit(game.ps, 0, 0, game.PLAYER_STATS_WIDTH, game.PLAYER_STATS_HEIGHT, 0, game.PLAYER_STATS_X, game.PLAYER_STATS_Y)
 
 
 # floating text animations for damage and healing
 def render_floating_text_animations():
-	for i, (obj, line, color, turn) in enumerate(reversed(game.hp_anim)):
-		new_color = libtcod.color_lerp(libtcod.black, color, 1 - ((turn / 20) * 0.2))
+	for i, (x, y, line, color, turn) in enumerate(reversed(game.hp_anim)):
+		new_color = libtcod.color_lerp(libtcod.black, color, 1 - ((turn / 15) * 0.2))
 		libtcod.console_set_default_foreground(game.con, new_color)
-		x, y = obj.x, obj.y
-		libtcod.console_print_ex(game.con, x - game.curx, y - game.cury - (turn / 20), libtcod.BKGND_NONE, libtcod.CENTER, line)
-		game.hp_anim[len(game.hp_anim) - i - 1] = (obj, line, color, turn + 1)
-		if turn > 80:
+		libtcod.console_print_ex(game.con, x - game.curx, y - game.cury - (turn / 15), libtcod.BKGND_NONE, libtcod.CENTER, line)
+		game.hp_anim[len(game.hp_anim) - i - 1] = (x, y, line, color, turn + 1)
+		if turn > 60:
 			game.hp_anim.pop(len(game.hp_anim) - i - 1)
 
 
-def render_tiles_animations(x, y, icon, light, dark):
+# return new colors for tiles animations
+def render_tiles_animations(x, y, icon, light, dark, lerp):
 	z = libtcod.random_get_int(game.rnd, 1, 70)
 	if z == 70:
 		l = libtcod.random_get_int(game.rnd, 0, 1)
 		if l == 0:
-			if game.current_map.animation[x][y] >= 0.1:
-				game.current_map.animation[x][y] -= 0.1
+			if lerp >= 0.1:
+				lerp -= 0.1
 			else:
-				game.current_map.animation[x][y] += 0.1
+				lerp += 0.1
 		else:
-			if game.current_map.animation[x][y] <= 1.0:
-				game.current_map.animation[x][y] += 0.1
+			if lerp < 1.0:
+				lerp += 0.1
 			else:
-				game.current_map.animation[x][y] -= 0.1
-	front = libtcod.color_lerp(light, icon, game.current_map.animation[x][y])
-	back = libtcod.color_lerp(dark, light, game.current_map.animation[x][y])
-	return front, back
+				lerp -= 0.1
+	front = libtcod.color_lerp(light, icon, lerp)
+	back = libtcod.color_lerp(dark, light, lerp)
+	return front, back, lerp
 
 
 # determine the current viewport for the map panel
@@ -764,12 +556,12 @@ def find_map_viewport():
 def render_map():
 	# recompute FOV if needed (the player moved or something)
 	libtcod.console_clear(game.con)
-	find_map_viewport()
-	fov_radius()
 	if game.fov_recompute:
+		find_map_viewport()
+		fov_radius()
 		initialize_fov(True)
-		game.fov_recompute = False
 		libtcod.map_compute_fov(game.fov_map, game.char.x, game.char.y, game.FOV_RADIUS, game.FOV_LIGHT_WALLS, game.FOV_ALGO)
+		game.fov_recompute = False
 
 	# 'torch' animation
 	if game.fov_torch:
@@ -779,12 +571,6 @@ def render_map():
 		tdx[0] += 30.0
 		dy = libtcod.noise_get(game.fov_noise, tdx, libtcod.NOISE_SIMPLEX) * 1.5
 		di = 0.4 * libtcod.noise_get(game.fov_noise, [game.fov_torchx], libtcod.NOISE_SIMPLEX)
-
-	# compute path using dijkstra algorithm
-	if game.path_recalculate:
-		libtcod.dijkstra_compute(game.path_dijk, game.char.x, game.char.y)
-		libtcod.dijkstra_path_set(game.path_dijk, game.path_dx, game.path_dy)
-		game.path_recalculate = False
 
 	# go through all tiles, and set their background color according to the FOV
 	for y in range(game.MAP_HEIGHT):
@@ -797,13 +583,18 @@ def render_map():
 					libtcod.console_put_char_ex(game.con, x, y, game.current_map.tiles[px][py].icon, game.current_map.tiles[px][py].dark_color, game.current_map.tiles[px][py].dark_back_color)
 			else:
 				if not game.fov_torch:
-					if game.current_map.tiles[px][py].is_animate():
-						(front, back) = render_tiles_animations(px, py, game.current_map.tiles[px][py].color, game.current_map.tiles[px][py].back_color, game.current_map.tiles[px][py].anim_color)
+					if game.current_map.animation[px][py] is not None:
+						(front, back, game.current_map.animation[px][py]['lerp']) = render_tiles_animations(px, py, game.current_map.tiles[px][py].color, game.current_map.animation[px][py]['light_color'], game.current_map.animation[px][py]['dark_color'], game.current_map.animation[px][py]['lerp'])
+						libtcod.console_put_char_ex(game.con, x, y, game.current_map.animation[px][py]['icon'], game.current_map.tiles[px][py].color, back)
+					elif game.current_map.tiles[px][py].is_animate():
+						(front, back, game.current_map.tiles[px][py].lerp) = render_tiles_animations(px, py, game.current_map.tiles[px][py].color, game.current_map.tiles[px][py].back_color, game.current_map.tiles[px][py].anim_color, game.current_map.tiles[px][py].lerp)
 						libtcod.console_put_char_ex(game.con, x, y, game.current_map.tiles[px][py].icon, front, back)
 					else:
 						libtcod.console_put_char_ex(game.con, x, y, game.current_map.tiles[px][py].icon, game.current_map.tiles[px][py].color, game.current_map.tiles[px][py].back_color)
 				else:
 					base = game.current_map.tiles[px][py].back_color
+					if game.current_map.animation[px][py] is not None:
+						base = game.current_map.animation[px][py]['light_color']
 					light = libtcod.gold
 					r = float(px - game.char.x + dx) * (px - game.char.x + dx) + (py - game.char.y + dy) * (py - game.char.y + dy)
 					if r < game.SQUARED_TORCH_RADIUS:
@@ -817,21 +608,20 @@ def render_map():
 				game.current_map.explored[px][py] = True
 
 	# draw a line between the player and the mouse cursor
-	if game.current_map.explored[game.path_dx][game.path_dy]:
-		for i in range(libtcod.dijkstra_size(game.path_dijk)):
-			x, y = libtcod.dijkstra_get(game.path_dijk, i)
-			libtcod.console_set_char_background(game.con, x - game.curx, y - game.cury, libtcod.desaturated_yellow, libtcod.BKGND_SET)
+	if game.path_dx in range(game.current_map.map_width) and game.path_dy in range(game.current_map.map_height):
+		if game.current_map.explored[game.path_dx][game.path_dy] and not game.current_map.tiles[game.path_dx][game.path_dy].blocked:
+			for i in range(libtcod.dijkstra_size(game.path_dijk)):
+				x, y = libtcod.dijkstra_get(game.path_dijk, i)
+				libtcod.console_set_char_background(game.con, x - game.curx, y - game.cury, libtcod.desaturated_yellow, libtcod.BKGND_SET)
 
 	# move the player if using mouse
 	if game.mouse_move:
 		if not libtcod.dijkstra_is_empty(game.path_dijk) and mouse_auto_move():
-			libtcod.console_put_char(game.con, game.char.x, game.char.y, ' ', libtcod.BKGND_NONE)
 			game.char.x, game.char.y = libtcod.dijkstra_path_walk(game.path_dijk)
-			libtcod.console_put_char(game.con, game.char.x, game.char.y, '@', libtcod.BKGND_NONE)
-			game.path_recalculate = True
 			game.fov_recompute = True
-			game.player.add_turn()
+			add_turn()
 		else:
+			items_at_feet()
 			game.mouse_move = False
 
 	if not game.mouse_move:
@@ -850,15 +640,15 @@ def render_map():
 				game.path_dx = 0
 				game.path_dy = 0
 			if not game.current_map.tiles[game.path_dx][game.path_dy].blocked:
-				game.path_recalculate = True
+				libtcod.dijkstra_path_set(game.path_dijk, game.path_dx, game.path_dy)
 		else:
-			game.path_dx = 0
-			game.path_dy = 0
+			game.path_dx = -1
+			game.path_dy = -1
 
 	# draw all objects in the map, except the player who his drawn last
-	for object in reversed(game.current_map.objects):
-		if object != game.char:
-			object.draw(game.con)
+	for obj in reversed(game.current_map.objects):
+		if obj.name != 'player':
+			obj.draw(game.con)
 	game.char.draw(game.con)
 
 	libtcod.console_print(game.con, 0, 0, get_names_under_mouse())
