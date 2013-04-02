@@ -12,10 +12,11 @@ import map
 import worldgen
 import messages
 import effects
+import death
 import debug as dbg
 
 VERSION = 'v0.3.1'
-BUILD = '41'
+BUILD = '42'
 
 #size of the gui windows
 MAP_WIDTH = 70
@@ -89,6 +90,9 @@ curx = 0
 cury = 0
 turns = 0
 traps = []
+old_msg = 0
+
+# thanatos, draconis, valamar, otatop
 
 terrain = [{'name': 'Mountain Peak', 'type': 'dirt', 'elevation': 0.950}, {'name': 'Mountains', 'type': 'dirt', 'elevation': 0.850},
 		{'name': 'Hills', 'type': 'dirt', 'elevation': 0.700}, {'name': 'Forest', 'type': 'grass', 'elevation': 0.250},
@@ -198,7 +202,7 @@ class Game(object):
 				self.save_game()
 				break
 			if player_action == 'quit':
-				util.death(True)
+				death.death_screen(True)
 				break
 			if player_action == 'exit':
 				break
@@ -239,7 +243,7 @@ class Game(object):
 				libtcod.console_flush()
 				while not key.vk == libtcod.KEY_SPACE:
 					libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, key, libtcod.Mouse(), True)
-				util.death()
+				death.death_screen()
 				player_action = 'exit'
 				break
 
@@ -304,12 +308,13 @@ class Game(object):
 				self.play_game()
 
 	# basic help text
+	# stuff to do: change manual system
 	def help(self):
 		contents = open('data/help.txt', 'r').read()
 		contents = contents.split('\n')
 		messages.box('Help', None, 'center_screenx', 'center_screeny', len(max(contents, key=len)) + 16, len(contents) + 4, contents, input=False)
 
-	# loading and changing game settings
+	# brings up settings menu
 	def settings(self):
 		box = libtcod.console_new(40, 8)
 		messages.box_gui(box, 0, 0, 40, 8, libtcod.green)
@@ -320,6 +325,8 @@ class Game(object):
 		util.change_settings(box, 40, 8, font, blitmap=False)
 		self.load_settings()
 
+	# load game settings
+	# stuff to do: add more options
 	def load_settings(self):
 		global font
 		if os.path.exists('settings.ini'):
@@ -353,9 +360,10 @@ class Game(object):
 
 	# reset some variables after saving of quitting current game
 	def reset_game(self):
-		global savefiles, turns, redraw_gui, fov_recompute
+		global savefiles, turns, old_msg, redraw_gui, fov_recompute
 		savefiles = os.listdir('saves')
 		turns = 0
+		old_msg = 0
 		redraw_gui = True
 		fov_recompute = True
 

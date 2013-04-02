@@ -6,6 +6,7 @@ import map
 
 
 # handles all the keyboard input commands
+# stuff to do: add more commands
 def keyboard_commands():
 	key = libtcod.Key()
 	ev = libtcod.sys_check_for_event(libtcod.EVENT_ANY, key, game.mouse)
@@ -42,12 +43,18 @@ def keyboard_commands():
 			player_move(1, 1)
 		elif key.vk == libtcod.KEY_SPACE or key.vk == libtcod.KEY_KP5:
 			wait_turn()
+		elif key.vk == libtcod.KEY_PAGEUP:
+			see_message_log(up=True)
+		elif key.vk == libtcod.KEY_PAGEDOWN:
+			see_message_log(down=True)
 
 		elif (key.lctrl or key.rctrl) and key.c != 0:
 			if key_char == 'd':
 				game.debug.menu()
 			elif key_char == 'e':
 				show_time()
+			elif key_char == 'm':
+				see_message_history()
 			elif key_char == 's':
 				if save_game():
 					return 'save'
@@ -327,6 +334,7 @@ def close_door():
 
 
 # drop an item
+# stuff to do: drop lit torch
 def drop_item():
 	qty = 1
 	if len(game.player.inventory) == 0:
@@ -364,10 +372,11 @@ def equip_item():
 
 
 # help screen
+# stuff to do: change manual screen
 def help():
 	contents = open('data/help.txt', 'r').read()
 	contents = contents.split('\n')
-	game.messages.box('Help', None, game.PLAYER_STATS_WIDTH + ((game.MAP_WIDTH - (len(max(contents, key=len)) + 20)) / 2), ((game.MAP_HEIGHT + 1) - max(16, len(contents) + 4)) / 2, len(max(contents, key=len)) + 20, len(contents) + 4, contents, input=False)
+	game.messages.box('Help', None, game.PLAYER_STATS_WIDTH + ((game.MAP_WIDTH - (len(max(contents, key=len)) + 20)) / 2), ((game.SCREEN_HEIGHT + 1) - max(16, len(contents) + 4)) / 2, len(max(contents, key=len)) + 20, len(contents) + 4, contents, input=False)
 	game.redraw_gui = True
 
 
@@ -386,7 +395,7 @@ def highscores():
 	game.redraw_gui = True
 
 
-# see inventory
+# see your inventory
 def inventory():
 	if len(game.player.inventory) == 0:
 		game.message.new('Your inventory is empty.', game.turns)
@@ -588,12 +597,66 @@ def save_game():
 	return False
 
 
-# print current time
+# show all of the old messages
+def see_message_history():
+	box_width = game.MESSAGE_WIDTH + 2
+	box_height = (game.SCREEN_HEIGHT / 2) + 4
+	box = libtcod.console_new(box_width, box_height)
+	game.messages.box_gui(box, 0, 0, box_width, box_height, libtcod.green)
+	libtcod.console_set_default_foreground(box, libtcod.black)
+	libtcod.console_set_default_background(box, libtcod.green)
+	libtcod.console_print_ex(box, box_width / 2, 0, libtcod.BKGND_SET, libtcod.CENTER, ' Message History ')
+	libtcod.console_set_default_foreground(box, libtcod.green)
+	libtcod.console_set_default_background(box, libtcod.black)
+	libtcod.console_print_ex(box, box_width / 2, box_height - 1, libtcod.BKGND_SET, libtcod.CENTER, ' Arrow keys - Scroll up/down, ESC - exit ')
+	libtcod.console_set_default_foreground(box, libtcod.white)
+
+	scroll = 0
+	exit = False
+	key = libtcod.Key()
+	while exit is False:
+		libtcod.console_rect(box, 1, 1, box_width - 2, box_height - 2, True, libtcod.BKGND_SET)
+		for i in range(min(box_height - 4, len(game.message.history))):
+			libtcod.console_set_default_foreground(box, game.message.history[i + scroll][1])
+			libtcod.console_print(box, 2, i + 2, game.message.history[i + scroll][0])
+		if scroll > 0:
+			libtcod.console_put_char_ex(box, box_width - 2, 1, chr(24), libtcod.white, libtcod.black)
+		if box_height - 4 + scroll < len(game.message.history):
+			libtcod.console_put_char_ex(box, box_width - 2, box_height - 2, chr(25), libtcod.white, libtcod.black)
+		libtcod.console_blit(box, 0, 0, box_width, box_height, 0, (game.SCREEN_WIDTH - box_width) / 2, (game.MAP_HEIGHT - box_height + 2) / 2, 1.0, 1.0)
+		libtcod.console_flush()
+		ev = libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS, key, libtcod.Mouse())
+		if ev == libtcod.EVENT_KEY_PRESS:
+			if key.vk == libtcod.KEY_ESCAPE:
+				exit = True
+			elif key.vk == libtcod.KEY_UP or key.vk == libtcod.KEY_KP8:
+				if scroll > 0:
+					scroll -= 1
+			elif key.vk == libtcod.KEY_DOWN or key.vk == libtcod.KEY_KP2:
+				if box_height - 4 + scroll < len(game.message.history):
+					scroll += 1
+	game.redraw_gui = True
+
+
+# show some of the old messages
+def see_message_log(up=False, down=False):
+	if up:
+		if game.old_msg < len(game.message.log) - 5:
+			game.old_msg += 1
+	if down:
+		if game.old_msg > 0:
+			game.old_msg -= 1
+	util.render_message_panel()
+	libtcod.console_flush()
+
+
+# print current time/date
 def show_time():
 	game.message.new(game.gametime.time_to_text(), game.turns)
 
 
 # show a miniature world map
+# stuff to do: add towns, zoom
 def show_worldmap():
 	box = libtcod.console_new(game.SCREEN_WIDTH, game.SCREEN_HEIGHT)
 	game.messages.box_gui(box, 0, 0, game.SCREEN_WIDTH, game.SCREEN_HEIGHT, libtcod.green)

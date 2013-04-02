@@ -151,6 +151,7 @@ class World(object):
 		libtcod.heightmap_normalize(game.hm)
 
 	# main function for generating the worldmap
+	# stuff to do: add rivers, place towns
 	def generate(self):
 		self.noise = libtcod.noise_new(2, self.rnd)
 		libtcod.noise_set_type(self.noise, libtcod.NOISE_PERLIN)

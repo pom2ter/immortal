@@ -15,6 +15,10 @@ class Message(object):
 			if game.turns - turn > 10:
 				self.log.remove((line, color, turn))
 
+	# delete message log history
+	def delete_history(self):
+		self.history = []
+
 	# empty message log
 	def empty(self):
 		self.log = []
@@ -22,15 +26,19 @@ class Message(object):
 	# add a new message to the queue
 	def new(self, new_msg, turn, color=libtcod.white):
 		#split the message if necessary, among multiple lines
-		new_msg_lines = textwrap.wrap(new_msg, game.MESSAGE_WIDTH)
+		new_msg_lines = textwrap.wrap(new_msg, game.MESSAGE_WIDTH - 2)
 
 		for line in new_msg_lines:
 			#if the buffer is full, remove the first line to make room for the new one
-			if len(self.log) == game.MESSAGE_HEIGHT:
+			if len(self.log) == 15:  # game.MESSAGE_HEIGHT:
 				del self.log[0]
 
 			#add the new line as a tuple, with the text and the color
 			self.log.append((line, color, turn))
+			if len(self.history) == 50:
+				del self.history[0]
+			self.history.append((line, color, turn))
+		game.old_msg = 0
 		util.render_message_panel()
 
 

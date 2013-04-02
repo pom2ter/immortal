@@ -3,9 +3,12 @@ KEYBOARD COMMANDS
 Arrow keys = Move character
 SPACE = wait 1 turn
 TAB = World map
+CTRL-M = Message history
 CTRL-S = Save game
 CTRL-X = Quit game
 ESC = Menu screen
+PAGE UP = Scroll up message log
+PAGE DOWN = Scroll down message log
 ? = Help screen
 
 a = Attack someone

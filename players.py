@@ -397,6 +397,7 @@ class Player(object):
 		self.equipment.pop(item)
 
 	# return carried weight
+	# stuff to do: burdened, overburdened
 	def weight_carried(self):
 		weight = sum(item.weight for item in self.inventory)
 		weight += sum(item.weight for item in self.equipment)
@@ -574,7 +575,7 @@ def create_character():
 		index = chargen_options(1, 5, 12, RACES, 'race')
 		game.player.race = RACES[index]
 
-		show_stats_panel(stats, game.player.gender + ' ' + game.player.race, index * 5)
+		show_stats_panel(stats, game.player.gender + ' ' + game.player.race, index * 6)
 		libtcod.console_rect(cs, 0, 2, cs_width, game.SCREEN_HEIGHT, True, libtcod.BKGND_SET)
 		libtcod.console_print(cs, 1, 3, 'Select a class:')
 		libtcod.console_print(cs, 16, 4, 'Modifiers')
@@ -587,7 +588,7 @@ def create_character():
 		indexr = chargen_options(1, 5, 12, CLASSES, 'class')
 		game.player.profession = CLASSES[indexr]
 
-		show_stats_panel(stats, game.player.gender + ' ' + game.player.race + ' ' + game.player.profession, (index * 5) + indexr + 1, 0)
+		show_stats_panel(stats, game.player.gender + ' ' + game.player.race + ' ' + game.player.profession, (index * 6) + indexr + 1, 0)
 		libtcod.console_rect(cs, 0, 2, cs_width, game.SCREEN_HEIGHT, True, libtcod.BKGND_SET)
 		libtcod.console_print(cs, 1, 3, 'Options:')
 		libtcod.console_blit(cs, 0, 0, cs_width, game.SCREEN_HEIGHT, 0, 0, 0)
@@ -595,7 +596,7 @@ def create_character():
 		while not final_choice:
 			choice = chargen_options(1, 5, 33, ['Reroll stats', 'Keep character and start game', 'Cancel and restart', 'Return to main menu'], None)
 			if choice == 0:
-				show_stats_panel(stats, game.player.gender + ' ' + game.player.race + ' ' + game.player.profession, (index * 5) + indexr + 1, 0)
+				show_stats_panel(stats, game.player.gender + ' ' + game.player.race + ' ' + game.player.profession, (index * 6) + indexr + 1, 0)
 			if choice == 1:
 				final_choice = True
 				return 'playing'

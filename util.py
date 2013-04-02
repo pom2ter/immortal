@@ -1,6 +1,4 @@
 import libtcodpy as libtcod
-import pickle
-import os
 import copy
 import game
 import commands
@@ -123,66 +121,7 @@ def color_lerp(lerp, descending, base=libtcod.black, light=libtcod.light_blue):
 	return color, lerp, descending
 
 
-# death screens and final score
-def death(quit=False):
-	libtcod.console_set_default_foreground(0, libtcod.white)
-	libtcod.console_set_default_background(0, libtcod.black)
-	libtcod.console_clear(0)
-	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 1, libtcod.BKGND_SET, libtcod.CENTER, 'Summary for ' + game.player.name)
-	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 3, libtcod.BKGND_SET, libtcod.CENTER, '_________________')
-	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 4, libtcod.BKGND_SET, libtcod.CENTER, '  /                 \ ')
-	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 5, libtcod.BKGND_SET, libtcod.CENTER, '  /                   \ ')
-	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 6, libtcod.BKGND_SET, libtcod.CENTER, '  /                     \ ')
-	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 7, libtcod.BKGND_SET, libtcod.CENTER, '|                     |')
-	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 8, libtcod.BKGND_SET, libtcod.CENTER, '|                     |')
-	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 9, libtcod.BKGND_SET, libtcod.CENTER, '|                     |')
-	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 10, libtcod.BKGND_SET, libtcod.CENTER, '|                     |')
-	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 11, libtcod.BKGND_SET, libtcod.CENTER, '|                     |')
-	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 12, libtcod.BKGND_SET, libtcod.CENTER, '|                     |')
-	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 13, libtcod.BKGND_SET, libtcod.CENTER, '|                     |')
-	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 14, libtcod.BKGND_SET, libtcod.CENTER, '|                     |')
-	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 15, libtcod.BKGND_SET, libtcod.CENTER, '|                     |')
-	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 16, libtcod.BKGND_SET, libtcod.CENTER, '* |   *     *     *     |*')
-	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 17, libtcod.BKGND_SET, libtcod.CENTER, '____\(/___\-/___/|\___\/\____/)\_____')
-
-	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 6, libtcod.BKGND_SET, libtcod.CENTER, 'R I P')
-	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 8, libtcod.BKGND_SET, libtcod.CENTER, game.player.name)
-	if quit:
-		libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 10, libtcod.BKGND_SET, libtcod.CENTER, 'quitted the game')
-		line2 = 'quitted the game'
-	else:
-		libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 10, libtcod.BKGND_SET, libtcod.CENTER, 'Killed by')
-		libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 11, libtcod.BKGND_SET, libtcod.CENTER, game.killer)
-		line2 = 'was killed by ' + game.killer
-	if game.current_map.location_id == 0:
-		libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 12, libtcod.BKGND_SET, libtcod.CENTER, 'in the')
-	else:
-		libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 12, libtcod.BKGND_SET, libtcod.CENTER, 'on level ' + str(game.current_map.location_level) + ' in the')
-	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 13, libtcod.BKGND_SET, libtcod.CENTER, game.current_map.location_name)
-
-	score = game.player.score()
-	line1 = game.player.name + ', the level ' + str(game.player.level) + ' ' + game.player.gender + ' ' + game.player.race + ' ' + game.player.profession + ','
-	if game.current_map.location_id == 0:
-		line2 += ' in the ' + game.current_map.location_name + ' (' + str(game.turns) + ' turns)'
-	else:
-		line2 += ' on level ' + str(game.current_map.location_level) + ' in the ' + game.current_map.location_name + ' (' + str(game.turns) + ' turns)'
-	libtcod.console_print(0, 2, 20, 'Final score')
-	libtcod.console_print(0, 2, 22, str(score))
-	libtcod.console_print(0, 8, 22, line1)
-	libtcod.console_print(0, 8, 23,	line2)
-	libtcod.console_flush()
-	libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, libtcod.Key(), libtcod.Mouse(), True)
-
-	game.highscore.append((score, line1, line2))
-	game.highscore = sorted(game.highscore, reverse=True)
-	if len(game.highscore) > 10:
-		game.highscore.pop()
-	save_high_scores()
-	if game.player.name.lower() in game.savefiles:
-		os.remove('saves/' + game.player.name.lower())
-
-
-# returns a particular point on the map
+# returns a particular point on the map (when you see the worldmap)
 def find_map_position(mapposx, mapposy):
 	if int(mapposx) == int(round(mapposx)):
 		if int(mapposy) == int(round(mapposy)):
@@ -325,14 +264,7 @@ def roll_dice(nb_dices, nb_faces, multiplier=1, bonus=0):
 	return libtcod.random_get_int(game.rnd, nb_dices, nb_dices * nb_faces * multiplier) + bonus
 
 
-# save changes to the highscores
-def save_high_scores():
-	f = open('data/highscores.dat', 'wb')
-	pickle.dump(game.highscore, f)
-	f.close()
-
-
-# set a map properties based on a fully explore map
+# set map properties based on a fully explore map
 def set_full_explore_map():
 	set_map = libtcod.map_new(game.current_map.map_width, game.current_map.map_height)
 	for py in range(game.current_map.map_height):
@@ -343,6 +275,7 @@ def set_full_explore_map():
 
 
 # show the worldmap
+# stuff to do: add towns, zoom
 def showmap(box, box_width, box_height):
 	lerp, choice = 1.0, -1
 	descending, keypress = True, False
@@ -462,12 +395,16 @@ def render_gui(color):
 
 # print the game messages, one line at a time
 def render_message_panel():
+	y = 0
 	libtcod.console_clear(game.panel)
-	game.message.delete()
-	for y, (line, color, turn) in enumerate(game.message.log):
-		new_color = libtcod.color_lerp(libtcod.darkest_grey, color, 1 - ((game.turns - turn) * 0.1))
-		libtcod.console_set_default_foreground(game.panel, new_color)
-		libtcod.console_print(game.panel, 0, y, line)
+	for i in range(max(0, len(game.message.log) - 5 - game.old_msg), len(game.message.log) - game.old_msg):
+		libtcod.console_set_default_foreground(game.panel, game.message.log[i][1])
+		libtcod.console_print(game.panel, 0, y, game.message.log[i][0])
+		y += 1
+	if game.old_msg + 5 < len(game.message.log):
+		libtcod.console_put_char_ex(game.panel, game.MESSAGE_WIDTH - 1, 0, chr(24), libtcod.white, libtcod.black)
+	if game.old_msg > 0:
+		libtcod.console_put_char_ex(game.panel, game.MESSAGE_WIDTH - 1, game.MESSAGE_HEIGHT - 1, chr(25), libtcod.white, libtcod.black)
 	libtcod.console_blit(game.panel, 0, 0, game.MESSAGE_WIDTH, game.MESSAGE_HEIGHT, 0, game.MESSAGE_X, game.MESSAGE_Y)
 
 
@@ -507,6 +444,7 @@ def render_player_stats_panel():
 
 
 # floating text animations for damage and healing
+# stuff to do: anim should start and end before next anim
 def render_floating_text_animations():
 	for i, (x, y, line, color, turn) in enumerate(reversed(game.hp_anim)):
 		new_color = libtcod.color_lerp(libtcod.black, color, 1 - ((turn / 15) * 0.2))
@@ -634,8 +572,7 @@ def render_map():
 			libtcod.console_set_char_background(game.con, mx, my, libtcod.white, libtcod.BKGND_SET)
 			if game.current_map.explored[px][py] and not game.current_map.tiles[px][py].blocked:
 				if game.mouse.lbutton_pressed:
-					if mouse_auto_move():
-						game.mouse_move = True
+					game.mouse_move = mouse_auto_move()
 			else:
 				game.path_dx = 0
 				game.path_dy = 0

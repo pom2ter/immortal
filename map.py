@@ -26,6 +26,7 @@ class Map(object):
 		self.generate(empty)
 
 	# create a map with a dungeon type
+	# stuff to do: add cavern, town, maze type
 	def create_dungeon(self):
 		rooms = []
 		num_rooms = 0
@@ -82,6 +83,7 @@ class Map(object):
 		return rooms
 
 	# create any outdoor map
+	# stuff to do: add mountains, mtns peak maps, transitions
 	def create_outdoor_map(self, default_tile):
 		trees_tiles = 0
 		rocks_tiles = 1
@@ -214,6 +216,7 @@ class Map(object):
 		return False
 
 	# place doors in dungeon level
+	# stuff to do: add locked doors
 	def place_doors(self):
 		for y in range(1, self.map_height - 1):
 			for x in range(1, self.map_width - 1):
@@ -623,7 +626,7 @@ def combine_maps():
 	game.current_map = super_map
 
 
-# decombine the super map into their respective overworld map
+# decombine the super map into their respective smaller chunks
 def decombine_maps():
 	mapid = [[0, 1, 2], [3, 0, 4], [5, 6, 7]]
 	super_map = game.current_map
