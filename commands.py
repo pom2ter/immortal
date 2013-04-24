@@ -265,6 +265,7 @@ def climb_down_stairs():
 			game.current_map = map.Map(location_name, location_abbr, location_id, level, 90, 52)
 
 		game.current_map.overworld_position = op
+		game.current_map.check_player_position()
 		util.add_turn()
 		util.initialize_fov()
 		game.fov_recompute = True
@@ -307,6 +308,7 @@ def climb_up_stairs():
 		else:
 			map.load_old_maps(location_id, level)
 			map.combine_maps()
+		game.current_map.check_player_position()
 		util.initialize_fov()
 		util.add_turn()
 		game.fov_recompute = True
@@ -650,6 +652,19 @@ def see_message_log(up=False, down=False):
 	libtcod.console_flush()
 
 
+# settings screen
+def settings():
+	width, height = 44, 9
+	box = libtcod.console_new(width, height)
+	game.messages.box_gui(box, 0, 0, width, height, libtcod.green)
+	libtcod.console_set_default_foreground(box, libtcod.black)
+	libtcod.console_set_default_background(box, libtcod.green)
+	libtcod.console_print_ex(box, 20, 0, libtcod.BKGND_SET, libtcod.CENTER, ' Settings ')
+	libtcod.console_set_default_foreground(box, libtcod.white)
+	util.change_settings(box, width, height, blitmap=True)
+	game.redraw_gui = True
+
+
 # print current time/date
 def show_time():
 	game.message.new(game.gametime.time_to_text(), game.turns)
@@ -668,18 +683,6 @@ def show_worldmap():
 	libtcod.console_print_ex(box, game.SCREEN_WIDTH / 2, game.SCREEN_HEIGHT - 1, libtcod.BKGND_SET, libtcod.CENTER, '[ Red dot - You, Black dots - Dungeons, S - Save map ]')
 	libtcod.console_set_default_foreground(box, libtcod.white)
 	util.showmap(box, game.SCREEN_WIDTH, game.SCREEN_HEIGHT)
-	game.redraw_gui = True
-
-
-# settings screen
-def settings():
-	box = libtcod.console_new(40, 8)
-	game.messages.box_gui(box, 0, 0, 40, 8, libtcod.green)
-	libtcod.console_set_default_foreground(box, libtcod.black)
-	libtcod.console_set_default_background(box, libtcod.green)
-	libtcod.console_print_ex(box, 20, 0, libtcod.BKGND_SET, libtcod.CENTER, ' Settings ')
-	libtcod.console_set_default_foreground(box, libtcod.white)
-	util.change_settings(box, 40, 8, game.font, blitmap=True)
 	game.redraw_gui = True
 
 

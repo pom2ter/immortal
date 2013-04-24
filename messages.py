@@ -35,11 +35,16 @@ class Message(object):
 
 			#add the new line as a tuple, with the text and the color
 			self.log.append((line, color, turn))
-			if len(self.history) == 50:
+			if len(self.history) == game.setting_history:
 				del self.history[0]
 			self.history.append((line, color, turn))
 		game.old_msg = 0
 		util.render_message_panel()
+
+	# trim history after changing the size in the settings
+	def trim_history(self):
+		if len(self.history) > game.setting_history:
+			self.history = self.history[(len(self.history) - game.setting_history):]
 
 
 # main function for the text box

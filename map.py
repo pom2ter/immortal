@@ -82,6 +82,18 @@ class Map(object):
 				num_rooms += 1
 		return rooms
 
+	# check if player position is inside map boundaries
+	def check_player_position(self):
+		if game.char.x >= self.map_width or game.char.y >= self.map_height:
+			x = libtcod.random_get_int(game.rnd, 0, self.map_width - 1)
+			y = libtcod.random_get_int(game.rnd, 0, self.map_height - 1)
+			while self.is_blocked(x, y):
+				x = libtcod.random_get_int(game.rnd, 0, self.map_width - 1)
+				y = libtcod.random_get_int(game.rnd, 0, self.map_height - 1)
+			game.char.x = x
+			game.char.y = y
+			game.message.new('You suddenly feel disoriented', game.turns)
+
 	# create any outdoor map
 	# stuff to do: add mountains, mtns peak maps, transitions
 	def create_outdoor_map(self, default_tile):
@@ -288,6 +300,9 @@ class Map(object):
 		# place stairs going down in a random spot
 		stairs = libtcod.random_get_int(game.rnd, 1, len(rooms) - 1)
 		(x, y) = rooms[stairs].center()
+		while self.tiles[x][y].type == 'stairs':
+			stairs = libtcod.random_get_int(game.rnd, 1, len(rooms) - 1)
+			(x, y) = rooms[stairs].center()
 		self.tiles[x][y] = game.tiles.get_tile('stairs going down')
 		self.down_staircase = (x, y)
 

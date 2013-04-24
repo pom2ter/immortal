@@ -48,27 +48,68 @@ def add_turn():
 
 
 # change game settings
-def change_settings(box, width, height, options, blitmap=False):
-	fonts = ['  Small  ', '  Large  ']
+def change_settings(box, width, height, blitmap=False):
+	fonts = ['Small', 'Large']
 	confirm, cancel = False, False
-	if game.font == 'large':
-		current = 1
+	if game.setting_font == 'large':
+		font = 1
 	else:
-		current = 0
+		font = 0
 	lerp = 1.0
 	descending = True
+	history = game.setting_history
+	current = 0
 
 	key = libtcod.Key()
 	libtcod.console_print_rect(box, 2, 2, width - 4, 2, '(You may need to restart the game for the changes to take effect)')
-	libtcod.console_print(box, 2, 5, 'Font: ')
-
+	libtcod.console_print(box, 2, 5, 'Font size: ')
+	libtcod.console_print(box, 2, 6, 'Message history size: ')
 	while not confirm and not cancel:
-		for i in range(len(fonts)):
+		color, lerp, descending = color_lerp(lerp, descending)
+
+		# font size setting
+		if current == 0:
+			libtcod.console_set_default_foreground(box, libtcod.white)
+			libtcod.console_set_default_background(box, color)
+		else:
+			libtcod.console_set_default_foreground(box, libtcod.grey)
 			libtcod.console_set_default_background(box, libtcod.black)
-			if current == i:
-				color, lerp, descending = color_lerp(lerp, descending)
-				libtcod.console_set_default_background(box, color)
-			libtcod.console_print_ex(box, 10 + (i * 10), 5, libtcod.BKGND_SET, libtcod.LEFT, fonts[i])
+		libtcod.console_rect(box, 26, 5, 13, 1, True, libtcod.BKGND_SET)
+		libtcod.console_print_ex(box, 32, 5, libtcod.BKGND_SET, libtcod.CENTER, fonts[font])
+		libtcod.console_set_default_foreground(box, libtcod.white)
+		if current != 0:
+			libtcod.console_set_default_foreground(box, libtcod.black)
+		elif font == 0:
+			libtcod.console_set_default_foreground(box, libtcod.darkest_grey)
+		libtcod.console_print_ex(box, 25, 5, libtcod.BKGND_NONE, libtcod.LEFT, chr(27))
+		libtcod.console_set_default_foreground(box, libtcod.white)
+		if current != 0:
+			libtcod.console_set_default_foreground(box, libtcod.black)
+		elif font == 1:
+			libtcod.console_set_default_foreground(box, libtcod.darkest_grey)
+		libtcod.console_print_ex(box, 39, 5, libtcod.BKGND_NONE, libtcod.LEFT, chr(26))
+
+		# message history size setting
+		if current == 1:
+			libtcod.console_set_default_foreground(box, libtcod.white)
+			libtcod.console_set_default_background(box, color)
+		else:
+			libtcod.console_set_default_foreground(box, libtcod.grey)
+			libtcod.console_set_default_background(box, libtcod.black)
+		libtcod.console_rect(box, 26, 6, 13, 1, True, libtcod.BKGND_SET)
+		libtcod.console_print_ex(box, 32, 6, libtcod.BKGND_SET, libtcod.CENTER, str(history))
+		libtcod.console_set_default_foreground(box, libtcod.white)
+		if current != 1:
+			libtcod.console_set_default_foreground(box, libtcod.black)
+		elif history == 50:
+			libtcod.console_set_default_foreground(box, libtcod.darkest_grey)
+		libtcod.console_print_ex(box, 25, 6, libtcod.BKGND_NONE, libtcod.LEFT, chr(27))
+		libtcod.console_set_default_foreground(box, libtcod.white)
+		if current != 1:
+			libtcod.console_set_default_foreground(box, libtcod.black)
+		elif history == 1000:
+			libtcod.console_set_default_foreground(box, libtcod.darkest_grey)
+		libtcod.console_print_ex(box, 39, 6, libtcod.BKGND_NONE, libtcod.LEFT, chr(26))
 
 		if blitmap:
 			libtcod.console_blit(box, 0, 0, width, height, 0, ((game.MAP_WIDTH - width) / 2) + game.MAP_X, (game.MAP_HEIGHT - height) / 2, 1.0, 1.0)
@@ -77,30 +118,43 @@ def change_settings(box, width, height, options, blitmap=False):
 		libtcod.console_flush()
 		libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS, key, libtcod.Mouse())
 
+		if key.vk == libtcod.KEY_LEFT or key.vk == libtcod.KEY_RIGHT or key.vk == libtcod.KEY_UP or key.vk == libtcod.KEY_DOWN:
+			lerp = 1.0
+			descending = True
 		if key.vk == libtcod.KEY_LEFT:
-			current -= 1
-			if current < 0:
-				current = 1
-			lerp = 1.0
-			descending = True
+			if current == 0:
+				if font > 0:
+					font -= 1
+			if current == 1:
+				if history > 50:
+					history -= 50
 		elif key.vk == libtcod.KEY_RIGHT:
-			current += 1
-			if current > 1:
-				current = 0
-			lerp = 1.0
-			descending = True
+			if current == 0:
+				if font < 1:
+					font += 1
+			if current == 1:
+				if history < 1000:
+					history += 50
+		elif key.vk == libtcod.KEY_UP:
+			if current > 0:
+				current -= 1
+		elif key.vk == libtcod.KEY_DOWN:
+			if current < 1:
+				current += 1
 		elif key.vk == libtcod.KEY_ESCAPE:
 			cancel = True
 		elif key.vk == libtcod.KEY_ENTER:
 			confirm = True
 
 	if confirm:
+		game.setting_history = history
+		if blitmap:
+			game.message.trim_history()
 		f = open('settings.ini', 'wb')
 		f.write('[Font]\n')
-		if current == 0:
-			f.write('small\n')
-		else:
-			f.write('large\n')
+		f.write(fonts[font].lower() + '\n')
+		f.write('[History]\n')
+		f.write(str(history) + '\n')
 		f.close()
 
 

@@ -35,7 +35,7 @@ tile_type "opened door" {
 }
 
 tile_type "stairs going up" {
-	type = "stairs_up"
+	type = "stairs"
 	icon = "<"
 	icon_color = "255,255,255"
 	dark_color = "95,95,95"
@@ -43,7 +43,7 @@ tile_type "stairs going up" {
 }
 
 tile_type "stairs going down" {
-	type = "stairs_down"
+	type = "stairs"
 	icon = ">"
 	icon_color = "255,255,255"
 	dark_color = "95,95,95"

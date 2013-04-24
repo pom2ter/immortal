@@ -16,7 +16,7 @@ import death
 import debug as dbg
 
 VERSION = 'v0.3.1'
-BUILD = '42'
+BUILD = '43'
 
 #size of the gui windows
 MAP_WIDTH = 70
@@ -73,6 +73,10 @@ current_backup = None
 border_maps = [0] * 8
 old_maps = []
 
+#settings
+setting_font = 'small'
+setting_history = 50
+
 #miscellaneous variables
 char = None
 times_saved = 0
@@ -82,7 +86,6 @@ mouse = libtcod.Mouse()
 killer = None
 highscore = []
 redraw_gui = True
-font = 'small'
 hp_anim = []
 font_width = 12
 font_height = 12
@@ -93,6 +96,11 @@ traps = []
 old_msg = 0
 
 # thanatos, draconis, valamar, otatop
+# multi colored map icons
+# deep water, ocean type, swimming
+# mountains peak type, transitions
+# caverns, maze types
+# scrolling, lockpicks, chest
 
 terrain = [{'name': 'Mountain Peak', 'type': 'dirt', 'elevation': 0.950}, {'name': 'Mountains', 'type': 'dirt', 'elevation': 0.850},
 		{'name': 'Hills', 'type': 'dirt', 'elevation': 0.700}, {'name': 'Forest', 'type': 'grass', 'elevation': 0.250},
@@ -110,7 +118,7 @@ class Game(object):
 		debug = dbg.Debug()
 		debug.enable = True
 		img = libtcod.image_load('title.png')
-		if font == 'large':
+		if setting_font == 'large':
 			libtcod.console_set_custom_font('font-large.png', libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_ASCII_INROW)
 			font_width = 14
 			font_height = 22
@@ -303,7 +311,9 @@ class Game(object):
 				char = current_map.objects[0]
 				worldmap.create_map_images(1)
 				message.empty()
+				message.trim_history()
 				message.new('Welcome back, ' + player.name + '!', turns, libtcod.Color(96, 212, 238))
+				current_map.check_player_position()
 				#print worldmap.dungeons
 				self.play_game()
 
@@ -316,26 +326,35 @@ class Game(object):
 
 	# brings up settings menu
 	def settings(self):
-		box = libtcod.console_new(40, 8)
-		messages.box_gui(box, 0, 0, 40, 8, libtcod.green)
+		width, height = 44, 9
+		box = libtcod.console_new(width, height)
+		messages.box_gui(box, 0, 0, width, height, libtcod.green)
 		libtcod.console_set_default_foreground(box, libtcod.black)
 		libtcod.console_set_default_background(box, libtcod.green)
 		libtcod.console_print_ex(box, 20, 0, libtcod.BKGND_SET, libtcod.CENTER, ' Settings ')
 		libtcod.console_set_default_foreground(box, libtcod.white)
-		util.change_settings(box, 40, 8, font, blitmap=False)
+		util.change_settings(box, width, height, blitmap=False)
 		self.load_settings()
 
 	# load game settings
 	# stuff to do: add more options
 	def load_settings(self):
-		global font
+		global setting_font, setting_history
 		if os.path.exists('settings.ini'):
 			contents = open('settings.ini', 'r')
-			for line in contents:
-				font = line.rstrip()
-			if font != 'large':
-				font = 'small'
+			while 1:
+				line = contents.readline().rstrip()
+				if line == '[Font]':
+					setting_font = contents.readline().rstrip()
+				if line == '[History]':
+					setting_history = int(contents.readline().rstrip())
+				if not line:
+					break
 			contents.close()
+			if setting_font != 'large':
+				setting_font = 'small'
+			if not setting_history in range(50, 1000):
+				setting_history = 50
 
 	# loading and showing the high scores screen
 	def show_high_scores(self):
