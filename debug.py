@@ -67,4 +67,4 @@ class Debug(object):
 				self.show_current_map()
 			if choice == 11:
 				self.hide_current_map()
-			game.redraw_gui = True
+			game.draw_gui = True

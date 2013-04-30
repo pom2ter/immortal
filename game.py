@@ -16,7 +16,7 @@ import death
 import debug as dbg
 
 VERSION = 'v0.3.1'
-BUILD = '43'
+BUILD = '44'
 
 #size of the gui windows
 MAP_WIDTH = 70
@@ -85,7 +85,6 @@ mouse_move = False
 mouse = libtcod.Mouse()
 killer = None
 highscore = []
-redraw_gui = True
 hp_anim = []
 font_width = 12
 font_height = 12
@@ -94,6 +93,8 @@ cury = 0
 turns = 0
 traps = []
 old_msg = 0
+draw_gui = True
+draw_map = True
 
 # thanatos, draconis, valamar, otatop
 # multi colored map icons
@@ -134,6 +135,8 @@ class Game(object):
 		panel = libtcod.console_new(MESSAGE_WIDTH, MESSAGE_HEIGHT)
 		ps = libtcod.console_new(PLAYER_STATS_WIDTH, PLAYER_STATS_HEIGHT)
 		fov_noise = libtcod.noise_new(1, 1.0, 1.0)
+		if not os.path.exists('saves'):
+			os.makedirs('saves')
 		savefiles = os.listdir('saves')
 		self.load_high_scores()
 		items = ItemList()
@@ -189,15 +192,15 @@ class Game(object):
 
 	# main game loop
 	def play_game(self):
-		global player_action, redraw_gui, player_move
+		global player_action, draw_gui, player_move
 		libtcod.console_clear(0)
 		util.initialize_fov()
 		while not libtcod.console_is_window_closed():
-			if redraw_gui:
+			if draw_gui:
 				util.render_gui(libtcod.red)
 				util.render_message_panel()
 				util.render_player_stats_panel()
-				redraw_gui = False
+				draw_gui = False
 			util.render_map()
 			libtcod.console_flush()
 
@@ -257,8 +260,6 @@ class Game(object):
 
 	# save the game using the shelve module
 	def save_game(self):
-		if not os.path.exists('saves'):
-			os.makedirs('saves')
 		file = shelve.open('saves/' + player.name.lower(), 'n')
 		file['worldmap'] = worldmap
 		file['current_map'] = current_map
@@ -276,7 +277,7 @@ class Game(object):
 
 	# load the game using the shelve module
 	def load_game(self):
-		global worldmap, current_map, current_backup, border_maps, old_maps, player, message, turns, gametime, fov_torch, game_state, times_saved, char, redraw_gui
+		global worldmap, current_map, current_backup, border_maps, old_maps, player, message, turns, gametime, fov_torch, game_state, times_saved, char, draw_gui
 		if len(savefiles) == 0:
 			contents = ['There are no saved games.']
 			messages.box('Saved games', None, 'center_screenx', 'center_screeny', len(max(contents, key=len)) + 16, len(contents) + 4, contents, input=False, align=libtcod.CENTER)
@@ -379,12 +380,13 @@ class Game(object):
 
 	# reset some variables after saving of quitting current game
 	def reset_game(self):
-		global savefiles, turns, old_msg, redraw_gui, fov_recompute
+		global savefiles, turns, old_msg, draw_gui, fov_recompute, draw_map
 		savefiles = os.listdir('saves')
 		turns = 0
 		old_msg = 0
-		redraw_gui = True
+		draw_gui = True
 		fov_recompute = True
+		draw_map = True
 
 	# brings up the main menu
 	def main_menu(self):

@@ -14,7 +14,9 @@ def add_turn():
 	game.turns += 1
 	game.gametime.update(1)
 	game.player_move = True
-	game.redraw_gui = True
+	game.draw_gui = True
+	game.draw_map = True
+	libtcod.console_clear(game.con)
 
 	if game.turns % (50 - game.player.endurance) == 0:
 		game.player.heal_health(1)
@@ -292,8 +294,7 @@ def items_at_feet():
 
 # print loading maps message
 def loadgen_message():
-	libtcod.console_print(game.con, 0, 0, 'Loading/Generating map chunks...')
-	libtcod.console_blit(game.con, 0, 0, game.MAP_WIDTH, game.MAP_HEIGHT, 0, game.MAP_X, game.MAP_Y)
+	libtcod.console_print(0, game.MAP_X, game.MAP_Y, 'Loading/Generating map chunks...')
 	libtcod.console_flush()
 
 
@@ -502,8 +503,8 @@ def render_player_stats_panel():
 def render_floating_text_animations():
 	for i, (x, y, line, color, turn) in enumerate(reversed(game.hp_anim)):
 		new_color = libtcod.color_lerp(libtcod.black, color, 1 - ((turn / 15) * 0.2))
-		libtcod.console_set_default_foreground(game.con, new_color)
-		libtcod.console_print_ex(game.con, x - game.curx, y - game.cury - (turn / 15), libtcod.BKGND_NONE, libtcod.CENTER, line)
+		libtcod.console_set_default_foreground(0, new_color)
+		libtcod.console_print_ex(0, game.MAP_X + x - game.curx, game.MAP_Y + y - game.cury - (turn / 15), libtcod.BKGND_NONE, libtcod.CENTER, line)
 		game.hp_anim[len(game.hp_anim) - i - 1] = (x, y, line, color, turn + 1)
 		if turn > 60:
 			game.hp_anim.pop(len(game.hp_anim) - i - 1)
@@ -547,7 +548,7 @@ def find_map_viewport():
 # master function of the game, everything pass through here on every turn
 def render_map():
 	# recompute FOV if needed (the player moved or something)
-	libtcod.console_clear(game.con)
+	libtcod.console_rect(0, game.MAP_X, game.MAP_Y, game.MAP_WIDTH, game.MAP_HEIGHT, True)
 	if game.fov_recompute:
 		find_map_viewport()
 		fov_radius()
@@ -571,7 +572,7 @@ def render_map():
 			py = y + game.cury
 			visible = libtcod.map_is_in_fov(game.fov_map, px, py)
 			if not visible:
-				if game.current_map.explored[px][py]:
+				if game.current_map.explored[px][py] and game.draw_map:
 					libtcod.console_put_char_ex(game.con, x, y, game.current_map.tiles[px][py].icon, game.current_map.tiles[px][py].dark_color, game.current_map.tiles[px][py].dark_back_color)
 			else:
 				if not game.fov_torch:
@@ -581,7 +582,7 @@ def render_map():
 					elif game.current_map.tiles[px][py].is_animate():
 						(front, back, game.current_map.tiles[px][py].lerp) = render_tiles_animations(px, py, game.current_map.tiles[px][py].color, game.current_map.tiles[px][py].back_color, game.current_map.tiles[px][py].anim_color, game.current_map.tiles[px][py].lerp)
 						libtcod.console_put_char_ex(game.con, x, y, game.current_map.tiles[px][py].icon, front, back)
-					else:
+					elif game.draw_map:
 						libtcod.console_put_char_ex(game.con, x, y, game.current_map.tiles[px][py].icon, game.current_map.tiles[px][py].color, game.current_map.tiles[px][py].back_color)
 				else:
 					base = game.current_map.tiles[px][py].back_color
@@ -599,12 +600,20 @@ def render_map():
 					libtcod.console_put_char_ex(game.con, x, y, game.current_map.tiles[px][py].icon, game.current_map.tiles[px][py].color, base)
 				game.current_map.explored[px][py] = True
 
+	# draw all objects in the map (if in the map viewport), except the player who his drawn last
+	for obj in reversed(game.current_map.objects):
+		if obj.name != 'player' and obj.x in range(game.curx, game.curx + game.MAP_WIDTH) and obj.y in range(game.cury, game.cury + game.MAP_HEIGHT):
+			obj.draw(game.con)
+	game.char.draw(game.con)
+	libtcod.console_blit(game.con, 0, 0, game.MAP_WIDTH, game.MAP_HEIGHT, 0, game.MAP_X, game.MAP_Y)
+	game.draw_map = False
+
 	# draw a line between the player and the mouse cursor
 	if game.path_dx in range(game.current_map.map_width) and game.path_dy in range(game.current_map.map_height):
 		if game.current_map.explored[game.path_dx][game.path_dy] and not game.current_map.tiles[game.path_dx][game.path_dy].blocked:
 			for i in range(libtcod.dijkstra_size(game.path_dijk)):
 				x, y = libtcod.dijkstra_get(game.path_dijk, i)
-				libtcod.console_set_char_background(game.con, x - game.curx, y - game.cury, libtcod.desaturated_yellow, libtcod.BKGND_SET)
+				libtcod.console_set_char_background(0, game.MAP_X + x - game.curx, game.MAP_Y + y - game.cury, libtcod.desaturated_yellow, libtcod.BKGND_SET)
 
 	# move the player if using mouse
 	if game.mouse_move:
@@ -616,34 +625,25 @@ def render_map():
 			items_at_feet()
 			game.mouse_move = False
 
+	# check where is the mouse cursor if not in the act of moving while using the mouse
 	if not game.mouse_move:
 		(mx, my) = (game.mouse.cx - game.MAP_X, game.mouse.cy - 1)
 		px = mx + game.curx
 		py = my + game.cury
+		game.path_dx = -1
+		game.path_dy = -1
 		if mx in range(game.MAP_WIDTH) and my in range(game.MAP_HEIGHT):
-			game.path_dx = px
-			game.path_dy = py
-			libtcod.console_set_char_background(game.con, mx, my, libtcod.white, libtcod.BKGND_SET)
+			libtcod.console_set_char_background(0, mx + game.MAP_X, my + 1, libtcod.white, libtcod.BKGND_SET)
 			if game.current_map.explored[px][py] and not game.current_map.tiles[px][py].blocked:
+				game.path_dx = px
+				game.path_dy = py
 				if game.mouse.lbutton_pressed:
 					game.mouse_move = mouse_auto_move()
-			else:
-				game.path_dx = 0
-				game.path_dy = 0
-			if not game.current_map.tiles[game.path_dx][game.path_dy].blocked:
-				libtcod.dijkstra_path_set(game.path_dijk, game.path_dx, game.path_dy)
-		else:
-			game.path_dx = -1
-			game.path_dy = -1
+				if not game.current_map.tiles[game.path_dx][game.path_dy].blocked:
+					libtcod.dijkstra_path_set(game.path_dijk, game.path_dx, game.path_dy)
 
-	# draw all objects in the map, except the player who his drawn last
-	for obj in reversed(game.current_map.objects):
-		if obj.name != 'player':
-			obj.draw(game.con)
-	game.char.draw(game.con)
-
-	libtcod.console_print(game.con, 0, 0, get_names_under_mouse())
+	libtcod.console_set_default_foreground(0, libtcod.light_yellow)
+	libtcod.console_print(0, game.MAP_X, game.MAP_Y, get_names_under_mouse())
 	if game.debug.enable:
-		libtcod.console_print_ex(game.con, game.SCREEN_WIDTH - 20, 0, libtcod.BKGND_SET, libtcod.RIGHT, str(game.gametime.hour) + ':' + str(game.gametime.minute).rjust(2, '0') + ' (%3d fps)' % libtcod.sys_get_fps())
+		libtcod.console_print_ex(0, game.MAP_X + game.MAP_WIDTH - 1, game.MAP_Y, libtcod.BKGND_NONE, libtcod.RIGHT, str(game.gametime.hour) + ':' + str(game.gametime.minute).rjust(2, '0') + ' (%3d fps)' % libtcod.sys_get_fps())
 	render_floating_text_animations()
-	libtcod.console_blit(game.con, 0, 0, game.MAP_WIDTH, game.MAP_HEIGHT, 0, game.MAP_X, game.MAP_Y)

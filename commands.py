@@ -356,7 +356,7 @@ def drop_item():
 		util.reset_quantity(game.player.inventory)
 		if choice != -1:
 			game.player.drop_item(output[choice], int(qty))
-	game.redraw_gui = True
+	game.draw_gui = True
 
 
 # equip an item
@@ -370,7 +370,7 @@ def equip_item():
 		util.reset_quantity(game.player.inventory)
 		if choice != -1:
 			game.player.equip_item(output[choice])
-	game.redraw_gui = True
+	game.draw_gui = True
 
 
 # help screen
@@ -379,7 +379,7 @@ def help():
 	contents = open('data/help.txt', 'r').read()
 	contents = contents.split('\n')
 	game.messages.box('Help', None, game.PLAYER_STATS_WIDTH + ((game.MAP_WIDTH - (len(max(contents, key=len)) + 20)) / 2), ((game.SCREEN_HEIGHT + 1) - max(16, len(contents) + 4)) / 2, len(max(contents, key=len)) + 20, len(contents) + 4, contents, input=False)
-	game.redraw_gui = True
+	game.draw_gui = True
 
 
 # highscore screen
@@ -394,7 +394,7 @@ def highscores():
 	else:
 		contents = ['The high scores file is empty.']
 		game.messages.box('High scores', None, 'center_screenx', 'center_screeny', len(max(contents, key=len)) + 16, len(contents) + 4, contents, input=False, align=libtcod.CENTER)
-	game.redraw_gui = True
+	game.draw_gui = True
 
 
 # see your inventory
@@ -407,7 +407,7 @@ def inventory():
 		util.reset_quantity(game.player.inventory)
 		if choice != -1:
 			output[choice].use()
-	game.redraw_gui = True
+	game.draw_gui = True
 
 
 # look (with keyboard)
@@ -557,14 +557,13 @@ def pickup_item():
 					game.current_map.objects.pop(itempos[i])
 					x += 1
 		util.reset_quantity(nb_items)
-		game.redraw_gui = True
+		game.draw_gui = True
 
 
 # dialog to confirm quitting the game
 def quit_game():
 	util.render_map()
-	libtcod.console_print(game.con, 0, 0, 'Are you sure you want to quit the game? (y/n)')
-	libtcod.console_blit(game.con, 0, 0, game.MAP_WIDTH, game.MAP_HEIGHT, 0, game.MAP_X, game.MAP_Y)
+	libtcod.console_print(0, game.MAP_X, game.MAP_Y, 'Are you sure you want to quit the game? (y/n)')
 	libtcod.console_flush()
 	key = libtcod.Key()
 
@@ -582,14 +581,13 @@ def remove_item():
 		choice = game.messages.box('Remove/Unequip an item', 'Up/down to select, ENTER to remove, ESC to exit', game.PLAYER_STATS_WIDTH + ((game.MAP_WIDTH - 56) / 2), ((game.MAP_HEIGHT + 1) - max(16, len(game.player.equipment) + 4)) / 2, 60, max(16, len(game.player.equipment) + 4), game.player.equipment, inv=True, step=2, mouse_exit=True)
 		if choice != -1:
 			game.player.unequip(choice)
-	game.redraw_gui = True
+	game.draw_gui = True
 
 
 # dialog to confirm saving the game
 def save_game():
 	util.render_map()
-	libtcod.console_print(game.con, 0, 0, 'Do you want to save (and quit) the game? (y/n)')
-	libtcod.console_blit(game.con, 0, 0, game.MAP_WIDTH, game.MAP_HEIGHT, 0, game.MAP_X, game.MAP_Y)
+	libtcod.console_print(0, game.MAP_X, game.MAP_Y, 'Do you want to save (and quit) the game? (y/n)')
 	libtcod.console_flush()
 	key = libtcod.Key()
 
@@ -637,7 +635,7 @@ def see_message_history():
 			elif key.vk == libtcod.KEY_DOWN or key.vk == libtcod.KEY_KP2:
 				if box_height - 4 + scroll < len(game.message.history):
 					scroll += 1
-	game.redraw_gui = True
+	game.draw_gui = True
 
 
 # show some of the old messages
@@ -662,7 +660,7 @@ def settings():
 	libtcod.console_print_ex(box, 20, 0, libtcod.BKGND_SET, libtcod.CENTER, ' Settings ')
 	libtcod.console_set_default_foreground(box, libtcod.white)
 	util.change_settings(box, width, height, blitmap=True)
-	game.redraw_gui = True
+	game.draw_gui = True
 
 
 # print current time/date
@@ -683,7 +681,7 @@ def show_worldmap():
 	libtcod.console_print_ex(box, game.SCREEN_WIDTH / 2, game.SCREEN_HEIGHT - 1, libtcod.BKGND_SET, libtcod.CENTER, '[ Red dot - You, Black dots - Dungeons, S - Save map ]')
 	libtcod.console_set_default_foreground(box, libtcod.white)
 	util.showmap(box, game.SCREEN_WIDTH, game.SCREEN_HEIGHT)
-	game.redraw_gui = True
+	game.draw_gui = True
 
 
 # use an item
@@ -696,7 +694,7 @@ def use_item():
 		util.reset_quantity(game.player.inventory)
 		if choice != -1:
 			output[choice].use()
-	game.redraw_gui = True
+	game.draw_gui = True
 
 
 # use a skill
@@ -731,7 +729,7 @@ def use_skill():
 					game.player.thieving_skills[choice].gain_xp(1)
 			elif dx != 0 or dy != 0:
 				game.message.new('You found no trap in that direction.', game.turns)
-	game.redraw_gui = True
+	game.draw_gui = True
 
 
 # passing one turn
@@ -874,4 +872,4 @@ def ztats():
 				screen = 0
 		elif key.vk == libtcod.KEY_ESCAPE:
 			exit = True
-	game.redraw_gui = True
+	game.draw_gui = True

@@ -580,9 +580,8 @@ class Object(object):
 		return self.x, self.y
 
 
-# main functions for the building of overworld maps
+# main functions for building the overworld maps
 def change_maps(did, dlevel):
-	util.render_map()
 	util.loadgen_message()
 	decombine_maps()
 	game.old_maps.append(game.current_map)
