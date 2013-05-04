@@ -573,19 +573,25 @@ def render_map():
 			visible = libtcod.map_is_in_fov(game.fov_map, px, py)
 			if not visible:
 				if game.current_map.explored[px][py] and game.draw_map:
-					libtcod.console_put_char_ex(game.con, x, y, game.current_map.tiles[px][py].icon, game.current_map.tiles[px][py].dark_color, game.current_map.tiles[px][py].dark_back_color)
+					if game.current_map.tiles[px][py].is_animate():
+						libtcod.console_put_char_ex(game.con, x, y, game.current_map.tiles[px][py].icon, game.current_map.tiles[px][py].dark_color, game.current_map.tiles[px][py].dark_back_color)
+					else:
+						libtcod.console_put_char_ex(game.con, x, y, game.current_map.tiles[px][py].icon, game.current_map.tiles[px][py].dark_color, game.current_map.animation[px][py]['dark_color'])
 			else:
 				if not game.fov_torch:
-					if game.current_map.animation[px][py] is not None:
+					if game.current_map.tiles[px][py].is_animate():
 						(front, back, game.current_map.animation[px][py]['lerp']) = render_tiles_animations(px, py, game.current_map.tiles[px][py].color, game.current_map.animation[px][py]['light_color'], game.current_map.animation[px][py]['dark_color'], game.current_map.animation[px][py]['lerp'])
-						libtcod.console_put_char_ex(game.con, x, y, game.current_map.animation[px][py]['icon'], game.current_map.tiles[px][py].color, back)
-					elif game.current_map.tiles[px][py].is_animate():
-						(front, back, game.current_map.tiles[px][py].lerp) = render_tiles_animations(px, py, game.current_map.tiles[px][py].color, game.current_map.tiles[px][py].back_color, game.current_map.tiles[px][py].anim_color, game.current_map.tiles[px][py].lerp)
 						libtcod.console_put_char_ex(game.con, x, y, game.current_map.tiles[px][py].icon, front, back)
+					elif game.current_map.animation[px][py] is not None:
+						if 'duration' in game.current_map.animation[px][py]:
+							(front, back, game.current_map.animation[px][py]['lerp']) = render_tiles_animations(px, py, game.current_map.tiles[px][py].color, game.current_map.animation[px][py]['light_color'], game.current_map.animation[px][py]['dark_color'], game.current_map.animation[px][py]['lerp'])
+							libtcod.console_put_char_ex(game.con, x, y, game.current_map.animation[px][py]['icon'], game.current_map.tiles[px][py].color, back)
+						else:
+							libtcod.console_put_char_ex(game.con, x, y, game.current_map.tiles[px][py].icon, game.current_map.tiles[px][py].color, game.current_map.animation[px][py]['light_color'])
 					elif game.draw_map:
-						libtcod.console_put_char_ex(game.con, x, y, game.current_map.tiles[px][py].icon, game.current_map.tiles[px][py].color, game.current_map.tiles[px][py].back_color)
+						libtcod.console_put_char_ex(game.con, x, y, game.current_map.tiles[px][py].icon, game.current_map.tiles[px][py].color, game.current_map.tiles[px][py].back_color_high)
 				else:
-					base = game.current_map.tiles[px][py].back_color
+					base = game.current_map.tiles[px][py].back_color_high
 					if game.current_map.animation[px][py] is not None:
 						base = game.current_map.animation[px][py]['light_color']
 					light = libtcod.gold

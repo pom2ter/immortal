@@ -28,16 +28,21 @@ class Debug(object):
 		game.current_map.overworld_position = temp_map.overworld_position
 		util.initialize_fov()
 		game.fov_recompute = True
+		game.draw_map = True
+		libtcod.console_clear(game.con)
 
 	def show_current_map(self):
 		game.current_map.explored = [[True for y in range(game.current_map.map_height)] for x in range(game.current_map.map_width)]
 		util.initialize_fov()
 		game.fov_recompute = True
+		game.draw_map = True
 
 	def hide_current_map(self):
 		game.current_map.explored = [[False for y in range(game.current_map.map_height)] for x in range(game.current_map.map_width)]
 		util.initialize_fov()
 		game.fov_recompute = True
+		game.draw_map = True
+		libtcod.console_clear(game.con)
 
 	def menu(self):
 		if self.enable:

@@ -16,7 +16,7 @@ import death
 import debug as dbg
 
 VERSION = 'v0.3.1'
-BUILD = '44'
+BUILD = '45'
 
 #size of the gui windows
 MAP_WIDTH = 70
@@ -97,8 +97,7 @@ draw_gui = True
 draw_map = True
 
 # thanatos, draconis, valamar, otatop
-# multi colored map icons
-# deep water, ocean type, swimming
+# deep water, ocean type, swimming, sand type
 # mountains peak type, transitions
 # caverns, maze types
 # scrolling, lockpicks, chest
@@ -260,11 +259,18 @@ class Game(object):
 
 	# save the game using the shelve module
 	def save_game(self):
+		global old_maps
+		contents = ['Saving.....']
+		messages.box(None, None, 'center_screenx', 'center_screeny', len(max(contents, key=len)) + 28, len(contents) + 4, contents, input=False, align=libtcod.CENTER, nokeypress=True)
+		if current_map.location_id == 0:
+			map.decombine_maps()
+			old_maps.append(current_map)
+			for i in range(len(border_maps)):
+				old_maps.append(border_maps[i])
+
 		file = shelve.open('saves/' + player.name.lower(), 'n')
 		file['worldmap'] = worldmap
 		file['current_map'] = current_map
-		file['current_backup'] = current_backup
-		file['border_maps'] = border_maps
 		file['maps'] = old_maps
 		file['player'] = player
 		file['messages'] = message
@@ -285,9 +291,6 @@ class Game(object):
 			desc = []
 			for i in range(len(savefiles)):
 				file = shelve.open('saves/' + savefiles[i], 'r')
-				file['worldmap']
-				file['current_map']
-				file['maps']
 				pl = file['player']
 				desc.append(savefiles[i] + ', a level ' + str(pl.level) + ' ' + pl.gender + ' ' + pl.race + ' ' + pl.profession)
 				file.close()
@@ -296,12 +299,10 @@ class Game(object):
 				contents = ['Loading.....']
 				messages.box(None, None, 'center_screenx', 'center_screeny', len(max(contents, key=len)) + 16, len(contents) + 4, contents, input=False, align=libtcod.CENTER, nokeypress=True)
 				file = shelve.open('saves/' + savefiles[choice], 'r')
+				player = file['player']
 				worldmap = file['worldmap']
 				current_map = file['current_map']
-				current_backup = file['current_backup']
-				border_maps = file['border_maps']
 				old_maps = file['maps']
-				player = file['player']
 				message = file['messages']
 				turns = file['turns']
 				gametime = file['gametime']
@@ -314,6 +315,9 @@ class Game(object):
 				message.empty()
 				message.trim_history()
 				message.new('Welcome back, ' + player.name + '!', turns, libtcod.Color(96, 212, 238))
+				if current_map.location_id == 0:
+					map.load_old_maps(0, current_map.location_level)
+					map.combine_maps()
 				current_map.check_player_position()
 				#print worldmap.dungeons
 				self.play_game()
@@ -378,15 +382,15 @@ class Game(object):
 			highscore = pickle.load(contents)
 			contents.close()
 
-	# reset some variables after saving of quitting current game
+	# reset some variables after saving or quitting current game
 	def reset_game(self):
 		global savefiles, turns, old_msg, draw_gui, fov_recompute, draw_map
 		savefiles = os.listdir('saves')
 		turns = 0
 		old_msg = 0
 		draw_gui = True
-		fov_recompute = True
 		draw_map = True
+		fov_recompute = True
 
 	# brings up the main menu
 	def main_menu(self):

@@ -1,8 +1,9 @@
 tile_type "wall" {
 	type = "wall"
 	icon = "#"
-	icon_color = "159,159,159"
-	dark_color = "95,95,95"
+	icon_color = "36,36,36"
+	back_color_h = "180,180,180"
+	back_color_l = "120,120,120"
 	article = "a "
 	blocked
 	block_sight
@@ -12,7 +13,8 @@ tile_type "floor" {
 	type = "floor"
 	icon = "."
 	icon_color = "159,159,159"
-	dark_color = "95,95,95"
+	back_color_h = "36,36,36"
+	back_color_l = "24,24,24"
 	article = "a "
 }
 
@@ -20,7 +22,8 @@ tile_type "door" {
 	type = "door"
 	icon = "+"
 	icon_color = "191,95,0"
-	dark_color = "64,32,0"
+	back_color_h = "36,36,36"
+	back_color_l = "24,24,24"
 	article = "a "
 	blocked
 	block_sight
@@ -30,7 +33,8 @@ tile_type "opened door" {
 	type = "open_door"
 	icon = "/"
 	icon_color = "191,95,0"
-	dark_color = "64,32,0"
+	back_color_h = "36,36,36"
+	back_color_l = "24,24,24"
 	article = "an "
 }
 
@@ -38,7 +42,8 @@ tile_type "stairs going up" {
 	type = "stairs"
 	icon = "<"
 	icon_color = "255,255,255"
-	dark_color = "95,95,95"
+	back_color_h = "36,36,36"
+	back_color_l = "24,24,24"
 	article = ""
 }
 
@@ -46,7 +51,8 @@ tile_type "stairs going down" {
 	type = "stairs"
 	icon = ">"
 	icon_color = "255,255,255"
-	dark_color = "95,95,95"
+	back_color_h = "36,36,36"
+	back_color_l = "24,24,24"
 	article = ""
 }
 
@@ -54,37 +60,38 @@ tile_type "shallow water" {
 	type = "water"
 	icon = "~"
 	icon_color = "206,206,255"
-	back_color = "172,172,255"
-	anim_color = "104,104,255"
+	back_color_h = "172,172,255"
+	back_color_l = "104,104,255"
 	article = ""
-	anim
+	animate
 }
 
 tile_type "deep water" {
 	type = "water"
 	icon = "~"
 	icon_color = "60,60,220"
-	back_color = "24,24,240"
-	anim_color = "24,24,240"
+	back_color_h = "24,24,240"
+	back_color_l = "24,24,240"
 	article = ""
-	anim
+	animate
 }
 
 tile_type "very deep water" {
 	type = "water"
 	icon = "~"
 	icon_color = "24,24,240"
-	back_color = "0,0,96"
-	anim_color = "0,0,96"
+	back_color_h = "0,0,96"
+	back_color_l = "0,0,96"
 	article = ""
-	anim
+	animate
 }
 
 tile_type "grass" {
 	type = "grass"
 	icon = "."
 	icon_color = "0,255,0"
-	dark_color = "0,0,96"
+	back_color_h = "0,30,0"
+	back_color_l = "0,10,0"
 	article = ""
 }
 
@@ -92,7 +99,8 @@ tile_type "medium grass" {
 	type = "grass"
 	icon = ","
 	icon_color = "0,255,0"
-	dark_color = "0,0,96"
+	back_color_h = "0,30,0"
+	back_color_l = "0,10,0"
 	article = ""
 }
 
@@ -100,7 +108,8 @@ tile_type "tall grass" {
 	type = "grass"
 	icon = ";"
 	icon_color = "0,255,0"
-	dark_color = "0,0,96"
+	back_color_h = "0,30,0"
+	back_color_l = "0,10,0"
 	article = ""
 }
 
@@ -108,7 +117,8 @@ tile_type "tree" {
 	type = "trees"
 	icon = "T"
 	icon_color = "0,191,0"
-	dark_color = "0,0,96"
+	back_color_h = "0,30,0"
+	back_color_l = "0,10,0"
 	article = "a "
 	block_sight
 }
@@ -117,7 +127,8 @@ tile_type "rock" {
 	type = "rock"
 	icon = "*"
 	icon_color = "127,127,127"
-	dark_color = "0,0,96"
+	back_color_h = "36,36,36"
+	back_color_l = "24,24,24"
 	article = "a "
 }
 
@@ -125,7 +136,8 @@ tile_type "dirt" {
 	type = "dirt"
 	icon = "."
 	icon_color = "127,101,63"
-	dark_color = "0,0,96"
+	back_color_h = "54,35,8"
+	back_color_l = "36,24,5"
 	article = ""
 }
 
@@ -133,7 +145,8 @@ tile_type "sand" {
 	type = "sand"
 	icon = "."
 	icon_color = "255,255,0"
-	dark_color = "0,0,96"
+	back_color_h = "207,192,132"
+	back_color_l = "138,128,88"
 	article = ""
 }
 
@@ -141,7 +154,6 @@ tile_type "hills" {
 	type = "hills"
 	icon = "~"
 	icon_color = "127,101,63"
-	dark_color = "42,34,21"
 	article = ""
 }
 
@@ -149,7 +161,6 @@ tile_type "mountains" {
 	type = "mountains"
 	icon = "^"
 	icon_color = "95,95,95"
-	dark_color = "32,32,32"
 	article = ""
 	blocked
 }
@@ -158,7 +169,6 @@ tile_type "high mountains" {
 	type = "mountains"
 	icon = "^"
 	icon_color = "255,255,255"
-	dark_color = "85,85,85"
 	article = ""
 	blocked
 	block_sight
@@ -168,7 +178,6 @@ tile_type "fireball trap" {
 	type = "trap"
 	icon = "^"	
 	icon_color = "191,0,0"
-	dark_color = "64,0,0"
 	article = "a "
 	invisible
 	fx_fireball
@@ -178,7 +187,6 @@ tile_type "poison gas trap" {
 	type = "trap"
 	icon = "^"	
 	icon_color = "127,255,0"
-	dark_color = "42,85,0"
 	article = "a "
 	invisible
 	fx_poison_gas
@@ -188,7 +196,6 @@ tile_type "sleeping gas trap" {
 	type = "trap"
 	icon = "^"	
 	icon_color = "255,255,255"
-	dark_color = "85,85,85"
 	article = "a "
 	invisible
 	fx_sleep_gas
@@ -198,7 +205,6 @@ tile_type "teleport trap" {
 	type = "trap"
 	icon = "^"	
 	icon_color = "115,220,255"
-	dark_color = "38,73,85"
 	article = "a "
 	invisible
 	fx_teleport
@@ -208,7 +214,6 @@ tile_type "bear trap" {
 	type = "trap"
 	icon = "^"	
 	icon_color = "159,159,159"
-	dark_color = "53,53,53"
 	article = "a "
 	invisible
 	fx_stuck

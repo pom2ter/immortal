@@ -657,7 +657,7 @@ def settings():
 	game.messages.box_gui(box, 0, 0, width, height, libtcod.green)
 	libtcod.console_set_default_foreground(box, libtcod.black)
 	libtcod.console_set_default_background(box, libtcod.green)
-	libtcod.console_print_ex(box, 20, 0, libtcod.BKGND_SET, libtcod.CENTER, ' Settings ')
+	libtcod.console_print_ex(box, width / 2, 0, libtcod.BKGND_SET, libtcod.CENTER, ' Settings ')
 	libtcod.console_set_default_foreground(box, libtcod.white)
 	util.change_settings(box, width, height, blitmap=True)
 	game.draw_gui = True
@@ -741,9 +741,7 @@ def wait_turn():
 
 # character sheet for stats
 def ztats_attributes(con, width, height):
-	util.text_box(con, 0, 0, width, height, 'Player stats')
-	libtcod.console_set_default_foreground(con, libtcod.white)
-	libtcod.console_set_default_background(con, libtcod.black)
+	ztats_box(con, width, height, ' Player stats ')
 	libtcod.console_print(con, 2, 2, game.player.name + ', a level ' + str(game.player.level) + ' ' + game.player.gender + ' ' + game.player.race + ' ' + game.player.profession)
 	libtcod.console_print(con, 2, 4, 'Strength     : ' + str(game.player.strength))
 	libtcod.console_print(con, 2, 5, 'Dexterity    : ' + str(game.player.dexterity))
@@ -764,9 +762,7 @@ def ztats_attributes(con, width, height):
 
 # character sheet for skills
 def ztats_skills(con, width, height):
-	util.text_box(con, 0, 0, width, height, 'Skills')
-	libtcod.console_set_default_foreground(con, libtcod.white)
-	libtcod.console_set_default_background(con, libtcod.black)
+	ztats_box(con, width, height, ' Skills ')
 	libtcod.console_print(con, 2, 2, 'Combat Skills')
 	for i in range(len(game.player.combat_skills)):
 		libtcod.console_print(con, 2, i + 4, game.player.combat_skills[i].name)
@@ -779,9 +775,7 @@ def ztats_skills(con, width, height):
 
 # character sheet for equipment
 def ztats_equipment(con, width, height):
-	util.text_box(con, 0, 0, width, height, 'Equipment')
-	libtcod.console_set_default_foreground(con, libtcod.white)
-	libtcod.console_set_default_background(con, libtcod.black)
+	ztats_box(con, width, height, ' Equipment ')
 	libtcod.console_print(con, 2, 2, 'Head       :')
 	libtcod.console_print(con, 2, 3, 'Cloak      :')
 	libtcod.console_print(con, 2, 4, 'Neck       :')
@@ -819,9 +813,7 @@ def ztats_equipment(con, width, height):
 
 # character sheet for inventory
 def ztats_inventory(con, width, height):
-	util.text_box(con, 0, 0, width, height, 'Inventory')
-	libtcod.console_set_default_foreground(con, libtcod.white)
-	libtcod.console_set_default_background(con, libtcod.black)
+	ztats_box(con, width, height, ' Inventory ')
 	output = util.item_stacking(game.player.inventory)
 	for i in range(len(output)):
 		if output[i].is_identified():
@@ -837,6 +829,16 @@ def ztats_inventory(con, width, height):
 		libtcod.console_print(con, 2, i + 2, text_left)
 		libtcod.console_print_ex(con, width - 3, i + 2, libtcod.BKGND_SET, libtcod.RIGHT, text_right)
 	util.reset_quantity(game.player.inventory)
+
+
+# character sheet box gui
+def ztats_box(con, width, height, header):
+	game.messages.box_gui(con, 0, 0, width, height)
+	libtcod.console_set_default_foreground(con, libtcod.black)
+	libtcod.console_set_default_background(con, libtcod.green)
+	libtcod.console_print_ex(con, width / 2, 0, libtcod.BKGND_SET, libtcod.CENTER, header)
+	libtcod.console_set_default_foreground(con, libtcod.white)
+	libtcod.console_set_default_background(con, libtcod.black)
 
 
 # character sheet
@@ -858,7 +860,9 @@ def ztats():
 		elif screen == 3:
 			ztats_inventory(stats, width, height)
 
-		libtcod.console_print_ex(stats, width / 2, height - 1, libtcod.BKGND_SET, libtcod.CENTER, '[ Arrow Left/Right = Change Pages ]')
+		libtcod.console_set_default_foreground(stats, libtcod.black)
+		libtcod.console_set_default_background(stats, libtcod.green)
+		libtcod.console_print_ex(stats, width / 2, height - 1, libtcod.BKGND_SET, libtcod.CENTER, ' [ Arrow Left/Right = Change Pages ] ')
 		libtcod.console_blit(stats, 0, 0, width, height, 0, ((game.MAP_WIDTH - width) / 2) + game.MAP_X, (game.MAP_HEIGHT - height) / 2, 1.0, 1.0)
 		libtcod.console_flush()
 		libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, key, game.mouse, True)

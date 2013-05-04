@@ -25,6 +25,18 @@ class Map(object):
 		self.overworld_position = (0, 0, 0)
 		self.generate(empty)
 
+	# check if player position is inside map boundaries
+	def check_player_position(self):
+		if game.char.x >= self.map_width or game.char.y >= self.map_height:
+			x = libtcod.random_get_int(game.rnd, 0, self.map_width - 1)
+			y = libtcod.random_get_int(game.rnd, 0, self.map_height - 1)
+			while self.is_blocked(x, y):
+				x = libtcod.random_get_int(game.rnd, 0, self.map_width - 1)
+				y = libtcod.random_get_int(game.rnd, 0, self.map_height - 1)
+			game.char.x = x
+			game.char.y = y
+			game.message.new('You suddenly feel disoriented', game.turns)
+
 	# create a map with a dungeon type
 	# stuff to do: add cavern, town, maze type
 	def create_dungeon(self):
@@ -80,19 +92,11 @@ class Map(object):
 				#finally, append the new room to the list
 				rooms.append(new_room)
 				num_rooms += 1
-		return rooms
 
-	# check if player position is inside map boundaries
-	def check_player_position(self):
-		if game.char.x >= self.map_width or game.char.y >= self.map_height:
-			x = libtcod.random_get_int(game.rnd, 0, self.map_width - 1)
-			y = libtcod.random_get_int(game.rnd, 0, self.map_height - 1)
-			while self.is_blocked(x, y):
-				x = libtcod.random_get_int(game.rnd, 0, self.map_width - 1)
-				y = libtcod.random_get_int(game.rnd, 0, self.map_height - 1)
-			game.char.x = x
-			game.char.y = y
-			game.message.new('You suddenly feel disoriented', game.turns)
+		for x in range(self.map_width):
+			for y in range(self.map_height):
+				self.set_tile_background(x, y)
+		return rooms
 
 	# create any outdoor map
 	# stuff to do: add mountains, mtns peak maps, transitions
@@ -156,21 +160,16 @@ class Map(object):
 					y = libtcod.random_get_int(game.rnd, 0, self.map_height - 1)
 				self.tiles[x][y] = game.tiles.get_tile(icons[j])
 				if self.tiles[x][y].is_animate():
-					self.tiles[x][y] = copy.deepcopy(game.tiles.get_tile(icons[j]))
-					self.tiles[x][y].lerp = round(libtcod.random_get_float(game.rnd, 0, 1), 1)
+					self.tiles[x][y] = game.tiles.get_tile(icons[j])
 				if icons[j] == 'shallow water':
 					if x + 1 <= self.map_width - 1:
-						self.tiles[x + 1][y] = copy.deepcopy(game.tiles.get_tile(icons[j]))
-						self.tiles[x + 1][y].lerp = round(libtcod.random_get_float(game.rnd, 0, 1), 1)
+						self.tiles[x + 1][y] = game.tiles.get_tile(icons[j])
 					if x - 1 >= 0:
-						self.tiles[x - 1][y] = copy.deepcopy(game.tiles.get_tile(icons[j]))
-						self.tiles[x - 1][y].lerp = round(libtcod.random_get_float(game.rnd, 0, 1), 1)
+						self.tiles[x - 1][y] = game.tiles.get_tile(icons[j])
 					if y + 1 <= self.map_height - 1:
-						self.tiles[x][y + 1] = copy.deepcopy(game.tiles.get_tile(icons[j]))
-						self.tiles[x][y + 1].lerp = round(libtcod.random_get_float(game.rnd, 0, 1), 1)
+						self.tiles[x][y + 1] = game.tiles.get_tile(icons[j])
 					if y - 1 >= 0:
-						self.tiles[x][y - 1] = copy.deepcopy(game.tiles.get_tile(icons[j]))
-						self.tiles[x][y - 1].lerp = round(libtcod.random_get_float(game.rnd, 0, 1), 1)
+						self.tiles[x][y - 1] = game.tiles.get_tile(icons[j])
 
 		# place dungeons on map
 		for (id, name, abbr, x, y) in game.worldmap.dungeons:
@@ -200,6 +199,10 @@ class Map(object):
 				(stairs_x, stairs_y) = room.center()
 				self.tiles[stairs_x][stairs_y] = game.tiles.get_tile('stairs going down')
 				self.down_staircase = (stairs_x, stairs_y)
+
+		for x in range(self.map_width):
+			for y in range(self.map_height):
+				self.set_tile_background(x, y)
 
 	# go through the tiles in the rectangle and make them passable
 	def create_room(self, room):
@@ -321,6 +324,15 @@ class Map(object):
 			self.tiles[x][y].color = temp_tile.color
 			self.tiles[x][y].dark_color = libtcod.color_lerp(libtcod.black, temp_tile.color, 0.3)
 
+	# assign tile background values
+	def set_tile_background(self, x, y):
+		lerp = round(libtcod.random_get_float(game.rnd, 0, 1), 1)
+		color = libtcod.color_lerp(self.tiles[x][y].back_color_high, self.tiles[x][y].back_color_low, lerp)
+		if self.tiles[x][y].is_animate():
+			self.animation[x][y] = {'light_color': self.tiles[x][y].back_color_high, 'dark_color': self.tiles[x][y].back_color_low, 'lerp': lerp}
+		else:
+			self.animation[x][y] = {'light_color': color, 'dark_color': libtcod.color_lerp(libtcod.black, color, 0.2), 'lerp': lerp}
+
 	# main function for generating a map
 	def generate(self, empty=False):
 		default_block_tiles = {'Dungeon': 'wall', 'Mountain Peak': 'high mountains', 'Mountains': 'mountains', 'Hills': 'hills', 'Forest': 'grass', 'Plains': 'grass', 'Coast': 'sand', 'Shore': 'shallow water', 'Sea': 'deep water', 'Ocean': 'very deep water'}
@@ -345,19 +357,18 @@ class Map(object):
 
 class Tile(object):
 	# a tile of the map and its properties
-	def __init__(self, icon, name, color, dark_color, back_color, dark_back_color, anim_color, blocked, block_sight=None, article=None, flags=None, typ=None):
+	def __init__(self, icon, name, color, dark_color, back_color_high, back_color_low, dark_back_color, blocked, block_sight=None, article=None, flags=None, typ=None):
 		self.blocked = blocked
-		self.icon = icon
 		self.name = name
+		self.icon = icon
+		self.type = typ
 		self.color = libtcod.Color(color[0], color[1], color[2])
 		self.dark_color = libtcod.Color(dark_color[0], dark_color[1], dark_color[2])
-		self.back_color = libtcod.Color(back_color[0], back_color[1], back_color[2])
+		self.back_color_high = libtcod.Color(back_color_high[0], back_color_high[1], back_color_high[2])
+		self.back_color_low = libtcod.Color(back_color_low[0], back_color_low[1], back_color_low[2])
 		self.dark_back_color = libtcod.Color(dark_back_color[0], dark_back_color[1], dark_back_color[2])
-		self.anim_color = libtcod.Color(anim_color[0], anim_color[1], anim_color[2])
-		self.lerp = 1.0
 		self.article = article
 		self.flags = flags
-		self.type = typ
 
 		# by default, if a tile is blocked, it also blocks sight
 		if block_sight is None:
@@ -366,7 +377,7 @@ class Tile(object):
 
 	# returns true if this tile animates
 	def is_animate(self):
-		if 'anim' in self.flags:
+		if 'animate' in self.flags:
 			return True
 		return False
 
@@ -388,13 +399,12 @@ class TileList(object):
 		libtcod.struct_add_property(tile_type_struct, 'type', libtcod.TYPE_STRING, True)
 		libtcod.struct_add_property(tile_type_struct, 'icon', libtcod.TYPE_STRING, True)
 		libtcod.struct_add_property(tile_type_struct, 'icon_color', libtcod.TYPE_COLOR, True)
-		libtcod.struct_add_property(tile_type_struct, 'dark_color', libtcod.TYPE_COLOR, False)
-		libtcod.struct_add_property(tile_type_struct, 'back_color', libtcod.TYPE_COLOR, False)
-		libtcod.struct_add_property(tile_type_struct, 'anim_color', libtcod.TYPE_COLOR, False)
+		libtcod.struct_add_property(tile_type_struct, 'back_color_h', libtcod.TYPE_COLOR, False)
+		libtcod.struct_add_property(tile_type_struct, 'back_color_l', libtcod.TYPE_COLOR, False)
 		libtcod.struct_add_property(tile_type_struct, 'article', libtcod.TYPE_STRING, True)
 		libtcod.struct_add_flag(tile_type_struct, 'blocked')
 		libtcod.struct_add_flag(tile_type_struct, 'block_sight')
-		libtcod.struct_add_flag(tile_type_struct, 'anim')
+		libtcod.struct_add_flag(tile_type_struct, 'animate')
 		libtcod.struct_add_flag(tile_type_struct, 'invisible')
 		libtcod.struct_add_flag(tile_type_struct, 'fx_teleport')
 		libtcod.struct_add_flag(tile_type_struct, 'fx_stuck')
@@ -442,14 +452,14 @@ class TileListener(object):
 			self.temp_tile.color.r = value.r
 			self.temp_tile.color.g = value.g
 			self.temp_tile.color.b = value.b
-		elif name == 'back_color':
-			self.temp_tile.back_color.r = value.r
-			self.temp_tile.back_color.g = value.g
-			self.temp_tile.back_color.b = value.b
-		elif name == 'anim_color':
-			self.temp_tile.anim_color.r = value.r
-			self.temp_tile.anim_color.g = value.g
-			self.temp_tile.anim_color.b = value.b
+		elif name == 'back_color_h':
+			self.temp_tile.back_color_high.r = value.r
+			self.temp_tile.back_color_high.g = value.g
+			self.temp_tile.back_color_high.b = value.b
+		elif name == 'back_color_l':
+			self.temp_tile.back_color_low.r = value.r
+			self.temp_tile.back_color_low.g = value.g
+			self.temp_tile.back_color_low.b = value.b
 		else:
 			if name == 'type':
 				self.temp_tile.type = value
@@ -460,8 +470,8 @@ class TileListener(object):
 		return True
 
 	def end_struct(self, struct, name):
-		self.temp_tile.dark_color = libtcod.color_lerp(libtcod.black, self.temp_tile.color, 0.3)
-		self.temp_tile.dark_back_color = libtcod.color_lerp(libtcod.black, self.temp_tile.back_color, 0.3)
+		self.temp_tile.dark_color = libtcod.color_lerp(libtcod.black, self.temp_tile.color, 0.2)
+		self.temp_tile.dark_back_color = libtcod.color_lerp(libtcod.black, self.temp_tile.back_color_low, 0.2)
 		game.tiles.add_to_list(self.temp_tile)
 		return True
 
@@ -493,33 +503,25 @@ class Rect(object):
 class Object(object):
 	#this is a generic object: the player, a monster, an item, the stairs...
 	#it's always represented by a character on screen.
-	def __init__(self, x, y, char, name, color, pickup=False, blocks=False, entity=None, ai=None, item=None):
+	def __init__(self, x, y, char, name, color, pickup=False, blocks=False, entity=None, item=None):
 		self.x = x
 		self.y = y
-		self.char = char
 		self.name = name
 		self.color = color
 		self.can_be_pickup = pickup
 		self.first_appearance = game.turns
 		self.blocks = blocks
 
+		self.char = char
 		if entity is not None:
 			self.entity = copy.deepcopy(entity)
 		else:
 			self.entity = entity
-		if self.entity:  # let the fighter component know who owns it
-			self.entity.owner = self
-
-		self.ai = ai
-		if self.ai:  # let the AI component know who owns it
-			self.ai.owner = self
 
 		if item is not None:
 			self.item = copy.deepcopy(item)
 		else:
 			self.item = item
-		if self.item:  # let the Item component know who owns it
-			self.item.owner = self
 
 	# move by the given amount, if the destination is not blocked
 	def move(self, dx, dy, map):
@@ -529,18 +531,6 @@ class Object(object):
 			util.add_turn()
 		elif map.tiles[self.x + dx][self.y + dy].type == 'wall':
 			game.message.new('The wall laughs at your attempt to pass through it.', game.turns)
-
-	# vector from this object to the target, and distance
-	def move_towards(self, target_x, target_y):
-		dx = target_x - self.x
-		dy = target_y - self.y
-		distance = math.sqrt(dx ** 2 + dy ** 2)
-
-		#normalize it to length 1 (preserving direction), then round it and
-		#convert to integer so the movement is restricted to the map grid
-		dx = int(round(dx / distance))
-		dy = int(round(dy / distance))
-		self.move(dx, dy)
 
 	# return the distance to another object
 	def distance_to(self, other):
@@ -561,9 +551,8 @@ class Object(object):
 	def delete(self):
 		game.current_map.objects.remove(self)
 
-	# draw objects on console
+	# draw objects on console only if it's visible to the player
 	def draw(self, con):
-		#only show if it's visible to the player
 		if libtcod.map_is_in_fov(game.fov_map, self.x, self.y):
 			libtcod.console_set_default_foreground(con, self.color)
 			libtcod.console_put_char(con, self.x - game.curx, self.y - game.cury, self.char, libtcod.BKGND_NONE)

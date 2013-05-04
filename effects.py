@@ -8,13 +8,13 @@ import util
 def check_active_effects():
 	for y in range(game.current_map.map_height):
 		for x in range(game.current_map.map_width):
-			if game.current_map.animation[x][y] is not None:
+			if game.current_map.animation[x][y] is not None and 'duration' in game.current_map.animation[x][y]:
 				if game.current_map.animation[x][y]['duration'] < game.turns + 1:
 					game.current_map.animation[x][y] = None
 
 	for obj in game.current_map.objects:
 		if obj.name == 'player':
-			if game.current_map.animation[game.char.x][game.char.y] is not None:
+			if game.current_map.animation[game.char.x][game.char.y] is not None and 'type' in game.current_map.animation[game.char.x][game.char.y]:
 				if game.current_map.animation[game.char.x][game.char.y]['type'] == 'poison_gas':
 					game.message.new('You step into poisonous gas!', game.turns)
 					if 'poison' not in game.player.flags:
@@ -31,7 +31,7 @@ def check_active_effects():
 							game.player.flags.append('sleep')
 
 		elif obj.entity:
-			if game.current_map.animation[obj.x][obj.y] is not None:
+			if game.current_map.animation[obj.x][obj.y] is not None and 'type' in game.current_map.animation[game.char.x][game.char.y]:
 				if game.current_map.animation[obj.x][obj.y]['type'] == 'poison_gas':
 					if libtcod.map_is_in_fov(game.fov_map, obj.x, obj.y):
 						game.message.new(obj.entity.article.capitalize() + obj.entity.name + ' step into poisonous gas!', game.turns)
@@ -60,7 +60,7 @@ def fireball(x, y, radius):
 			for j in range(-radius, radius + 1):
 				if libtcod.dijkstra_get_distance(path_dijk, x + i, y + j) <= step and libtcod.dijkstra_get_distance(path_dijk, x + i, y + j) >= 0 and libtcod.map_is_in_fov(game.fov_map, x + i, y + j):
 					(front, back, lerp) = util.render_tiles_animations(x + i, y + j, libtcod.Color(160, 0, 0), libtcod.Color(64, 0, 0), libtcod.Color(0, 0, 0), round(libtcod.random_get_float(game.rnd, 0, 1), 1))
-					libtcod.console_put_char_ex(game.con, x - game.curx + i, y - game.cury + j, '*', front, game.current_map.tiles[x - game.curx + i][y - game.cury + j].back_color)
+					libtcod.console_put_char_ex(game.con, x - game.curx + i, y - game.cury + j, '*', front, game.current_map.tiles[x - game.curx + i][y - game.cury + j].back_color_high)
 					player_fov = True
 		if player_fov:
 			libtcod.console_blit(game.con, 0, 0, game.MAP_WIDTH, game.MAP_HEIGHT, 0, game.MAP_X, game.MAP_Y)
