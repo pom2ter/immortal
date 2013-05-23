@@ -16,14 +16,14 @@ import death
 import debug as dbg
 
 VERSION = 'v0.3.1'
-BUILD = '45'
+BUILD = '46'
 
 #size of the gui windows
-MAP_WIDTH = 70
-MAP_HEIGHT = 28
+MAP_WIDTH = 71
+MAP_HEIGHT = 31
 MESSAGE_WIDTH = MAP_WIDTH
 MESSAGE_HEIGHT = 5
-PLAYER_STATS_WIDTH = 16
+PLAYER_STATS_WIDTH = 18
 SCREEN_WIDTH = MAP_WIDTH + PLAYER_STATS_WIDTH + 3
 SCREEN_HEIGHT = MAP_HEIGHT + MESSAGE_HEIGHT + 3
 PLAYER_STATS_HEIGHT = SCREEN_HEIGHT - 2
@@ -86,8 +86,8 @@ mouse = libtcod.Mouse()
 killer = None
 highscore = []
 hp_anim = []
-font_width = 12
-font_height = 12
+font_width = 10
+font_height = 16
 curx = 0
 cury = 0
 turns = 0
@@ -97,7 +97,7 @@ draw_gui = True
 draw_map = True
 
 # thanatos, draconis, valamar, otatop
-# deep water, ocean type, swimming, sand type
+# swimming
 # mountains peak type, transitions
 # caverns, maze types
 # scrolling, lockpicks, chest
@@ -123,7 +123,7 @@ class Game(object):
 			font_width = 14
 			font_height = 22
 		else:
-			libtcod.console_set_custom_font('font-small.png', libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_TCOD)
+			libtcod.console_set_custom_font('font-small.png', libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_ASCII_INROW)
 		self.init_root_console()
 		#libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, 'Immortal ' + VERSION, False)
 		libtcod.image_scale(img, SCREEN_WIDTH * 2, SCREEN_HEIGHT * 2)
@@ -156,14 +156,14 @@ class Game(object):
 		max_height_size = (desktop_height / font_height) - 6
 		if max_width_size > SCREEN_WIDTH:
 			MAP_WIDTH = MAP_WIDTH + (max_width_size - SCREEN_WIDTH)
-			if MAP_WIDTH > 74:
-				MAP_WIDTH = 74
+			if MAP_WIDTH > 71:
+				MAP_WIDTH = 71
 			MESSAGE_WIDTH = MAP_WIDTH
 			SCREEN_WIDTH = MAP_WIDTH + PLAYER_STATS_WIDTH + 3
 		if max_height_size > SCREEN_HEIGHT:
 			MAP_HEIGHT = MAP_HEIGHT + (max_height_size - SCREEN_HEIGHT)
-			if MAP_HEIGHT > 32:
-				MAP_HEIGHT = 32
+			if MAP_HEIGHT > 31:
+				MAP_HEIGHT = 31
 			SCREEN_HEIGHT = MAP_HEIGHT + MESSAGE_HEIGHT + 3
 			PLAYER_STATS_HEIGHT = SCREEN_HEIGHT - 2
 			MESSAGE_Y = MAP_HEIGHT + 2
@@ -181,7 +181,7 @@ class Game(object):
 			contents = ['Generating world map...']
 			messages.box(None, None, 'center_screenx', 'center_screeny', len(max(contents, key=len)) + 16, len(contents) + 4, contents, input=False, align=libtcod.CENTER, nokeypress=True)
 			worldmap = worldgen.World()
-			current_map = map.Map('Wilderness', 'WD', 0, (worldmap.player_positiony * WORLDMAP_WIDTH) + worldmap.player_positionx, typ='Forest')
+			current_map = map.Map('Wilderness', 'WD', 0, (worldmap.player_positiony * WORLDMAP_WIDTH) + worldmap.player_positionx, typ=map.find_terrain_type((worldmap.player_positiony * WORLDMAP_WIDTH) + worldmap.player_positionx))
 			for i in range(len(border_maps)):
 				border_maps[i] = map.Map('Wilderness', 'WD', 0, (worldmap.player_positiony * WORLDMAP_WIDTH) + worldmap.player_positionx + cardinal[i], typ=map.find_terrain_type((worldmap.player_positiony * WORLDMAP_WIDTH) + worldmap.player_positionx + cardinal[i]))
 			map.combine_maps()
@@ -229,11 +229,14 @@ class Game(object):
 					if obj.entity is not None and game_state != 'death':
 						if not obj.entity.is_disabled():
 							obj.x, obj.y = obj.entity.take_turn(obj.x, obj.y)
-							if game.current_map.tiles[obj.x][obj.y].type == 'trap' and not obj.entity.is_above_ground() and obj.entity.can_move():
-								if game.current_map.tiles[obj.x][obj.y].is_invisible():
+#							if game.current_map.tiles[obj.x][obj.y].type == 'trap' and not obj.entity.is_above_ground() and obj.entity.can_move():
+#								if game.current_map.tiles[obj.x][obj.y].is_invisible():
+							if game.current_map.tile[obj.x][obj.y]['type'] == 'trap' and not obj.entity.is_above_ground() and obj.entity.can_move():
+								if game.current_map.is_invisible(obj.x, obj.y):
 									util.spring_trap(obj.x, obj.y, obj.entity.article.capitalize() + obj.entity.name)
 								elif libtcod.map_is_in_fov(game.fov_map, obj.x, obj.y):
-									game.message.new('The ' + obj.entity.name + ' sidestep the ' + game.current_map.tiles[obj.x][obj.y].name, game.turns)
+#									game.message.new('The ' + obj.entity.name + ' sidestep the ' + game.current_map.tiles[obj.x][obj.y].name, game.turns)
+									game.message.new('The ' + obj.entity.name + ' sidestep the ' + game.current_map.tile[obj.x][obj.y]['name'], game.turns)
 						obj.entity.check_condition(obj.x, obj.y)
 						if obj.entity.is_dead():
 							if libtcod.map_is_in_fov(game.fov_map, obj.x, obj.y):

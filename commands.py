@@ -146,15 +146,19 @@ def player_move(dx, dy):
 		game.message.new("You can't move!", game.turns)
 		util.add_turn()
 	else:
-		if game.current_map.tiles[game.char.x + dx][game.char.y + dy].type == 'door':
+#		if game.current_map.tiles[game.char.x + dx][game.char.y + dy].type == 'door':
+		if game.current_map.tile[game.char.x + dx][game.char.y + dy]['type'] == 'door':
 			open_door(dx, dy)
 		else:
 			game.char.move(dx, dy, game.current_map)
-			if game.current_map.tiles[game.char.x][game.char.y].type == 'trap' and not game.player.is_above_ground():
-				if game.current_map.tiles[game.char.x][game.char.y].is_invisible():
+#			if game.current_map.tiles[game.char.x][game.char.y].type == 'trap' and not game.player.is_above_ground():
+#				if game.current_map.tiles[game.char.x][game.char.y].is_invisible():
+			if game.current_map.tile[game.char.x][game.char.y]['type'] == 'trap' and not game.player.is_above_ground():
+				if game.current_map.is_invisible(game.char.x, game.char.y):
 					util.spring_trap(game.char.x, game.char.y)
 				else:
-					game.message.new('You sidestep the ' + game.current_map.tiles[game.char.x][game.char.y].name, game.turns)
+#					game.message.new('You sidestep the ' + game.current_map.tiles[game.char.x][game.char.y].name, game.turns)
+					game.message.new('You sidestep the ' + game.current_map.tile[game.char.x][game.char.y]['name'], game.turns)
 			if game.current_map.location_id == 0:
 				coordx = [-1, 0, 1]
 				coordy = [-(game.WORLDMAP_WIDTH), 0, game.WORLDMAP_WIDTH]
@@ -205,7 +209,8 @@ def attack():
 			for obj in game.current_map.objects:
 				if obj.entity and obj.x == px and obj.y == py:
 					target = obj
-			if not game.current_map.explored[px][py]:
+#			if not game.current_map.explored[px][py]:
+			if not game.current_map.is_explored(px, py):
 				game.message.new("You can't fight darkness.", game.turns)
 			elif target is None:
 				game.message.new('There is no one here.', game.turns)
@@ -231,7 +236,8 @@ def climb_down_stairs():
 	location_abbr = game.current_map.location_abbr
 	op = (0, 0, 0)
 
-	if game.current_map.tiles[game.char.x][game.char.y].icon != '>':
+#	if game.current_map.tiles[game.char.x][game.char.y].icon != '>':
+	if game.current_map.tile[game.char.x][game.char.y]['icon'] != '>':
 		game.message.new('You see no stairs going in that direction!', game.turns)
 	else:
 		if game.current_map.location_id > 0:
@@ -278,7 +284,8 @@ def climb_up_stairs():
 	location_name = game.current_map.location_name
 	location_abbr = game.current_map.location_abbr
 
-	if game.current_map.tiles[game.char.x][game.char.y].icon != '<':
+#	if game.current_map.tiles[game.char.x][game.char.y].icon != '<':
+	if game.current_map.tile[game.char.x][game.char.y]['icon'] != '<':
 		game.message.new('You see no stairs going in that direction!', game.turns)
 	else:
 		if game.current_map.location_level > 1:
@@ -324,12 +331,15 @@ def close_door():
 	libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, key, libtcod.Mouse(), True)
 	dx, dy = key_check(key, dx, dy)
 
-	if game.current_map.tiles[game.char.x + dx][game.char.y + dy].name == 'opened door':
-		game.current_map.tiles[game.char.x + dx][game.char.y + dy] = game.tiles.get_tile('door')
+#	if game.current_map.tiles[game.char.x + dx][game.char.y + dy].name == 'opened door':
+#		game.current_map.tiles[game.char.x + dx][game.char.y + dy] = game.tiles.get_tile('door')
+	if game.current_map.tile[game.char.x + dx][game.char.y + dy]['name'] == 'opened door':
+		game.current_map.set_tile_values('door', game.char.x + dx, game.char.y + dy)
 		util.add_turn()
 		game.message.new('You close the door.', game.turns)
 		game.fov_recompute = True
-	elif game.current_map.tiles[game.char.x + dx][game.char.y + dy].name == 'door':
+#	elif game.current_map.tiles[game.char.x + dx][game.char.y + dy].name == 'door':
+	elif game.current_map.tile[game.char.x + dx][game.char.y + dy]['name'] == 'door':
 		game.message.new('That door is already closed!', game.turns)
 	elif dx != 0 or dy != 0:
 		game.message.new('There is no door in that direction!', game.turns)
@@ -443,7 +453,8 @@ def look():
 		py = dy + game.cury
 
 		# create a list with the names of all objects at the cursor coordinates
-		if dx in range(game.MAP_WIDTH - 1) and dy in range(game.MAP_HEIGHT - 1) and game.current_map.explored[px][py]:
+#		if dx in range(game.MAP_WIDTH - 1) and dy in range(game.MAP_HEIGHT - 1) and game.current_map.explored[px][py]:
+		if dx in range(game.MAP_WIDTH - 1) and dy in range(game.MAP_HEIGHT - 1) and game.current_map.is_explored(px, py):
 			names = [obj for obj in game.current_map.objects if obj.x == px and obj.y == py]
 			prefix = 'you see '
 			if not libtcod.map_is_in_fov(game.fov_map, px, py):
@@ -454,10 +465,12 @@ def look():
 			if (px, py) == (game.char.x, game.char.y):
 				text = 'you see yourself'
 			elif names == []:
-				if game.current_map.tiles[px][py].is_invisible():
+#				if game.current_map.tiles[px][py].is_invisible():
+				if game.current_map.is_invisible(px, py):
 					text = prefix + 'a floor'
 				else:
-					text = prefix + game.current_map.tiles[px][py].article + game.current_map.tiles[px][py].name
+#					text = prefix + game.current_map.tiles[px][py].article + game.current_map.tiles[px][py].name
+					text = prefix + game.current_map.tile[px][py]['article'] + game.current_map.tile[px][py]['name']
 			elif len(names) > 1:
 				text = prefix
 				for i in range(len(names)):
@@ -494,12 +507,15 @@ def open_door(x=None, y=None):
 	else:
 		dx, dy = x, y
 
-	if game.current_map.tiles[game.char.x + dx][game.char.y + dy].name == 'door':
-		game.current_map.tiles[game.char.x + dx][game.char.y + dy] = game.tiles.get_tile('opened door')
+#	if game.current_map.tiles[game.char.x + dx][game.char.y + dy].name == 'door':
+#		game.current_map.tiles[game.char.x + dx][game.char.y + dy] = game.tiles.get_tile('opened door')
+	if game.current_map.tile[game.char.x + dx][game.char.y + dy]['name'] == 'door':
+		game.current_map.set_tile_values('opened door', game.char.x + dx, game.char.y + dy)
 		util.add_turn()
 		game.message.new('You open the door.', game.turns)
 		game.fov_recompute = True
-	elif game.current_map.tiles[game.char.x + dx][game.char.y + dy].name == 'opened door':
+#	elif game.current_map.tiles[game.char.x + dx][game.char.y + dy].name == 'opened door':
+	elif game.current_map.tile[game.char.x + dx][game.char.y + dy]['name'] == 'opened door':
 		game.message.new('That door is already opened!', game.turns)
 	elif dx != 0 or dy != 0:
 		game.message.new('There is no door in that direction!', game.turns)
@@ -713,11 +729,13 @@ def use_skill():
 			libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, key, libtcod.Mouse(), True)
 			dx, dy = key_check(key, dx, dy)
 
-			if game.current_map.tiles[game.char.x + dx][game.char.y + dy].type == 'trap':
+#			if game.current_map.tiles[game.char.x + dx][game.char.y + dy].type == 'trap':
+			if game.current_map.tile[game.char.x + dx][game.char.y + dy]['type'] == 'trap':
 				util.add_turn()
 				dice = libtcod.random_get_int(game.rnd, 0, 200)
 				if game.player.thieving_skills[choice].level >= dice:
-					game.current_map.tiles[game.char.x + dx][game.char.y + dy] = game.tiles.get_tile('floor')
+#					game.current_map.tiles[game.char.x + dx][game.char.y + dy] = game.tiles.get_tile('floor')
+					game.current_map.set_tile_values('floor', game.char.x + dx, game.char.y + dy)
 					game.message.new('You disarm the trap.', game.turns)
 					game.player.thieving_skills[choice].gain_xp(5)
 				else:

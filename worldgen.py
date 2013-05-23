@@ -9,8 +9,8 @@ class World(object):
 		self.noise = 0
 		self.hm_list = [0] * (game.WORLDMAP_WIDTH * game.WORLDMAP_HEIGHT)
 		self.sandheight = 0.12
-		self.map_image_big = 0
-		self.map_image_small = 0
+		self.map_image_big = None
+		self.map_image_small = None
 		self.player_positionx = 0
 		self.player_positiony = 0
 		self.dungeons = []
@@ -67,7 +67,7 @@ class World(object):
 				libtcod.console_put_char_ex(con, x, y, ' ', bcolor, bcolor)
 				libtcod.image_put_pixel(self.map_image_small, x, y, bcolor)
 				if mode == 0:
-					self.hm_list[(y * game.WORLDMAP_WIDTH) + x] = cellheight
+					self.hm_list[(y * game.WORLDMAP_WIDTH) + x] = float("{0:.4f}".format(cellheight))
 
 		libtcod.image_scale(self.map_image_small, (game.SCREEN_WIDTH - 2) * 2, (game.SCREEN_HEIGHT - 2) * 2)
 		if mode == 0:
@@ -93,6 +93,7 @@ class World(object):
 				os.makedirs('maps')
 			libtcod.image_save(self.map_image_big, 'maps/worldmap-' + game.player.name + '.png')
 			#libtcod.image_save(self.map_image_small, 'maps/' + time.strftime('%Y%m%d-%H%M%S') + '.png')
+			self.map_image_big = None
 
 	# place all dungeons after terrain generation
 	def place_dungeons(self):

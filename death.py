@@ -114,7 +114,8 @@ def death_showmap(scrollx, scrolly):
 	box = libtcod.console_new(game.current_map.map_width, game.current_map.map_height)
 	for y in range(min(game.SCREEN_HEIGHT - 14, game.current_map.map_height)):
 		for x in range(min(game.SCREEN_WIDTH - 8, game.current_map.map_width)):
-			libtcod.console_put_char_ex(box, x, y, game.current_map.tiles[x + scrollx][y + scrolly].icon, game.current_map.tiles[x + scrollx][y + scrolly].color, game.current_map.tiles[x + scrollx][y + scrolly].back_color_high)
+#			libtcod.console_put_char_ex(box, x, y, game.current_map.tiles[x + scrollx][y + scrolly].icon, game.current_map.tiles[x + scrollx][y + scrolly].color, game.current_map.tiles[x + scrollx][y + scrolly].back_color_high)
+			libtcod.console_put_char_ex(box, x, y, game.current_map.tile[x + scrollx][y + scrolly]['icon'], game.current_map.tile[x + scrollx][y + scrolly]['color'], game.current_map.tile[x + scrollx][y + scrolly]['back_light_color'])
 	for obj in reversed(game.current_map.objects):
 		if obj.name != 'player':
 			if obj.x in range(scrollx, game.SCREEN_WIDTH - 8 + scrollx) and obj.y in range(scrolly, game.SCREEN_HEIGHT - 14 + scrolly):

@@ -70,12 +70,9 @@ class Player(object):
 	def attack(self, target):
 		if not target.entity.is_hostile():
 			target.entity.becomes_hostile()
-		#thac0 = 20 - (self.attack_rating() - target.entity.defense_rating)
-		#dice = util.roll_dice(1, 20)
 		attacker = util.roll_dice(1, 50)
 		defender = util.roll_dice(1, 50)
 		if (attacker != 1 and defender != 50 and ((attacker + self.attack_rating()) >= (defender + target.entity.defense_rating) or attacker == 50 or defender == 1)) or target.entity.is_disabled():
-		#if dice != 1 and (dice >= thac0 or dice == 20):
 			damage = 0
 			for i in range(len(self.equipment)):
 				if self.equipment[i].type == 'weapon':
@@ -154,7 +151,8 @@ class Player(object):
 			game.message.new('You drop ' + obj.item.article + obj.item.name, game.turns, libtcod.red)
 		else:
 			game.message.new('You drop ' + str(qty) + ' ' + obj.item.plural, game.turns, libtcod.red)
-		if game.current_map.tiles[game.char.x][game.char.y].type == 'trap':
+#		if game.current_map.tiles[game.char.x][game.char.y].type == 'trap':
+		if game.current_map.tile[game.char.x][game.char.y]['type'] == 'trap':
 			if self.is_above_ground():
 				util.spring_trap(game.char.x, game.char.y, obj.item.article.capitalize() + obj.item.name)
 			else:
@@ -705,9 +703,7 @@ def starting_stats():
 		game.player.inventory.append(copy.deepcopy(game.items.get_item('leather armor')))
 
 	game.player.inventory.append(copy.deepcopy(game.items.get_item('torch')))
-	game.player.inventory.append(copy.deepcopy(game.items.get_item('torch')))
 	game.player.inventory.append(copy.deepcopy(game.items.get_item('ration')))
-	game.player.inventory.append(copy.deepcopy(game.items.get_item('torch')))
 	game.player.set_max_health()
 	game.player.set_max_mana()
 	game.player.health = game.player.max_health

@@ -8,21 +8,32 @@ import util
 def check_active_effects():
 	for y in range(game.current_map.map_height):
 		for x in range(game.current_map.map_width):
-			if game.current_map.animation[x][y] is not None and 'duration' in game.current_map.animation[x][y]:
-				if game.current_map.animation[x][y]['duration'] < game.turns + 1:
-					game.current_map.animation[x][y] = None
+#			if game.current_map.animation[x][y] is not None and 'duration' in game.current_map.animation[x][y]:
+#				if game.current_map.animation[x][y]['duration'] < game.turns + 1:
+#					game.current_map.animation[x][y] = None
+			if 'duration' in game.current_map.tile[x][y]:
+				if game.current_map.tile[x][y]['duration'] < game.turns + 1:
+					explored = game.current_map.is_explored(x, y)
+					game.current_map.set_tile_values(game.current_map.tile[x][y]['name'], x, y)
+					if game.current_map.is_invisible(x, y):
+						game.current_map.tile[x][y].pop('invisible', None)
+					if explored:
+						game.current_map.tile[x][y].update({'explored': True})
 
 	for obj in game.current_map.objects:
 		if obj.name == 'player':
-			if game.current_map.animation[game.char.x][game.char.y] is not None and 'type' in game.current_map.animation[game.char.x][game.char.y]:
-				if game.current_map.animation[game.char.x][game.char.y]['type'] == 'poison_gas':
+#			if game.current_map.animation[game.char.x][game.char.y] is not None and 'type' in game.current_map.animation[game.char.x][game.char.y]:
+#				if game.current_map.animation[game.char.x][game.char.y]['type'] == 'poison_gas':
+			if 'type' in game.current_map.tile[game.char.x][game.char.y]:
+				if game.current_map.tile[game.char.x][game.char.y]['type'] == 'poison_gas':
 					game.message.new('You step into poisonous gas!', game.turns)
 					if 'poison' not in game.player.flags:
 						dice = libtcod.random_get_int(game.rnd, 1, 50)
 						if dice > game.player.endurance + (game.player.karma / 2):
 							game.message.new('You are poisoned!', game.turns, libtcod.Color(0, 112, 0))
 							game.player.flags.append('poison')
-				if game.current_map.animation[game.char.x][game.char.y]['type'] == 'sleep_gas':
+#				if game.current_map.animation[game.char.x][game.char.y]['type'] == 'sleep_gas':
+				if game.current_map.tile[game.char.x][game.char.y]['type'] == 'sleep_gas':
 					if 'sleep' not in game.player.flags:
 						game.message.new('You step into sleeping gas!', game.turns)
 						dice = libtcod.random_get_int(game.rnd, 1, 50)
@@ -31,15 +42,18 @@ def check_active_effects():
 							game.player.flags.append('sleep')
 
 		elif obj.entity:
-			if game.current_map.animation[obj.x][obj.y] is not None and 'type' in game.current_map.animation[game.char.x][game.char.y]:
-				if game.current_map.animation[obj.x][obj.y]['type'] == 'poison_gas':
+#			if game.current_map.animation[obj.x][obj.y] is not None and 'type' in game.current_map.animation[obj.x][obj.y]:
+#				if game.current_map.animation[obj.x][obj.y]['type'] == 'poison_gas':
+			if 'type' in game.current_map.tile[obj.x][obj.y]:
+				if game.current_map.tile[obj.x][obj.y]['type'] == 'poison_gas':
 					if libtcod.map_is_in_fov(game.fov_map, obj.x, obj.y):
 						game.message.new(obj.entity.article.capitalize() + obj.entity.name + ' step into poisonous gas!', game.turns)
 					if 'poison' not in obj.entity.flags:
 						dice = util.roll_dice(1, 3)
 						if dice == 3:
 							obj.entity.flags.append('poison')
-				if game.current_map.animation[obj.x][obj.y]['type'] == 'sleep_gas':
+#				if game.current_map.animation[obj.x][obj.y]['type'] == 'sleep_gas':
+				if game.current_map.tile[obj.x][obj.y]['type'] == 'sleep_gas':
 					if 'sleep' not in obj.entity.flags:
 						if libtcod.map_is_in_fov(game.fov_map, obj.x, obj.y):
 							game.message.new(obj.entity.article.capitalize() + obj.entity.name + ' step into sleeping gas!', game.turns)
@@ -60,12 +74,11 @@ def fireball(x, y, radius):
 			for j in range(-radius, radius + 1):
 				if libtcod.dijkstra_get_distance(path_dijk, x + i, y + j) <= step and libtcod.dijkstra_get_distance(path_dijk, x + i, y + j) >= 0 and libtcod.map_is_in_fov(game.fov_map, x + i, y + j):
 					(front, back, lerp) = util.render_tiles_animations(x + i, y + j, libtcod.Color(160, 0, 0), libtcod.Color(64, 0, 0), libtcod.Color(0, 0, 0), round(libtcod.random_get_float(game.rnd, 0, 1), 1))
-					libtcod.console_put_char_ex(game.con, x - game.curx + i, y - game.cury + j, '*', front, game.current_map.tiles[x - game.curx + i][y - game.cury + j].back_color_high)
+					libtcod.console_put_char_ex(0, game.MAP_X + x - game.curx + i, game.MAP_Y + y - game.cury + j, '*', front, back)
 					player_fov = True
 		if player_fov:
-			libtcod.console_blit(game.con, 0, 0, game.MAP_WIDTH, game.MAP_HEIGHT, 0, game.MAP_X, game.MAP_Y)
 			libtcod.console_flush()
-			time.sleep(0.085)
+			time.sleep(0.05)
 			player_fov = False
 
 	for obj in game.current_map.objects:
@@ -91,7 +104,8 @@ def poison_gas(x, y, radius, duration):
 	for i in range(-radius, radius + 1):
 		for j in range(-radius, radius + 1):
 			if libtcod.dijkstra_get_distance(path_dijk, x + i, y + j) <= radius and libtcod.dijkstra_get_distance(path_dijk, x + i, y + j) >= 0:
-				game.current_map.animation[x + i][y + j] = {'icon': game.current_map.tiles[x + i][y + j].icon, 'light_color': libtcod.Color(0, 224, 0), 'dark_color': libtcod.Color(0, 112, 0), 'lerp': round(libtcod.random_get_float(game.rnd, 0, 1), 1), 'duration': game.turns + duration, 'type': 'poison_gas'}
+#				game.current_map.animation[x + i][y + j] = {'icon': game.current_map.tiles[x + i][y + j].icon, 'back_light_color': libtcod.Color(0, 224, 0), 'back_dark_color': libtcod.Color(0, 112, 0), 'lerp': round(libtcod.random_get_float(game.rnd, 0, 1), 1), 'duration': game.turns + duration, 'type': 'poison_gas'}
+				game.current_map.tile[x + i][y + j].update({'icon': game.current_map.tile[x + i][y + j]['icon'], 'back_light_color': libtcod.Color(0, 224, 0), 'back_dark_color': libtcod.Color(0, 112, 0), 'lerp': round(libtcod.random_get_float(game.rnd, 0, 1), 1), 'duration': game.turns + duration, 'type': 'poison_gas'})
 				for obj in game.current_map.objects:
 					if obj.item is None:
 						if obj.x == x + i and obj.y == y + j:
@@ -118,7 +132,8 @@ def sleeping_gas(x, y, radius, duration):
 	for i in range(-radius, radius + 1):
 		for j in range(-radius, radius + 1):
 			if libtcod.dijkstra_get_distance(path_dijk, x + i, y + j) <= radius and libtcod.dijkstra_get_distance(path_dijk, x + i, y + j) >= 0:
-				game.current_map.animation[x + i][y + j] = {'icon': game.current_map.tiles[x + i][y + j].icon, 'light_color': libtcod.Color(115, 220, 225), 'dark_color': libtcod.Color(0, 143, 189), 'lerp': round(libtcod.random_get_float(game.rnd, 0, 1), 1), 'duration': game.turns + duration, 'type': 'sleep_gas'}
+#				game.current_map.animation[x + i][y + j] = {'icon': game.current_map.tiles[x + i][y + j].icon, 'back_light_color': libtcod.Color(115, 220, 225), 'back_dark_color': libtcod.Color(0, 143, 189), 'lerp': round(libtcod.random_get_float(game.rnd, 0, 1), 1), 'duration': game.turns + duration, 'type': 'sleep_gas'}
+				game.current_map.tile[x + i][y + j].update({'icon': game.current_map.tile[x + i][y + j]['icon'], 'back_light_color': libtcod.Color(115, 220, 225), 'back_dark_color': libtcod.Color(0, 143, 189), 'lerp': round(libtcod.random_get_float(game.rnd, 0, 1), 1), 'duration': game.turns + duration, 'type': 'sleep_gas'})
 				for obj in game.current_map.objects:
 					if obj.item is None:
 						if obj.x == x + i and obj.y == y + j:

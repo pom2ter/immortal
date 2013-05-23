@@ -164,7 +164,6 @@ class Monster(object):
 					turn_hostile = libtcod.random_get_int(game.rnd, 1, 100)
 					if turn_hostile <= 10:
 						self.flags.append('ai_hostile')
-			#elif set(['ai_neutral', 'ai_hostile']).issubset(self.flags):
 			elif all(i in self.flags for i in ['ai_neutral', 'ai_hostile']):
 				return_neutral = libtcod.random_get_int(game.rnd, 1, 100)
 				if return_neutral <= 10:
