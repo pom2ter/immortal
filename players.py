@@ -8,7 +8,6 @@ import messages
 RACES = ['Human', 'Elf', 'Dwarf', 'Halfling']
 CLASSES = ['Fighter', 'Rogue', 'Priest', 'Mage', 'Explorer']
 GENDER = ['Male', 'Female']
-COMBAT_SKILLS = ['Sword', 'Axe', 'Mace', 'Dagger', 'Polearm', 'Staff', 'Bow', 'Missile', 'Hands']
 RACE_DESC = ["Humans are the most common race in the Realm. They are average at everything and thus don't have any racial bonuses or penalties.",
 			"Elves are more dedicated to magic than combat. They have bonuses to intelligence and wisdow but penalties to strength and endurance.",
 			"Dwarves are the strongest (but stupidest) people in the Realm. They are primarily used has 'tanks'. They have a bonus to strength and endurance and a penalty to everything else.",
@@ -25,14 +24,19 @@ BASE_STATS = [[9, 9, 9, 9, 9], [12, 9, 7, 8, 11], [10, 12, 8, 9, 8], [10, 8, 9, 
 EXPERIENCE_TABLES = [0, 100, 250, 500, 800, 1250, 1750, 2450, 3250, 4150, 5200, 6400, 7800, 9400, 11200, 13200, 16400, 18800, 21400, 24200, 27000]
 FIGHTER_HP_GAIN = 10
 FIGHTER_MP_GAIN = 2
+FIGHTER_STAMINA_GAIN = 8
 ROGUE_HP_GAIN = 8
 ROGUE_MP_GAIN = 4
-PRIEST_HP_GAIN = 7
+ROGUE_STAMINA_GAIN = 6
+PRIEST_HP_GAIN = 6
 PRIEST_MP_GAIN = 8
-MAGE_HP_GAIN = 5
+PRIEST_STAMINA_GAIN = 5
+MAGE_HP_GAIN = 4
 MAGE_MP_GAIN = 10
+MAGE_STAMINA_GAIN = 2
 EXPLORER_HP_GAIN = 6
 EXPLORER_MP_GAIN = 6
+EXPLORER_STAMINA_GAIN = 4
 
 
 class Player(object):
@@ -57,13 +61,17 @@ class Player(object):
 		self.mana = 0
 		self.max_mana = 0
 		self.base_mana = 0
+		self.stamina = 0
+		self.max_stamina = 0
+		self.base_stamina = 0
 		self.inventory = []
 		self.equipment = []
 		self.gold = 0
 		self.mks = 0
-		self.combat_skills = [Skill('Sword', 0, 0), Skill('Axe', 0, 0), Skill('Mace', 0, 0), Skill('Dagger', 0, 0), Skill('Polearm', 0, 0),
-								Skill('Staff', 0, 0), Skill('Bow', 0, 0), Skill('Missile', 0, 0), Skill('Hands', 0, 0)]
-		self.thieving_skills = [Skill('Detect Traps', 0, 0, 'detect_trap'), Skill('Disarm Traps', 0, 0)]
+		self.skills = [Skill('Sword', 'Combat', 0, 0), Skill('Axe', 'Combat', 0, 0), Skill('Mace', 'Combat', 0, 0),
+						Skill('Dagger', 'Combat', 0, 0), Skill('Polearm', 'Combat', 0, 0), Skill('Staff', 'Combat', 0, 0),
+						Skill('Bow', 'Combat', 0, 0), Skill('Missile', 'Combat', 0, 0), Skill('Hands', 'Combat', 0, 0),
+						Skill('Detect Traps', 'Physical', 0, 0, True, 'detect_trap'), Skill('Disarm Traps', 'Physical', 0, 0, True), Skill('Swimming', 'Physical', 0, 0)]
 		self.flags = []
 
 	# attack an enemy
@@ -87,10 +95,13 @@ class Player(object):
 				self.mks += 1
 				target.entity.loot(target.x, target.y)
 				target.delete()
-			self.combat_skills[self.find_weapon_type()].gain_xp(2)
+			self.skills[self.find_weapon_type()].gain_xp(2)
 		else:
 			game.message.new('You missed the ' + target.entity.name + '.', game.turns)
-			self.combat_skills[self.find_weapon_type()].gain_xp(1)
+			self.skills[self.find_weapon_type()].gain_xp(1)
+		self.stamina -= 1
+		if self.no_stamina():
+			game.message.new('You fall unconscious from exaustion!', game.turns)
 		util.add_turn()
 
 	# calculates your attack rating
@@ -98,7 +109,7 @@ class Player(object):
 		ar = self.strength
 		ar += self.dexterity * 0.25
 		ar += self.karma * 0.25
-		ar += self.combat_skills[self.find_weapon_type()].level * 0.2
+		ar += self.skills[self.find_weapon_type()].level * 0.2
 		return ar
 
 	# returns true if player can move
@@ -151,7 +162,6 @@ class Player(object):
 			game.message.new('You drop ' + obj.item.article + obj.item.name, game.turns, libtcod.red)
 		else:
 			game.message.new('You drop ' + str(qty) + ' ' + obj.item.plural, game.turns, libtcod.red)
-#		if game.current_map.tiles[game.char.x][game.char.y].type == 'trap':
 		if game.current_map.tile[game.char.x][game.char.y]['type'] == 'trap':
 			if self.is_above_ground():
 				util.spring_trap(game.char.x, game.char.y, obj.item.article.capitalize() + obj.item.name)
@@ -201,26 +211,30 @@ class Player(object):
 			game.message.new('You equip the ' + self.inventory[item].unidentified_name, game.turns, libtcod.green)
 		self.inventory.pop(item)
 
+	# return skill index
+	def find_skill(self, skill):
+		return [i.name for i in self.skills].index(skill)
+
 	# returns the weapon type
 	def find_weapon_type(self):
-		weapon_type = 8
+		weapon_type = self.find_skill('Hands')
 		for i in range(len(self.equipment)):
 			if 'weapon_sword' in self.equipment[i].flags:
-				return 0
+				return self.find_skill('Sword')
 			if 'weapon_axe' in self.equipment[i].flags:
-				return 1
+				return self.find_skill('Axe')
 			if 'weapon_mace' in self.equipment[i].flags:
-				return 2
+				return self.find_skill('Mace')
 			if 'weapon_dagger' in self.equipment[i].flags:
-				return 3
+				return self.find_skill('Dagger')
 			if 'weapon_polearm' in self.equipment[i].flags:
-				return 4
+				return self.find_skill('Polearm')
 			if 'weapon_staff' in self.equipment[i].flags:
-				return 5
+				return self.find_skill('Staff')
 			if 'weapon_bow' in self.equipment[i].flags:
-				return 6
+				return self.find_skill('Bow')
 			if 'weapon_missile' in self.equipment[i].flags:
-				return 7
+				return self.find_skill('Missile')
 		return weapon_type
 
 	# stuff to do when you gain a level
@@ -229,29 +243,37 @@ class Player(object):
 		if self.profession == 'Fighter':
 			hp_increase = libtcod.random_get_int(game.rnd, 2, FIGHTER_HP_GAIN)
 			mp_increase = libtcod.random_get_int(game.rnd, 2, FIGHTER_MP_GAIN)
+			stamina_increase = libtcod.random_get_int(game.rnd, 2, FIGHTER_STAMINA_GAIN)
 			self.stat_gain(50, 15, 5, 10, 20)
 		if self.profession == 'Rogue':
 			hp_increase = libtcod.random_get_int(game.rnd, 2, ROGUE_HP_GAIN)
 			mp_increase = libtcod.random_get_int(game.rnd, 2, ROGUE_MP_GAIN)
+			stamina_increase = libtcod.random_get_int(game.rnd, 2, ROGUE_STAMINA_GAIN)
 			self.stat_gain(20, 50, 10, 10, 10)
 		if self.profession == 'Priest':
 			hp_increase = libtcod.random_get_int(game.rnd, 2, PRIEST_HP_GAIN)
 			mp_increase = libtcod.random_get_int(game.rnd, 2, PRIEST_MP_GAIN)
+			stamina_increase = libtcod.random_get_int(game.rnd, 2, PRIEST_STAMINA_GAIN)
 			self.stat_gain(20, 10, 10, 50, 10)
 		if self.profession == 'Mage':
 			hp_increase = libtcod.random_get_int(game.rnd, 2, MAGE_HP_GAIN)
 			mp_increase = libtcod.random_get_int(game.rnd, 2, MAGE_MP_GAIN)
+			stamina_increase = libtcod.random_get_int(game.rnd, 2, MAGE_STAMINA_GAIN)
 			self.stat_gain(10, 15, 50, 20, 5)
 		if self.profession == 'Explorer':
-			hp_increase = libtcod.random_get_int(game.rnd, 2, MAGE_HP_GAIN)
-			mp_increase = libtcod.random_get_int(game.rnd, 2, MAGE_MP_GAIN)
+			hp_increase = libtcod.random_get_int(game.rnd, 2, EXPLORER_HP_GAIN)
+			mp_increase = libtcod.random_get_int(game.rnd, 2, EXPLORER_MP_GAIN)
+			stamina_increase = libtcod.random_get_int(game.rnd, 2, EXPLORER_STAMINA_GAIN)
 			self.stat_gain(20, 20, 20, 20, 20)
 		self.base_health += hp_increase
 		self.base_mana += mp_increase
+		self.base_stamina += stamina_increase
 		self.health += hp_increase
 		self.mana += mp_increase
+		self.stamina += stamina_increase
 		self.set_max_health()
 		self.set_max_mana()
+		self.set_max_stamina()
 
 	# raises your xp
 	def gain_xp(self, xp):
@@ -271,12 +293,15 @@ class Player(object):
 
 	# heals the amount of mana
 	def heal_mana(self, mp):
-		old_mana = self.mana
 		self.mana += mp
 		if self.mana > self.max_mana:
 			self.mana = self.max_mana
-		if old_mana < self.mana:
-			game.hp_anim.append([game.char.x, game.char.y, str(self.mana - old_mana), libtcod.green, 0])
+
+	# heals the amount of stamina
+	def heal_stamina(self, st):
+		self.stamina += st
+		if self.stamina > self.max_stamina:
+			self.stamina = self.max_stamina
 
 	# calculates your health bonus
 	def health_bonus(self):
@@ -298,7 +323,7 @@ class Player(object):
 
 	# returns true if player is disabled
 	def is_disabled(self):
-		if 'sleep' in self.flags:
+		if any(i in self.flags for i in ['sleep', 'unconscious']):
 			return True
 		return False
 
@@ -334,12 +359,20 @@ class Player(object):
 		cc += self.karma * 0.5
 		return round(cc, 2)
 
+	# check if player has no stamina
+	def no_stamina(self):
+		if self.stamina <= 0:
+			self.stamina == 0
+			if 'unconscious' not in self.flags:
+				self.flags.append('unconscious')
+			return True
+		return False
+
 	# calculates your total score
 	def score(self):
 		score = 0
 		score += (self.strength + self.dexterity + self.intelligence + self.wisdom + self.endurance + self.karma) / 5
-		score += sum(c.level for c in self.combat_skills) / 20
-		score += sum(c.level for c in self.thieving_skills) / 20
+		score += sum(c.level for c in self.skills) / 20
 		score += self.xp / 5
 		score += (self.level - 1) * 50
 		score += game.turns / 50
@@ -358,6 +391,20 @@ class Player(object):
 		self.max_mana = self.base_mana + self.mana_bonus()
 		if self.mana > self.max_mana:
 			self.mana = self.max_mana
+
+	# set your max stamina
+	def set_max_stamina(self):
+		self.max_stamina = self.base_stamina + self.stamina_bonus()
+		if self.stamina > self.max_stamina:
+			self.stamina = self.max_stamina
+
+	# calculates your stamina bonus
+	def stamina_bonus(self):
+		sb = self.strength
+		sb += self.endurance * 0.75
+		sb += self.dexterity * 0.5
+		sb += self.karma * 0.25
+		return int(sb)
 
 	# stat gain when you raise a level
 	def stat_gain(self, st, dx, iq, wi, en):
@@ -403,15 +450,17 @@ class Player(object):
 
 
 class Skill(object):
-	def __init__(self, name, level, xp, flag=None):
+	def __init__(self, name, cat, level, xp, can_use=False, flag=None):
 		self.name = name
+		self.category = cat
 		self.level = level
 		self.xp = xp
+		self.can_use = can_use
 		self.flag = flag
 
 	# set a skill active
 	def active(self):
-		if self.flag is None:
+		if not self.can_use:
 			game.message.new("You can't use this skill that way.", game.turns)
 		elif self.flag in game.player.flags:
 			game.player.flags.remove(self.flag)
@@ -435,6 +484,10 @@ class Skill(object):
 				self.xp = 0
 				self.level += 1
 				game.message.new('Your ' + self.name + ' skill increased to ' + str(self.level) + '!', game.turns, libtcod.light_green)
+
+	# set skill level
+	def set_level(self, level):
+		self.level = level
 
 
 class Time(object):
@@ -619,7 +672,6 @@ def show_stats_panel(stats, text, attr=-1, roll=-1):
 	libtcod.console_print(stats, 2, 7, 'Intelligence:  ')
 	libtcod.console_print(stats, 2, 8, 'Wisdom:        ')
 	libtcod.console_print(stats, 2, 9, 'Endurance:     ')
-	libtcod.console_print(stats, 2, 11, 'Karma:         ')
 
 	if not attr == -1:
 		for i in range(5):
@@ -636,7 +688,6 @@ def show_stats_panel(stats, text, attr=-1, roll=-1):
 		for i in range(5):
 			libtcod.console_print(stats, 24, i + 5, str(stat[i]))
 			libtcod.console_print_ex(stats, 31, i + 5, libtcod.BKGND_SET, libtcod.RIGHT, ' ' + str(BASE_STATS[attr][i] + stat[i]))
-		libtcod.console_print_ex(stats, 31, 11, libtcod.BKGND_SET, libtcod.RIGHT, ' ' + str(stat[5]))
 		game.player.strength = BASE_STATS[attr][0] + stat[0]
 		game.player.dexterity = BASE_STATS[attr][1] + stat[1]
 		game.player.intelligence = BASE_STATS[attr][2] + stat[2]
@@ -658,47 +709,52 @@ def starting_stats():
 	if game.player.profession == 'Fighter':
 		game.player.base_health = libtcod.random_get_int(game.rnd, 2, FIGHTER_HP_GAIN)
 		game.player.base_mana = libtcod.random_get_int(game.rnd, 2, FIGHTER_MP_GAIN)
+		game.player.base_stamina = libtcod.random_get_int(game.rnd, 2, FIGHTER_STAMINA_GAIN)
 		game.player.inventory.append(copy.deepcopy(game.items.get_item('short sword')))
 		game.player.inventory.append(copy.deepcopy(game.items.get_item('leather armor')))
-		game.player.combat_skills[0].level = 20
-		game.player.combat_skills[1].level = 20
-		game.player.combat_skills[2].level = 10
-		game.player.combat_skills[3].level = 15
-		game.player.combat_skills[4].level = 20
-		game.player.combat_skills[8].level = 5
+		game.player.skills[game.player.find_skill('Sword')].set_level(20)
+		game.player.skills[game.player.find_skill('Axe')].set_level(20)
+		game.player.skills[game.player.find_skill('Mace')].set_level(10)
+		game.player.skills[game.player.find_skill('Dagger')].set_level(15)
+		game.player.skills[game.player.find_skill('Polearm')].set_level(20)
+		game.player.skills[game.player.find_skill('Hands')].set_level(5)
 
 	if game.player.profession == 'Rogue':
 		game.player.base_health = libtcod.random_get_int(game.rnd, 2, ROGUE_HP_GAIN)
 		game.player.base_mana = libtcod.random_get_int(game.rnd, 2, ROGUE_MP_GAIN)
+		game.player.base_stamina = libtcod.random_get_int(game.rnd, 2, ROGUE_STAMINA_GAIN)
 		game.player.inventory.append(copy.deepcopy(game.items.get_item('dagger')))
 		game.player.inventory.append(copy.deepcopy(game.items.get_item('leather armor')))
-		game.player.combat_skills[3].level = 15
-		game.player.combat_skills[6].level = 5
-		game.player.combat_skills[7].level = 5
-		game.player.combat_skills[8].level = 5
-		game.player.thieving_skills[0].level = 15
-		game.player.thieving_skills[1].level = 15
+		game.player.skills[game.player.find_skill('Dagger')].set_level(20)
+		game.player.skills[game.player.find_skill('Bow')].set_level(5)
+		game.player.skills[game.player.find_skill('Missile')].set_level(5)
+		game.player.skills[game.player.find_skill('Hands')].set_level(5)
+		game.player.skills[game.player.find_skill('Detect Traps')].set_level(15)
+		game.player.skills[game.player.find_skill('Disarm Traps')].set_level(15)
 
 	if game.player.profession == 'Priest':
 		game.player.base_health = libtcod.random_get_int(game.rnd, 2, PRIEST_HP_GAIN)
 		game.player.base_mana = libtcod.random_get_int(game.rnd, 2, PRIEST_MP_GAIN)
+		game.player.base_stamina = libtcod.random_get_int(game.rnd, 2, PRIEST_STAMINA_GAIN)
 		game.player.inventory.append(copy.deepcopy(game.items.get_item('mace')))
 		game.player.inventory.append(copy.deepcopy(game.items.get_item('leather armor')))
-		game.player.combat_skills[0].level = 5
-		game.player.combat_skills[2].level = 15
-		game.player.combat_skills[3].level = 5
-		game.player.combat_skills[5].level = 5
+		game.player.skills[game.player.find_skill('Sword')].set_level(5)
+		game.player.skills[game.player.find_skill('Mace')].set_level(20)
+		game.player.skills[game.player.find_skill('Dagger')].set_level(5)
+		game.player.skills[game.player.find_skill('Staff')].set_level(5)
 
 	if game.player.profession == 'Mage':
 		game.player.base_health = libtcod.random_get_int(game.rnd, 2, MAGE_HP_GAIN)
 		game.player.base_mana = libtcod.random_get_int(game.rnd, 2, MAGE_MP_GAIN)
+		game.player.base_stamina = libtcod.random_get_int(game.rnd, 2, MAGE_STAMINA_GAIN)
 		game.player.inventory.append(copy.deepcopy(game.items.get_item('quarterstaff')))
 		game.player.inventory.append(copy.deepcopy(game.items.get_item('robes')))
-		game.player.combat_skills[5].level = 15
+		game.player.skills[game.player.find_skill('Staff')].set_level(20)
 
 	if game.player.profession == 'Explorer':
 		game.player.base_health = libtcod.random_get_int(game.rnd, 2, EXPLORER_HP_GAIN)
 		game.player.base_mana = libtcod.random_get_int(game.rnd, 2, EXPLORER_MP_GAIN)
+		game.player.base_stamina = libtcod.random_get_int(game.rnd, 2, EXPLORER_STAMINA_GAIN)
 		game.player.inventory.append(copy.deepcopy(game.items.get_item('dagger')))
 		game.player.inventory.append(copy.deepcopy(game.items.get_item('leather armor')))
 
@@ -706,5 +762,7 @@ def starting_stats():
 	game.player.inventory.append(copy.deepcopy(game.items.get_item('ration')))
 	game.player.set_max_health()
 	game.player.set_max_mana()
+	game.player.set_max_stamina()
 	game.player.health = game.player.max_health
 	game.player.mana = game.player.max_mana
+	game.player.stamina = game.player.max_stamina

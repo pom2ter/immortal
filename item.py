@@ -92,6 +92,14 @@ class Item(object):
 					game.player.heal_mana(heal)
 					game.message.new('You gain ' + str(heal) + ' mana points.', game.turns, libtcod.green)
 
+			if 'stamina_healing' in self.flags:
+				if game.player.stamina == game.player.max_stamina:
+					game.message.new('Your stamina is already at maximum.', game.turns)
+				else:
+					heal = self.dice.roll_dice()
+					game.player.heal_stamina(heal)
+					game.message.new('You gain ' + str(heal) + ' stamina.', game.turns, libtcod.green)
+
 			if 'torchlight' in self.flags:
 				if self.active:
 					self.active = False
@@ -136,6 +144,7 @@ class ItemList(object):
 		libtcod.struct_add_property(item_type_struct, 'expiration', libtcod.TYPE_INT, False)
 		libtcod.struct_add_flag(item_type_struct, 'healing')
 		libtcod.struct_add_flag(item_type_struct, 'mana_healing')
+		libtcod.struct_add_flag(item_type_struct, 'stamina_healing')
 		libtcod.struct_add_flag(item_type_struct, 'usable')
 		libtcod.struct_add_flag(item_type_struct, 'equippable')
 		libtcod.struct_add_flag(item_type_struct, 'consumable')

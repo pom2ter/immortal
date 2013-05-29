@@ -146,19 +146,32 @@ def player_move(dx, dy):
 		game.message.new("You can't move!", game.turns)
 		util.add_turn()
 	else:
-#		if game.current_map.tiles[game.char.x + dx][game.char.y + dy].type == 'door':
 		if game.current_map.tile[game.char.x + dx][game.char.y + dy]['type'] == 'door':
 			open_door(dx, dy)
 		else:
 			game.char.move(dx, dy, game.current_map)
-#			if game.current_map.tiles[game.char.x][game.char.y].type == 'trap' and not game.player.is_above_ground():
-#				if game.current_map.tiles[game.char.x][game.char.y].is_invisible():
 			if game.current_map.tile[game.char.x][game.char.y]['type'] == 'trap' and not game.player.is_above_ground():
 				if game.current_map.is_invisible(game.char.x, game.char.y):
 					util.spring_trap(game.char.x, game.char.y)
 				else:
-#					game.message.new('You sidestep the ' + game.current_map.tiles[game.char.x][game.char.y].name, game.turns)
 					game.message.new('You sidestep the ' + game.current_map.tile[game.char.x][game.char.y]['name'], game.turns)
+			if game.current_map.tile[game.char.x][game.char.y]['name'] in ['deep water', 'very deep water']:
+				if 'swimming' not in game.player.flags:
+					game.player.flags.append('swimming')
+				stamina_loss = (100 - game.player.skills[game.player.find_skill('Swimming')].level) / 2
+				if stamina_loss == 0:
+					stamina_loss = 1
+				game.player.stamina -= stamina_loss
+				if game.player.no_stamina():
+					game.message.new('You drown!', game.turns, libtcod.light_orange)
+					game.message.new('*** Press space ***', game.turns)
+					game.killer = 'drowning'
+					game.game_state = 'death'
+				else:
+					game.player.skills[game.player.find_skill('Swimming')].gain_xp(2)
+			elif 'swimming' in game.player.flags:
+				game.player.flags.remove('swimming')
+
 			if game.current_map.location_id == 0:
 				coordx = [-1, 0, 1]
 				coordy = [-(game.WORLDMAP_WIDTH), 0, game.WORLDMAP_WIDTH]
@@ -209,7 +222,6 @@ def attack():
 			for obj in game.current_map.objects:
 				if obj.entity and obj.x == px and obj.y == py:
 					target = obj
-#			if not game.current_map.explored[px][py]:
 			if not game.current_map.is_explored(px, py):
 				game.message.new("You can't fight darkness.", game.turns)
 			elif target is None:
@@ -236,7 +248,6 @@ def climb_down_stairs():
 	location_abbr = game.current_map.location_abbr
 	op = (0, 0, 0)
 
-#	if game.current_map.tiles[game.char.x][game.char.y].icon != '>':
 	if game.current_map.tile[game.char.x][game.char.y]['icon'] != '>':
 		game.message.new('You see no stairs going in that direction!', game.turns)
 	else:
@@ -284,7 +295,6 @@ def climb_up_stairs():
 	location_name = game.current_map.location_name
 	location_abbr = game.current_map.location_abbr
 
-#	if game.current_map.tiles[game.char.x][game.char.y].icon != '<':
 	if game.current_map.tile[game.char.x][game.char.y]['icon'] != '<':
 		game.message.new('You see no stairs going in that direction!', game.turns)
 	else:
@@ -331,14 +341,11 @@ def close_door():
 	libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, key, libtcod.Mouse(), True)
 	dx, dy = key_check(key, dx, dy)
 
-#	if game.current_map.tiles[game.char.x + dx][game.char.y + dy].name == 'opened door':
-#		game.current_map.tiles[game.char.x + dx][game.char.y + dy] = game.tiles.get_tile('door')
 	if game.current_map.tile[game.char.x + dx][game.char.y + dy]['name'] == 'opened door':
 		game.current_map.set_tile_values('door', game.char.x + dx, game.char.y + dy)
 		util.add_turn()
 		game.message.new('You close the door.', game.turns)
 		game.fov_recompute = True
-#	elif game.current_map.tiles[game.char.x + dx][game.char.y + dy].name == 'door':
 	elif game.current_map.tile[game.char.x + dx][game.char.y + dy]['name'] == 'door':
 		game.message.new('That door is already closed!', game.turns)
 	elif dx != 0 or dy != 0:
@@ -453,7 +460,6 @@ def look():
 		py = dy + game.cury
 
 		# create a list with the names of all objects at the cursor coordinates
-#		if dx in range(game.MAP_WIDTH - 1) and dy in range(game.MAP_HEIGHT - 1) and game.current_map.explored[px][py]:
 		if dx in range(game.MAP_WIDTH - 1) and dy in range(game.MAP_HEIGHT - 1) and game.current_map.is_explored(px, py):
 			names = [obj for obj in game.current_map.objects if obj.x == px and obj.y == py]
 			prefix = 'you see '
@@ -465,11 +471,9 @@ def look():
 			if (px, py) == (game.char.x, game.char.y):
 				text = 'you see yourself'
 			elif names == []:
-#				if game.current_map.tiles[px][py].is_invisible():
 				if game.current_map.is_invisible(px, py):
 					text = prefix + 'a floor'
 				else:
-#					text = prefix + game.current_map.tiles[px][py].article + game.current_map.tiles[px][py].name
 					text = prefix + game.current_map.tile[px][py]['article'] + game.current_map.tile[px][py]['name']
 			elif len(names) > 1:
 				text = prefix
@@ -507,14 +511,11 @@ def open_door(x=None, y=None):
 	else:
 		dx, dy = x, y
 
-#	if game.current_map.tiles[game.char.x + dx][game.char.y + dy].name == 'door':
-#		game.current_map.tiles[game.char.x + dx][game.char.y + dy] = game.tiles.get_tile('opened door')
 	if game.current_map.tile[game.char.x + dx][game.char.y + dy]['name'] == 'door':
 		game.current_map.set_tile_values('opened door', game.char.x + dx, game.char.y + dy)
 		util.add_turn()
 		game.message.new('You open the door.', game.turns)
 		game.fov_recompute = True
-#	elif game.current_map.tiles[game.char.x + dx][game.char.y + dy].name == 'opened door':
 	elif game.current_map.tile[game.char.x + dx][game.char.y + dy]['name'] == 'opened door':
 		game.message.new('That door is already opened!', game.turns)
 	elif dx != 0 or dy != 0:
@@ -613,7 +614,7 @@ def save_game():
 	return False
 
 
-# show all of the old messages
+# show all the old messages
 def see_message_history():
 	box_width = game.MESSAGE_WIDTH + 2
 	box_height = (game.SCREEN_HEIGHT / 2) + 4
@@ -715,11 +716,15 @@ def use_item():
 
 # use a skill
 def use_skill():
-	output = [x.name for x in game.player.thieving_skills]
+	skills = []
+	for x in game.player.skills:
+		if x.can_use:
+			skills.append(x)
+	output = [x.name for x in skills]
 	choice = game.messages.box('Use a skill', 'Up/down to select, ENTER to use, ESC to exit', game.PLAYER_STATS_WIDTH + ((game.MAP_WIDTH - 56) / 2), ((game.MAP_HEIGHT + 1) - max(16, len(output) + 4)) / 2, 60, max(16, len(output) + 4), output, step=2, mouse_exit=True)
 	if choice != -1:
 		if output[choice] == 'Detect Traps':
-			game.player.thieving_skills[choice].active()
+			skills[choice].active()
 		if output[choice] == 'Disarm Traps':
 			game.message.new('Disarm trap in which direction?', game.turns)
 			util.render_map()
@@ -729,22 +734,20 @@ def use_skill():
 			libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, key, libtcod.Mouse(), True)
 			dx, dy = key_check(key, dx, dy)
 
-#			if game.current_map.tiles[game.char.x + dx][game.char.y + dy].type == 'trap':
 			if game.current_map.tile[game.char.x + dx][game.char.y + dy]['type'] == 'trap':
 				util.add_turn()
 				dice = libtcod.random_get_int(game.rnd, 0, 200)
-				if game.player.thieving_skills[choice].level >= dice:
-#					game.current_map.tiles[game.char.x + dx][game.char.y + dy] = game.tiles.get_tile('floor')
+				if skills[choice].level >= dice:
 					game.current_map.set_tile_values('floor', game.char.x + dx, game.char.y + dy)
 					game.message.new('You disarm the trap.', game.turns)
-					game.player.thieving_skills[choice].gain_xp(5)
+					skills[choice].gain_xp(5)
 				else:
 					dice = libtcod.random_get_int(game.rnd, 1, 50)
 					if dice > game.player.karma + game.player.dexterity:
 						game.message.new('You inadvertently set off the trap!', game.turns)
 					else:
 						game.message.new('You failed to disarm the trap.', game.turns)
-					game.player.thieving_skills[choice].gain_xp(1)
+					skills[choice].gain_xp(1)
 			elif dx != 0 or dy != 0:
 				game.message.new('You found no trap in that direction.', game.turns)
 	game.draw_gui = True
@@ -768,10 +771,11 @@ def ztats_attributes(con, width, height):
 	libtcod.console_print(con, 2, 8, 'Endurance    : ' + str(game.player.endurance))
 	libtcod.console_print(con, 2, 9, 'Karma        : ' + str(game.player.karma))
 
-	libtcod.console_print(con, 30, 4, 'Health : ' + str(game.player.health) + '/' + str(game.player.max_health))
-	libtcod.console_print(con, 30, 5, 'Mana   : ' + str(game.player.mana) + '/' + str(game.player.max_mana))
-	libtcod.console_print(con, 30, 6, 'Experience: ' + str(game.player.xp))
-	libtcod.console_print(con, 30, 7, 'Gold: ' + str(game.player.gold))
+	libtcod.console_print(con, 30, 4, 'Health  : ' + str(game.player.health) + '/' + str(game.player.max_health))
+	libtcod.console_print(con, 30, 5, 'Stamina : ' + str(game.player.stamina) + '/' + str(game.player.max_stamina))
+	libtcod.console_print(con, 30, 6, 'Mana    : ' + str(game.player.mana) + '/' + str(game.player.max_mana))
+	libtcod.console_print(con, 30, 7, 'Experience: ' + str(game.player.xp))
+	libtcod.console_print(con, 30, 8, 'Gold: ' + str(game.player.gold))
 
 	libtcod.console_print(con, 2, 11, 'Attack Rating     : ' + str(game.player.attack_rating()))
 	libtcod.console_print(con, 2, 12, 'Defense Rating    : ' + str(game.player.defense_rating()))
@@ -781,14 +785,20 @@ def ztats_attributes(con, width, height):
 # character sheet for skills
 def ztats_skills(con, width, height):
 	ztats_box(con, width, height, ' Skills ')
+	skills_c, skills_p = [], []
+	for i in game.player.skills:
+		if i.category == 'Combat':
+			skills_c.append(i)
+		if i.category == 'Physical':
+			skills_p.append(i)
 	libtcod.console_print(con, 2, 2, 'Combat Skills')
-	for i in range(len(game.player.combat_skills)):
-		libtcod.console_print(con, 2, i + 4, game.player.combat_skills[i].name)
-		libtcod.console_print(con, 13, i + 4, str(game.player.combat_skills[i].level))
-	libtcod.console_print(con, 20, 2, 'Thieving Skills')
-	for i in range(len(game.player.thieving_skills)):
-		libtcod.console_print(con, 20, i + 4, game.player.thieving_skills[i].name)
-		libtcod.console_print(con, 34, i + 4, str(game.player.thieving_skills[i].level))
+	for i in range(len(skills_c)):
+		libtcod.console_print(con, 2, i + 4, skills_c[i].name)
+		libtcod.console_print(con, 13, i + 4, str(skills_c[i].level))
+	libtcod.console_print(con, 20, 2, 'Physical Skills')
+	for i in range(len(skills_p)):
+		libtcod.console_print(con, 20, i + 4, skills_p[i].name)
+		libtcod.console_print(con, 34, i + 4, str(skills_p[i].level))
 
 
 # character sheet for equipment

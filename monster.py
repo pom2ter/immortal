@@ -31,7 +31,7 @@ class Monster(object):
 		if (attacker != 1 and defender != 50 and ((attacker + self.attack_rating) >= (defender + game.player.defense_rating()) or attacker == 50 or defender == 1)) or game.player.is_disabled():
 			damage = self.damage.roll_dice()
 			game.message.new(self.article.capitalize() + self.name + ' hits you for ' + str(damage) + ' pts of damage', game.turns, libtcod.light_red)
-			game.player.take_damage(damage, self.article.capitalize() + self.name)
+			game.player.take_damage(damage, self.article + self.name)
 		else:
 			game.message.new(self.article.capitalize() + self.name + ' attacks you but misses.', game.turns)
 
@@ -85,7 +85,7 @@ class Monster(object):
 
 	# returns true if monster is disabled
 	def is_disabled(self):
-		if 'sleep' in self.flags or self.is_dead():
+		if any(i in self.flags for i in ['sleep', 'unconscious']) or self.is_dead():
 			return True
 		return False
 

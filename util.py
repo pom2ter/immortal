@@ -21,6 +21,11 @@ def add_turn():
 		game.player.heal_health(1)
 	if game.turns % (50 - game.player.intelligence) == 0:
 		game.player.heal_mana(1)
+	if game.turns % (40 - game.player.strength) == 0:
+		game.player.heal_stamina(1)
+		if 'unconscious' in game.player.flags:
+			game.message.new('You regain consciousness.', game.turns)
+			game.player.flags.remove('unconscious')
 
 	game.player.item_expiration()
 	game.player.item_is_active()
@@ -29,26 +34,24 @@ def add_turn():
 
 	if 'detect_trap' in game.player.flags:
 		game.gametime.update(1)
+		skill = game.player.find_skill('Detect Traps')
 		dice = libtcod.random_get_int(game.rnd, 0, 200)
-		if game.player.thieving_skills[0].level >= dice:
+		if game.player.skills[skill].level >= dice:
 			if len(game.traps) > 0:
 				dice = libtcod.random_get_int(game.rnd, 0, len(game.traps) - 1)
 				for i, (x, y) in enumerate(game.traps):
 					if i == dice:
-#						game.current_map.tiles[x][y] = game.tiles.get_tile(game.current_map.tiles[x][y].name)
-#						if 'invisible' in game.current_map.tiles[x][y].flags:
-#							game.current_map.tiles[x][y].flags.remove('invisible')
 						game.current_map.set_tile_values(game.current_map.tile[x][y]['name'], x, y)
 						if game.current_map.is_invisible(x, y):
 							game.current_map.tile[x][y].pop('invisible', None)
 				game.message.new('You detect a trap!', game.turns)
-				game.player.thieving_skills[0].gain_xp(3)
+				game.player.skills[skill].gain_xp(3)
 			else:
-				game.player.thieving_skills[0].gain_xp(1)
+				game.player.skills[skill].gain_xp(1)
 		else:
 			dice = libtcod.random_get_int(game.rnd, 0, 100)
-			if game.player.thieving_skills[0].level >= dice:
-				game.player.thieving_skills[0].gain_xp(1)
+			if game.player.skills[skill].level >= dice:
+				game.player.skills[skill].gain_xp(1)
 
 
 # change game settings
@@ -213,7 +216,6 @@ def get_names_under_mouse():
 	(x, y) = (game.mouse.cx - game.MAP_X, game.mouse.cy - 1)
 	px = x + game.curx
 	py = y + game.cury
-#	if x in range(game.MAP_WIDTH - 1) and y in range(game.MAP_HEIGHT - 1) and game.current_map.explored[px][py]:
 	if x in range(game.MAP_WIDTH - 1) and y in range(game.MAP_HEIGHT - 1) and game.current_map.is_explored(px, py):
 		names = [obj for obj in game.current_map.objects if obj.x == px and obj.y == py]
 		prefix = 'you see '
@@ -225,9 +227,6 @@ def get_names_under_mouse():
 		if (px, py) == (game.char.x, game.char.y):
 			return 'you see yourself'
 		if names == []:
-#			if game.current_map.tiles[px][py].is_invisible():
-#				return prefix + 'a floor'
-#			return prefix + game.current_map.tiles[px][py].article + game.current_map.tiles[px][py].name
 			if game.current_map.is_invisible(px, py):
 				return prefix + 'a floor'
 			return prefix + game.current_map.tile[px][py]['article'] + game.current_map.tile[px][py]['name']
@@ -330,7 +329,6 @@ def set_full_explore_map():
 	set_map = libtcod.map_new(game.current_map.map_width, game.current_map.map_height)
 	for py in range(game.current_map.map_height):
 		for px in range(game.current_map.map_width):
-#			libtcod.map_set_properties(set_map, px, py, not game.current_map.tiles[px][py].block_sight, not game.current_map.is_blocked(px, py, False))
 			libtcod.map_set_properties(set_map, px, py, not game.current_map.is_sight_blocked(px, py), not game.current_map.is_blocked(px, py, False))
 	path = libtcod.dijkstra_new(set_map)
 	return path
@@ -370,21 +368,6 @@ def showmap(box, box_width, box_height):
 
 # someone set off a trap :O
 def spring_trap(x, y, victim='You'):
-#	game.current_map.tiles[x][y] = copy.deepcopy(game.tiles.get_tile(game.current_map.tiles[x][y].name))
-#	if 'invisible' in game.current_map.tiles[x][y].flags:
-#		game.current_map.tiles[x][y].flags.remove('invisible')
-#	if libtcod.map_is_in_fov(game.fov_map, x, y):
-#		game.message.new(victim + ' sprung a trap!', game.turns)
-#	if 'fx_teleport' in game.current_map.tiles[x][y].flags:
-#		effects.teleportation(x, y, victim)
-#	if 'fx_stuck' in game.current_map.tiles[x][y].flags:
-#		effects.stuck(x, y, victim)
-#	if 'fx_poison_gas' in game.current_map.tiles[x][y].flags:
-#		effects.poison_gas(x, y, 3, 20)
-#	if 'fx_sleep_gas' in game.current_map.tiles[x][y].flags:
-#		effects.sleeping_gas(x, y, 3, 20)
-#	if 'fx_fireball' in game.current_map.tiles[x][y].flags:
-#		effects.fireball(x, y, 3)
 	explored = game.current_map.is_explored(x, y)
 	game.current_map.set_tile_values(game.current_map.tile[x][y]['name'], x, y)
 	if game.current_map.is_invisible(x, y):
@@ -416,16 +399,13 @@ def initialize_fov(update=False):
 		game.fov_map = libtcod.map_new(game.current_map.map_width, game.current_map.map_height)
 		for y in range(game.current_map.map_height):
 			for x in range(game.current_map.map_width):
-#				libtcod.map_set_properties(game.fov_map, x, y, not game.current_map.tiles[x][y].block_sight, game.current_map.explored[x][y] and (not game.current_map.is_blocked(x, y)))
 				libtcod.map_set_properties(game.fov_map, x, y, not game.current_map.is_sight_blocked(x, y), game.current_map.is_explored(x, y) and (not game.current_map.is_blocked(x, y)))
 	else:
 		for y in range(game.char.y - game.FOV_RADIUS, game.char.y + game.FOV_RADIUS):
 			for x in range(game.char.x - game.FOV_RADIUS, game.char.x + game.FOV_RADIUS):
 				if x < game.current_map.map_width and y < game.current_map.map_height:
-#					libtcod.map_set_properties(game.fov_map, x, y, not game.current_map.tiles[x][y].block_sight, game.current_map.explored[x][y] and (not game.current_map.is_blocked(x, y)))
 					libtcod.map_set_properties(game.fov_map, x, y, not game.current_map.is_sight_blocked(x, y), game.current_map.is_explored(x, y) and (not game.current_map.is_blocked(x, y)))
 					if libtcod.map_is_in_fov(game.fov_map, x, y):
-#						if game.current_map.tiles[x][y].type == 'trap' and game.current_map.tiles[x][y].is_invisible():
 						if game.current_map.tile[x][y]['type'] == 'trap' and game.current_map.is_invisible(x, y):
 							game.traps.append((x, y))
 	# compute paths using dijkstra algorithm
@@ -449,7 +429,10 @@ def render_bar(con, x, y, total_width, name, value, maximum, bar_color, back_col
 		libtcod.console_rect(con, x, y, bar_width, 1, False, libtcod.BKGND_SET)
 
 	#finally, some centered text with the values
-	libtcod.console_set_default_foreground(con, libtcod.white)
+	if name == 'ST':
+		libtcod.console_set_default_foreground(con, libtcod.black)
+	else:
+		libtcod.console_set_default_foreground(con, libtcod.white)
 	libtcod.console_print_ex(con, x + total_width / 2, y, libtcod.BKGND_NONE, libtcod.CENTER, ' ' + name + ': ' + str(value) + '/' + str(maximum) + ' ')
 
 
@@ -496,24 +479,29 @@ def render_player_stats_panel():
 	libtcod.console_set_default_background(game.ps, libtcod.black)
 	libtcod.console_clear(game.ps)
 	render_bar(game.ps, 0, 5, game.PLAYER_STATS_WIDTH, 'HP', game.player.health, game.player.max_health, libtcod.red, libtcod.darker_red)
-	render_bar(game.ps, 0, 6, game.PLAYER_STATS_WIDTH, 'MP', game.player.mana, game.player.max_mana, libtcod.blue, libtcod.darker_blue)
+	render_bar(game.ps, 0, 6, game.PLAYER_STATS_WIDTH, 'ST', game.player.stamina, game.player.max_stamina, libtcod.yellow, libtcod.darker_yellow)
+	render_bar(game.ps, 0, 7, game.PLAYER_STATS_WIDTH, 'MP', game.player.mana, game.player.max_mana, libtcod.blue, libtcod.darker_blue)
 	libtcod.console_print(game.ps, 0, 0, game.player.name)
 	libtcod.console_print(game.ps, 0, 1, game.player.race + ' ' + game.player.profession)
 	libtcod.console_print(game.ps, 0, 3, game.current_map.location_abbr + '-' + str(game.current_map.location_level) + '     ')
-	libtcod.console_print(game.ps, 0, 8, 'LV: ' + str(game.player.level))
-	libtcod.console_print(game.ps, 0, 9, 'XP: ' + str(game.player.xp))
-	libtcod.console_print(game.ps, 0, 10, 'Str: ' + str(game.player.strength) + ' ')
-	libtcod.console_print(game.ps, 0, 11, 'Dex: ' + str(game.player.dexterity) + ' ')
-	libtcod.console_print(game.ps, 0, 12, 'Int: ' + str(game.player.intelligence) + ' ')
-	libtcod.console_print(game.ps, 0, 13, 'Wis: ' + str(game.player.wisdom) + ' ')
-	libtcod.console_print(game.ps, 0, 14, 'End: ' + str(game.player.endurance) + ' ')
-	libtcod.console_print(game.ps, 0, 15, 'Karma: ' + str(game.player.karma) + ' ')
+	libtcod.console_print(game.ps, 0, 9, 'LV: ' + str(game.player.level))
+	libtcod.console_print(game.ps, 0, 10, 'XP: ' + str(game.player.xp))
+	libtcod.console_print(game.ps, 0, 11, 'Str: ' + str(game.player.strength) + ' ')
+	libtcod.console_print(game.ps, 0, 12, 'Dex: ' + str(game.player.dexterity) + ' ')
+	libtcod.console_print(game.ps, 0, 13, 'Int: ' + str(game.player.intelligence) + ' ')
+	libtcod.console_print(game.ps, 0, 14, 'Wis: ' + str(game.player.wisdom) + ' ')
+	libtcod.console_print(game.ps, 0, 15, 'End: ' + str(game.player.endurance) + ' ')
+	libtcod.console_print(game.ps, 0, 16, 'Karma: ' + str(game.player.karma) + ' ')
 	libtcod.console_print(game.ps, 0, game.PLAYER_STATS_HEIGHT - 2, 'Turns: ' + str(game.turns) + ' ')
-	libtcod.console_print(game.ps, 0, 17, 'Active skills: ')
-	libtcod.console_print(game.ps, 0, 20, 'Condition: ')
+	libtcod.console_print(game.ps, 0, 18, 'Active skills: ')
+	libtcod.console_print(game.ps, 0, 21, 'Condition: ')
 	libtcod.console_set_default_foreground(game.ps, libtcod.light_sepia)
+	act_skill = ''
 	if 'detect_trap' in game.player.flags:
-		libtcod.console_print(game.ps, 0, 18, 'DetTrap')
+		act_skill += 'DetTrap '
+	if 'swimming' in game.player.flags:
+		act_skill += 'Swimming '
+	libtcod.console_print(game.ps, 0, 19, act_skill)
 
 	cond = ''
 	if 'stuck' in game.player.flags:
@@ -522,7 +510,9 @@ def render_player_stats_panel():
 		cond += 'Psnd '
 	if 'sleep' in game.player.flags:
 		cond += 'Sleep '
-	libtcod.console_print(game.ps, 0, 21, cond)
+	if 'unconscious' in game.player.flags:
+		cond += 'Unconscious '
+	libtcod.console_print(game.ps, 0, 22, cond)
 	libtcod.console_blit(game.ps, 0, 0, game.PLAYER_STATS_WIDTH, game.PLAYER_STATS_HEIGHT, 0, game.PLAYER_STATS_X, game.PLAYER_STATS_Y)
 
 
@@ -600,11 +590,6 @@ def render_map():
 			py = y + game.cury
 			visible = libtcod.map_is_in_fov(game.fov_map, px, py)
 			if not visible:
-#				if game.current_map.explored[px][py] and game.draw_map:
-#					if game.current_map.tiles[px][py].is_animate():
-#						libtcod.console_put_char_ex(game.con, x, y, game.current_map.tiles[px][py].icon, game.current_map.tiles[px][py].dark_color, game.current_map.tiles[px][py].dark_back_color)
-#					else:
-#						libtcod.console_put_char_ex(game.con, x, y, game.current_map.tiles[px][py].icon, game.current_map.tiles[px][py].dark_color, game.current_map.animation[px][py].back_dark_color)
 				if game.current_map.is_explored(px, py) and game.draw_map:
 					if game.current_map.is_animate(px, py):
 						libtcod.console_put_char_ex(game.con, x, y, game.current_map.tile[px][py]['icon'], game.current_map.tile[px][py]['dark_color'], game.current_map.tile[px][py]['dark_back_color'])
@@ -612,26 +597,12 @@ def render_map():
 						libtcod.console_put_char_ex(game.con, x, y, game.current_map.tile[px][py]['icon'], game.current_map.tile[px][py]['dark_color'], game.current_map.tile[px][py]['back_dark_color'])
 			else:
 				if not game.fov_torch:
-#					if game.current_map.tiles[px][py].is_animate():
-#						(front, back, game.current_map.animation[px][py]['lerp']) = render_tiles_animations(px, py, game.current_map.tiles[px][py].color, game.current_map.animation[px][py]['back_light_color'], game.current_map.animation[px][py]['back_dark_color'], game.current_map.animation[px][py]['lerp'])
-#						libtcod.console_put_char_ex(game.con, x, y, game.current_map.tiles[px][py].icon, front, back)
-#					elif game.current_map.animation[px][py] is not None:
-#						if 'duration' in game.current_map.animation[px][py]:
-#							(front, back, game.current_map.animation[px][py]['lerp']) = render_tiles_animations(px, py, game.current_map.tiles[px][py].color, game.current_map.animation[px][py]['back_light_color'], game.current_map.animation[px][py]['back_dark_color'], game.current_map.animation[px][py]['lerp'])
-#							libtcod.console_put_char_ex(game.con, x, y, game.current_map.animation[px][py]['icon'], game.current_map.tiles[px][py].color, back)
-#						else:
-#							libtcod.console_put_char_ex(game.con, x, y, game.current_map.tiles[px][py].icon, game.current_map.animation[px][py]['fore_light_color'], game.current_map.animation[px][py]['back_light_color'])
-#					elif game.draw_map:
-#						libtcod.console_put_char_ex(game.con, x, y, game.current_map.tiles[px][py].icon, game.current_map.tiles[px][py].color_high, game.current_map.tiles[px][py].back_color_high)
 					if game.current_map.is_animate(px, py) or 'duration' in game.current_map.tile[px][py]:
 						(front, back, game.current_map.tile[px][py]['lerp']) = render_tiles_animations(px, py, game.current_map.tile[px][py]['color'], game.current_map.tile[px][py]['back_light_color'], game.current_map.tile[px][py]['back_dark_color'], game.current_map.tile[px][py]['lerp'])
 						libtcod.console_put_char_ex(game.con, x, y, game.current_map.tile[px][py]['icon'], front, back)
 					elif game.draw_map:
 						libtcod.console_put_char_ex(game.con, x, y, game.current_map.tile[px][py]['icon'], game.current_map.tile[px][py]['color'], game.current_map.tile[px][py]['back_light_color'])
 				else:
-#					base = game.current_map.tiles[px][py].back_color_high
-#					if game.current_map.animation[px][py] is not None:
-#						base = game.current_map.animation[px][py]['back_light_color']
 					base = game.current_map.tile[px][py]['back_light_color']
 					light = libtcod.gold
 					r = float(px - game.char.x + dx) * (px - game.char.x + dx) + (py - game.char.y + dy) * (py - game.char.y + dy)
@@ -642,9 +613,7 @@ def render_map():
 						elif l > 1.0:
 							l = 1.0
 						base = libtcod.color_lerp(base, light, l)
-#					libtcod.console_put_char_ex(game.con, x, y, game.current_map.tiles[px][py].icon, game.current_map.tiles[px][py].color, base)
 					libtcod.console_put_char_ex(game.con, x, y, game.current_map.tile[px][py]['icon'], game.current_map.tile[px][py]['color'], base)
-#				game.current_map.explored[px][py] = True
 				if not game.current_map.is_explored(px, py):
 					game.current_map.tile[px][py].update({'explored': True})
 
@@ -658,7 +627,6 @@ def render_map():
 
 	# draw a line between the player and the mouse cursor
 	if game.path_dx in range(game.current_map.map_width) and game.path_dy in range(game.current_map.map_height):
-#		if game.current_map.explored[game.path_dx][game.path_dy] and not game.current_map.tiles[game.path_dx][game.path_dy].blocked:
 		if game.current_map.is_explored(game.path_dx, game.path_dy) and not game.current_map.is_blocked(game.path_dx, game.path_dy):
 			for i in range(libtcod.dijkstra_size(game.path_dijk)):
 				x, y = libtcod.dijkstra_get(game.path_dijk, i)
@@ -684,13 +652,11 @@ def render_map():
 		game.path_dy = -1
 		if mx in range(game.MAP_WIDTH) and my in range(game.MAP_HEIGHT):
 			libtcod.console_set_char_background(0, mx + game.MAP_X, my + 1, libtcod.white, libtcod.BKGND_SET)
-#			if game.current_map.explored[px][py] and not game.current_map.tiles[px][py].blocked:
 			if game.current_map.is_explored(px, py) and not game.current_map.is_blocked(px, py):
 				game.path_dx = px
 				game.path_dy = py
 				if game.mouse.lbutton_pressed:
 					game.mouse_move = mouse_auto_move()
-#				if not game.current_map.tiles[game.path_dx][game.path_dy].blocked:
 				if not game.current_map.is_blocked(game.path_dx, game.path_dy):
 					libtcod.dijkstra_path_set(game.path_dijk, game.path_dx, game.path_dy)
 

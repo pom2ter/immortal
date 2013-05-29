@@ -15,8 +15,8 @@ import effects
 import death
 import debug as dbg
 
-VERSION = 'v0.3.1'
-BUILD = '46'
+VERSION = 'v0.3.2'
+BUILD = '47'
 
 #size of the gui windows
 MAP_WIDTH = 71
@@ -97,7 +97,6 @@ draw_gui = True
 draw_map = True
 
 # thanatos, draconis, valamar, otatop
-# swimming
 # mountains peak type, transitions
 # caverns, maze types
 # scrolling, lockpicks, chest
@@ -229,13 +228,10 @@ class Game(object):
 					if obj.entity is not None and game_state != 'death':
 						if not obj.entity.is_disabled():
 							obj.x, obj.y = obj.entity.take_turn(obj.x, obj.y)
-#							if game.current_map.tiles[obj.x][obj.y].type == 'trap' and not obj.entity.is_above_ground() and obj.entity.can_move():
-#								if game.current_map.tiles[obj.x][obj.y].is_invisible():
 							if game.current_map.tile[obj.x][obj.y]['type'] == 'trap' and not obj.entity.is_above_ground() and obj.entity.can_move():
 								if game.current_map.is_invisible(obj.x, obj.y):
 									util.spring_trap(obj.x, obj.y, obj.entity.article.capitalize() + obj.entity.name)
 								elif libtcod.map_is_in_fov(game.fov_map, obj.x, obj.y):
-#									game.message.new('The ' + obj.entity.name + ' sidestep the ' + game.current_map.tiles[obj.x][obj.y].name, game.turns)
 									game.message.new('The ' + obj.entity.name + ' sidestep the ' + game.current_map.tile[obj.x][obj.y]['name'], game.turns)
 						obj.entity.check_condition(obj.x, obj.y)
 						if obj.entity.is_dead():
