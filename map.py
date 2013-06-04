@@ -324,13 +324,13 @@ class Map(object):
 
 			dice = libtcod.random_get_int(game.rnd, 1, 100)
 			if dice <= 10:
-				d = game.items.get_item('gold')
+				d = game.baseitems.get_item('gold')
 			elif dice <= 60:
-				d = game.items.get_item_by_level(1)
+				d = game.baseitems.get_item_by_level(1)
 			elif dice <= 90:
-				d = game.items.get_item_by_level(2)
+				d = game.baseitems.get_item_by_level(2)
 			else:
-				d = game.items.get_item_by_level(3)
+				d = game.baseitems.get_item_by_level(3)
 			item = Object(x, y, d.icon, d.name, d.color, True, item=d)
 			self.objects.append(item)
 
@@ -429,7 +429,6 @@ class Map(object):
 
 
 class Tile(object):
-	# a tile of the map and its properties
 	def __init__(self, icon, name, color, color_low, dark_color, back_color_high, back_color_low, dark_back_color, blocked, block_sight=None, article=None, flags=None, typ=None):
 		self.blocked = blocked
 		self.name = name

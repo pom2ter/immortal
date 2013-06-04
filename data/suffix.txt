@@ -1,0 +1,45 @@
+suffix_type " of minor healing" {
+	cost_multiplier = 3.0
+	icon_color = "255,0,0"
+	level = 1
+	dices = "1d8+1"
+	heal_health
+}
+
+suffix_type " of major healing" {
+	cost_multiplier = 7.0
+	icon_color = "255,115,115"
+	level = 3
+	dices = "2d12+1"
+	heal_health
+}
+
+suffix_type " of minor mana" {
+	cost_multiplier = 3.0
+	icon_color = "0,0,255"
+	level = 1
+	dices = "1d8+1"
+	heal_mana
+}
+
+suffix_type " of minor stamina" {
+	cost_multiplier = 3.0
+	icon_color = "255,255,0"
+	level = 1
+	dices = "1d8+1"
+	heal_stamina
+}
+
+suffix_type " of protection" {
+	cost_multiplier = 5.0
+	icon_color = "115,255,255"
+	level = 3
+	protect
+}
+
+suffix_type " of regeneration" {
+	cost_multiplier = 5.0
+	icon_color = "255,0,0"
+	level = 3
+	regenerate
+}

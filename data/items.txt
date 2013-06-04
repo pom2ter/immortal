@@ -4,13 +4,11 @@ item_type "dagger" {
 	plural = "daggers"
 	icon = "("
 	icon_color = "255,255,255"
-	dark_color = "85,85,85"
 	level = 1
 	weight = 1.0
 	cost = 10
 	dices = "1d4"
 	article = "a "
-	expiration = 1000
 	equippable
 	weapon_dagger
 }
@@ -21,7 +19,6 @@ item_type "short sword" {
 	plural = "short swords"
 	icon = "("
 	icon_color = "255,255,255"
-	dark_color = "85,85,85"
 	level = 1
 	weight = 2.0
 	cost = 10
@@ -37,7 +34,6 @@ item_type "long sword" {
 	plural = "long swords"
 	icon = "("
 	icon_color = "255,255,255"
-	dark_color = "85,85,85"
 	level = 1
 	weight = 4.0
 	cost = 10
@@ -53,7 +49,6 @@ item_type "mace" {
 	plural = "maces"
 	icon = "("
 	icon_color = "255,255,255"
-	dark_color = "85,85,85"
 	level = 1
 	weight = 10.0
 	cost = 10
@@ -69,7 +64,6 @@ item_type "hand axe" {
 	plural = "hand axes"
 	icon = "("
 	icon_color = "255,255,255"
-	dark_color = "85,85,85"
 	level = 1
 	weight = 5.0
 	cost = 10
@@ -85,7 +79,6 @@ item_type "quarterstaff" {
 	plural = "quarterstaves"
 	icon = "("
 	icon_color = "255,255,255"
-	dark_color = "85,85,85"
 	level = 1
 	weight = 5.0
 	cost = 10
@@ -101,7 +94,6 @@ item_type "bow" {
 	plural = "bows"
 	icon = "("
 	icon_color = "255,255,255"
-	dark_color = "85,85,85"
 	level = 1
 	weight = 2.0
 	cost = 10
@@ -117,7 +109,6 @@ item_type "sling" {
 	plural = "slings"
 	icon = "("
 	icon_color = "255,255,255"
-	dark_color = "85,85,85"
 	level = 1
 	weight = 2.0
 	cost = 5
@@ -133,7 +124,6 @@ item_type "spear" {
 	plural = "spears"
 	icon = "("
 	icon_color = "255,255,255"
-	dark_color = "85,85,85"
 	level = 1
 	weight = 8.0
 	cost = 10
@@ -149,7 +139,6 @@ item_type "shield" {
 	plural = "shields"
 	icon = "["
 	icon_color = "127,127,127"
-	dark_color = "42,42,42"
 	level = 1
 	weight = 10.0
 	cost = 20
@@ -164,7 +153,6 @@ item_type "helmet" {
 	plural = "helmets"
 	icon = "["
 	icon_color = "127,127,127"
-	dark_color = "42,42,42"
 	level = 1
 	weight = 6.0
 	cost = 10
@@ -179,7 +167,6 @@ item_type "cape" {
 	plural = "capes"
 	icon = "["
 	icon_color = "127,127,127"
-	dark_color = "42,42,42"
 	level = 1
 	weight = 4.0
 	cost = 15
@@ -194,7 +181,6 @@ item_type "robes" {
 	plural = "robes"
 	icon = "["
 	icon_color = "0,0,255"
-	dark_color = "0,0,85"
 	level = 1
 	weight = 5.0
 	cost = 10
@@ -209,7 +195,6 @@ item_type "leather armor" {
 	plural = "leather armors"
 	icon = "["
 	icon_color = "127,127,127"
-	dark_color = "42,42,42"
 	level = 1
 	weight = 10.0
 	cost = 25
@@ -224,7 +209,6 @@ item_type "studded leather armor" {
 	plural = "studded leather armors"
 	icon = "["
 	icon_color = "127,127,127"
-	dark_color = "42,42,42"
 	level = 2
 	weight = 20.0
 	cost = 25
@@ -239,7 +223,6 @@ item_type "leather boots" {
 	plural = "leather boots"
 	icon = "["
 	icon_color = "127,127,127"
-	dark_color = "42,42,42"
 	level = 1
 	weight = 2.5
 	cost = 5
@@ -254,7 +237,6 @@ item_type "leather gloves" {
 	plural = "leather gloves"
 	icon = "["
 	icon_color = "127,127,127"
-	dark_color = "42,42,42"
 	level = 1
 	weight = 2.0
 	cost = 5
@@ -269,7 +251,6 @@ item_type "ring of protection" {
 	plural = "rings of protection"
 	icon = "o"
 	icon_color = "115,255,255"
-	dark_color = "38,85,85"
 	level = 1
 	weight = 0.5
 	cost = 50
@@ -284,7 +265,6 @@ item_type "ring of regeneration" {
 	plural = "rings of regeneration"
 	icon = "o"
 	icon_color = "255,0,0"
-	dark_color = "85,0,0"
 	level = 1
 	weight = 0.5
 	cost = 50
@@ -299,7 +279,6 @@ item_type "potion of minor healing" {
 	plural = "potions of minor healing"
 	icon = "!"
 	icon_color = "255,0,0"
-	dark_color = "85,0,0"
 	level = 1
 	weight = 0.5
 	cost = 50
@@ -316,7 +295,6 @@ item_type "potion of major healing" {
 	plural = "potions of major healing"
 	icon = "!"
 	icon_color = "255,115,115"
-	dark_color = "85,38,38"
 	level = 2
 	weight = 0.5
 	cost = 200
@@ -333,7 +311,6 @@ item_type "potion of mana" {
 	plural = "potions of mana"
 	icon = "!"
 	icon_color = "0,0,255"
-	dark_color = "0,0,85"
 	level = 1
 	weight = 0.5
 	cost = 50
@@ -350,7 +327,6 @@ item_type "torch" {
 	plural = "torches"
 	icon = "]"
 	icon_color = "0,0,255"
-	dark_color = "0,0,85"
 	level = 1
 	weight = 0.1
 	cost = 5
@@ -366,7 +342,6 @@ item_type "ration" {
 	plural = "rations"
 	icon = "%"
 	icon_color = "0,0,255"
-	dark_color = "0,0,85"
 	level = 1
 	weight = 2
 	cost = 5
@@ -383,7 +358,6 @@ item_type "gold" {
 	plural = "gold"
 	icon = "$"
 	icon_color = "229,191,0"
-	dark_color = "76,64,0"
 	level = 1
 	article = "some "
 }
@@ -394,7 +368,6 @@ item_type "kobold corpse" {
 	plural = "kobold corpses"
 	icon = "%"
 	icon_color = "127,101,63"
-	dark_color = "64,50,32"
 	weight = 20.0
 	article = "a "
 	charge = 1
@@ -410,7 +383,6 @@ item_type "goblin corpse" {
 	plural = "goblin corpses"
 	icon = "%"
 	icon_color = "127,101,63"
-	dark_color = "64,50,32"
 	weight = 20.0
 	article = "a "
 	charge = 1
@@ -426,7 +398,6 @@ item_type "gnoll corpse" {
 	plural = "gnoll corpses"
 	icon = "%"
 	icon_color = "127,101,63"
-	dark_color = "64,50,32"
 	weight = 35.0
 	article = "a "
 	charge = 1
@@ -442,7 +413,6 @@ item_type "orc corpse" {
 	plural = "orc corpses"
 	icon = "%"
 	icon_color = "127,101,63"
-	dark_color = "64,50,32"
 	weight = 30.0
 	article = "a "
 	charge = 1
@@ -458,7 +428,6 @@ item_type "troll corpse" {
 	plural = "troll corpses"
 	icon = "%"
 	icon_color = "127,101,63"
-	dark_color = "64,50,32"
 	weight = 75.0
 	article = "a "
 	charge = 1
@@ -474,7 +443,6 @@ item_type "bat corpse" {
 	plural = "bat corpses"
 	icon = "%"
 	icon_color = "127,101,63"
-	dark_color = "64,50,32"
 	weight = 2.0
 	article = "a "
 	charge = 1
@@ -490,7 +458,6 @@ item_type "rat corpse" {
 	plural = "rat corpses"
 	icon = "%"
 	icon_color = "127,101,63"
-	dark_color = "64,50,32"
 	weight = 2.0
 	article = "a "
 	charge = 1
@@ -506,7 +473,6 @@ item_type "lizard corpse" {
 	plural = "lizard corpses"
 	icon = "%"
 	icon_color = "127,101,63"
-	dark_color = "64,50,32"
 	weight = 5.0
 	article = "a "
 	charge = 1
@@ -522,7 +488,6 @@ item_type "bear corpse" {
 	plural = "bear corpses"
 	icon = "%"
 	icon_color = "127,101,63"
-	dark_color = "64,50,32"
 	weight = 100.0
 	article = "a "
 	charge = 1
@@ -538,7 +503,6 @@ item_type "cat corpse" {
 	plural = "cat corpses"
 	icon = "%"
 	icon_color = "127,101,63"
-	dark_color = "64,50,32"
 	weight = 2.0
 	article = "a "
 	charge = 1
@@ -554,7 +518,6 @@ item_type "dog corpse" {
 	plural = "dog corpses"
 	icon = "%"
 	icon_color = "127,101,63"
-	dark_color = "64,50,32"
 	weight = 5.0
 	article = "a "
 	charge = 1
@@ -570,7 +533,6 @@ item_type "wolf corpse" {
 	plural = "wolf corpses"
 	icon = "%"
 	icon_color = "127,101,63"
-	dark_color = "64,50,32"
 	weight = 22.5
 	article = "a "
 	charge = 1
@@ -586,7 +548,6 @@ item_type "hound corpse" {
 	plural = "hound corpses"
 	icon = "%"
 	icon_color = "127,101,63"
-	dark_color = "64,50,32"
 	weight = 15.0
 	article = "a "
 	charge = 1
@@ -602,7 +563,6 @@ item_type "human corpse" {
 	plural = "human corpses"
 	icon = "%"
 	icon_color = "127,101,63"
-	dark_color = "64,50,32"
 	weight = 35.0
 	article = "a "
 	charge = 1

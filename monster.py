@@ -99,20 +99,20 @@ class Monster(object):
 	def loot(self, x, y):
 		corpse = libtcod.random_get_int(game.rnd, 1, 100)
 		if corpse <= self.corpse:
-			d = game.items.get_item(self.unidentified_name + ' corpse')
+			d = game.baseitems.get_item(self.unidentified_name + ' corpse')
 			drop = map.Object(x, y, d.icon, d.name, d.color, True, item=d)
 			game.current_map.objects.append(drop)
 		drop_chance = libtcod.random_get_int(game.rnd, 1, 100)
 		if drop_chance >= 80:
 			dice = libtcod.random_get_int(game.rnd, 1, 100)
 			if dice <= 10:
-				d = game.items.get_item('gold')
+				d = game.baseitems.get_item('gold')
 			elif dice <= 60:
-				d = game.items.get_item_by_level(1)
+				d = game.baseitems.get_item_by_level(1)
 			elif dice <= 90:
-				d = game.items.get_item_by_level(2)
+				d = game.baseitems.get_item_by_level(2)
 			else:
-				d = game.items.get_item_by_level(3)
+				d = game.baseitems.get_item_by_level(3)
 			drop = map.Object(x, y, d.icon, d.name, d.color, True, item=d)
 			game.current_map.objects.append(drop)
 

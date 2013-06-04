@@ -1,0 +1,42 @@
+prefix_type "broken " {
+	cost_multiplier = 0.5
+	level = 1
+	quality = 0
+}
+
+prefix_type "superior " {
+	cost_multiplier = 2.0
+	level = 3
+	quality = 2
+}
+
+prefix_type "exceptional " {
+	cost_multiplier = 3.0
+	level = 6
+	quality = 3
+}
+
+prefix_type "iron " {
+	cost_multiplier = 3.0
+	level = 3
+}
+
+prefix_type "steel " {
+	cost_multiplier = 3.0
+	level = 6
+}
+
+prefix_type "mithril " {
+	cost_multiplier = 3.0
+	level = 9
+}
+
+prefix_type "adamantium " {
+	cost_multiplier = 3.0
+	level = 12
+}
+
+prefix_type "diamond " {
+	cost_multiplier = 3.0
+	level = 15
+}

@@ -16,7 +16,7 @@ import death
 import debug as dbg
 
 VERSION = 'v0.3.2'
-BUILD = '47'
+BUILD = '48'
 
 #size of the gui windows
 MAP_WIDTH = 71
@@ -112,7 +112,7 @@ months = ['Phoenix', 'Manticore', 'Hydra', 'Golem', 'Centaur', 'Siren', 'Dragon'
 
 class Game(object):
 	def __init__(self):
-		global debug, img, font_width, font_height, rnd, con, panel, ps, fov_noise, savefiles, items, tiles, monsters
+		global debug, img, font_width, font_height, rnd, con, panel, ps, fov_noise, savefiles, baseitems, prefix, suffix, tiles, monsters
 		self.load_settings()
 		debug = dbg.Debug()
 		debug.enable = True
@@ -137,8 +137,12 @@ class Game(object):
 			os.makedirs('saves')
 		savefiles = os.listdir('saves')
 		self.load_high_scores()
-		items = ItemList()
-		items.init_parser()
+		baseitems = BaseItemList()
+		baseitems.init_parser()
+		prefix = PrefixList()
+		prefix.init_parser()
+		suffix = SuffixList()
+		suffix.init_parser()
 		tiles = map.TileList()
 		tiles.init_parser()
 		monsters = MonsterList()
