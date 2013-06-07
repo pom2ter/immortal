@@ -78,13 +78,13 @@ class World(object):
 					self.player_positiony = start / game.WORLDMAP_WIDTH
 					starter_dungeon = libtcod.random_get_int(self.rnd, 0, 4)
 					if starter_dungeon == 1:
-						self.dungeons.append((len(self.dungeons) + 1, 'Starter Dungeon', 'SD', self.player_positionx, self.player_positiony - 1))
+						self.dungeons.append((len(self.dungeons) + 1, 'Starter Dungeon', 'SD', self.player_positionx, self.player_positiony - 1, 1))
 					elif starter_dungeon == 2:
-						self.dungeons.append((len(self.dungeons) + 1, 'Starter Dungeon', 'SD', self.player_positionx + 1, self.player_positiony))
+						self.dungeons.append((len(self.dungeons) + 1, 'Starter Dungeon', 'SD', self.player_positionx + 1, self.player_positiony, 1))
 					elif starter_dungeon == 3:
-						self.dungeons.append((len(self.dungeons) + 1, 'Starter Dungeon', 'SD', self.player_positionx, self.player_positiony + 1))
+						self.dungeons.append((len(self.dungeons) + 1, 'Starter Dungeon', 'SD', self.player_positionx, self.player_positiony + 1, 1))
 					else:
-						self.dungeons.append((len(self.dungeons) + 1, 'Starter Dungeon', 'SD', self.player_positionx - 1, self.player_positiony))
+						self.dungeons.append((len(self.dungeons) + 1, 'Starter Dungeon', 'SD', self.player_positionx - 1, self.player_positiony, 1))
 					#libtcod.image_put_pixel(self.map_image_small, self.player_positionx, self.player_positiony, libtcod.white)
 
 		if mode == 2:
@@ -103,7 +103,7 @@ class World(object):
 			y = libtcod.random_get_int(game.rnd, 0, game.WORLDMAP_HEIGHT - 1)
 			cellheight = int(libtcod.heightmap_get_value(game.hm, x, y) * 1000)
 			if cellheight in range(250, 699):
-				self.dungeons.append((len(self.dungeons) + 1, 'Dungeon', 'Dng', x, y))
+				self.dungeons.append((len(self.dungeons) + 1, 'Dungeon', 'Dng', x, y, libtcod.random_get_int(game.rnd, 1, 20)))
 
 	# reduce landmass to the appropriate level
 	def set_land_mass(self, landmass, waterlevel):

@@ -22,9 +22,17 @@ class Debug(object):
 		if choice != '':
 			game.player.flags.append(choice)
 
+	def fully_identify_inventory(self):
+		for i in range(len(game.player.inventory)):
+			if 'fully_identified' not in game.player.inventory[i].flags:
+				game.player.inventory[i].flags.append('fully_identified')
+		for i in range(len(game.player.equipment)):
+			if 'fully_identified' not in game.player.equipment[i].flags:
+				game.player.equipment[i].flags.append('fully_identified')
+
 	def reset_dungeon_level(self):
 		temp_map = game.current_map
-		game.current_map = map.Map(temp_map.location_name, temp_map.location_abbr, temp_map.location_id, temp_map.location_level, 90, 52)
+		game.current_map = map.Map(temp_map.location_name, temp_map.location_abbr, temp_map.location_id, temp_map.location_level, temp_map.threat_level, 90, 52)
 		game.current_map.overworld_position = temp_map.overworld_position
 		util.initialize_fov()
 		game.fov_recompute = True
@@ -67,7 +75,7 @@ class Debug(object):
 
 	def menu(self):
 		if self.enable:
-			contents = ['Edit strength stat', 'Edit dexterity stat', 'Edit intelligence stat', 'Edit wisdom stat', 'Edit endurance stat', 'Edit karma stat', 'Heal health', 'Heal stamina', 'Heal mana', 'Add player flag', 'Reset dungeon level', 'Show current map', 'Hide current map', 'Teleport (manual)']
+			contents = ['Edit strength stat', 'Edit dexterity stat', 'Edit intelligence stat', 'Edit wisdom stat', 'Edit endurance stat', 'Edit karma stat', 'Heal health', 'Heal stamina', 'Heal mana', 'Add player flag', 'Fully identity inventory', 'Reset dungeon level', 'Show current map', 'Hide current map', 'Teleport (manual)']
 			choice = game.messages.box('Debug Menu', None, game.PLAYER_STATS_WIDTH + (((game.MAP_WIDTH + 3) - (len(max(contents, key=len)) + 4)) / 2), ((game.MAP_HEIGHT + 1) - (len(contents) + 2)) / 2, len(max(contents, key=len)) + 4, len(contents) + 2, contents, mouse_exit=True)
 			if choice == 0:
 				game.player.strength = self.edit_attribute('Strength: ')
@@ -90,11 +98,13 @@ class Debug(object):
 			if choice == 9:
 				self.add_player_flag()
 			if choice == 10:
-				self.reset_dungeon_level()
+				self.fully_identify_inventory()
 			if choice == 11:
-				self.show_current_map()
+				self.reset_dungeon_level()
 			if choice == 12:
-				self.hide_current_map()
+				self.show_current_map()
 			if choice == 13:
+				self.hide_current_map()
+			if choice == 14:
 				self.teleport_anywhere_manual()
 			game.draw_gui = True

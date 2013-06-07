@@ -6,11 +6,12 @@ import util
 
 
 class Map(object):
-	def __init__(self, name, abbr, id, level, mw=130, mh=60, typ='Dungeon', empty=False):
+	def __init__(self, name, abbr, id, level, tlevel=1, mw=130, mh=60, typ='Dungeon', empty=False):
 		self.location_name = name
 		self.location_abbr = abbr
 		self.location_id = id
 		self.location_level = level
+		self.threat_level = tlevel
 		self.type = typ
 		self.map_width = mw
 		self.map_height = mh
@@ -259,7 +260,7 @@ class Map(object):
 
 	# place dungeon entrance on map if there is one
 	def place_dungeons(self):
-		for (id, name, abbr, x, y) in game.worldmap.dungeons:
+		for (id, name, abbr, x, y, tlevel) in game.worldmap.dungeons:
 			if (y * game.WORLDMAP_WIDTH) + x == self.location_level:
 				dx = libtcod.random_get_int(game.rnd, 0, self.map_width - 9)
 				dy = libtcod.random_get_int(game.rnd, 0, self.map_height - 9)
@@ -321,18 +322,8 @@ class Map(object):
 			while (self.is_blocked(x, y) or self.tile[x][y]['name'] in ['deep water', 'very deep water']):
 				x = libtcod.random_get_int(game.rnd, 0, self.map_width - 1)
 				y = libtcod.random_get_int(game.rnd, 0, self.map_height - 1)
-
-			dice = libtcod.random_get_int(game.rnd, 1, 100)
-			if dice <= 10:
-				d = game.baseitems.get_item('gold')
-			elif dice <= 60:
-				d = game.baseitems.get_item_by_level(1)
-			elif dice <= 90:
-				d = game.baseitems.get_item_by_level(2)
-			else:
-				d = game.baseitems.get_item_by_level(3)
-			item = Object(x, y, d.icon, d.name, d.color, True, item=d)
-			self.objects.append(item)
+			loot = game.baseitems.loot_generation(x, y, 1)
+			self.objects.append(loot)
 
 	# places up and down stairs on dungeon level
 	def place_stairs(self, rooms):
@@ -602,15 +593,11 @@ class Object(object):
 		self.blocks = blocks
 
 		self.char = char
+		self.item = item
 		if entity is not None:
 			self.entity = copy.deepcopy(entity)
 		else:
 			self.entity = entity
-
-		if item is not None:
-			self.item = copy.deepcopy(item)
-		else:
-			self.item = item
 
 	# move by the given amount, if the destination is not blocked
 	def move(self, dx, dy, map):
@@ -684,7 +671,7 @@ def load_old_maps(did, dlevel):
 				generate = False
 				break
 		if generate:
-			temp_map = Map(game.current_map.location_name, game.current_map.location_abbr, did, coord[j], game.current_map.map_width, game.current_map.map_height, find_terrain_type(coord[j]))
+			temp_map = Map(game.current_map.location_name, game.current_map.location_abbr, did, coord[j], game.current_map.threat_level, game.current_map.map_width, game.current_map.map_height, find_terrain_type(coord[j]))
 		if j == len(coord) - 1:
 			game.current_map = temp_map
 		else:
@@ -694,7 +681,7 @@ def load_old_maps(did, dlevel):
 # combine some overworld maps into a super map
 def combine_maps():
 	mapid = [[0, 1, 2], [3, 0, 4], [5, 6, 7]]
-	super_map = Map(game.current_map.location_name, game.current_map.location_abbr, game.current_map.location_id, game.current_map.location_level, game.current_map.map_width * 3, game.current_map.map_height * 3, game.current_map.type, True)
+	super_map = Map(game.current_map.location_name, game.current_map.location_abbr, game.current_map.location_id, game.current_map.location_level, game.current_map.threat_level, game.current_map.map_width * 3, game.current_map.map_height * 3, game.current_map.type, True)
 	game.char.x += game.current_map.map_width
 	game.char.y += game.current_map.map_height
 	super_map.objects.append(game.char)

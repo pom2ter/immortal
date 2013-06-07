@@ -246,6 +246,7 @@ def climb_down_stairs():
 	location_id = game.current_map.location_id
 	location_name = game.current_map.location_name
 	location_abbr = game.current_map.location_abbr
+	threat_level = game.current_map.threat_level
 	op = (0, 0, 0)
 
 	if game.current_map.tile[game.char.x][game.char.y]['icon'] != '>':
@@ -257,11 +258,12 @@ def climb_down_stairs():
 			game.old_maps.append(game.current_map)
 		else:
 			level = 1
-			for (id, name, abbr, x, y) in game.worldmap.dungeons:
+			for (id, name, abbr, x, y, tlevel) in game.worldmap.dungeons:
 				if y * game.WORLDMAP_WIDTH + x == game.current_map.location_level:
 					location_id = id
 					location_name = name
 					location_abbr = abbr
+					threat_level = tlevel
 			game.message.new('You enter the ' + location_name + '.', game.turns)
 			map.decombine_maps()
 			game.old_maps.append(game.current_map)
@@ -279,7 +281,7 @@ def climb_down_stairs():
 				generate = False
 				break
 		if generate:
-			game.current_map = map.Map(location_name, location_abbr, location_id, level, 90, 52)
+			game.current_map = map.Map(location_name, location_abbr, location_id, level, threat_level, 90, 52)
 
 		game.current_map.overworld_position = op
 		game.current_map.check_player_position()
@@ -294,6 +296,7 @@ def climb_up_stairs():
 	location_id = game.current_map.location_id
 	location_name = game.current_map.location_name
 	location_abbr = game.current_map.location_abbr
+	threat_level = game.current_map.threat_level
 
 	if game.current_map.tile[game.char.x][game.char.y]['icon'] != '<':
 		game.message.new('You see no stairs going in that direction!', game.turns)
@@ -321,7 +324,7 @@ def climb_up_stairs():
 					generate = False
 					break
 			if generate:
-				game.current_map = map.Map(location_name, location_abbr, location_id, level, 90, 52)
+				game.current_map = map.Map(location_name, location_abbr, location_id, level, threat_level, 90, 52)
 		else:
 			map.load_old_maps(location_id, level)
 			map.combine_maps()
@@ -378,8 +381,7 @@ def drop_item():
 
 # equip an item
 def equip_item():
-	equippable = any(item.is_equippable() for item in game.player.inventory)
-	if not equippable:
+	if not any(item.is_equippable() for item in game.player.inventory):
 		game.message.new("You don't have any equippable items.", game.turns)
 	else:
 		output = util.item_stacking(game.player.inventory, True)
@@ -483,12 +485,12 @@ def look():
 					elif i > 0:
 						text += ', '
 					if names[i].item is not None:
-						text += names[i].item.article + names[i].item.name
+						text += names[i].item.get_name(True)
 					if names[i].entity is not None:
 						text += names[i].entity.article + names[i].entity.name
 			else:
 				if names[0].item is not None:
-					text = prefix + names[0].item.article + names[0].item.name
+					text = prefix + names[0].item.get_name(True)
 				if names[0].entity is not None:
 					text = prefix + names[0].entity.article + names[0].entity.name
 
@@ -835,7 +837,7 @@ def ztats_equipment(con, width, height):
 			y = 6
 		if game.player.equipment[i].type == 'shield':
 			y = 7
-		libtcod.console_print(con, 13, y, ': ' + game.player.equipment[i].name)
+		libtcod.console_print(con, 13, y, ': ' + game.player.equipment[i].get_name())
 		libtcod.console_print_ex(con, width - 3, y, libtcod.BKGND_SET, libtcod.RIGHT, str(game.player.equipment[i].weight) + ' lbs')
 
 
@@ -844,13 +846,7 @@ def ztats_inventory(con, width, height):
 	ztats_box(con, width, height, ' Inventory ')
 	output = util.item_stacking(game.player.inventory)
 	for i in range(len(output)):
-		if output[i].is_identified():
-			if output[i].quantity > 1:
-				text_left = str(output[i].quantity) + ' ' + output[i].plural
-			else:
-				text_left = output[i].name
-		else:
-			text_left = output[i].unidentified_name
+		text_left = output[i].get_name()
 		if output[i].duration > 0:
 			text_left += ' (' + str(output[i].duration) + ' turns left)'
 		text_right = str(round(output[i].weight * output[i].quantity, 1)) + ' lbs'

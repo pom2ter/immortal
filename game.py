@@ -16,7 +16,7 @@ import death
 import debug as dbg
 
 VERSION = 'v0.3.2'
-BUILD = '48'
+BUILD = '49'
 
 #size of the gui windows
 MAP_WIDTH = 71

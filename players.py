@@ -1,5 +1,4 @@
 import libtcodpy as libtcod
-import copy
 import game
 import util
 import map
@@ -149,7 +148,7 @@ class Player(object):
 	def drop_item(self, item, qty=1):
 		for i in range(qty):
 			for j in xrange(len(self.inventory)):
-				if self.inventory[j].name == item.name:
+				if self.inventory[j].full_name == item.full_name:
 					pos = j
 					break
 			obj = map.Object(game.char.x, game.char.y, self.inventory[pos].icon, self.inventory[pos].name, self.inventory[pos].color, True, item=self.inventory[pos])
@@ -159,9 +158,9 @@ class Player(object):
 			self.inventory.pop(pos)
 
 		if qty == 1:
-			game.message.new('You drop ' + obj.item.article + obj.item.name, game.turns, libtcod.red)
+			game.message.new('You drop ' + obj.item.get_name(True), game.turns, libtcod.red)
 		else:
-			game.message.new('You drop ' + str(qty) + ' ' + obj.item.plural, game.turns, libtcod.red)
+			game.message.new('You drop ' + str(qty) + ' ' + obj.item.get_plural_name(), game.turns, libtcod.red)
 		if game.current_map.tile[game.char.x][game.char.y]['type'] == 'trap':
 			if self.is_above_ground():
 				util.spring_trap(game.char.x, game.char.y, obj.item.article.capitalize() + obj.item.name)
@@ -172,7 +171,7 @@ class Player(object):
 	# equips an item
 	def equip_item(self, item):
 		for i in xrange(len(self.inventory)):
-			if self.inventory[i].name == item.name:
+			if self.inventory[i].full_name == item.full_name:
 				item = i
 				break
 
@@ -206,9 +205,9 @@ class Player(object):
 		self.equipment.append(self.inventory[item])
 		util.add_turn()
 		if switch:
-			game.message.new('You unequip the ' + old.unidentified_name + ' before equipping the ' + self.inventory[item].unidentified_name, game.turns, libtcod.green)
+			game.message.new('You unequip the ' + old.get_name() + ' before equipping the ' + self.inventory[item].get_name(), game.turns, libtcod.green)
 		else:
-			game.message.new('You equip the ' + self.inventory[item].unidentified_name, game.turns, libtcod.green)
+			game.message.new('You equip the ' + self.inventory[item].get_name(), game.turns, libtcod.green)
 		self.inventory.pop(item)
 
 	# return skill index
@@ -438,7 +437,7 @@ class Player(object):
 	def unequip(self, item):
 		self.inventory.append(self.equipment[item])
 		util.add_turn()
-		game.message.new('You unequip the ' + self.equipment[item].unidentified_name, game.turns, libtcod.red)
+		game.message.new('You unequip the ' + self.equipment[item].get_name(), game.turns, libtcod.red)
 		self.equipment.pop(item)
 
 	# return carried weight
@@ -710,8 +709,8 @@ def starting_stats():
 		game.player.base_health = libtcod.random_get_int(game.rnd, 2, FIGHTER_HP_GAIN)
 		game.player.base_mana = libtcod.random_get_int(game.rnd, 2, FIGHTER_MP_GAIN)
 		game.player.base_stamina = libtcod.random_get_int(game.rnd, 2, FIGHTER_STAMINA_GAIN)
-		game.player.inventory.append(copy.deepcopy(game.baseitems.get_item('short sword')))
-		game.player.inventory.append(copy.deepcopy(game.baseitems.get_item('leather armor')))
+		game.player.inventory.append(game.baseitems.create_item('uncursed ', '', 'short sword', ''))
+		game.player.inventory.append(game.baseitems.create_item('uncursed ', '', 'leather armor', ''))
 		game.player.skills[game.player.find_skill('Sword')].set_level(20)
 		game.player.skills[game.player.find_skill('Axe')].set_level(20)
 		game.player.skills[game.player.find_skill('Mace')].set_level(10)
@@ -723,8 +722,8 @@ def starting_stats():
 		game.player.base_health = libtcod.random_get_int(game.rnd, 2, ROGUE_HP_GAIN)
 		game.player.base_mana = libtcod.random_get_int(game.rnd, 2, ROGUE_MP_GAIN)
 		game.player.base_stamina = libtcod.random_get_int(game.rnd, 2, ROGUE_STAMINA_GAIN)
-		game.player.inventory.append(copy.deepcopy(game.baseitems.get_item('dagger')))
-		game.player.inventory.append(copy.deepcopy(game.baseitems.get_item('leather armor')))
+		game.player.inventory.append(game.baseitems.create_item('uncursed ', '', 'dagger', ''))
+		game.player.inventory.append(game.baseitems.create_item('uncursed ', '', 'leather armor', ''))
 		game.player.skills[game.player.find_skill('Dagger')].set_level(20)
 		game.player.skills[game.player.find_skill('Bow')].set_level(5)
 		game.player.skills[game.player.find_skill('Missile')].set_level(5)
@@ -736,8 +735,8 @@ def starting_stats():
 		game.player.base_health = libtcod.random_get_int(game.rnd, 2, PRIEST_HP_GAIN)
 		game.player.base_mana = libtcod.random_get_int(game.rnd, 2, PRIEST_MP_GAIN)
 		game.player.base_stamina = libtcod.random_get_int(game.rnd, 2, PRIEST_STAMINA_GAIN)
-		game.player.inventory.append(copy.deepcopy(game.baseitems.get_item('mace')))
-		game.player.inventory.append(copy.deepcopy(game.baseitems.get_item('leather armor')))
+		game.player.inventory.append(game.baseitems.create_item('uncursed ', '', 'mace', ''))
+		game.player.inventory.append(game.baseitems.create_item('uncursed ', '', 'leather armor', ''))
 		game.player.skills[game.player.find_skill('Sword')].set_level(5)
 		game.player.skills[game.player.find_skill('Mace')].set_level(20)
 		game.player.skills[game.player.find_skill('Dagger')].set_level(5)
@@ -747,19 +746,20 @@ def starting_stats():
 		game.player.base_health = libtcod.random_get_int(game.rnd, 2, MAGE_HP_GAIN)
 		game.player.base_mana = libtcod.random_get_int(game.rnd, 2, MAGE_MP_GAIN)
 		game.player.base_stamina = libtcod.random_get_int(game.rnd, 2, MAGE_STAMINA_GAIN)
-		game.player.inventory.append(copy.deepcopy(game.baseitems.get_item('quarterstaff')))
-		game.player.inventory.append(copy.deepcopy(game.baseitems.get_item('robes')))
+		game.player.inventory.append(game.baseitems.create_item('uncursed ', '', 'quarterstaff', ''))
+		game.player.inventory.append(game.baseitems.create_item('uncursed ', '', 'robes', ''))
 		game.player.skills[game.player.find_skill('Staff')].set_level(20)
 
 	if game.player.profession == 'Explorer':
 		game.player.base_health = libtcod.random_get_int(game.rnd, 2, EXPLORER_HP_GAIN)
 		game.player.base_mana = libtcod.random_get_int(game.rnd, 2, EXPLORER_MP_GAIN)
 		game.player.base_stamina = libtcod.random_get_int(game.rnd, 2, EXPLORER_STAMINA_GAIN)
-		game.player.inventory.append(copy.deepcopy(game.baseitems.get_item('dagger')))
-		game.player.inventory.append(copy.deepcopy(game.baseitems.get_item('leather armor')))
+		game.player.inventory.append(game.baseitems.create_item('uncursed ', '', 'dagger', ''))
+		game.player.inventory.append(game.baseitems.create_item('uncursed ', '', 'leather armor', ''))
 
-	game.player.inventory.append(copy.deepcopy(game.baseitems.get_item('torch')))
-	game.player.inventory.append(copy.deepcopy(game.baseitems.get_item('ration')))
+	game.player.inventory.append(game.baseitems.create_item('uncursed ', '', 'torch', ''))
+	game.player.inventory.append(game.baseitems.create_item('uncursed ', '', 'torch', ''))
+	game.player.inventory.append(game.baseitems.create_item('uncursed ', '', 'ration', ''))
 	game.player.set_max_health()
 	game.player.set_max_mana()
 	game.player.set_max_stamina()

@@ -7,7 +7,7 @@ import map
 
 
 class Monster(object):
-	def __init__(self, typ, name, unid_name, icon, color, dark_color, level, health, damage, article, ar, dr, xp, corpse, flags):
+	def __init__(self, typ, name, unid_name, icon, color, dark_color, level, health, damage, article, ar, dr, xp, weight, corpse, flags):
 		self.type = typ
 		self.name = name
 		self.unidentified_name = unid_name
@@ -21,6 +21,7 @@ class Monster(object):
 		self.attack_rating = ar
 		self.defense_rating = dr
 		self.xp = xp
+		self.weight = weight
 		self.corpse = corpse
 		self.flags = flags
 
@@ -99,21 +100,12 @@ class Monster(object):
 	def loot(self, x, y):
 		corpse = libtcod.random_get_int(game.rnd, 1, 100)
 		if corpse <= self.corpse:
-			d = game.baseitems.get_item(self.unidentified_name + ' corpse')
+			d = game.baseitems.create_corpse(self.name, self.weight)
 			drop = map.Object(x, y, d.icon, d.name, d.color, True, item=d)
 			game.current_map.objects.append(drop)
 		drop_chance = libtcod.random_get_int(game.rnd, 1, 100)
 		if drop_chance >= 80:
-			dice = libtcod.random_get_int(game.rnd, 1, 100)
-			if dice <= 10:
-				d = game.baseitems.get_item('gold')
-			elif dice <= 60:
-				d = game.baseitems.get_item_by_level(1)
-			elif dice <= 90:
-				d = game.baseitems.get_item_by_level(2)
-			else:
-				d = game.baseitems.get_item_by_level(3)
-			drop = map.Object(x, y, d.icon, d.name, d.color, True, item=d)
+			drop = game.baseitems.loot_generation(x, y, self.level)
 			game.current_map.objects.append(drop)
 
 	# monster move towards player
@@ -200,6 +192,7 @@ class MonsterList(object):
 		libtcod.struct_add_property(monster_type_struct, 'damage', libtcod.TYPE_DICE, True)
 		libtcod.struct_add_property(monster_type_struct, 'article', libtcod.TYPE_STRING, True)
 		libtcod.struct_add_property(monster_type_struct, 'xp', libtcod.TYPE_INT, True)
+		libtcod.struct_add_property(monster_type_struct, 'weight', libtcod.TYPE_INT, False)
 		libtcod.struct_add_property(monster_type_struct, 'corpse', libtcod.TYPE_INT, False)
 		libtcod.struct_add_flag(monster_type_struct, 'ai_friendly')
 		libtcod.struct_add_flag(monster_type_struct, 'ai_neutral')
@@ -240,7 +233,7 @@ class MonsterList(object):
 
 class MonsterListener(object):
 	def new_struct(self, struct, name):
-		self.temp_monster = Monster('', '', '', '', [0, 0, 0], [0, 0, 0], 0, 0, item.Dice(0, 0, 0, 0), '', 0, 0, 0, 0, [])
+		self.temp_monster = Monster('', '', '', '', [0, 0, 0], [0, 0, 0], 0, 0, item.Dice(0, 0, 0, 0), '', 0, 0, 0, 0, 0, [])
 		self.temp_monster.name = name
 		return True
 
@@ -277,6 +270,8 @@ class MonsterListener(object):
 				self.temp_monster.defense_rating = value
 			if name == 'xp':
 				self.temp_monster.xp = value
+			if name == 'weight':
+				self.temp_monster.weight = value
 			if name == 'corpse':
 				self.temp_monster.corpse = value
 			if name == 'article':

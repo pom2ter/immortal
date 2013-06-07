@@ -1,6 +1,7 @@
 import libtcodpy as libtcod
 import game
 import util
+import map
 
 
 #######################################
@@ -45,20 +46,28 @@ class Item(object):
 			string = self.article
 		if "fully_identified" in self.flags:
 			if self.quantity > 1:
-				string += self.full_plural
+				string = str(self.quantity) + ' ' + self.full_plural
 			else:
 				string += self.full_name
 		elif "identified" in self.flags:
 			if self.quantity > 1:
-				string += self.prefix + self.plural + self.suffix
+				string = str(self.quantity) + ' ' + self.prefix + self.plural + self.suffix
 			else:
 				string += self.prefix + self.name + self.suffix
 		else:
 			if self.quantity > 1:
-				string += self.plural
+				string = str(self.quantity) + ' ' + self.plural
 			else:
 				string += self.name
 		return string
+
+	# return the plural name of the item
+	def get_plural_name(self):
+		if "fully_identified" in self.flags:
+			return self.full_plural
+		elif "identified" in self.flags:
+			return self.prefix + self.plural + self.suffix
+		return self.plural
 
 	# return true if item is active
 	def is_active(self):
@@ -92,9 +101,10 @@ class Item(object):
 	def pick_up(self, ts):
 		if self.type == 'money':
 			gold = libtcod.random_get_int(game.rnd, 1, 100)
-			game.message.new('You pick up ' + str(gold) + ' gold pieces', game.turns, libtcod.gold)
+			game.message.new('You pick up ' + str(gold) + ' ' + self.name + ' pieces', game.turns, libtcod.gold)
 			game.player.gold += gold
 		else:
+			self.quantity = 1
 			game.message.new('You pick up ' + self.get_name(True), game.turns, libtcod.green)
 			self.turn_created = ts
 			game.player.inventory.append(self)
@@ -152,10 +162,9 @@ class Item(object):
 #######################################
 
 class BaseItem(object):
-	def __init__(self, typ, name, unid_name, plural, icon, color, dark_color, level, weight, cost, dice, article, charge, duration, expiration, flags):
+	def __init__(self, typ, name, plural, icon, color, dark_color, level, weight, cost, dice, article, charge, duration, expiration, flags):
 		self.type = typ
 		self.name = name
-		self.unidentified_name = unid_name
 		self.plural = plural
 		self.icon = icon
 		self.color = libtcod.Color(color[0], color[1], color[2])
@@ -178,95 +187,6 @@ class BaseItem(object):
 	def __eq__(self, other):
 		return self.name == other.name and self.charges == other.charges and self.flags == other.flags and self.duration == other.duration and self.cur_expiration == other.cur_expiration and self.active == other.active
 
-	# return true if item is active
-	def is_active(self):
-		if self.active:
-			self.duration -= 1
-			if self.duration == 0:
-				return True
-		return False
-
-	# return true if item can be equipped
-	def is_equippable(self):
-		if 'equippable' in self.flags:
-			return True
-		return False
-
-	# return true if item 'expiration date' has been reached
-	def is_expired(self):
-		if self.cur_expiration >= 1:
-			self.cur_expiration -= 1
-			if self.cur_expiration == 0:
-				return True
-		return False
-
-	# return true if item is identified, always returns true for now
-	def is_identified(self):
-		if 'identified' in self.flags:
-			return True
-		return True
-
-	# picks up the item
-	def pick_up(self, ts, silent=False):
-		if self.type == 'money':
-			gold = libtcod.random_get_int(game.rnd, 1, 100)
-			if not silent:
-				game.message.new('You pick up ' + str(gold) + ' gold pieces', game.turns, libtcod.gold)
-			game.player.gold += gold
-		else:
-			if not silent:
-				game.message.new('You pick up ' + self.article + self.unidentified_name, game.turns, libtcod.green)
-			self.turn_created = ts
-			game.player.inventory.append(self)
-		if not silent:
-			util.add_turn()
-
-	# use the item
-	def use(self):
-		if 'usable' in self.flags:
-			if 'healing' in self.flags:
-				if game.player.health == game.player.max_health:
-					game.message.new('You are already at max health.', game.turns)
-				else:
-					heal = self.dice.roll_dice()
-					game.player.heal_health(heal)
-					game.message.new('You gain ' + str(heal) + ' hit points.', game.turns, libtcod.green)
-
-			if 'mana_healing' in self.flags:
-				if game.player.mana == game.player.max_mana:
-					game.message.new('Your mana is already at maximum.', game.turns)
-				else:
-					heal = self.dice.roll_dice()
-					game.player.heal_mana(heal)
-					game.message.new('You gain ' + str(heal) + ' mana points.', game.turns, libtcod.green)
-
-			if 'stamina_healing' in self.flags:
-				if game.player.stamina == game.player.max_stamina:
-					game.message.new('Your stamina is already at maximum.', game.turns)
-				else:
-					heal = self.dice.roll_dice()
-					game.player.heal_stamina(heal)
-					game.message.new('You gain ' + str(heal) + ' stamina.', game.turns, libtcod.green)
-
-			if 'torchlight' in self.flags:
-				if self.active:
-					self.active = False
-					game.fov_torch = any('torchlight' in x.flags and x.active for x in game.player.inventory)
-					game.message.new('You extenguish the ' + self.name, game.turns, libtcod.gold)
-				else:
-					game.fov_torch = True
-					self.active = True
-					game.message.new('You light the ' + self.name, game.turns, libtcod.gold)
-				game.fov_recompute = True
-
-			if self.charges > 0:
-				self.charges -= 1
-				if self.charges == 0:
-					game.player.inventory.remove(self)
-			util.add_turn()
-		else:
-			game.message.new("You can't use that item.", game.turns)
-
 
 class BaseItemList(object):
 	def __init__(self):
@@ -277,7 +197,6 @@ class BaseItemList(object):
 		parser = libtcod.parser_new()
 		item_type_struct = libtcod.parser_new_struct(parser, 'item_type')
 		libtcod.struct_add_property(item_type_struct, 'type', libtcod.TYPE_STRING, True)
-		libtcod.struct_add_property(item_type_struct, 'unidentified_name', libtcod.TYPE_STRING, True)
 		libtcod.struct_add_property(item_type_struct, 'plural', libtcod.TYPE_STRING, True)
 		libtcod.struct_add_property(item_type_struct, 'icon', libtcod.TYPE_STRING, True)
 		libtcod.struct_add_property(item_type_struct, 'icon_color', libtcod.TYPE_COLOR, True)
@@ -297,6 +216,7 @@ class BaseItemList(object):
 		libtcod.struct_add_flag(item_type_struct, 'equippable')
 		libtcod.struct_add_flag(item_type_struct, 'consumable')
 		libtcod.struct_add_flag(item_type_struct, 'torchlight')
+		libtcod.struct_add_flag(item_type_struct, 'identified')
 		libtcod.struct_add_flag(item_type_struct, 'weapon_dagger')
 		libtcod.struct_add_flag(item_type_struct, 'weapon_sword')
 		libtcod.struct_add_flag(item_type_struct, 'weapon_mace')
@@ -311,20 +231,7 @@ class BaseItemList(object):
 		libtcod.struct_add_flag(item_type_struct, 'armor_hands')
 		libtcod.struct_add_flag(item_type_struct, 'armor_feet')
 		libtcod.struct_add_flag(item_type_struct, 'armor_ring')
-		libtcod.struct_add_flag(item_type_struct, 'corpse_goblin')
-		libtcod.struct_add_flag(item_type_struct, 'corpse_kobold')
-		libtcod.struct_add_flag(item_type_struct, 'corpse_orc')
-		libtcod.struct_add_flag(item_type_struct, 'corpse_rat')
-		libtcod.struct_add_flag(item_type_struct, 'corpse_cat')
-		libtcod.struct_add_flag(item_type_struct, 'corpse_bat')
-		libtcod.struct_add_flag(item_type_struct, 'corpse_dog')
-		libtcod.struct_add_flag(item_type_struct, 'corpse_lizard')
-		libtcod.struct_add_flag(item_type_struct, 'corpse_human')
-		libtcod.struct_add_flag(item_type_struct, 'corpse_wolf')
-		libtcod.struct_add_flag(item_type_struct, 'corpse_bear')
-		libtcod.struct_add_flag(item_type_struct, 'corpse_troll')
-		libtcod.struct_add_flag(item_type_struct, 'corpse_gnoll')
-		libtcod.struct_add_flag(item_type_struct, 'corpse_hound')
+		libtcod.struct_add_flag(item_type_struct, 'corpse')
 		libtcod.parser_run(parser, 'data/items.txt', BaseItemListener())
 
 	# add an item to the list
@@ -332,7 +239,51 @@ class BaseItemList(object):
 		if item is not None:
 			self.list.append(item)
 
-	# get an item from the list
+	# create a corpse 'item'
+	def create_corpse(self, mname, weight):
+		item = self.get_item('corpse')
+		loot = Item(item.type, mname + ' ' + item.name, 'uncursed ', '', '', item.plural, item.icon, item.color, item.dark_color, item.level, weight, item.cost, 1, 1, item.dice, item.article, item.charges, item.duration, item.expiration, item.flags)
+		return loot
+
+	# create specific item
+	def create_item(self, status, prefix, item, suffix):
+		item = self.get_item(item)
+		if prefix is not None:
+			prefix = game.prefix.get_prefix(prefix)
+		if suffix is not None:
+			suffix = game.suffix.get_suffix(suffix)
+		loot = self.generate_stats(status, prefix, item, suffix)
+		return loot
+
+	# generate some item stats
+	def generate_stats(self, status, prefix, item, suffix):
+		pname, sname = '', ''
+		pcost, scost = 1, 1
+
+		ilvl = item.level
+		dice = item.dice
+		flags = item.flags
+		if prefix is not None:
+			if prefix.level > ilvl:
+				ilvl = prefix.level
+			pcost = prefix.cost_multiplier
+			pname = prefix.name
+			if len(prefix.flags):
+				flags += prefix.flags
+		if suffix is not None:
+			if suffix.level > ilvl:
+				ilvl = suffix.level
+			scost = suffix.cost_multiplier
+			sname = suffix.name
+			if suffix.dice.nb_faces > 0:
+				dice = suffix.dice
+			if len(suffix.flags):
+				flags += suffix.flags
+		flags.append('identified')
+		loot = Item(item.type, item.name, status, pname, sname, item.plural, item.icon, item.color, item.dark_color, ilvl, item.weight, item.cost, pcost, scost, dice, item.article, item.charges, item.duration, item.expiration, list(set(flags)))
+		return loot
+
+	# fetch an item from the list
 	def get_item(self, name):
 		for item in self.list:
 			if name == item.name:
@@ -342,9 +293,60 @@ class BaseItemList(object):
 	# choose a random item based on its level
 	def get_item_by_level(self, level):
 		item = libtcod.random_get_int(game.rnd, 0, len(self.list) - 1)
-		while (self.list[item].level > level) or (self.list[item].type == 'corpse'):
+		while (self.list[item].level > level) or (self.list[item].type == 'corpse') or (self.list[item].type == 'money'):
 			item = libtcod.random_get_int(game.rnd, 0, len(self.list) - 1)
 		return self.list[item]
+
+	# choose a random item based on its type
+	def get_item_by_type(self, type, level=100):
+		item = libtcod.random_get_int(game.rnd, 0, len(self.list) - 1)
+		while (self.list[item].type != type) or (self.list[item].level > level):
+			item = libtcod.random_get_int(game.rnd, 0, len(self.list) - 1)
+		return self.list[item]
+
+	# generate an item
+	def loot_generation(self, x, y, level):
+		prefix, suffix = None, None
+		status = ''
+
+		# generate base item
+		dice = libtcod.random_get_int(game.rnd, 1, 100)
+		if dice <= 10:
+			d = self.get_item_by_type('money', level)
+		else:
+			if dice <= 60:
+				d = self.get_item_by_level(level)
+			elif dice <= 90:
+				d = self.get_item_by_level(level + 1)
+			else:
+				d = self.get_item_by_level(level + 2)
+
+			# generate prefix
+			pdice = libtcod.random_get_int(game.rnd, 1, 100)
+			if pdice <= 50:
+				prefix = game.prefix.get_prefix_by_level(level)
+			elif pdice <= 90:
+				prefix = game.prefix.get_prefix_by_level(level + 1)
+
+			# generate suffix
+			sdice = libtcod.random_get_int(game.rnd, 1, 100)
+			if sdice <= 50:
+				suffix = game.suffix.get_suffix_by_level(level)
+			elif sdice <= 90:
+				suffix = game.suffix.get_suffix_by_level(level + 1)
+
+			# generate status
+			stdice = libtcod.random_get_int(game.rnd, 1, 100)
+			if stdice <= 90:
+				status = 'uncursed '
+			elif stdice <= 95:
+				status = 'blessed '
+			else:
+				status = 'cursed '
+
+		loot = self.generate_stats(status, prefix, d, suffix)
+		obj = map.Object(x, y, loot.icon, loot.name, loot.color, True, item=loot)
+		return obj
 
 
 class Dice(object):
@@ -361,7 +363,7 @@ class Dice(object):
 
 class BaseItemListener(object):
 	def new_struct(self, struct, name):
-		self.temp_item = BaseItem('', '', '', '', '', [0, 0, 0], [0, 0, 0], 0, 0, 0, Dice(0, 0, 0, 0), '', 0, 0, 0, [])
+		self.temp_item = BaseItem('', '', '', '', [0, 0, 0], [0, 0, 0], 0, 0, 0, Dice(0, 0, 0, 0), '', 0, 0, 0, [])
 		self.temp_item.name = name
 		return True
 
@@ -403,8 +405,6 @@ class BaseItemListener(object):
 			if name == 'expiration':
 				self.temp_item.expiration = value
 				self.temp_item.cur_expiration = value
-			if name == 'unidentified_name':
-				self.temp_item.unidentified_name = value
 			if name == 'plural':
 				self.temp_item.plural = value
 		return True
@@ -445,10 +445,24 @@ class PrefixList(object):
 		libtcod.struct_add_property(prefix_type_struct, 'quality', libtcod.TYPE_INT, False)
 		libtcod.parser_run(parser, 'data/prefix.txt', PrefixListener())
 
-	# add a suffix to the list
+	# add a prefix to the list
 	def add_to_list(self, prefix=None):
 		if prefix is not None:
 			self.list.append(prefix)
+
+	# fetch a prefix from the list
+	def get_prefix(self, name):
+		for prefix in self.list:
+			if name == prefix.name:
+				return prefix
+		return None
+
+	# choose a random prefix based on its level
+	def get_prefix_by_level(self, level):
+		prefix = libtcod.random_get_int(game.rnd, 0, len(self.list) - 1)
+		while self.list[prefix].level > level:
+			prefix = libtcod.random_get_int(game.rnd, 0, len(self.list) - 1)
+		return self.list[prefix]
 
 
 class PrefixListener(object):
@@ -517,6 +531,20 @@ class SuffixList(object):
 	def add_to_list(self, suffix=None):
 		if suffix is not None:
 			self.list.append(suffix)
+
+	# fetch a suffix from the list
+	def get_suffix(self, name):
+		for suffix in self.list:
+			if name == suffix.name:
+				return suffix
+		return None
+
+	# choose a random suffix based on its level
+	def get_suffix_by_level(self, level):
+		suffix = libtcod.random_get_int(game.rnd, 0, len(self.list) - 1)
+		while self.list[suffix].level > level:
+			suffix = libtcod.random_get_int(game.rnd, 0, len(self.list) - 1)
+		return self.list[suffix]
 
 
 class SuffixListener(object):

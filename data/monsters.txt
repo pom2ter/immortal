@@ -11,6 +11,7 @@ monster_type "giant rat" {
 	health = 4
 	damage = "1d4"
 	xp = 6
+	weight = 3
 	corpse = 10
 	ai_neutral
 }
@@ -28,6 +29,7 @@ monster_type "lizard" {
 	health = 4
 	damage = "1d4"
 	xp = 8
+	weight = 1
 	corpse = 15
 	ai_neutral
 }
@@ -45,6 +47,7 @@ monster_type "large bat" {
 	health = 4
 	damage = "1d4"
 	xp = 5
+	weight = 2
 	corpse = 10
 	ai_neutral
 	flying
@@ -63,6 +66,7 @@ monster_type "bear" {
 	health = 12
 	damage = "1d8"
 	xp = 20
+	weight = 300
 	corpse = 10
 	ai_neutral
 }
@@ -80,6 +84,7 @@ monster_type "scrawny dog" {
 	health = 4
 	damage = "1d4"
 	xp = 4
+	weight = 30
 	corpse = 20
 	ai_neutral
 }
@@ -97,6 +102,7 @@ monster_type "wolf" {
 	health = 8
 	damage = "1d6"
 	xp = 10
+	weight = 75
 	corpse = 20
 	ai_hostile
 }
@@ -114,6 +120,7 @@ monster_type "hound" {
 	health = 6
 	damage = "1d4+1"
 	xp = 6
+	weight = 50
 	corpse = 15
 	ai_neutral
 }
@@ -195,6 +202,7 @@ monster_type "kobold" {
 	health = 8
 	damage = "1d6"
 	xp = 10
+	weight = 30
 	corpse = 20
 	ai_hostile
 }
@@ -212,6 +220,7 @@ monster_type "goblin" {
 	health = 8
 	damage = "1d6"
 	xp = 10
+	weight = 40
 	corpse = 20
 	ai_hostile
 }
@@ -229,6 +238,7 @@ monster_type "gnoll" {
 	health = 12
 	damage = "1d6"
 	xp = 15
+	weight = 250
 	corpse = 15
 	ai_hostile
 }
@@ -246,6 +256,7 @@ monster_type "orc" {
 	health = 10
 	damage = "1d6"
 	xp = 12
+	weight = 200
 	corpse = 20
 	ai_hostile
 }
@@ -263,6 +274,7 @@ monster_type "troll" {
 	health = 30
 	damage = "2d6+1"
 	xp = 30
+	weight = 215
 	corpse = 10
 	ai_hostile
 }
@@ -312,6 +324,7 @@ monster_type "bandit" {
 	health = 8
 	damage = "1d6"
 	xp = 12
+	weight = 150
 	corpse = 20
 	ai_hostile
 }
@@ -329,6 +342,7 @@ monster_type "cutpurse" {
 	health = 6
 	damage = "1d4"
 	xp = 8
+	weight = 150
 	corpse = 15
 	ai_neutral
 }
@@ -346,6 +360,7 @@ monster_type "scrawny cat" {
 	health = 4
 	damage = "1d4"
 	xp = 4
+	weight = 8
 	corpse = 10
 	ai_neutral
 }
@@ -395,6 +410,7 @@ monster_type "soldier" {
 	health = 15
 	damage = "2d6+1"
 	xp = 20
+	weight = 180
 	corpse = 20
 	ai_hostile
 }

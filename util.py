@@ -239,13 +239,13 @@ def get_names_under_mouse():
 				elif i > 0:
 					string += ', '
 				if names[i].item is not None:
-					string += names[i].item.article + names[i].item.name
+					string += names[i].item.get_name(True)
 				if names[i].entity is not None:
 					string += names[i].entity.article + names[i].entity.name
 			return string
 		else:
 			if names[0].item is not None:
-				return prefix + names[0].item.article + names[0].item.name
+				return prefix + names[0].item.get_name(True)
 			if names[0].entity is not None:
 				return prefix + names[0].entity.article + names[0].entity.name
 	else:
@@ -262,6 +262,10 @@ def item_stacking(inv, equip=False):
 			for y in output:
 				if x == y:
 					y.quantity += 1
+#	for xx in output:
+#		for yy in inv:
+#			if xx == yy:
+#				yy.quantity = xx.quantity
 	if equip:
 		output = [x for x in output if x.is_equippable()]
 	return output
@@ -269,13 +273,7 @@ def item_stacking(inv, equip=False):
 
 # return formatted string for inventory listing
 def inventory_output(inv):
-	if inv.is_identified():
-		if inv.quantity > 1:
-			text_left = str(inv.quantity) + ' ' + inv.plural
-		else:
-			text_left = inv.name
-	else:
-		text_left = inv.unidentified_name
+	text_left = inv.get_name()
 	if inv.duration > 0:
 		text_left += ' (' + str(inv.duration) + ' turns left)'
 	if inv.active:
@@ -290,11 +288,11 @@ def items_at_feet():
 	if len(objects) > 1:
 		game.message.new('You see several items at your feet.', game.turns)
 	elif len(objects) == 1:
-		if objects[0].item.name == 'gold':
+		if objects[0].item.type == 'money':
 			commands.pickup_item()
 			game.turns -= 1
 		else:
-			game.message.new('You see ' + objects[0].item.article + objects[0].item.name, game.turns)
+			game.message.new('You see ' + objects[0].item.get_name(True), game.turns)
 
 
 # print loading maps message
@@ -344,7 +342,7 @@ def showmap(box, box_width, box_height):
 	mapposy = game.worldmap.player_positiony * (float(game.SCREEN_HEIGHT - 2) / float(game.WORLDMAP_HEIGHT))
 	char = find_map_position(mapposx, mapposy)
 	libtcod.console_set_default_foreground(box, libtcod.black)
-	for (id, name, abbr, x, y) in game.worldmap.dungeons:
+	for (id, name, abbr, x, y, tlevel) in game.worldmap.dungeons:
 		dmapposx = x * (float(game.SCREEN_WIDTH - 2) / float(game.WORLDMAP_WIDTH))
 		dmapposy = y * (float(game.SCREEN_HEIGHT - 2) / float(game.WORLDMAP_HEIGHT))
 		dchar = find_map_position(dmapposx, dmapposy)
