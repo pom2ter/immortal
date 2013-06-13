@@ -262,10 +262,6 @@ def item_stacking(inv, equip=False):
 			for y in output:
 				if x == y:
 					y.quantity += 1
-#	for xx in output:
-#		for yy in inv:
-#			if xx == yy:
-#				yy.quantity = xx.quantity
 	if equip:
 		output = [x for x in output if x.is_equippable()]
 	return output
@@ -659,7 +655,7 @@ def render_map():
 					libtcod.dijkstra_path_set(game.path_dijk, game.path_dx, game.path_dy)
 
 	libtcod.console_set_default_foreground(0, libtcod.light_yellow)
-	libtcod.console_print(0, game.MAP_X, game.MAP_Y, get_names_under_mouse())
+	libtcod.console_print_rect(0, game.MAP_X, game.MAP_Y, game.MAP_WIDTH - 18, game.MAP_HEIGHT, get_names_under_mouse())
 	if game.debug.enable:
 		libtcod.console_print_ex(0, game.MAP_X + game.MAP_WIDTH - 1, game.MAP_Y, libtcod.BKGND_NONE, libtcod.RIGHT, str(game.gametime.hour) + ':' + str(game.gametime.minute).rjust(2, '0') + ' (%3d fps)' % libtcod.sys_get_fps())
 	render_floating_text_animations()

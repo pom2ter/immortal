@@ -7,7 +7,8 @@ import game
 # death screens and final summaries for player
 # stuff to do: final inventory
 def death_screen(quit=False):
-	scroll, scrollx, scrolly = 0, 0, 0
+	scrolli, scrollm = 0, 0
+	scrollx, scrolly = 0, 0
 	exit = False
 	key = libtcod.Key()
 	(screen, score, line1, line2) = death_tombstone(quit)
@@ -23,19 +24,27 @@ def death_screen(quit=False):
 		key_char = chr(key.c)
 
 		if key.vk == libtcod.KEY_UP or key.vk == libtcod.KEY_KP8:
+			if screen == 'inventory':
+				if scrolli > 0:
+					scrolli -= 1
+					death_inventory(scrolli)
 			if screen == 'message':
-				if scroll > 0:
-					scroll -= 1
-					death_messagelog(scroll)
+				if scrollm > 0:
+					scrollm -= 1
+					death_messagelog(scrollm)
 			if screen == 'map':
 				if scrolly > 0:
 					scrolly -= 1
 					death_showmap(scrollx, scrolly)
 		elif key.vk == libtcod.KEY_DOWN or key.vk == libtcod.KEY_KP2:
+			if screen == 'inventory':
+				if game.SCREEN_HEIGHT - 10 + scrolli < len(game.player.inventory + game.player.equipment):
+					scrolli += 1
+					death_inventory(scrolli)
 			if screen == 'message':
-				if game.SCREEN_HEIGHT - 10 + scroll < len(game.message.history):
-					scroll += 1
-					death_messagelog(scroll)
+				if game.SCREEN_HEIGHT - 10 + scrollm < len(game.message.history):
+					scrollm += 1
+					death_messagelog(scrollm)
 			if screen == 'map':
 				if game.SCREEN_HEIGHT - 14 + scrolly < game.current_map.map_height:
 					scrolly += 1
@@ -51,10 +60,10 @@ def death_screen(quit=False):
 					scrollx += 1
 					death_showmap(scrollx, scrolly)
 
-#		elif key_char == 'i':
-#			screen = death_inventory()
+		elif key_char == 'i':
+			screen = death_inventory(scrolli)
 		elif key_char == 'l':
-			screen = death_messagelog(scroll)
+			screen = death_messagelog(scrollm)
 		elif key_char == 'm':
 			screen = death_showmap(scrollx, scrolly)
 		elif key_char == 't':
@@ -69,6 +78,25 @@ def death_screen(quit=False):
 	save_high_scores()
 	if game.player.name.lower() in game.savefiles:
 		os.remove('saves/' + game.player.name.lower())
+
+
+# death screen: show a fully indentified inventory
+def death_inventory(scroll):
+	libtcod.console_set_default_foreground(0, libtcod.white)
+	libtcod.console_set_default_background(0, libtcod.black)
+	libtcod.console_clear(0)
+	libtcod.console_hline(0, 0, 0, game.SCREEN_WIDTH, libtcod.BKGND_SET)
+	libtcod.console_hline(0, 0, 2, game.SCREEN_WIDTH, libtcod.BKGND_SET)
+	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 1, libtcod.BKGND_SET, libtcod.CENTER, 'INVENTORY')
+	libtcod.console_rect(0, 1, 4, game.SCREEN_WIDTH - 2, game.SCREEN_HEIGHT - 10, True, libtcod.BKGND_SET)
+	output = game.player.inventory + game.player.equipment
+	for i in range(min(game.SCREEN_HEIGHT - 10, len(output))):
+		libtcod.console_print(0, 2, i + 4, output[i + scroll].full_name)
+	if scroll > 0:
+		libtcod.console_put_char_ex(0, game.SCREEN_WIDTH - 2, 4, chr(24), libtcod.white, libtcod.black)
+	if game.SCREEN_HEIGHT - 10 + scroll < len(output):
+		libtcod.console_put_char_ex(0, game.SCREEN_WIDTH - 2, game.SCREEN_HEIGHT - 7, chr(25), libtcod.white, libtcod.black)
+	return 'inventory'
 
 
 # death screen: show recent message log

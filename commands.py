@@ -256,6 +256,9 @@ def climb_down_stairs():
 			level = game.current_map.location_level + 1
 			game.message.new('You climb down the stairs.', game.turns)
 			game.old_maps.append(game.current_map)
+			dice = libtcod.random_get_int(game.rnd, 1, 10)
+			if dice == 10:
+				threat_level += 1
 		else:
 			level = 1
 			for (id, name, abbr, x, y, tlevel) in game.worldmap.dungeons:
@@ -494,11 +497,11 @@ def look():
 				if names[0].entity is not None:
 					text = prefix + names[0].entity.article + names[0].entity.name
 
-		libtcod.console_set_default_foreground(game.con, libtcod.white)
-		libtcod.console_set_default_background(game.con, libtcod.black)
-		libtcod.console_rect(game.con, 0, 0, game.MAP_WIDTH, 1, True, libtcod.BKGND_SET)
-		libtcod.console_print(game.con, 0, 0, text)
+		libtcod.console_set_default_foreground(game.con, libtcod.light_yellow)
+		libtcod.console_rect(game.con, 0, 0, game.MAP_WIDTH, 2, True, libtcod.BKGND_NONE)
+		libtcod.console_print_rect(game.con, 0, 0, game.MAP_WIDTH - 18, game.MAP_HEIGHT, text)
 		libtcod.console_blit(game.con, 0, 0, game.MAP_WIDTH, game.MAP_HEIGHT, 0, game.MAP_X, game.MAP_Y)
+	game.draw_map = True
 
 
 # open door

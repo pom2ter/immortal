@@ -298,12 +298,12 @@ class Map(object):
 
 		# fetch monster to place base on threat level
 		dice = libtcod.random_get_int(game.rnd, 1, 100)
-		if dice <= 60:
-			d = game.monsters.get_monster_by_level(1)
-		elif dice <= 90:
-			d = game.monsters.get_monster_by_level(2)
+		if dice <= 80:
+			d = game.monsters.get_monster_by_level(self.threat_level)
+		elif dice <= 99:
+			d = game.monsters.get_monster_by_level(self.threat_level + 1)
 		else:
-			d = game.monsters.get_monster_by_level(3)
+			d = game.monsters.get_monster_by_level(self.threat_level + 2)
 		monster = Object(x, y, d.icon, d.name, d.color, blocks=True, entity=d)
 		self.objects.insert(1, monster)
 
@@ -322,7 +322,7 @@ class Map(object):
 			while (self.is_blocked(x, y) or self.tile[x][y]['name'] in ['deep water', 'very deep water']):
 				x = libtcod.random_get_int(game.rnd, 0, self.map_width - 1)
 				y = libtcod.random_get_int(game.rnd, 0, self.map_height - 1)
-			loot = game.baseitems.loot_generation(x, y, 1)
+			loot = game.baseitems.loot_generation(x, y, self.threat_level)
 			self.objects.append(loot)
 
 	# places up and down stairs on dungeon level
@@ -671,7 +671,7 @@ def load_old_maps(did, dlevel):
 				generate = False
 				break
 		if generate:
-			temp_map = Map(game.current_map.location_name, game.current_map.location_abbr, did, coord[j], game.current_map.threat_level, game.current_map.map_width, game.current_map.map_height, find_terrain_type(coord[j]))
+			temp_map = Map(game.current_map.location_name, game.current_map.location_abbr, did, coord[j], game.worldmap.set_threat_level(coord[j] % game.WORLDMAP_WIDTH, coord[j] / game.WORLDMAP_WIDTH), game.current_map.map_width, game.current_map.map_height, find_terrain_type(coord[j]))
 		if j == len(coord) - 1:
 			game.current_map = temp_map
 		else:

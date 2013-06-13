@@ -314,25 +314,25 @@ class BaseItemList(object):
 		if dice <= 10:
 			d = self.get_item_by_type('money', level)
 		else:
-			if dice <= 60:
+			if dice <= 80:
 				d = self.get_item_by_level(level)
-			elif dice <= 90:
+			elif dice <= 99:
 				d = self.get_item_by_level(level + 1)
 			else:
 				d = self.get_item_by_level(level + 2)
 
 			# generate prefix
 			pdice = libtcod.random_get_int(game.rnd, 1, 100)
-			if pdice <= 50:
+			if pdice <= 60:
 				prefix = game.prefix.get_prefix_by_level(level)
-			elif pdice <= 90:
+			elif pdice <= 80:
 				prefix = game.prefix.get_prefix_by_level(level + 1)
 
 			# generate suffix
 			sdice = libtcod.random_get_int(game.rnd, 1, 100)
-			if sdice <= 50:
+			if sdice <= 60:
 				suffix = game.suffix.get_suffix_by_level(level)
-			elif sdice <= 90:
+			elif sdice <= 80:
 				suffix = game.suffix.get_suffix_by_level(level + 1)
 
 			# generate status

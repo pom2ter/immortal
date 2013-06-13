@@ -1,6 +1,7 @@
 import libtcodpy as libtcod
-import game
+import math
 import os
+import game
 
 
 class World(object):
@@ -13,6 +14,9 @@ class World(object):
 		self.map_image_small = None
 		self.player_positionx = 0
 		self.player_positiony = 0
+		self.originx = 0
+		self.originy = 0
+		self.max_distance = 0
 		self.dungeons = []
 		self.generate()
 
@@ -76,6 +80,24 @@ class World(object):
 				if int(self.hm_list[start] * 1000) in range(250, 699):
 					self.player_positionx = start % game.WORLDMAP_WIDTH
 					self.player_positiony = start / game.WORLDMAP_WIDTH
+					self.originx = self.player_positionx
+					self.originy = self.player_positiony
+
+					dijk_map = libtcod.map_new(game.WORLDMAP_WIDTH, game.WORLDMAP_HEIGHT)
+					for y in range(game.WORLDMAP_HEIGHT):
+						for x in range(game.WORLDMAP_WIDTH):
+							libtcod.map_set_properties(dijk_map, x, y, True, True)
+					path_dijk = libtcod.dijkstra_new(dijk_map)
+					libtcod.dijkstra_compute(path_dijk, self.originx, self.originy)
+					for y in range(game.WORLDMAP_HEIGHT):
+						for x in range(game.WORLDMAP_WIDTH):
+							dist = libtcod.dijkstra_get_distance(path_dijk, x, y)
+							if dist > self.max_distance:
+								self.max_distance = dist
+					for i in range(len(self.dungeons)):
+						(id, name, abbr, x, y, tlevel) = self.dungeons[i]
+						self.dungeons[i] = (id, name, abbr, x, y, self.set_threat_level(self.dungeons[i][3], self.dungeons[i][4]) + 1)
+
 					starter_dungeon = libtcod.random_get_int(self.rnd, 0, 4)
 					if starter_dungeon == 1:
 						self.dungeons.append((len(self.dungeons) + 1, 'Starter Dungeon', 'SD', self.player_positionx, self.player_positiony - 1, 1))
@@ -97,7 +119,7 @@ class World(object):
 
 	# place all dungeons after terrain generation
 	def place_dungeons(self):
-		number_of_dungeons = libtcod.random_get_int(game.rnd, 9, 16)
+		number_of_dungeons = libtcod.random_get_int(game.rnd, 12, 18)
 		while len(self.dungeons) != number_of_dungeons:
 			x = libtcod.random_get_int(game.rnd, 0, game.WORLDMAP_WIDTH - 1)
 			y = libtcod.random_get_int(game.rnd, 0, game.WORLDMAP_HEIGHT - 1)
@@ -129,6 +151,21 @@ class World(object):
 				else:
 					h = h * watercoef
 				libtcod.heightmap_set_value(game.hm, x, y, h)
+
+	# set threat level of a overworld map based on the player point of origin
+	# the farther it is, the more dangerous it is
+	def set_threat_level(self, posx, posy):
+		dijk_map = libtcod.map_new(game.WORLDMAP_WIDTH, game.WORLDMAP_HEIGHT)
+		for y in range(game.WORLDMAP_HEIGHT):
+			for x in range(game.WORLDMAP_WIDTH):
+				libtcod.map_set_properties(dijk_map, x, y, True, True)
+		path_dijk = libtcod.dijkstra_new(dijk_map)
+		libtcod.dijkstra_compute(path_dijk, self.originx, self.originy)
+		dist = libtcod.dijkstra_get_distance(path_dijk, posx, posy)
+		tlevel = int(math.ceil(dist / (self.max_distance / 20)))
+		if tlevel > 20:
+			tlevel = 20
+		return tlevel
 
 	# smooth edges so that land doesnt touch the map borders
 	def smooth_edges(self):
