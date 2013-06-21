@@ -45,11 +45,17 @@ class Player(object):
 		self.gender = GENDER[0]
 		self.profession = CLASSES[0]
 		self.strength = 9
+		self.base_strength = 9
 		self.dexterity = 9
+		self.base_dexterity = 9
 		self.intelligence = 9
+		self.base_intelligence = 9
 		self.wisdom = 9
+		self.base_wisdom = 9
 		self.endurance = 9
+		self.base_endurance = 9
 		self.karma = 9
+		self.base_karma = 9
 		self.icon = '@'
 		self.icon_color = libtcod.white
 		self.level = 1
@@ -83,7 +89,9 @@ class Player(object):
 			damage = 0
 			for i in range(len(self.equipment)):
 				if self.equipment[i].type == 'weapon':
-					damage = self.equipment[i].dice.roll_dice()
+					quality_bonus = 0.75 + (0.25 * self.equipment[i].quality)
+					damage = int(self.equipment[i].dice.roll_dice() * quality_bonus)
+					damage += self.damage_modifiers(self.equipment[i])
 			if damage == 0:
 				damage = util.roll_dice(1, 4)
 			game.message.new('You hit ' + target.entity.article + target.entity.name + ' for ' + str(damage) + ' pts of damage.', game.turns, libtcod.light_yellow)
@@ -103,13 +111,26 @@ class Player(object):
 			game.message.new('You fall unconscious from exaustion!', game.turns)
 		util.add_turn()
 
-	# calculates your attack rating
+	# calculates your attack rating....
 	def attack_rating(self):
 		ar = self.strength
 		ar += self.dexterity * 0.25
 		ar += self.karma * 0.25
 		ar += self.skills[self.find_weapon_type()].level * 0.2
+		self.attack_rating_modifiers()
 		return ar
+
+	# ....and apply modifiers
+	def attack_rating_modifiers(self):
+		modifier = 0
+		for i in range(len(self.equipment)):
+			if 'ar_bonus1' in self.equipment[i].flags:
+				modifier += util.roll_dice(1, 4)
+			if 'ar_bonus2' in self.equipment[i].flags:
+				modifier += util.roll_dice(1, 4, 2)
+			if 'ar_bonus3' in self.equipment[i].flags:
+				modifier += util.roll_dice(1, 4, 3)
+		return modifier
 
 	# returns true if player can move
 	def can_move(self):
@@ -120,22 +141,33 @@ class Player(object):
 	# checks player condition each turn
 	def check_condition(self):
 		if 'stuck' in self.flags:
-			dice = libtcod.random_get_int(game.rnd, 1, 100)
+			dice = util.roll_dice(1, 100)
 			if self.strength + (self.karma / 2) >= dice:
 				game.message.new('You can move freely again!', game.turns)
 				self.flags.remove('stuck')
 		if 'poison' in self.flags:
-			dice = libtcod.random_get_int(game.rnd, 1, 100)
+			dice = util.roll_dice(1, 100)
 			if self.endurance + (self.karma / 2) >= dice:
 				game.message.new('You are no longer poisoned.', game.turns)
 				self.flags.remove('poison')
 			else:
 				self.take_damage(1, 'poison')
 		if 'sleep' in self.flags:
-			dice = libtcod.random_get_int(game.rnd, 1, 100)
+			dice = util.roll_dice(1, 100)
 			if self.wisdom + (self.karma / 2) >= dice:
 				game.message.new('You wake up.', game.turns)
 				self.flags.remove('sleep')
+
+	# calculates damage modifiers
+	def damage_modifiers(self, obj):
+		modifier = 0
+		if 'damage_bonus1' in obj.flags:
+			modifier += util.roll_dice(1, 6)
+		if 'damage_bonus2' in obj.flags:
+			modifier += util.roll_dice(1, 6, 2)
+		if 'damage_bonus3' in obj.flags:
+			modifier += util.roll_dice(1, 6, 3)
+		return modifier
 
 	# calculates your defense rating
 	def defense_rating(self):
@@ -175,7 +207,7 @@ class Player(object):
 				item = i
 				break
 
-		if self.inventory[item].type == 'armor':
+		if any(i in self.inventory[item].type for i in ['armor', 'robe', 'cloak']):
 			for flags in self.inventory[item].flags:
 				if 'armor_' in flags:
 					flag = flags
@@ -189,7 +221,7 @@ class Player(object):
 
 		if switch:
 			for obj in reversed(self.equipment):
-				if self.inventory[item].type == 'armor':
+				if any(i in self.inventory[item].type for i in ['armor', 'robe', 'cloak']):
 					if flag in obj.flags:
 						self.inventory.append(obj)
 						self.equipment.remove(obj)
@@ -203,6 +235,7 @@ class Player(object):
 							break
 
 		self.equipment.append(self.inventory[item])
+		self.stats_bonus()
 		util.add_turn()
 		if switch:
 			game.message.new('You unequip the ' + old.get_name() + ' before equipping the ' + self.inventory[item].get_name(), game.turns, libtcod.green)
@@ -407,17 +440,59 @@ class Player(object):
 
 	# stat gain when you raise a level
 	def stat_gain(self, st, dx, iq, wi, en):
-		fate = libtcod.random_get_int(game.rnd, 1, 100)
+		fate = util.roll_dice(1, 100)
 		if fate <= st:
 			self.strength += 1
+			self.base_strength += 1
 		elif fate <= st + dx:
 			self.dexterity += 1
+			self.base_dexterity += 1
 		elif fate <= st + dx + iq:
 			self.intelligence += 1
+			self.base_intelligence += 1
 		elif fate <= st + dx + iq + wi:
 			self.wisdom += 1
+			self.base_wisdom += 1
 		elif fate <= st + dx + iq + wi + en:
 			self.endurance += 1
+			self.base_endurance += 1
+
+	# calculates stats bonuses
+	def stats_bonus(self):
+		self.strength = self.base_strength
+		self.dexterity = self.base_dexterity
+		self.intelligence = self.base_intelligence
+		self.wisdom = self.base_wisdom
+		self.endurance = self.base_endurance
+		self.karma = self.base_karma
+		self.set_max_health()
+		self.set_max_mana()
+		self.set_max_stamina()
+
+		for i in range(len(self.equipment)):
+			if 'str_bonus' in self.equipment[i].flags:
+				self.strength += self.equipment[i].bonus
+			if 'dex_bonus' in self.equipment[i].flags:
+				self.dexterity += self.equipment[i].bonus
+			if 'int_bonus' in self.equipment[i].flags:
+				self.intelligence += self.equipment[i].bonus
+			if 'wis_bonus' in self.equipment[i].flags:
+				self.wisdom += self.equipment[i].bonus
+			if 'end_bonus' in self.equipment[i].flags:
+				self.endurance += self.equipment[i].bonus
+
+			if 'health_bonus1' in self.equipment[i].flags:
+				if self.equipment[i].bonus == 0:
+					self.equipment[i].bonus = util.roll_dice(1, 6)
+				self.max_health += self.equipment[i].bonus
+			if 'mana_bonus1' in self.equipment[i].flags:
+				if self.equipment[i].bonus == 0:
+					self.equipment[i].bonus = util.roll_dice(1, 6)
+				self.max_mana += self.equipment[i].bonus
+			if 'stamina_bonus1' in self.equipment[i].flags:
+				if self.equipment[i].bonus == 0:
+					self.equipment[i].bonus = util.roll_dice(1, 6)
+				self.max_stamina += self.equipment[i].bonus
 
 	# reduce your health
 	def take_damage(self, damage, source):
@@ -439,6 +514,7 @@ class Player(object):
 		util.add_turn()
 		game.message.new('You unequip the ' + self.equipment[item].get_name(), game.turns, libtcod.red)
 		self.equipment.pop(item)
+		self.stats_bonus()
 
 	# return carried weight
 	# stuff to do: burdened, overburdened
@@ -687,12 +763,12 @@ def show_stats_panel(stats, text, attr=-1, roll=-1):
 		for i in range(5):
 			libtcod.console_print(stats, 24, i + 5, str(stat[i]))
 			libtcod.console_print_ex(stats, 31, i + 5, libtcod.BKGND_SET, libtcod.RIGHT, ' ' + str(BASE_STATS[attr][i] + stat[i]))
-		game.player.strength = BASE_STATS[attr][0] + stat[0]
-		game.player.dexterity = BASE_STATS[attr][1] + stat[1]
-		game.player.intelligence = BASE_STATS[attr][2] + stat[2]
-		game.player.wisdom = BASE_STATS[attr][3] + stat[3]
-		game.player.endurance = BASE_STATS[attr][4] + stat[4]
-		game.player.karma = stat[5]
+		game.player.base_strength = BASE_STATS[attr][0] + stat[0]
+		game.player.base_dexterity = BASE_STATS[attr][1] + stat[1]
+		game.player.base_intelligence = BASE_STATS[attr][2] + stat[2]
+		game.player.base_wisdom = BASE_STATS[attr][3] + stat[3]
+		game.player.base_endurance = BASE_STATS[attr][4] + stat[4]
+		game.player.base_karma = stat[5]
 		starting_stats()
 
 	for i in range(game.SCREEN_HEIGHT):
@@ -704,13 +780,13 @@ def show_stats_panel(stats, text, attr=-1, roll=-1):
 # starting stats and equipment after character generation
 def starting_stats():
 	game.player.inventory = []
-	game.player.gold = libtcod.random_get_int(game.rnd, 1, 50)
+	game.player.gold = util.roll_dice(1, 50)
 	if game.player.profession == 'Fighter':
 		game.player.base_health = libtcod.random_get_int(game.rnd, 2, FIGHTER_HP_GAIN)
 		game.player.base_mana = libtcod.random_get_int(game.rnd, 2, FIGHTER_MP_GAIN)
 		game.player.base_stamina = libtcod.random_get_int(game.rnd, 2, FIGHTER_STAMINA_GAIN)
 		game.player.inventory.append(game.baseitems.create_item('uncursed ', '', 'short sword', ''))
-		game.player.inventory.append(game.baseitems.create_item('uncursed ', '', 'leather armor', ''))
+		game.player.inventory.append(game.baseitems.create_item('uncursed ', 'leather ', 'armor', ''))
 		game.player.skills[game.player.find_skill('Sword')].set_level(20)
 		game.player.skills[game.player.find_skill('Axe')].set_level(20)
 		game.player.skills[game.player.find_skill('Mace')].set_level(10)
@@ -723,7 +799,7 @@ def starting_stats():
 		game.player.base_mana = libtcod.random_get_int(game.rnd, 2, ROGUE_MP_GAIN)
 		game.player.base_stamina = libtcod.random_get_int(game.rnd, 2, ROGUE_STAMINA_GAIN)
 		game.player.inventory.append(game.baseitems.create_item('uncursed ', '', 'dagger', ''))
-		game.player.inventory.append(game.baseitems.create_item('uncursed ', '', 'leather armor', ''))
+		game.player.inventory.append(game.baseitems.create_item('uncursed ', 'leather ', 'armor', ''))
 		game.player.skills[game.player.find_skill('Dagger')].set_level(20)
 		game.player.skills[game.player.find_skill('Bow')].set_level(5)
 		game.player.skills[game.player.find_skill('Missile')].set_level(5)
@@ -736,7 +812,7 @@ def starting_stats():
 		game.player.base_mana = libtcod.random_get_int(game.rnd, 2, PRIEST_MP_GAIN)
 		game.player.base_stamina = libtcod.random_get_int(game.rnd, 2, PRIEST_STAMINA_GAIN)
 		game.player.inventory.append(game.baseitems.create_item('uncursed ', '', 'mace', ''))
-		game.player.inventory.append(game.baseitems.create_item('uncursed ', '', 'leather armor', ''))
+		game.player.inventory.append(game.baseitems.create_item('uncursed ', 'leather ', 'armor', ''))
 		game.player.skills[game.player.find_skill('Sword')].set_level(5)
 		game.player.skills[game.player.find_skill('Mace')].set_level(20)
 		game.player.skills[game.player.find_skill('Dagger')].set_level(5)
@@ -755,14 +831,24 @@ def starting_stats():
 		game.player.base_mana = libtcod.random_get_int(game.rnd, 2, EXPLORER_MP_GAIN)
 		game.player.base_stamina = libtcod.random_get_int(game.rnd, 2, EXPLORER_STAMINA_GAIN)
 		game.player.inventory.append(game.baseitems.create_item('uncursed ', '', 'dagger', ''))
-		game.player.inventory.append(game.baseitems.create_item('uncursed ', '', 'leather armor', ''))
+		game.player.inventory.append(game.baseitems.create_item('uncursed ', 'leather ', 'armor', ''))
 
 	game.player.inventory.append(game.baseitems.create_item('uncursed ', '', 'torch', ''))
 	game.player.inventory.append(game.baseitems.create_item('uncursed ', '', 'torch', ''))
 	game.player.inventory.append(game.baseitems.create_item('uncursed ', '', 'ration', ''))
+	game.player.inventory.append(game.baseitems.create_item('uncursed ', 'exceptional ', 'quarterstaff', ' of minor healing'))
+
+	game.player.strength = game.player.base_strength
+	game.player.dexterity = game.player.base_dexterity
+	game.player.intelligence = game.player.base_intelligence
+	game.player.wisdom = game.player.base_wisdom
+	game.player.endurance = game.player.base_endurance
+	game.player.karma = game.player.base_karma
+
 	game.player.set_max_health()
 	game.player.set_max_mana()
 	game.player.set_max_stamina()
 	game.player.health = game.player.max_health
 	game.player.mana = game.player.max_mana
 	game.player.stamina = game.player.max_stamina
+	game.player.stats_bonus()

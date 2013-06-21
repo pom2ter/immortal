@@ -1,42 +1,288 @@
-prefix_type "broken " {
+prefix_type "low quality " {
+	type = "quality"
 	cost_multiplier = 0.5
 	level = 1
 	quality = 0
+	armor
+	shield
+	weapon
+	ring
+}
+
+prefix_type "crude " {
+	type = "quality"
+	cost_multiplier = 0.5
+	level = 2
+	quality = 0
+	armor
+	shield
+	weapon
+	ring
+}
+
+prefix_type "damaged " {
+	type = "quality"
+	cost_multiplier = 0.5
+	level = 3
+	quality = 0
+	armor
+	shield
+	weapon
+	ring
 }
 
 prefix_type "superior " {
+	type = "quality"
 	cost_multiplier = 2.0
 	level = 3
 	quality = 2
+	armor
+	shield
+	weapon
+	ring
 }
 
 prefix_type "exceptional " {
-	cost_multiplier = 3.0
-	level = 6
+	type = "quality"
+	cost_multiplier = 4.0
+	level = 5
 	quality = 3
+	armor
+	shield
+	weapon
+	ring
+}
+
+prefix_type "leather " {
+	type = "material"
+	cost_multiplier = 1.0
+	level = 1
+	armor
+}
+
+prefix_type "hard leather " {
+	type = "material"
+	cost_multiplier = 2.0
+	level = 2
+	quality = 2
+	armor
+}
+
+prefix_type "bronze " {
+	type = "material"
+	cost_multiplier = 2.0
+	level = 2
+	quality = 2
+	weapon
+	shield
+	ring
+}
+
+prefix_type "scale " {
+	type = "material"
+	cost_multiplier = 3.0
+	level = 3
+	quality = 3
+	armor
 }
 
 prefix_type "iron " {
+	type = "material"
 	cost_multiplier = 3.0
 	level = 3
+	quality = 3
+	weapon
+	shield
+	ring
+}
+
+prefix_type "plate " {
+	type = "material"
+	cost_multiplier = 4.0
+	level = 5
+	quality = 4
+	armor
 }
 
 prefix_type "steel " {
-	cost_multiplier = 3.0
-	level = 6
+	type = "material"
+	cost_multiplier = 4.0
+	level = 5
+	quality = 4
+	shield
+	weapon
+	ring
 }
 
 prefix_type "mithril " {
-	cost_multiplier = 3.0
+	type = "material"
+	cost_multiplier = 5.0
+	level = 7
+	quality = 5
+	armor
+	shield
+	weapon
+	ring
+}
+
+prefix_type "elven " {
+	type = "material"
+	cost_multiplier = 6.0
 	level = 9
+	quality = 6
+	armor
+	shield
+	weapon
+	ring
+}
+
+prefix_type "dwarven " {
+	type = "material"
+	cost_multiplier = 7.0
+	level = 11
+	quality = 7
+	armor
+	shield
+	weapon
+	ring
 }
 
 prefix_type "adamantium " {
-	cost_multiplier = 3.0
-	level = 12
+	type = "material"
+	cost_multiplier = 8.0
+	level = 13
+	quality = 8
+	armor
+	shield
+	weapon
+	ring
 }
 
 prefix_type "diamond " {
-	cost_multiplier = 3.0
+	type = "material"
+	cost_multiplier = 9.0
 	level = 15
+	quality = 9
+	armor
+	shield
+	weapon
+	ring
+}
+
+prefix_type "dragon " {
+	type = "material"
+	cost_multiplier = 10.0
+	level = 17
+	quality = 10
+	armor
+	shield
+	weapon
+	ring
+}
+
+prefix_type "divine " {
+	type = "material"
+	cost_multiplier = 11.0
+	level = 19
+	quality = 11
+	armor
+	shield
+	weapon
+	ring
+}
+
+prefix_type "sharp " {
+	type = "modifier"
+	cost_multiplier = 5.0
+	level = 3
+	weapon
+	damage_bonus1
+}
+
+prefix_type "fine " {
+	type = "modifier"
+	cost_multiplier = 10.0
+	level = 8
+	weapon
+	damage_bonus2
+}
+
+prefix_type "deadly " {
+	type = "modifier"
+	cost_multiplier = 15.0
+	level = 13
+	weapon
+	damage_bonus3
+}
+
+prefix_type "fierce " {
+	type = "modifier"
+	cost_multiplier = 5.0
+	level = 4
+	weapon
+	ar_bonus1
+}
+
+prefix_type "savage " {
+	type = "modifier"
+	cost_multiplier = 10.0
+	level = 9
+	weapon
+	ar_bonus2
+}
+
+prefix_type "brutal " {
+	type = "modifier"
+	cost_multiplier = 15.0
+	level = 14
+	weapon
+	ar_bonus3
+}
+
+prefix_type "fiery " {
+	type = "modifier"
+	cost_multiplier = 5.0
+	level = 5
+	weapon
+	fire_bonus1
+}
+
+prefix_type "burning " {
+	type = "modifier"
+	cost_multiplier = 10.0
+	level = 10
+	weapon
+	fire_bonus2
+}
+
+prefix_type "volcanic " {
+	type = "modifier"
+	cost_multiplier = 15.0
+	level = 15
+	weapon
+	fire_bonus3
+}
+
+prefix_type "chilling " {
+	type = "modifier"
+	cost_multiplier = 5.0
+	level = 6
+	weapon
+	cold_bonus1
+}
+
+prefix_type "freezing " {
+	type = "modifier"
+	cost_multiplier = 10.0
+	level = 11
+	weapon
+	cold_bonus2
+}
+
+prefix_type "arctic " {
+	type = "modifier"
+	cost_multiplier = 15.0
+	level = 16
+	weapon
+	cold_bonus3
 }

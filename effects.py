@@ -23,14 +23,14 @@ def check_active_effects():
 				if game.current_map.tile[game.char.x][game.char.y]['type'] == 'poison_gas':
 					game.message.new('You step into poisonous gas!', game.turns)
 					if 'poison' not in game.player.flags:
-						dice = libtcod.random_get_int(game.rnd, 1, 50)
+						dice = util.roll_dice(1, 50)
 						if dice > game.player.endurance + (game.player.karma / 2):
 							game.message.new('You are poisoned!', game.turns, libtcod.Color(0, 112, 0))
 							game.player.flags.append('poison')
 				if game.current_map.tile[game.char.x][game.char.y]['type'] == 'sleep_gas':
 					if 'sleep' not in game.player.flags:
 						game.message.new('You step into sleeping gas!', game.turns)
-						dice = libtcod.random_get_int(game.rnd, 1, 50)
+						dice = util.roll_dice(1, 50)
 						if dice > game.player.wisdom + (game.player.karma / 2):
 							game.message.new('You fall asleep!', game.turns, libtcod.Color(0, 143, 189))
 							game.player.flags.append('sleep')
@@ -102,7 +102,7 @@ def poison_gas(x, y, radius, duration):
 							if obj.name == 'player':
 								game.message.new('You are caught in a poisonous cloud!', game.turns)
 								if 'poison' not in game.player.flags:
-									dice = libtcod.random_get_int(game.rnd, 1, 50)
+									dice = util.roll_dice(1, 50)
 									if dice > game.player.endurance + (game.player.karma / 2):
 										game.message.new('You are poisoned!', game.turns, libtcod.Color(0, 112, 0))
 										game.player.flags.append('poison')
@@ -129,7 +129,7 @@ def sleeping_gas(x, y, radius, duration):
 							if obj.name == 'player':
 								game.message.new('You are caught in a sleeping cloud!', game.turns)
 								if 'sleep' not in game.player.flags:
-									dice = libtcod.random_get_int(game.rnd, 1, 50)
+									dice = util.roll_dice(1, 50)
 									if dice > game.player.wisdom + (game.player.karma / 2):
 										game.message.new('You fall asleep!', game.turns, libtcod.Color(0, 143, 189))
 										game.player.flags.append('sleep')

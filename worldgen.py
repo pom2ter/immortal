@@ -162,9 +162,9 @@ class World(object):
 		path_dijk = libtcod.dijkstra_new(dijk_map)
 		libtcod.dijkstra_compute(path_dijk, self.originx, self.originy)
 		dist = libtcod.dijkstra_get_distance(path_dijk, posx, posy)
-		tlevel = int(math.ceil(dist / (self.max_distance / 20)))
-		if tlevel > 20:
-			tlevel = 20
+		tlevel = int(math.ceil(dist / (self.max_distance / game.MAX_THREAT_LEVEL)))
+		if tlevel > game.MAX_THREAT_LEVEL:
+			tlevel = game.MAX_THREAT_LEVEL
 		return tlevel
 
 	# smooth edges so that land doesnt touch the map borders

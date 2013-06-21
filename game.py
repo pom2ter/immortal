@@ -15,8 +15,8 @@ import effects
 import death
 import debug as dbg
 
-VERSION = 'v0.3.2'
-BUILD = '50'
+VERSION = 'v0.3.3'
+BUILD = '51'
 
 #size of the gui windows
 MAP_WIDTH = 71
@@ -30,6 +30,7 @@ PLAYER_STATS_HEIGHT = SCREEN_HEIGHT - 2
 
 WORLDMAP_WIDTH = 400
 WORLDMAP_HEIGHT = 240
+MAX_THREAT_LEVEL = 20
 
 #sizes and coordinates relevant for the GUI
 PLAYER_STATS_X = 1
@@ -96,10 +97,12 @@ old_msg = 0
 draw_gui = True
 draw_map = True
 
-# thanatos, draconis, valamar, otatop
+# thanatos, draconis, valamar, otatop, maurice the goblin
 # mountains peak type, transitions
 # caverns, maze types
 # scrolling, lockpicks, chest
+# burdened, food, money
+# curse, bless
 
 terrain = [{'name': 'Mountain Peak', 'type': 'dirt', 'elevation': 0.950}, {'name': 'Mountains', 'type': 'dirt', 'elevation': 0.850},
 		{'name': 'Hills', 'type': 'dirt', 'elevation': 0.700}, {'name': 'Forest', 'type': 'grass', 'elevation': 0.250},
@@ -366,7 +369,7 @@ class Game(object):
 
 	# loading and showing the high scores screen
 	def show_high_scores(self):
-		if os.path.exists('data/highscores.dat'):
+		if os.path.exists('highscores.dat'):
 			self.load_high_scores()
 			contents = []
 			for (score, line1, line2) in highscore:
@@ -380,8 +383,8 @@ class Game(object):
 
 	def load_high_scores(self):
 		global highscore
-		if os.path.exists('data/highscores.dat'):
-			contents = open('data/highscores.dat', 'rb')
+		if os.path.exists('highscores.dat'):
+			contents = open('highscores.dat', 'rb')
 			highscore = pickle.load(contents)
 			contents.close()
 

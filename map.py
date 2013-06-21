@@ -297,7 +297,7 @@ class Map(object):
 			y = libtcod.random_get_int(game.rnd, 0, self.map_height - 1)
 
 		# fetch monster to place base on threat level
-		dice = libtcod.random_get_int(game.rnd, 1, 100)
+		dice = util.roll_dice(1, 100)
 		if dice <= 80:
 			d = game.monsters.get_monster_by_level(self.threat_level)
 		elif dice <= 99:

@@ -98,12 +98,12 @@ class Monster(object):
 
 	# see if monster drops an item or a corpse when dying
 	def loot(self, x, y):
-		corpse = libtcod.random_get_int(game.rnd, 1, 100)
+		corpse = util.roll_dice(1, 100)
 		if corpse <= self.corpse:
 			d = game.baseitems.create_corpse(self.name, self.weight)
 			drop = map.Object(x, y, d.icon, d.name, d.color, True, item=d)
 			game.current_map.objects.append(drop)
-		drop_chance = libtcod.random_get_int(game.rnd, 1, 100)
+		drop_chance = util.roll_dice(1, 100)
 		if drop_chance >= 80:
 			drop = game.baseitems.loot_generation(x, y, self.level)
 			game.current_map.objects.append(drop)
@@ -153,11 +153,11 @@ class Monster(object):
 				dy = 0
 			if all(i == 'ai_neutral' and i != 'ai_hostile' for i in self.flags):
 				if self.distance_to_player(game.char, x, y) <= 2:
-					turn_hostile = libtcod.random_get_int(game.rnd, 1, 100)
+					turn_hostile = util.roll_dice(1, 100)
 					if turn_hostile <= 10:
 						self.flags.append('ai_hostile')
 			elif all(i in self.flags for i in ['ai_neutral', 'ai_hostile']):
-				return_neutral = libtcod.random_get_int(game.rnd, 1, 100)
+				return_neutral = util.roll_dice(1, 100)
 				if return_neutral <= 10:
 					self.flags[:] = (value for value in self.flags if value != 'ai_hostile')
 			#retry if destination is blocked
@@ -226,7 +226,7 @@ class MonsterList(object):
 	# spawn a monster
 	def spawn(self):
 		if self.number_of_monsters_on_map() < game.current_map.max_monsters:
-			number = libtcod.random_get_int(game.rnd, 1, 100)
+			number = util.roll_dice(1, 100)
 			if number == 1:
 				game.current_map.place_monsters()
 

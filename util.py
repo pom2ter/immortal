@@ -216,7 +216,7 @@ def get_names_under_mouse():
 	(x, y) = (game.mouse.cx - game.MAP_X, game.mouse.cy - 1)
 	px = x + game.curx
 	py = y + game.cury
-	if x in range(game.MAP_WIDTH - 1) and y in range(game.MAP_HEIGHT - 1) and game.current_map.is_explored(px, py):
+	if x in range(game.MAP_WIDTH) and y in range(game.MAP_HEIGHT) and game.current_map.is_explored(px, py):
 		names = [obj for obj in game.current_map.objects if obj.x == px and obj.y == py]
 		prefix = 'you see '
 		if not libtcod.map_is_in_fov(game.fov_map, px, py):
@@ -315,7 +315,7 @@ def reset_quantity(inv):
 
 # returns the roll of a die
 def roll_dice(nb_dices, nb_faces, multiplier=1, bonus=0):
-	return libtcod.random_get_int(game.rnd, nb_dices, nb_dices * nb_faces * multiplier) + bonus
+	return libtcod.random_get_int(game.rnd, nb_dices * multiplier, nb_dices * nb_faces * multiplier) + bonus
 
 
 # set map properties based on a fully explore map
@@ -472,6 +472,8 @@ def render_message_panel():
 def render_player_stats_panel():
 	libtcod.console_set_default_background(game.ps, libtcod.black)
 	libtcod.console_clear(game.ps)
+	libtcod.console_set_color_control(libtcod.COLCTRL_1, libtcod.green, libtcod.black)
+	libtcod.console_set_color_control(libtcod.COLCTRL_2, libtcod.red, libtcod.black)
 	render_bar(game.ps, 0, 5, game.PLAYER_STATS_WIDTH, 'HP', game.player.health, game.player.max_health, libtcod.red, libtcod.darker_red)
 	render_bar(game.ps, 0, 6, game.PLAYER_STATS_WIDTH, 'ST', game.player.stamina, game.player.max_stamina, libtcod.yellow, libtcod.darker_yellow)
 	render_bar(game.ps, 0, 7, game.PLAYER_STATS_WIDTH, 'MP', game.player.mana, game.player.max_mana, libtcod.blue, libtcod.darker_blue)
@@ -480,11 +482,42 @@ def render_player_stats_panel():
 	libtcod.console_print(game.ps, 0, 3, game.current_map.location_abbr + '-' + str(game.current_map.location_level) + '     ')
 	libtcod.console_print(game.ps, 0, 9, 'LV: ' + str(game.player.level))
 	libtcod.console_print(game.ps, 0, 10, 'XP: ' + str(game.player.xp))
-	libtcod.console_print(game.ps, 0, 11, 'Str: ' + str(game.player.strength) + ' ')
-	libtcod.console_print(game.ps, 0, 12, 'Dex: ' + str(game.player.dexterity) + ' ')
-	libtcod.console_print(game.ps, 0, 13, 'Int: ' + str(game.player.intelligence) + ' ')
-	libtcod.console_print(game.ps, 0, 14, 'Wis: ' + str(game.player.wisdom) + ' ')
-	libtcod.console_print(game.ps, 0, 15, 'End: ' + str(game.player.endurance) + ' ')
+
+	if game.player.strength > game.player.base_strength:
+		libtcod.console_print(game.ps, 0, 11, 'Str: %c%i%c ' % (libtcod.COLCTRL_1, game.player.strength, libtcod.COLCTRL_STOP))
+	elif game.player.strength < game.player.base_strength:
+		libtcod.console_print(game.ps, 0, 11, 'Str: %c%i%c ' % (libtcod.COLCTRL_2, game.player.strength, libtcod.COLCTRL_STOP))
+	else:
+		libtcod.console_print(game.ps, 0, 11, 'Str: ' + str(game.player.strength) + ' ')
+
+	if game.player.dexterity > game.player.base_dexterity:
+		libtcod.console_print(game.ps, 0, 12, 'Dex: %c%i%c ' % (libtcod.COLCTRL_1, game.player.dexterity, libtcod.COLCTRL_STOP))
+	elif game.player.dexterity < game.player.base_dexterity:
+		libtcod.console_print(game.ps, 0, 12, 'Dex: %c%i%c ' % (libtcod.COLCTRL_2, game.player.dexterity, libtcod.COLCTRL_STOP))
+	else:
+		libtcod.console_print(game.ps, 0, 12, 'Dex: ' + str(game.player.dexterity) + ' ')
+
+	if game.player.intelligence > game.player.intelligence:
+		libtcod.console_print(game.ps, 0, 13, 'Int: %c%i%c ' % (libtcod.COLCTRL_1, game.player.intelligence, libtcod.COLCTRL_STOP))
+	elif game.player.intelligence < game.player.intelligence:
+		libtcod.console_print(game.ps, 0, 13, 'Int: %c%i%c ' % (libtcod.COLCTRL_2, game.player.intelligence, libtcod.COLCTRL_STOP))
+	else:
+		libtcod.console_print(game.ps, 0, 13, 'Int: ' + str(game.player.intelligence) + ' ')
+
+	if game.player.wisdom > game.player.wisdom:
+		libtcod.console_print(game.ps, 0, 14, 'Wis: %c%i%c ' % (libtcod.COLCTRL_1, game.player.wisdom, libtcod.COLCTRL_STOP))
+	elif game.player.wisdom < game.player.wisdom:
+		libtcod.console_print(game.ps, 0, 14, 'Wis: %c%i%c ' % (libtcod.COLCTRL_2, game.player.wisdom, libtcod.COLCTRL_STOP))
+	else:
+		libtcod.console_print(game.ps, 0, 14, 'Wis: ' + str(game.player.wisdom) + ' ')
+
+	if game.player.endurance > game.player.endurance:
+		libtcod.console_print(game.ps, 0, 15, 'End: %c%i%c ' % (libtcod.COLCTRL_1, game.player.endurance, libtcod.COLCTRL_STOP))
+	elif game.player.endurance < game.player.endurance:
+		libtcod.console_print(game.ps, 0, 15, 'End: %c%i%c ' % (libtcod.COLCTRL_2, game.player.endurance, libtcod.COLCTRL_STOP))
+	else:
+		libtcod.console_print(game.ps, 0, 15, 'End: ' + str(game.player.endurance) + ' ')
+
 	libtcod.console_print(game.ps, 0, 16, 'Karma: ' + str(game.player.karma) + ' ')
 	libtcod.console_print(game.ps, 0, game.PLAYER_STATS_HEIGHT - 2, 'Turns: ' + str(game.turns) + ' ')
 	libtcod.console_print(game.ps, 0, 18, 'Active skills: ')

@@ -53,7 +53,7 @@ def box(header, footer, startx, starty, width, height, contents, default=0, inpu
 	if startx == 'center_screenx':
 		startx = (game.SCREEN_WIDTH - (len(max(contents, key=len)) + 16)) / 2
 	if startx == 'center_mapx':
-		startx = game.PLAYER_STATS_WIDTH + ((game.MAP_WIDTH - 56) / 2)
+		startx = game.PLAYER_STATS_WIDTH + ((game.MAP_WIDTH - (width - 4)) / 2)
 	if starty == 'center_screeny':
 		starty = (game.SCREEN_HEIGHT - (len(contents) + 4)) / 2
 	if starty == 'center_mapy':

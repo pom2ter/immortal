@@ -4,6 +4,7 @@ suffix_type " of minor healing" {
 	level = 1
 	dices = "1d8+1"
 	heal_health
+	potion
 }
 
 suffix_type " of major healing" {
@@ -12,6 +13,7 @@ suffix_type " of major healing" {
 	level = 3
 	dices = "2d12+1"
 	heal_health
+	potion
 }
 
 suffix_type " of minor mana" {
@@ -20,6 +22,7 @@ suffix_type " of minor mana" {
 	level = 1
 	dices = "1d8+1"
 	heal_mana
+	potion
 }
 
 suffix_type " of minor stamina" {
@@ -28,6 +31,7 @@ suffix_type " of minor stamina" {
 	level = 1
 	dices = "1d8+1"
 	heal_stamina
+	potion
 }
 
 suffix_type " of protection" {
@@ -35,6 +39,8 @@ suffix_type " of protection" {
 	icon_color = "115,255,255"
 	level = 3
 	protect
+	cloak
+	ring
 }
 
 suffix_type " of regeneration" {
@@ -42,4 +48,249 @@ suffix_type " of regeneration" {
 	icon_color = "255,0,0"
 	level = 3
 	regenerate
+	cloak
+	ring
+}
+
+suffix_type " of fire resistance" {
+	cost_multiplier = 6.0
+	icon_color = "255,0,0"
+	level = 5
+	resist_fire
+	cloak
+	ring
+}
+
+suffix_type " of ice resistance" {
+	cost_multiplier = 6.0
+	icon_color = "0,255,255"
+	level = 5
+	resist_ice
+	cloak
+	ring
+}
+
+suffix_type " of poison resistance" {
+	cost_multiplier = 6.0
+	icon_color = "0,255,0"
+	level = 5
+	resist_poison
+	cloak
+	ring
+}
+
+suffix_type " of health" {
+	cost_multiplier = 6.0
+	icon_color = "255,255,255"
+	level = 5
+	health_bonus1
+	armor
+	shield
+	weapon
+	ring
+}
+
+suffix_type " of mana" {
+	cost_multiplier = 6.0
+	icon_color = "255,255,255"
+	level = 5
+	mana_bonus1
+	armor
+	shield
+	weapon
+	ring
+}
+
+suffix_type " of stamina" {
+	cost_multiplier = 6.0
+	icon_color = "255,255,255"
+	level = 5
+	stamina_bonus1
+	armor
+	shield
+	weapon
+	ring
+}
+
+suffix_type " of strength" {
+	cost_multiplier = 5.0
+	icon_color = "255,255,255"
+	level = 3
+	bonus = 1
+	str_bonus
+	armor
+	shield
+	weapon
+	ring
+}
+
+suffix_type " of the giant" {
+	cost_multiplier = 10.0
+	icon_color = "255,255,255"
+	level = 8
+	bonus = 2
+	str_bonus
+	armor
+	shield
+	weapon
+	ring
+}
+
+suffix_type " of the titan" {
+	cost_multiplier = 15.0
+	icon_color = "255,255,255"
+	level = 13
+	bonus = 3
+	str_bonus
+	armor
+	shield
+	weapon
+	ring
+}
+
+suffix_type " of dexterity" {
+	cost_multiplier = 5.0
+	icon_color = "255,255,255"
+	level = 4
+	bonus = 1
+	dex_bonus
+	armor
+	shield
+	weapon
+	ring
+}
+
+suffix_type " of nimbleness" {
+	cost_multiplier = 10.0
+	icon_color = "255,255,255"
+	level = 9
+	bonus = 2
+	dex_bonus
+	armor
+	shield
+	weapon
+	ring
+}
+
+suffix_type " of quickness" {
+	cost_multiplier = 15.0
+	icon_color = "255,255,255"
+	level = 14
+	bonus = 3
+	dex_bonus
+	armor
+	shield
+	weapon
+	ring
+}
+
+suffix_type " of intelligence" {
+	cost_multiplier = 5.0
+	icon_color = "255,255,255"
+	level = 5
+	bonus = 1
+	int_bonus
+	armor
+	robe
+	shield
+	weapon
+	ring
+}
+
+suffix_type " of comprehension" {
+	cost_multiplier = 10.0
+	icon_color = "255,255,255"
+	level = 10
+	bonus = 2
+	int_bonus
+	armor
+	robe
+	shield
+	weapon
+	ring
+}
+
+suffix_type " of brilliance" {
+	cost_multiplier = 15.0
+	icon_color = "255,255,255"
+	level = 15
+	bonus = 3
+	int_bonus
+	armor
+	robe
+	shield
+	weapon
+	ring
+}
+
+suffix_type " of wisdom" {
+	cost_multiplier = 5.0
+	icon_color = "255,255,255"
+	level = 6
+	bonus = 1
+	wis_bonus
+	armor
+	shield
+	weapon
+	ring
+}
+
+suffix_type " of knowledge" {
+	cost_multiplier = 10.0
+	icon_color = "255,255,255"
+	level = 11
+	bonus = 2
+	wis_bonus
+	armor
+	shield
+	weapon
+	ring
+}
+
+suffix_type " of enlightenment" {
+	cost_multiplier = 15.0
+	icon_color = "255,255,255"
+	level = 16
+	bonus = 3
+	wis_bonus
+	armor
+	shield
+	weapon
+	ring
+}
+
+suffix_type " of endurance" {
+	cost_multiplier = 5.0
+	icon_color = "255,255,255"
+	level = 7
+	bonus = 1
+	end_bonus
+	armor
+	shield
+	weapon
+	ring
+}
+
+suffix_type " of vitality" {
+	cost_multiplier = 10.0
+	icon_color = "255,255,255"
+	level = 12
+	bonus = 2
+	end_bonus
+	armor
+	shield
+	weapon
+	ring
+}
+
+suffix_type " of fortitude" {
+	cost_multiplier = 15.0
+	icon_color = "255,255,255"
+	level = 17
+	bonus = 3
+	end_bonus
+	armor
+	shield
+	weapon
+	ring
 }

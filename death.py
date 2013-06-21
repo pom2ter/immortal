@@ -82,6 +82,7 @@ def death_screen(quit=False):
 
 # death screen: show a fully indentified inventory
 def death_inventory(scroll):
+	libtcod.console_set_color_control(libtcod.COLCTRL_1, libtcod.gray, libtcod.black)
 	libtcod.console_set_default_foreground(0, libtcod.white)
 	libtcod.console_set_default_background(0, libtcod.black)
 	libtcod.console_clear(0)
@@ -91,7 +92,10 @@ def death_inventory(scroll):
 	libtcod.console_rect(0, 1, 4, game.SCREEN_WIDTH - 2, game.SCREEN_HEIGHT - 10, True, libtcod.BKGND_SET)
 	output = game.player.inventory + game.player.equipment
 	for i in range(min(game.SCREEN_HEIGHT - 10, len(output))):
-		libtcod.console_print(0, 2, i + 4, output[i + scroll].full_name)
+		if output[i + scroll].quality == 0:
+			libtcod.console_print(0, 2, i + 4, '%c%s%c' % (libtcod.COLCTRL_1, output[i + scroll].full_name, libtcod.COLCTRL_STOP))
+		else:
+			libtcod.console_print(0, 2, i + 4, output[i + scroll].full_name)
 	if scroll > 0:
 		libtcod.console_put_char_ex(0, game.SCREEN_WIDTH - 2, 4, chr(24), libtcod.white, libtcod.black)
 	if game.SCREEN_HEIGHT - 10 + scroll < len(output):
@@ -210,6 +214,6 @@ def death_tombstone(quit=False):
 
 # save changes to the highscores
 def save_high_scores():
-	f = open('data/highscores.dat', 'wb')
+	f = open('highscores.dat', 'wb')
 	pickle.dump(game.highscore, f)
 	f.close()

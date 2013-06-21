@@ -151,7 +151,7 @@ item_type "helmet" {
 }
 
 item_type "cape" {
-	type = "armor"
+	type = "cloak"
 	plural = "capes"
 	icon = "["
 	icon_color = "127,127,127"
@@ -164,7 +164,7 @@ item_type "cape" {
 }
 
 item_type "robes" {
-	type = "armor"
+	type = "robe"
 	plural = "robes"
 	icon = "["
 	icon_color = "0,0,255"
@@ -176,9 +176,9 @@ item_type "robes" {
 	armor_body
 }
 
-item_type "leather armor" {
+item_type "armor" {
 	type = "armor"
-	plural = "leather armors"
+	plural = "armors"
 	icon = "["
 	icon_color = "127,127,127"
 	level = 1
@@ -189,22 +189,9 @@ item_type "leather armor" {
 	armor_body
 }
 
-item_type "studded leather armor" {
+item_type "boots" {
 	type = "armor"
-	plural = "studded leather armors"
-	icon = "["
-	icon_color = "127,127,127"
-	level = 2
-	weight = 20.0
-	cost = 25
-	article = "a "
-	equippable
-	armor_body
-}
-
-item_type "leather boots" {
-	type = "armor"
-	plural = "leather boots"
+	plural = "boots"
 	icon = "["
 	icon_color = "127,127,127"
 	level = 1
@@ -215,9 +202,9 @@ item_type "leather boots" {
 	armor_feet
 }
 
-item_type "leather gloves" {
+item_type "gloves" {
 	type = "armor"
-	plural = "leather gloves"
+	plural = "gloves"
 	icon = "["
 	icon_color = "127,127,127"
 	level = 1
@@ -318,6 +305,7 @@ item_type "corpse" {
 	plural = "corpses"
 	icon = "%"
 	icon_color = "127,101,63"
+	level = 1
 	weight = 2.0
 	article = "a "
 	charge = 1
