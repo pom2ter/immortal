@@ -2,7 +2,7 @@ Immortal is a roguelike game made in Python using the libtcod library.
 The goal of the game is to become an immortal by being one of the god's 
 champion.
 
-As of right now (0.3.0) the game is still in alpha stage and more or less
+As of right now (0.3.3) the game is still in alpha stage and more or less
 unplayable. Binary executables will be available with any public releases but
 for now if you want to play the game from the sources, make sure you have
 Python v2.7 32-bit installed.
