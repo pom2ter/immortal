@@ -31,10 +31,10 @@ class Monster(object):
 		defender = util.roll_dice(1, 50)
 		if (attacker != 1 and defender != 50 and ((attacker + self.attack_rating) >= (defender + game.player.defense_rating()) or attacker == 50 or defender == 1)) or game.player.is_disabled():
 			damage = self.damage.roll_dice()
-			game.message.new(self.article.capitalize() + self.name + ' hits you for ' + str(damage) + ' pts of damage', game.turns, libtcod.light_red)
+			game.message.new(self.article.capitalize() + self.get_name() + ' hits you for ' + str(damage) + ' pts of damage', game.turns, libtcod.light_red)
 			game.player.take_damage(damage, self.article + self.name)
 		else:
-			game.message.new(self.article.capitalize() + self.name + ' attacks you but misses.', game.turns)
+			game.message.new(self.article.capitalize() + self.get_name() + ' attacks you but misses.', game.turns)
 
 	# monster becomes hostile
 	def becomes_hostile(self):
@@ -63,7 +63,7 @@ class Monster(object):
 			dice = util.roll_dice(1, 5)
 			if dice == 5:
 				if libtcod.map_is_in_fov(game.fov_map, x, y):
-					game.message.new('The ' + self.name + 'woke up.', game.turns)
+					game.message.new('The ' + self.get_name() + 'woke up.', game.turns)
 				self.flags.remove('sleep')
 
 	# determines monster distance to player
@@ -71,6 +71,17 @@ class Monster(object):
 		dx = player.x - x
 		dy = player.y - y
 		return math.sqrt(dx ** 2 + dy ** 2)
+
+	# return monster's name base of identity level
+	def get_name(self, article=False):
+		string = ''
+		if article:
+			string = self.article
+		if "identified" in self.flags:
+			string += self.name
+		else:
+			string += self.unidentified_name + '(?)'
+		return string
 
 	# returns true if monster is not touching the ground
 	def is_above_ground(self):
@@ -93,6 +104,12 @@ class Monster(object):
 	# returns true if monster is hostile
 	def is_hostile(self):
 		if 'ai_hostile' in self.flags:
+			return True
+		return False
+
+	# return true if monster is identified
+	def is_identified(self):
+		if 'identified' in self.flags:
 			return True
 		return False
 
@@ -132,7 +149,7 @@ class Monster(object):
 		if source == 'player':
 			if "sleep" in self.flags:
 				if libtcod.map_is_in_fov(game.fov_map, x, y):
-					game.message.new('The ' + self.name + 'woke up.', game.turns)
+					game.message.new('The ' + self.get_name() + 'woke up.', game.turns)
 				self.flags.remove('sleep')
 
 	# monster takes its turn
@@ -186,7 +203,7 @@ class MonsterList(object):
 		libtcod.struct_add_property(monster_type_struct, 'icon_color', libtcod.TYPE_COLOR, True)
 		libtcod.struct_add_property(monster_type_struct, 'dark_color', libtcod.TYPE_COLOR, True)
 		libtcod.struct_add_property(monster_type_struct, 'level', libtcod.TYPE_INT, True)
-		libtcod.struct_add_property(monster_type_struct, 'health', libtcod.TYPE_INT, True)
+		libtcod.struct_add_property(monster_type_struct, 'health', libtcod.TYPE_DICE, True)
 		libtcod.struct_add_property(monster_type_struct, 'attack_rating', libtcod.TYPE_INT, True)
 		libtcod.struct_add_property(monster_type_struct, 'defense_rating', libtcod.TYPE_INT, True)
 		libtcod.struct_add_property(monster_type_struct, 'damage', libtcod.TYPE_DICE, True)
@@ -197,7 +214,9 @@ class MonsterList(object):
 		libtcod.struct_add_flag(monster_type_struct, 'ai_friendly')
 		libtcod.struct_add_flag(monster_type_struct, 'ai_neutral')
 		libtcod.struct_add_flag(monster_type_struct, 'ai_hostile')
+		libtcod.struct_add_flag(monster_type_struct, 'identified')
 		libtcod.struct_add_flag(monster_type_struct, 'flying')
+		libtcod.struct_add_flag(monster_type_struct, 'aquatic')
 		libtcod.parser_run(parser, 'data/monsters.txt', MonsterListener())
 
 	# add monster to the list
@@ -233,7 +252,7 @@ class MonsterList(object):
 
 class MonsterListener(object):
 	def new_struct(self, struct, name):
-		self.temp_monster = Monster('', '', '', '', [0, 0, 0], [0, 0, 0], 0, 0, item.Dice(0, 0, 0, 0), '', 0, 0, 0, 0, 0, [])
+		self.temp_monster = Monster('', '', '', '', [0, 0, 0], [0, 0, 0], 0, item.Dice(0, 0, 0, 0), item.Dice(0, 0, 0, 0), '', 0, 0, 0, 0, 0, [])
 		self.temp_monster.name = name
 		return True
 
@@ -255,6 +274,11 @@ class MonsterListener(object):
 			self.temp_monster.damage.nb_faces = value.nb_faces
 			self.temp_monster.damage.multiplier = value.multiplier
 			self.temp_monster.damage.bonus = value.addsub
+		elif name == 'health':
+			self.temp_monster.health.nb_dices = value.nb_dices
+			self.temp_monster.health.nb_faces = value.nb_faces
+			self.temp_monster.health.multiplier = value.multiplier
+			self.temp_monster.health.bonus = value.addsub
 		else:
 			if name == 'type':
 				self.temp_monster.type = value
@@ -262,8 +286,6 @@ class MonsterListener(object):
 				self.temp_monster.icon = value
 			if name == 'level':
 				self.temp_monster.level = value
-			if name == 'health':
-				self.temp_monster.health = value
 			if name == 'attack_rating':
 				self.temp_monster.attack_rating = value
 			if name == 'defense_rating':
@@ -282,6 +304,8 @@ class MonsterListener(object):
 
 	def end_struct(self, struct, name):
 		self.temp_monster.dark_color = libtcod.color_lerp(libtcod.black, self.temp_monster.color, 0.3)
+		if self.temp_monster.level == 1:
+			self.temp_monster.flags.append('identified')
 		game.monsters.add_to_list(self.temp_monster)
 		return True
 

@@ -117,7 +117,7 @@ prefix_type "steel " {
 prefix_type "mithril " {
 	type = "material"
 	cost_multiplier = 5.0
-	level = 7
+	level = 8
 	quality = 5
 	armor
 	shield
@@ -128,19 +128,8 @@ prefix_type "mithril " {
 prefix_type "elven " {
 	type = "material"
 	cost_multiplier = 6.0
-	level = 9
+	level = 8
 	quality = 6
-	armor
-	shield
-	weapon
-	ring
-}
-
-prefix_type "dwarven " {
-	type = "material"
-	cost_multiplier = 7.0
-	level = 11
-	quality = 7
 	armor
 	shield
 	weapon
@@ -149,8 +138,19 @@ prefix_type "dwarven " {
 
 prefix_type "adamantium " {
 	type = "material"
+	cost_multiplier = 7.0
+	level = 10
+	quality = 7
+	armor
+	shield
+	weapon
+	ring
+}
+
+prefix_type "dwarven " {
+	type = "material"
 	cost_multiplier = 8.0
-	level = 13
+	level = 12
 	quality = 8
 	armor
 	shield
@@ -161,7 +161,7 @@ prefix_type "adamantium " {
 prefix_type "diamond " {
 	type = "material"
 	cost_multiplier = 9.0
-	level = 15
+	level = 14
 	quality = 9
 	armor
 	shield
@@ -172,7 +172,7 @@ prefix_type "diamond " {
 prefix_type "dragon " {
 	type = "material"
 	cost_multiplier = 10.0
-	level = 17
+	level = 16
 	quality = 10
 	armor
 	shield
@@ -183,8 +183,19 @@ prefix_type "dragon " {
 prefix_type "divine " {
 	type = "material"
 	cost_multiplier = 11.0
-	level = 19
+	level = 18
 	quality = 11
+	armor
+	shield
+	weapon
+	ring
+}
+
+prefix_type "ancient " {
+	type = "material"
+	cost_multiplier = 12.0
+	level = 20
+	quality = 12
 	armor
 	shield
 	weapon

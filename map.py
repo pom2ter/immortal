@@ -5,6 +5,10 @@ import game
 import util
 
 
+#########################################
+# Map Class
+#########################################
+
 class Map(object):
 	def __init__(self, name, abbr, id, level, tlevel=1, mw=130, mh=60, typ='Dungeon', empty=False):
 		self.location_name = name
@@ -419,6 +423,10 @@ class Map(object):
 				self.place_objects()
 
 
+#########################################
+# Tile Class
+#########################################
+
 class Tile(object):
 	def __init__(self, icon, name, color, color_low, dark_color, back_color_high, back_color_low, dark_back_color, blocked, block_sight=None, article=None, flags=None, typ=None):
 		self.blocked = blocked
@@ -560,6 +568,10 @@ class TileListener(object):
 		return True
 
 
+#########################################
+# Rect Class
+#########################################
+
 class Rect(object):
 	# a rectangle on the map. used to characterize a room.
 	def __init__(self, x, y, w, h):
@@ -580,6 +592,10 @@ class Rect(object):
 				self.y1 <= other.y2 and self.y2 >= other.y1)
 
 
+#########################################
+# Object Class
+#########################################
+
 class Object(object):
 	# this is a generic object: the player, a monster, an item, the stairs...
 	# it's always represented by a character on screen.
@@ -596,6 +612,7 @@ class Object(object):
 		self.item = item
 		if entity is not None:
 			self.entity = copy.deepcopy(entity)
+			self.entity.health = self.entity.health.roll_dice()
 		else:
 			self.entity = entity
 

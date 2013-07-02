@@ -76,7 +76,8 @@ class Player(object):
 		self.skills = [Skill('Sword', 'Combat', 0, 0), Skill('Axe', 'Combat', 0, 0), Skill('Mace', 'Combat', 0, 0),
 						Skill('Dagger', 'Combat', 0, 0), Skill('Polearm', 'Combat', 0, 0), Skill('Staff', 'Combat', 0, 0),
 						Skill('Bow', 'Combat', 0, 0), Skill('Missile', 'Combat', 0, 0), Skill('Hands', 'Combat', 0, 0),
-						Skill('Detect Traps', 'Physical', 0, 0, True, 'detect_trap'), Skill('Disarm Traps', 'Physical', 0, 0, True), Skill('Swimming', 'Physical', 0, 0)]
+						Skill('Detect Traps', 'Physical', 0, 0, True, 'detect_trap'), Skill('Disarm Traps', 'Physical', 0, 0, True), Skill('Swimming', 'Physical', 0, 0),
+						Skill('Artifacts', 'Academic', 0, 0, True), Skill('Mythology', 'Academic', 0, 0)]
 		self.flags = []
 
 	# attack an enemy
@@ -94,17 +95,17 @@ class Player(object):
 					damage += self.damage_modifiers(self.equipment[i])
 			if damage == 0:
 				damage = util.roll_dice(1, 4)
-			game.message.new('You hit ' + target.entity.article + target.entity.name + ' for ' + str(damage) + ' pts of damage.', game.turns, libtcod.light_yellow)
+			game.message.new('You hit ' + target.entity.get_name(True) + ' for ' + str(damage) + ' pts of damage.', game.turns, libtcod.light_yellow)
 			target.entity.take_damage(target.x, target.y, damage, 'player')
 			if target.entity.is_dead():
-				game.message.new('The ' + target.entity.name + ' dies!', game.turns, libtcod.light_orange)
+				game.message.new('The ' + target.entity.get_name() + ' dies!', game.turns, libtcod.light_orange)
 				self.gain_xp(target.entity.xp)
 				self.mks += 1
 				target.entity.loot(target.x, target.y)
 				target.delete()
 			self.skills[self.find_weapon_type()].gain_xp(2)
 		else:
-			game.message.new('You missed the ' + target.entity.name + '.', game.turns)
+			game.message.new('You missed the ' + target.entity.get_name() + '.', game.turns)
 			self.skills[self.find_weapon_type()].gain_xp(1)
 		self.stamina -= 1
 		if self.no_stamina():
@@ -195,7 +196,7 @@ class Player(object):
 			game.message.new('You drop ' + str(qty) + ' ' + obj.item.get_plural_name(), game.turns, libtcod.red)
 		if game.current_map.tile[game.char.x][game.char.y]['type'] == 'trap':
 			if self.is_above_ground():
-				util.spring_trap(game.char.x, game.char.y, obj.item.article.capitalize() + obj.item.name)
+				util.spring_trap(game.char.x, game.char.y, obj.item.article.capitalize() + obj.item.get_name())
 			else:
 				util.spring_trap(game.char.x, game.char.y)
 		util.add_turn()
@@ -785,8 +786,8 @@ def starting_stats():
 		game.player.base_health = libtcod.random_get_int(game.rnd, 2, FIGHTER_HP_GAIN)
 		game.player.base_mana = libtcod.random_get_int(game.rnd, 2, FIGHTER_MP_GAIN)
 		game.player.base_stamina = libtcod.random_get_int(game.rnd, 2, FIGHTER_STAMINA_GAIN)
-		game.player.inventory.append(game.baseitems.create_item('uncursed ', '', 'short sword', ''))
-		game.player.inventory.append(game.baseitems.create_item('uncursed ', 'leather ', 'armor', ''))
+		game.player.inventory.append(game.baseitems.create_item('uncursed ', '', 'short sword', '', 'identified'))
+		game.player.inventory.append(game.baseitems.create_item('uncursed ', 'leather ', 'armor', '', 'identified'))
 		game.player.skills[game.player.find_skill('Sword')].set_level(20)
 		game.player.skills[game.player.find_skill('Axe')].set_level(20)
 		game.player.skills[game.player.find_skill('Mace')].set_level(10)
@@ -798,8 +799,8 @@ def starting_stats():
 		game.player.base_health = libtcod.random_get_int(game.rnd, 2, ROGUE_HP_GAIN)
 		game.player.base_mana = libtcod.random_get_int(game.rnd, 2, ROGUE_MP_GAIN)
 		game.player.base_stamina = libtcod.random_get_int(game.rnd, 2, ROGUE_STAMINA_GAIN)
-		game.player.inventory.append(game.baseitems.create_item('uncursed ', '', 'dagger', ''))
-		game.player.inventory.append(game.baseitems.create_item('uncursed ', 'leather ', 'armor', ''))
+		game.player.inventory.append(game.baseitems.create_item('uncursed ', '', 'dagger', '', 'identified'))
+		game.player.inventory.append(game.baseitems.create_item('uncursed ', 'leather ', 'armor', '', 'identified'))
 		game.player.skills[game.player.find_skill('Dagger')].set_level(20)
 		game.player.skills[game.player.find_skill('Bow')].set_level(5)
 		game.player.skills[game.player.find_skill('Missile')].set_level(5)
@@ -811,8 +812,8 @@ def starting_stats():
 		game.player.base_health = libtcod.random_get_int(game.rnd, 2, PRIEST_HP_GAIN)
 		game.player.base_mana = libtcod.random_get_int(game.rnd, 2, PRIEST_MP_GAIN)
 		game.player.base_stamina = libtcod.random_get_int(game.rnd, 2, PRIEST_STAMINA_GAIN)
-		game.player.inventory.append(game.baseitems.create_item('uncursed ', '', 'mace', ''))
-		game.player.inventory.append(game.baseitems.create_item('uncursed ', 'leather ', 'armor', ''))
+		game.player.inventory.append(game.baseitems.create_item('uncursed ', '', 'mace', '', 'identified'))
+		game.player.inventory.append(game.baseitems.create_item('uncursed ', 'leather ', 'armor', '', 'identified'))
 		game.player.skills[game.player.find_skill('Sword')].set_level(5)
 		game.player.skills[game.player.find_skill('Mace')].set_level(20)
 		game.player.skills[game.player.find_skill('Dagger')].set_level(5)
@@ -822,20 +823,20 @@ def starting_stats():
 		game.player.base_health = libtcod.random_get_int(game.rnd, 2, MAGE_HP_GAIN)
 		game.player.base_mana = libtcod.random_get_int(game.rnd, 2, MAGE_MP_GAIN)
 		game.player.base_stamina = libtcod.random_get_int(game.rnd, 2, MAGE_STAMINA_GAIN)
-		game.player.inventory.append(game.baseitems.create_item('uncursed ', '', 'quarterstaff', ''))
-		game.player.inventory.append(game.baseitems.create_item('uncursed ', '', 'robes', ''))
+		game.player.inventory.append(game.baseitems.create_item('uncursed ', '', 'quarterstaff', '', 'identified'))
+		game.player.inventory.append(game.baseitems.create_item('uncursed ', '', 'robes', '', 'identified'))
 		game.player.skills[game.player.find_skill('Staff')].set_level(20)
 
 	if game.player.profession == 'Explorer':
 		game.player.base_health = libtcod.random_get_int(game.rnd, 2, EXPLORER_HP_GAIN)
 		game.player.base_mana = libtcod.random_get_int(game.rnd, 2, EXPLORER_MP_GAIN)
 		game.player.base_stamina = libtcod.random_get_int(game.rnd, 2, EXPLORER_STAMINA_GAIN)
-		game.player.inventory.append(game.baseitems.create_item('uncursed ', '', 'dagger', ''))
-		game.player.inventory.append(game.baseitems.create_item('uncursed ', 'leather ', 'armor', ''))
+		game.player.inventory.append(game.baseitems.create_item('uncursed ', '', 'dagger', '', 'identified'))
+		game.player.inventory.append(game.baseitems.create_item('uncursed ', 'leather ', 'armor', '', 'identified'))
 
-	game.player.inventory.append(game.baseitems.create_item('uncursed ', '', 'torch', ''))
-	game.player.inventory.append(game.baseitems.create_item('uncursed ', '', 'torch', ''))
-	game.player.inventory.append(game.baseitems.create_item('uncursed ', '', 'ration', ''))
+	game.player.inventory.append(game.baseitems.create_item('uncursed ', '', 'torch', '', 'identified'))
+	game.player.inventory.append(game.baseitems.create_item('uncursed ', '', 'torch', '', 'identified'))
+	game.player.inventory.append(game.baseitems.create_item('uncursed ', '', 'ration', '', 'identified'))
 	game.player.inventory.append(game.baseitems.create_item('uncursed ', 'exceptional ', 'quarterstaff', ' of minor healing'))
 
 	game.player.strength = game.player.base_strength

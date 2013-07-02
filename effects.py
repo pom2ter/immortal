@@ -39,7 +39,7 @@ def check_active_effects():
 			if 'type' in game.current_map.tile[obj.x][obj.y]:
 				if game.current_map.tile[obj.x][obj.y]['type'] == 'poison_gas':
 					if libtcod.map_is_in_fov(game.fov_map, obj.x, obj.y):
-						game.message.new(obj.entity.article.capitalize() + obj.entity.name + ' step into poisonous gas!', game.turns)
+						game.message.new(obj.entity.article.capitalize() + obj.entity.get_name() + ' step into poisonous gas!', game.turns)
 					if 'poison' not in obj.entity.flags:
 						dice = util.roll_dice(1, 3)
 						if dice == 3:
@@ -47,11 +47,11 @@ def check_active_effects():
 				if game.current_map.tile[obj.x][obj.y]['type'] == 'sleep_gas':
 					if 'sleep' not in obj.entity.flags:
 						if libtcod.map_is_in_fov(game.fov_map, obj.x, obj.y):
-							game.message.new(obj.entity.article.capitalize() + obj.entity.name + ' step into sleeping gas!', game.turns)
+							game.message.new(obj.entity.article.capitalize() + obj.entity.get_name() + ' step into sleeping gas!', game.turns)
 						dice = util.roll_dice(1, 3)
 						if dice == 3:
 							if libtcod.map_is_in_fov(game.fov_map, obj.x, obj.y):
-								game.message.new(obj.entity.article.capitalize() + obj.entity.name + ' falls asleep!', game.turns)
+								game.message.new(obj.entity.article.capitalize() + obj.entity.get_name() + ' falls asleep!', game.turns)
 							obj.entity.flags.append('sleep')
 
 
@@ -83,7 +83,7 @@ def fireball(x, y, radius):
 				damage = util.roll_dice(1, 10)
 				obj.entity.take_damage(obj.x, obj.y, damage, 'a fireball')
 				if libtcod.map_is_in_fov(game.fov_map, obj.x, obj.y):
-					game.message.new(obj.entity.article.capitalize() + obj.entity.name + ' is hit by a fireball for ' + str(damage) + ' pts of damage!', game.turns)
+					game.message.new(obj.entity.article.capitalize() + obj.entity.get_name() + ' is hit by a fireball for ' + str(damage) + ' pts of damage!', game.turns)
 				elif not obj.entity.is_dead():
 					game.message.new('You hear a scream.', game.turns)
 
@@ -108,7 +108,7 @@ def poison_gas(x, y, radius, duration):
 										game.player.flags.append('poison')
 							else:
 								if libtcod.map_is_in_fov(game.fov_map, obj.x, obj.y):
-									game.message.new(obj.entity.article.capitalize() + obj.entity.name + ' is caught in a poisonous cloud!', game.turns)
+									game.message.new(obj.entity.article.capitalize() + obj.entity.get_name() + ' is caught in a poisonous cloud!', game.turns)
 								if 'poison' not in obj.entity.flags:
 									dice = util.roll_dice(1, 3)
 									if dice == 3:
@@ -135,12 +135,12 @@ def sleeping_gas(x, y, radius, duration):
 										game.player.flags.append('sleep')
 							else:
 								if libtcod.map_is_in_fov(game.fov_map, obj.x, obj.y):
-									game.message.new(obj.entity.article.capitalize() + obj.entity.name + ' is caught in a sleeping cloud!', game.turns)
+									game.message.new(obj.entity.article.capitalize() + obj.entity.get_name() + ' is caught in a sleeping cloud!', game.turns)
 								if 'sleep' not in obj.entity.flags:
 									dice = util.roll_dice(1, 3)
 									if dice == 3:
 										if libtcod.map_is_in_fov(game.fov_map, obj.x, obj.y):
-											game.message.new(obj.entity.article.capitalize() + obj.entity.name + ' falls asleep!', game.turns)
+											game.message.new(obj.entity.article.capitalize() + obj.entity.get_name() + ' falls asleep!', game.turns)
 										obj.entity.flags.append('sleep')
 
 

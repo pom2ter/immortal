@@ -490,12 +490,12 @@ def look():
 					if names[i].item is not None:
 						text += names[i].item.get_name(True)
 					if names[i].entity is not None:
-						text += names[i].entity.article + names[i].entity.name
+						text += names[i].entity.get_name(True)
 			else:
 				if names[0].item is not None:
 					text = prefix + names[0].item.get_name(True)
 				if names[0].entity is not None:
-					text = prefix + names[0].entity.article + names[0].entity.name
+					text = prefix + names[0].entity.get_name(True)
 
 		libtcod.console_set_default_foreground(game.con, libtcod.light_yellow)
 		libtcod.console_rect(game.con, 0, 0, game.MAP_WIDTH, 2, True, libtcod.BKGND_NONE)
@@ -728,6 +728,22 @@ def use_skill():
 	output = [x.name for x in skills]
 	choice = game.messages.box('Use a skill', 'Up/down to select, ENTER to use, ESC to exit', 'center_mapx', 'center_mapy', 60, max(16, len(output) + 4), output, step=2, mouse_exit=True)
 	if choice != -1:
+		if output[choice] == 'Artifacts':
+			output2 = game.player.inventory + game.player.equipment
+			choice2 = game.messages.box('Use skill on which item', 'Up/down to select, ENTER to use, ESC to exit', 'center_mapx', 'center_mapy', 65, max(16, len(output) + 4), output2, inv=True, step=2, mouse_exit=True)
+			if choice2 != -1:
+				if output2[choice2].is_identified():
+					game.message.new('That item is already identified.', game.turns)
+				else:
+					util.add_turn()
+					if output2[choice2].level * 5 > skills[choice].level:
+						game.message.new('Your skill is not high enough to identity that item.', game.turns)
+						skills[choice].gain_xp(1)
+					else:
+						game.message.new('You identify the item!', game.turns)
+						output2[choice2].flags.append('identified')
+						skills[choice].gain_xp(5)
+
 		if output[choice] == 'Detect Traps':
 			skills[choice].active()
 		if output[choice] == 'Disarm Traps':
@@ -822,20 +838,26 @@ def ztats_attributes(con, width, height):
 # character sheet for skills
 def ztats_skills(con, width, height):
 	ztats_box(con, width, height, ' Skills ')
-	skills_c, skills_p = [], []
+	skills_c, skills_p, skills_a = [], [], []
 	for i in game.player.skills:
 		if i.category == 'Combat':
 			skills_c.append(i)
 		if i.category == 'Physical':
 			skills_p.append(i)
-	libtcod.console_print(con, 2, 2, 'Combat Skills')
+		if i.category == 'Academic':
+			skills_a.append(i)
+	libtcod.console_print(con, 2, 2, 'Combat')
 	for i in range(len(skills_c)):
 		libtcod.console_print(con, 2, i + 4, skills_c[i].name)
 		libtcod.console_print(con, 13, i + 4, str(skills_c[i].level))
-	libtcod.console_print(con, 20, 2, 'Physical Skills')
+	libtcod.console_print(con, 20, 2, 'Physical')
 	for i in range(len(skills_p)):
 		libtcod.console_print(con, 20, i + 4, skills_p[i].name)
 		libtcod.console_print(con, 34, i + 4, str(skills_p[i].level))
+	libtcod.console_print(con, 40, 2, 'Academic')
+	for i in range(len(skills_a)):
+		libtcod.console_print(con, 40, i + 4, skills_a[i].name)
+		libtcod.console_print(con, 54, i + 4, str(skills_a[i].level))
 
 
 # character sheet for equipment

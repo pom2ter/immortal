@@ -241,13 +241,13 @@ def get_names_under_mouse():
 				if names[i].item is not None:
 					string += names[i].item.get_name(True)
 				if names[i].entity is not None:
-					string += names[i].entity.article + names[i].entity.name
+					string += names[i].entity.get_name(True)
 			return string
 		else:
 			if names[0].item is not None:
 				return prefix + names[0].item.get_name(True)
 			if names[0].entity is not None:
-				return prefix + names[0].entity.article + names[0].entity.name
+				return prefix + names[0].entity.get_name(True)
 	else:
 		return ''
 
@@ -647,6 +647,14 @@ def render_map():
 	# draw all objects in the map (if in the map viewport), except the player who his drawn last
 	for obj in reversed(game.current_map.objects):
 		if obj.name != 'player' and obj.x in range(game.curx, game.curx + game.MAP_WIDTH) and obj.y in range(game.cury, game.cury + game.MAP_HEIGHT):
+			if obj.entity is not None and game.draw_map:
+				if not obj.entity.is_identified() and libtcod.map_is_in_fov(game.fov_map, obj.x, obj.y):
+					dice = roll_dice(1, 100)
+					skill = game.player.find_skill('Mythology')
+					if (game.player.skills[skill].level * 0.8) + 20 >= dice:
+						obj.entity.flags.append('identified')
+						game.message.new('You properly identify the ' + obj.entity.unidentified_name + ' as ' + obj.entity.get_name(True), game.turns)
+						game.player.skills[skill].gain_xp(3)
 			obj.draw(game.con)
 	game.char.draw(game.con)
 	libtcod.console_blit(game.con, 0, 0, game.MAP_WIDTH, game.MAP_HEIGHT, 0, game.MAP_X, game.MAP_Y)

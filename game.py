@@ -16,7 +16,6 @@ import death
 import debug as dbg
 
 VERSION = 'v0.3.3'
-BUILD = '51'
 
 #size of the gui windows
 MAP_WIDTH = 71
@@ -237,13 +236,13 @@ class Game(object):
 							obj.x, obj.y = obj.entity.take_turn(obj.x, obj.y)
 							if game.current_map.tile[obj.x][obj.y]['type'] == 'trap' and not obj.entity.is_above_ground() and obj.entity.can_move():
 								if game.current_map.is_invisible(obj.x, obj.y):
-									util.spring_trap(obj.x, obj.y, obj.entity.article.capitalize() + obj.entity.name)
+									util.spring_trap(obj.x, obj.y, obj.entity.article.capitalize() + obj.entity.get_name())
 								elif libtcod.map_is_in_fov(game.fov_map, obj.x, obj.y):
-									game.message.new('The ' + obj.entity.name + ' sidestep the ' + game.current_map.tile[obj.x][obj.y]['name'], game.turns)
+									game.message.new('The ' + obj.entity.get_name() + ' sidestep the ' + game.current_map.tile[obj.x][obj.y]['name'], game.turns)
 						obj.entity.check_condition(obj.x, obj.y)
 						if obj.entity.is_dead():
 							if libtcod.map_is_in_fov(game.fov_map, obj.x, obj.y):
-								game.message.new('The ' + obj.entity.name + ' dies!', game.turns, libtcod.light_orange)
+								game.message.new('The ' + obj.entity.get_name() + ' dies!', game.turns, libtcod.light_orange)
 							else:
 								game.message.new('You hear a dying scream.', game.turns)
 							obj.entity.loot(obj.x, obj.y)

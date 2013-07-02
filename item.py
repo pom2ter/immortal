@@ -248,13 +248,15 @@ class BaseItemList(object):
 		return loot
 
 	# create specific item
-	def create_item(self, status, prefix, item, suffix):
+	def create_item(self, status, prefix, item, suffix, flags=None):
 		item = self.get_item(item)
 		if prefix is not None:
 			prefix = game.prefix.get_prefix(prefix)
 		if suffix is not None:
 			suffix = game.suffix.get_suffix(suffix)
 		loot = self.generate_item_stats(status, prefix, item, suffix)
+		if flags is not None:
+			loot.flags.append(flags)
 		return loot
 
 	# generate some item stats
