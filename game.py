@@ -234,7 +234,7 @@ class Game(object):
 					if obj.entity is not None and game_state != 'death':
 						if not obj.entity.is_disabled():
 							obj.x, obj.y = obj.entity.take_turn(obj.x, obj.y)
-							if game.current_map.tile[obj.x][obj.y]['type'] == 'trap' and not obj.entity.is_above_ground() and obj.entity.can_move():
+							if game.current_map.tile[obj.x][obj.y]['type'] == 'trap' and not obj.entity.is_above_ground() and obj.entity.can_move(obj.x, obj.y):
 								if game.current_map.is_invisible(obj.x, obj.y):
 									util.spring_trap(obj.x, obj.y, obj.entity.article.capitalize() + obj.entity.get_name())
 								elif libtcod.map_is_in_fov(game.fov_map, obj.x, obj.y):

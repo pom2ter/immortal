@@ -197,20 +197,6 @@ def find_map_position(mapposx, mapposy):
 	return char
 
 
-# change fov radius base on time of day
-def fov_radius():
-	game.FOV_RADIUS = 9
-	if game.gametime.hour == 20:
-		game.FOV_RADIUS = 9 - (game.gametime.minute / 10)
-	if game.gametime.hour == 6:
-		game.FOV_RADIUS = 3 + (game.gametime.minute / 10)
-	if game.gametime.hour >= 21 or game.gametime.hour < 6 or game.current_map.location_id != 0:
-		game.FOV_RADIUS = 3
-	if game.fov_torch:
-		if game.FOV_RADIUS < game.TORCH_RADIUS:
-			game.FOV_RADIUS = game.TORCH_RADIUS
-
-
 # return a string with the names of all objects under the mouse
 def get_names_under_mouse():
 	(x, y) = (game.mouse.cx - game.MAP_X, game.mouse.cy - 1)
@@ -590,6 +576,20 @@ def find_map_viewport():
 			game.cury = game.current_map.map_height - game.MAP_HEIGHT
 
 
+# change fov radius base on time of day
+def fov_radius():
+	game.FOV_RADIUS = 9
+	if game.gametime.hour == 20:
+		game.FOV_RADIUS = 9 - (game.gametime.minute / 10)
+	if game.gametime.hour == 6:
+		game.FOV_RADIUS = 3 + (game.gametime.minute / 10)
+	if game.gametime.hour >= 21 or game.gametime.hour < 6 or game.current_map.location_id != 0:
+		game.FOV_RADIUS = 3
+	if game.fov_torch:
+		if game.FOV_RADIUS < game.TORCH_RADIUS:
+			game.FOV_RADIUS = game.TORCH_RADIUS
+
+
 # master function of the game, everything pass through here on every turn
 def render_map():
 	# recompute FOV if needed (the player moved or something)
@@ -617,7 +617,7 @@ def render_map():
 			py = y + game.cury
 			visible = libtcod.map_is_in_fov(game.fov_map, px, py)
 			if not visible:
-				if game.current_map.is_explored(px, py) and game.draw_map:
+				if game.draw_map and game.current_map.is_explored(px, py):
 					if game.current_map.is_animate(px, py):
 						libtcod.console_put_char_ex(game.con, x, y, game.current_map.tile[px][py]['icon'], game.current_map.tile[px][py]['dark_color'], game.current_map.tile[px][py]['dark_back_color'])
 					else:
@@ -646,16 +646,19 @@ def render_map():
 
 	# draw all objects in the map (if in the map viewport), except the player who his drawn last
 	for obj in reversed(game.current_map.objects):
-		if obj.name != 'player' and obj.x in range(game.curx, game.curx + game.MAP_WIDTH) and obj.y in range(game.cury, game.cury + game.MAP_HEIGHT):
-			if obj.entity is not None and game.draw_map:
-				if not obj.entity.is_identified() and libtcod.map_is_in_fov(game.fov_map, obj.x, obj.y):
+		if obj.x in range(game.curx, game.curx + game.MAP_WIDTH) and obj.y in range(game.cury, game.cury + game.MAP_HEIGHT) and game.current_map.is_explored(obj.x, obj.y) and obj.name != 'player':
+			if game.draw_map and obj.entity is not None:
+				if libtcod.map_is_in_fov(game.fov_map, obj.x, obj.y) and not obj.entity.is_identified():
 					dice = roll_dice(1, 100)
 					skill = game.player.find_skill('Mythology')
 					if (game.player.skills[skill].level * 0.8) + 20 >= dice:
 						obj.entity.flags.append('identified')
 						game.message.new('You properly identify the ' + obj.entity.unidentified_name + ' as ' + obj.entity.get_name(True), game.turns)
 						game.player.skills[skill].gain_xp(3)
-			obj.draw(game.con)
+			if obj.entity is not None and not obj.entity.is_identified():
+				obj.draw(game.con, libtcod.white)
+			else:
+				obj.draw(game.con)
 	game.char.draw(game.con)
 	libtcod.console_blit(game.con, 0, 0, game.MAP_WIDTH, game.MAP_HEIGHT, 0, game.MAP_X, game.MAP_Y)
 	game.draw_map = False

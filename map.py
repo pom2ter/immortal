@@ -296,18 +296,18 @@ class Map(object):
 	def place_monsters(self):
 		x = libtcod.random_get_int(game.rnd, 0, self.map_width - 1)
 		y = libtcod.random_get_int(game.rnd, 0, self.map_height - 1)
-		while (self.is_blocked(x, y) or self.tile[x][y]['name'] in ['deep water', 'very deep water']):
+		while (self.is_blocked(x, y)):
 			x = libtcod.random_get_int(game.rnd, 0, self.map_width - 1)
 			y = libtcod.random_get_int(game.rnd, 0, self.map_height - 1)
 
 		# fetch monster to place base on threat level
 		dice = util.roll_dice(1, 100)
 		if dice <= 80:
-			d = game.monsters.get_monster_by_level(self.threat_level)
+			d = game.monsters.get_monster_by_level(self.threat_level, self.tile[x][y]['name'])
 		elif dice <= 99:
-			d = game.monsters.get_monster_by_level(self.threat_level + 1)
+			d = game.monsters.get_monster_by_level(self.threat_level + 1, self.tile[x][y]['name'])
 		else:
-			d = game.monsters.get_monster_by_level(self.threat_level + 2)
+			d = game.monsters.get_monster_by_level(self.threat_level + 2, self.tile[x][y]['name'])
 		monster = Object(x, y, d.icon, d.name, d.color, blocks=True, entity=d)
 		self.objects.insert(1, monster)
 
@@ -316,7 +316,7 @@ class Map(object):
 		num_monsters = libtcod.random_get_int(game.rnd, self.max_monsters / 5, self.max_monsters)
 		num_items = libtcod.random_get_int(game.rnd, self.max_items / 5, self.max_items)
 		if self.type in ['Sea', 'Ocean']:
-			num_items, num_monsters = 0, 0
+			num_items = 0
 		for i in range(num_monsters):
 			self.place_monsters()
 
@@ -645,11 +645,14 @@ class Object(object):
 		game.current_map.objects.remove(self)
 
 	# draw objects on console only if it's visible to the player
-	def draw(self, con):
+	def draw(self, con, color=None):
 		if libtcod.map_is_in_fov(game.fov_map, self.x, self.y):
-			libtcod.console_set_default_foreground(con, self.color)
+			if color is not None:
+				libtcod.console_set_default_foreground(con, color)
+			else:
+				libtcod.console_set_default_foreground(con, self.color)
 			libtcod.console_put_char(con, self.x - game.curx, self.y - game.cury, self.char, libtcod.BKGND_NONE)
-		elif game.current_map.is_explored(self.x, self.y) and self.can_be_pickup:
+		elif self.can_be_pickup:
 			libtcod.console_set_default_foreground(con, self.item.dark_color)
 			libtcod.console_put_char(con, self.x - game.curx, self.y - game.cury, self.char, libtcod.BKGND_NONE)
 
