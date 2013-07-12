@@ -684,6 +684,15 @@ def load_old_maps(did, dlevel):
 	game.rnd = libtcod.random_new()
 	for j in range(len(coord)):
 		generate = True
+		if j in [0, 3, 5]:
+			if coord[j] % game.WORLDMAP_WIDTH == game.WORLDMAP_WIDTH - 1:
+				coord[j] = coord[j] + game.WORLDMAP_WIDTH
+		if j in [2, 4, 7]:
+			if coord[j] % game.WORLDMAP_WIDTH == 0:
+				coord[j] = coord[j] - game.WORLDMAP_WIDTH
+		if coord[j] not in range(game.WORLDMAP_WIDTH * game.WORLDMAP_HEIGHT):
+			coord[j] = abs((game.WORLDMAP_WIDTH * game.WORLDMAP_HEIGHT) - abs(coord[j]))
+
 		for i in xrange(len(game.old_maps)):
 			if game.old_maps[i].location_id == did and game.old_maps[i].location_level == coord[j]:
 				temp_map = game.old_maps[i]

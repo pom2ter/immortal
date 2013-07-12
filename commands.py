@@ -173,14 +173,16 @@ def player_move(dx, dy):
 				game.player.flags.remove('swimming')
 
 			if game.current_map.location_id == 0:
-				coordx = [-1, 0, 1]
-				coordy = [-(game.WORLDMAP_WIDTH), 0, game.WORLDMAP_WIDTH]
 				px = game.current_map.map_width / 3
 				py = game.current_map.map_height / 3
 				if (game.char.y / py) == 0 or (game.char.x / px) == 0 or (game.char.y / py) == 2 or (game.char.x / px) == 2:
-					level = game.current_map.location_level + coordx[game.char.x / px] + coordy[game.char.y / py]
 					game.worldmap.player_positionx += dx
 					game.worldmap.player_positiony += dy
+					if game.worldmap.player_positionx not in range(game.WORLDMAP_WIDTH):
+						game.worldmap.player_positionx = game.WORLDMAP_WIDTH - abs(game.worldmap.player_positionx)
+					if game.worldmap.player_positiony not in range(game.WORLDMAP_HEIGHT):
+						game.worldmap.player_positiony = game.WORLDMAP_HEIGHT - abs(game.worldmap.player_positiony)
+					level = (game.worldmap.player_positiony * game.WORLDMAP_WIDTH) + game.worldmap.player_positionx
 					map.change_maps(0, level)
 			util.items_at_feet()
 		game.fov_recompute = True

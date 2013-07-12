@@ -102,6 +102,7 @@ draw_map = True
 # scrolling, lockpicks, chest
 # burdened, food, money
 # curse, bless
+# apprentice, journeyman, adept, master
 
 terrain = [{'name': 'Mountain Peak', 'type': 'dirt', 'elevation': 0.950}, {'name': 'Mountains', 'type': 'dirt', 'elevation': 0.850},
 		{'name': 'Hills', 'type': 'dirt', 'elevation': 0.700}, {'name': 'Forest', 'type': 'grass', 'elevation': 0.250},

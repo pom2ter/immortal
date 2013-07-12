@@ -35,8 +35,7 @@ def add_turn():
 	if 'detect_trap' in game.player.flags:
 		game.gametime.update(1)
 		skill = game.player.find_skill('Detect Traps')
-		dice = libtcod.random_get_int(game.rnd, 0, 200)
-		if game.player.skills[skill].level >= dice:
+		if game.player.skills[skill].level >= libtcod.random_get_int(game.rnd, 0, 200):
 			if len(game.traps) > 0:
 				dice = libtcod.random_get_int(game.rnd, 0, len(game.traps) - 1)
 				for i, (x, y) in enumerate(game.traps):
@@ -49,8 +48,7 @@ def add_turn():
 			else:
 				game.player.skills[skill].gain_xp(1)
 		else:
-			dice = libtcod.random_get_int(game.rnd, 0, 100)
-			if game.player.skills[skill].level >= dice:
+			if game.player.skills[skill].level >= libtcod.random_get_int(game.rnd, 0, 100):
 				game.player.skills[skill].gain_xp(1)
 
 
@@ -167,7 +165,6 @@ def change_settings(box, width, height, blitmap=False):
 
 # color fading in/out
 def color_lerp(lerp, descending, base=libtcod.black, light=libtcod.light_blue):
-	color = base
 	if descending:
 		lerp -= 0.001
 		if lerp < 0.4:
@@ -178,7 +175,7 @@ def color_lerp(lerp, descending, base=libtcod.black, light=libtcod.light_blue):
 		if lerp > 1.0:
 			lerp = 1.0
 			descending = True
-	color = libtcod.color_lerp(color, light, lerp)
+	color = libtcod.color_lerp(base, light, lerp)
 	return color, lerp, descending
 
 
@@ -202,7 +199,7 @@ def get_names_under_mouse():
 	(x, y) = (game.mouse.cx - game.MAP_X, game.mouse.cy - 1)
 	px = x + game.curx
 	py = y + game.cury
-	if x in range(game.MAP_WIDTH) and y in range(game.MAP_HEIGHT) and game.current_map.is_explored(px, py):
+	if game.current_map.is_explored(px, py) and x in range(game.MAP_WIDTH) and y in range(game.MAP_HEIGHT):
 		names = [obj for obj in game.current_map.objects if obj.x == px and obj.y == py]
 		prefix = 'you see '
 		if not libtcod.map_is_in_fov(game.fov_map, px, py):
@@ -286,7 +283,7 @@ def loadgen_message():
 # check to see if you can auto-move with mouse
 def mouse_auto_move():
 	for obj in game.current_map.objects:
-		if libtcod.map_is_in_fov(game.fov_map, obj.x, obj.y) and (obj.entity is not None):
+		if libtcod.map_is_in_fov(game.fov_map, obj.x, obj.y) and obj.entity is not None:
 			game.message.new('Auto-move aborted: Monster is near', game.turns)
 			game.mouse_move = False
 			return False
@@ -520,7 +517,7 @@ def render_player_stats_panel():
 	if 'stuck' in game.player.flags:
 		cond += 'Stuck '
 	if 'poison' in game.player.flags:
-		cond += 'Psnd '
+		cond += 'Poisoned '
 	if 'sleep' in game.player.flags:
 		cond += 'Sleep '
 	if 'unconscious' in game.player.flags:
@@ -533,8 +530,7 @@ def render_player_stats_panel():
 # stuff to do: anim should start and end before next anim
 def render_floating_text_animations():
 	for i, (x, y, line, color, turn) in enumerate(reversed(game.hp_anim)):
-		new_color = libtcod.color_lerp(libtcod.black, color, 1 - ((turn / 15) * 0.2))
-		libtcod.console_set_default_foreground(0, new_color)
+		libtcod.console_set_default_foreground(0, libtcod.color_lerp(libtcod.black, color, 1 - ((turn / 15) * 0.2)))
 		libtcod.console_print_ex(0, game.MAP_X + x - game.curx, game.MAP_Y + y - game.cury - (turn / 15), libtcod.BKGND_NONE, libtcod.CENTER, line)
 		game.hp_anim[len(game.hp_anim) - i - 1] = (x, y, line, color, turn + 1)
 		if turn > 60:
@@ -543,10 +539,8 @@ def render_floating_text_animations():
 
 # return new colors for tiles animations
 def render_tiles_animations(x, y, icon, light, dark, lerp):
-	z = libtcod.random_get_int(game.rnd, 1, 70)
-	if z == 70:
-		l = libtcod.random_get_int(game.rnd, 0, 1)
-		if l == 0:
+	if libtcod.random_get_int(game.rnd, 1, 70) == 70:
+		if libtcod.random_get_int(game.rnd, 0, 1) == 0:
 			if lerp >= 0.1:
 				lerp -= 0.1
 			else:
@@ -615,8 +609,7 @@ def render_map():
 		for x in range(game.MAP_WIDTH):
 			px = x + game.curx
 			py = y + game.cury
-			visible = libtcod.map_is_in_fov(game.fov_map, px, py)
-			if not visible:
+			if not libtcod.map_is_in_fov(game.fov_map, px, py):
 				if game.draw_map and game.current_map.is_explored(px, py):
 					if game.current_map.is_animate(px, py):
 						libtcod.console_put_char_ex(game.con, x, y, game.current_map.tile[px][py]['icon'], game.current_map.tile[px][py]['dark_color'], game.current_map.tile[px][py]['dark_back_color'])
@@ -631,7 +624,6 @@ def render_map():
 						libtcod.console_put_char_ex(game.con, x, y, game.current_map.tile[px][py]['icon'], game.current_map.tile[px][py]['color'], game.current_map.tile[px][py]['back_light_color'])
 				else:
 					base = game.current_map.tile[px][py]['back_light_color']
-					light = libtcod.gold
 					r = float(px - game.char.x + dx) * (px - game.char.x + dx) + (py - game.char.y + dy) * (py - game.char.y + dy)
 					if r < game.SQUARED_TORCH_RADIUS:
 						l = (game.SQUARED_TORCH_RADIUS - r) / game.SQUARED_TORCH_RADIUS + di
@@ -639,7 +631,7 @@ def render_map():
 							l = 0.0
 						elif l > 1.0:
 							l = 1.0
-						base = libtcod.color_lerp(base, light, l)
+						base = libtcod.color_lerp(base, libtcod.gold, l)
 					libtcod.console_put_char_ex(game.con, x, y, game.current_map.tile[px][py]['icon'], game.current_map.tile[px][py]['color'], base)
 				if not game.current_map.is_explored(px, py):
 					game.current_map.tile[px][py].update({'explored': True})
@@ -649,9 +641,8 @@ def render_map():
 		if obj.x in range(game.curx, game.curx + game.MAP_WIDTH) and obj.y in range(game.cury, game.cury + game.MAP_HEIGHT) and game.current_map.is_explored(obj.x, obj.y) and obj.name != 'player':
 			if game.draw_map and obj.entity is not None:
 				if libtcod.map_is_in_fov(game.fov_map, obj.x, obj.y) and not obj.entity.is_identified():
-					dice = roll_dice(1, 100)
 					skill = game.player.find_skill('Mythology')
-					if (game.player.skills[skill].level * 0.8) + 20 >= dice:
+					if (game.player.skills[skill].level * 0.8) + 20 >= roll_dice(1, 100):
 						obj.entity.flags.append('identified')
 						game.message.new('You properly identify the ' + obj.entity.unidentified_name + ' as ' + obj.entity.get_name(True), game.turns)
 						game.player.skills[skill].gain_xp(3)
@@ -673,7 +664,7 @@ def render_map():
 
 	# move the player if using mouse
 	if game.mouse_move:
-		if not libtcod.dijkstra_is_empty(game.path_dijk) and mouse_auto_move():
+		if mouse_auto_move() and not libtcod.dijkstra_is_empty(game.path_dijk):
 			game.char.x, game.char.y = libtcod.dijkstra_path_walk(game.path_dijk)
 			game.fov_recompute = True
 			add_turn()

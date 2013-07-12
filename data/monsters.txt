@@ -250,14 +250,18 @@ monster_type "large snake" {
 	type = "reptile"
 	unidentified_name = "snake"
 	icon = "s"
-	icon_color = "0,191,191"
+	icon_color = "103,230,103"
+	icon_color2 = "57,230,57"
+	icon_color3 = "0,204,0"
+	icon_color4 = "38,153,38"
+	icon_color5 = "0,133,0"
 	article = "a "
 	level = 2
 	attack_rating = 5
 	defense_rating = 6
 	health = "2d4"
 	damage = "1d4+1"
-	xp = 6
+	xp = 10
 	ai_neutral
 	land
 }
@@ -266,7 +270,11 @@ monster_type "giant spider" {
 	type = "insect"
 	unidentified_name = "spider"
 	icon = "S"
-	icon_color = "0,0,128"
+	icon_color = "150,126,76"
+	icon_color2 = "150,120,60"
+	icon_color3 = "80,60,20"
+	icon_color4 = "44,38,26"
+	icon_color5 = "30,20,1"
 	article = "a "
 	level = 2
 	attack_rating = 8
@@ -304,14 +312,18 @@ monster_type "hound" {
 	type = "canine"
 	unidentified_name = "dog"
 	icon = "d"
-	icon_color = "191,191,191"
+	icon_color = "255,182,115"
+	icon_color2 = "255,155,64"
+	icon_color3 = "255,122,0"
+	icon_color4 = "191,117,48"
+	icon_color5 = "166,80,0"
 	article = "a "
 	level = 2
 	attack_rating = 7
 	defense_rating = 7
 	health = "2d4"
 	damage = "1d4+1"
-	xp = 6
+	xp = 10
 	weight = 50
 	corpse = 15
 	ai_neutral
@@ -322,7 +334,11 @@ monster_type "goblin" {
 	type = "humanoid"
 	unidentified_name = "goblin"
 	icon = "g"
-	icon_color = "0,191,0"
+	icon_color = "100,223,100"
+	icon_color2 = "56,223,56"
+	icon_color3 = "0,191,0"
+	icon_color4 = "36,143,36"
+	icon_color5 = "0,124,0"
 	article = "a "
 	level = 2
 	attack_rating = 12
@@ -340,7 +356,11 @@ monster_type "zombie" {
 	type = "undead"
 	unidentified_name = "zombie"
 	icon = "u"
-	icon_color = "71,83,95"
+	icon_color = "159,101,208"
+	icon_color2 = "141,63,208"
+	icon_color3 = "91,11,161"
+	icon_color4 = "82,36,121"
+	icon_color5 = "58,4,104"
 	article = "a "
 	level = 2
 	attack_rating = 16
@@ -356,7 +376,11 @@ monster_type "ooze" {
 	type = "jelly"
 	unidentified_name = "ooze"
 	icon = "j"
-	icon_color = "115,115,255"
+	icon_color = "100,223,100"
+	icon_color2 = "56,223,56"
+	icon_color3 = "0,191,0"
+	icon_color4 = "36,143,36"
+	icon_color5 = "0,124,0"
 	article = "an "
 	level = 2
 	attack_rating = 10
@@ -372,15 +396,19 @@ monster_type "raven" {
 	type = "bird"
 	unidentified_name = "bird"
 	icon = "b"
-	icon_color = "127,101,63"
+	icon_color = "43,119,123"
+	icon_color2 = "24,118,123"
+	icon_color3 = "0,39,41"
+	icon_color4 = "10,20,21"
+	icon_color5 = "0,12,13"
 	article = "a "
 	level = 2
 	attack_rating = 6
 	defense_rating = 10
 	health = "1d6"
 	damage = "1d4"
-	xp = 5
-	weight = 2
+	xp = 10
+	weight = 3
 	corpse = 10
 	ai_neutral
 	flying
@@ -390,15 +418,19 @@ monster_type "piranha" {
 	type = "fish"
 	unidentified_name = "fish"
 	icon = "f"
-	icon_color = "0,191,191"
+	icon_color = "111,97,225"
+	icon_color2 = "84,67,225"
+	icon_color3 = "47,28,206"
+	icon_color4 = "64,59,105"
+	icon_color5 = "7,0,65"
 	article = "a "
 	level = 2
 	attack_rating = 4
 	defense_rating = 4
 	health = "1d6"
 	damage = "1d4"
-	xp = 4
-	weight = 8
+	xp = 12
+	weight = 5
 	corpse = 10
 	ai_hostile
 	aquatic
