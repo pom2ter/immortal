@@ -158,7 +158,7 @@ class Monster(object):
 
 	# monster takes its turn
 	def take_turn(self, x, y):
-		if self.is_hostile() and libtcod.map_is_in_fov(game.fov_map, x, y):
+		if libtcod.map_is_in_fov(game.fov_map, x, y) and self.is_hostile():
 			#move towards player if far away
 			dx, dy = 0, 0
 			if self.distance_to_player(game.char, x, y) >= 2:

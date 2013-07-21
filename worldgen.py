@@ -119,13 +119,13 @@ class World(object):
 
 	# place all dungeons after terrain generation
 	def place_dungeons(self):
-		number_of_dungeons = libtcod.random_get_int(game.rnd, 12, 18)
+		number_of_dungeons = libtcod.random_get_int(self.rnd, 12, 18)
 		while len(self.dungeons) != number_of_dungeons:
-			x = libtcod.random_get_int(game.rnd, 0, game.WORLDMAP_WIDTH - 1)
-			y = libtcod.random_get_int(game.rnd, 0, game.WORLDMAP_HEIGHT - 1)
+			x = libtcod.random_get_int(self.rnd, 0, game.WORLDMAP_WIDTH - 1)
+			y = libtcod.random_get_int(self.rnd, 0, game.WORLDMAP_HEIGHT - 1)
 			cellheight = int(libtcod.heightmap_get_value(game.hm, x, y) * 1000)
 			if cellheight in range(250, 699):
-				self.dungeons.append((len(self.dungeons) + 1, 'Dungeon', 'Dng', x, y, libtcod.random_get_int(game.rnd, 1, 20)))
+				self.dungeons.append((len(self.dungeons) + 1, 'Dungeon', 'Dng', x, y, libtcod.random_get_int(self.rnd, 1, 20)))
 
 	# reduce landmass to the appropriate level
 	def set_land_mass(self, landmass, waterlevel):

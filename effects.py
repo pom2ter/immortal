@@ -63,7 +63,7 @@ def fireball(x, y, radius):
 		player_fov = False
 		for i in range(-radius, radius + 1):
 			for j in range(-radius, radius + 1):
-				if libtcod.dijkstra_get_distance(path_dijk, x + i, y + j) <= step and libtcod.dijkstra_get_distance(path_dijk, x + i, y + j) >= 0 and libtcod.map_is_in_fov(game.fov_map, x + i, y + j):
+				if libtcod.map_is_in_fov(game.fov_map, x + i, y + j) and libtcod.dijkstra_get_distance(path_dijk, x + i, y + j) <= step and libtcod.dijkstra_get_distance(path_dijk, x + i, y + j) >= 0:
 					(front, back, lerp) = util.render_tiles_animations(x + i, y + j, libtcod.Color(160, 0, 0), libtcod.Color(64, 0, 0), libtcod.Color(0, 0, 0), round(libtcod.random_get_float(game.rnd, 0, 1), 1))
 					libtcod.console_put_char_ex(0, game.MAP_X + x - game.curx + i, game.MAP_Y + y - game.cury + j, '*', front, back)
 					player_fov = True
@@ -169,7 +169,7 @@ def teleportation(x, y, victim='You'):
 	for obj in game.current_map.objects:
 		if obj.x == x and obj.y == y:
 			victims.append(obj)
-			if (obj.entity and obj.entity.is_above_ground()) or (obj.name == 'player' and game.player.is_above_ground()):
+			if (obj.entity.is_above_ground() and obj.entity) or (obj.name == 'player' and game.player.is_above_ground()):
 				victims.pop()
 	dx = libtcod.random_get_int(game.rnd, 0, game.current_map.map_width - 1)
 	dy = libtcod.random_get_int(game.rnd, 0, game.current_map.map_height - 1)

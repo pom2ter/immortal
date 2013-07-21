@@ -126,6 +126,7 @@ class Game(object):
 			font_height = 22
 		else:
 			libtcod.console_set_custom_font('font-small.png', libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_ASCII_INROW)
+		os.putenv("SDL_VIDEO_CENTERED", "1")
 		self.init_root_console()
 		#libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, 'Immortal ' + VERSION, False)
 		libtcod.image_scale(img, SCREEN_WIDTH * 2, SCREEN_HEIGHT * 2)

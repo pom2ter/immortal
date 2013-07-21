@@ -303,7 +303,7 @@ class BaseItemList(object):
 
 	# choose a random item based on its level
 	def get_item_by_level(self, level):
-		item = [x for x in self.list if x.level <= level and x.type != 'corpse' and x.type != 'money']
+		item = [x for x in self.list if x.type != 'corpse' and x.type != 'money' and x.level <= level]
 		if item:
 			return item[libtcod.random_get_int(game.rnd, 0, len(item) - 1)]
 		return None

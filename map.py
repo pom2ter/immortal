@@ -231,7 +231,7 @@ class Map(object):
 			return True
 		if include_obj:
 			for obj in self.objects:
-				if obj.blocks and obj.x == x and obj.y == y:
+				if obj.x == x and obj.y == y and obj.blocks:
 					return True
 		return False
 
@@ -748,7 +748,7 @@ def decombine_maps():
 			current.objects = []
 			current.objects.append(game.char)
 			for obj in super_map.objects:
-				if obj.name != 'player' and obj.x / (super_map.map_width / 3) == j and obj.y / (super_map.map_height / 3) == i:
+				if obj.x / (super_map.map_width / 3) == j and obj.y / (super_map.map_height / 3) == i and obj.name != 'player':
 					obj.x = obj.x - (j * (super_map.map_width / 3))
 					obj.y = obj.y - (i * (super_map.map_height / 3))
 					current.objects.append(obj)

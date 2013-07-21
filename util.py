@@ -263,7 +263,7 @@ def inventory_output(inv):
 
 # output names of items you pass by
 def items_at_feet():
-	objects = [obj for obj in game.current_map.objects if obj.item and obj.x == game.char.x and obj.y == game.char.y]
+	objects = [obj for obj in game.current_map.objects if obj.x == game.char.x and obj.y == game.char.y and obj.item]
 	if len(objects) > 1:
 		game.message.new('You see several items at your feet.', game.turns)
 	elif len(objects) == 1:

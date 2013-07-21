@@ -135,7 +135,7 @@ def player_move(dx, dy):
 	#try to find an attackable object there
 	target = None
 	for object in game.current_map.objects:
-		if object.entity and object.x == x and object.y == y:
+		if object.x == x and object.y == y and object.entity:
 			target = object
 			break
 
@@ -222,7 +222,7 @@ def attack():
 
 		if key.vk == libtcod.KEY_ENTER:
 			for obj in game.current_map.objects:
-				if obj.entity and obj.x == px and obj.y == py:
+				if obj.x == px and obj.y == py and obj.entity:
 					target = obj
 			if not game.current_map.is_explored(px, py):
 				game.message.new("You can't fight darkness.", game.turns)
