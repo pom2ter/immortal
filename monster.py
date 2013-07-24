@@ -1,5 +1,6 @@
 import libtcodpy as libtcod
 import math
+import copy
 import game
 import util
 import item
@@ -260,7 +261,7 @@ class MonsterList(object):
 	# spawn a monster
 	def spawn(self):
 		if self.number_of_monsters_on_map() < game.current_map.max_monsters:
-			number = util.roll_dice(1, 100)
+			number = util.roll_dice(1, 90)
 			if number == 1:
 				game.current_map.place_monsters()
 
@@ -322,6 +323,24 @@ class MonsterListener(object):
 		if self.temp_monster.level == 1:
 			self.temp_monster.flags.append('identified')
 		game.monsters.add_to_list(self.temp_monster)
+		if self.temp_monster.type == 'humanoid':
+			for i in range(0, 4):
+				self.new_monster = copy.deepcopy(self.temp_monster)
+				if i == 0:
+					self.new_monster.name = 'apprentice ' + self.new_monster.name
+				if i == 1:
+					self.new_monster.name = 'journeyman ' + self.new_monster.name
+				if i == 2:
+					self.new_monster.name = 'adept ' + self.new_monster.name
+				if i == 3:
+					self.new_monster.name = 'master ' + self.new_monster.name
+				self.new_monster.level += (i * 2) + 1
+				self.new_monster.attack_rating *= int((i + 1) * 0.75)
+				self.new_monster.defense_rating *= int((i + 1) * 0.75)
+				self.new_monster.health.multiplier = i + 2
+				self.new_monster.damage.multiplier = i + 2
+				self.new_monster.xp *= int((i + 1) * 0.75)
+				game.monsters.add_to_list(self.new_monster)
 		return True
 
 	def error(self, msg):

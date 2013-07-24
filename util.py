@@ -199,7 +199,7 @@ def get_names_under_mouse():
 	(x, y) = (game.mouse.cx - game.MAP_X, game.mouse.cy - 1)
 	px = x + game.curx
 	py = y + game.cury
-	if game.current_map.is_explored(px, py) and x in range(game.MAP_WIDTH) and y in range(game.MAP_HEIGHT):
+	if x in range(game.MAP_WIDTH) and y in range(game.MAP_HEIGHT) and game.current_map.is_explored(px, py):
 		names = [obj for obj in game.current_map.objects if obj.x == px and obj.y == py]
 		prefix = 'you see '
 		if not libtcod.map_is_in_fov(game.fov_map, px, py):
