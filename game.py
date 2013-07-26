@@ -22,7 +22,7 @@ MAP_WIDTH = 71
 MAP_HEIGHT = 31
 MESSAGE_WIDTH = MAP_WIDTH
 MESSAGE_HEIGHT = 5
-PLAYER_STATS_WIDTH = 18
+PLAYER_STATS_WIDTH = 21
 SCREEN_WIDTH = MAP_WIDTH + PLAYER_STATS_WIDTH + 3
 SCREEN_HEIGHT = MAP_HEIGHT + MESSAGE_HEIGHT + 3
 PLAYER_STATS_HEIGHT = SCREEN_HEIGHT - 2
@@ -110,6 +110,7 @@ terrain = [{'name': 'Mountain Peak', 'type': 'dirt', 'elevation': 0.950}, {'name
 		{'name': 'Ocean', 'type': 'very deep water', 'elevation': 0.000}, {'name': 'Dungeon', 'type': 'wall', 'elevation': 0.000}]
 
 months = ['Phoenix', 'Manticore', 'Hydra', 'Golem', 'Centaur', 'Siren', 'Dragon', 'Werewolf', 'Gargoyle', 'Kraken', 'Basilisk', 'Unicorn']
+fonts = [{'name': 'small', 'file': 'font-small.png', 'width': 10, 'height': 16}, {'name': 'medium', 'file': 'font-medium.png', 'width': 12, 'height': 19}, {'name': 'large', 'file': 'font-large.png', 'width': 14, 'height': 22}]
 
 
 class Game(object):
@@ -119,12 +120,11 @@ class Game(object):
 		debug = dbg.Debug()
 		debug.enable = True
 		img = libtcod.image_load('title.png')
-		if setting_font == 'large':
-			libtcod.console_set_custom_font('font-large.png', libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_ASCII_INROW)
-			font_width = 14
-			font_height = 22
-		else:
-			libtcod.console_set_custom_font('font-small.png', libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_ASCII_INROW)
+		for i in range(len(fonts)):
+			if setting_font == fonts[i]['name']:
+				libtcod.console_set_custom_font(fonts[i]['file'], libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_ASCII_INROW)
+				font_width = fonts[i]['width']
+				font_height = fonts[i]['height']
 		os.putenv("SDL_VIDEO_CENTERED", "1")
 		self.init_root_console()
 		#libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, 'Immortal ' + VERSION, False)
@@ -362,7 +362,7 @@ class Game(object):
 				if not line:
 					break
 			contents.close()
-			if setting_font != 'large':
+			if not any(setting_font == i for i in ['small', 'medium', 'large']):
 				setting_font = 'small'
 			if not setting_history in range(50, 1000):
 				setting_history = 50

@@ -319,6 +319,7 @@ class MonsterListener(object):
 		return True
 
 	def end_struct(self, struct, name):
+		skill_level = ['apprentice ', 'journeyman ', 'adept ', 'master ']
 		self.temp_monster.dark_color = libtcod.color_lerp(libtcod.black, self.temp_monster.color, 0.3)
 		if self.temp_monster.level == 1:
 			self.temp_monster.flags.append('identified')
@@ -326,14 +327,7 @@ class MonsterListener(object):
 		if self.temp_monster.type == 'humanoid':
 			for i in range(0, 4):
 				self.new_monster = copy.deepcopy(self.temp_monster)
-				if i == 0:
-					self.new_monster.name = 'apprentice ' + self.new_monster.name
-				if i == 1:
-					self.new_monster.name = 'journeyman ' + self.new_monster.name
-				if i == 2:
-					self.new_monster.name = 'adept ' + self.new_monster.name
-				if i == 3:
-					self.new_monster.name = 'master ' + self.new_monster.name
+				self.new_monster.name = skill_level[i] + self.new_monster.name
 				self.new_monster.level += (i * 2) + 1
 				self.new_monster.attack_rating *= int((i + 1) * 0.75)
 				self.new_monster.defense_rating *= int((i + 1) * 0.75)

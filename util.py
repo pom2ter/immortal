@@ -54,12 +54,12 @@ def add_turn():
 
 # change game settings
 def change_settings(box, width, height, blitmap=False):
-	fonts = ['Small', 'Large']
 	confirm, cancel = False, False
+	font = 0
 	if game.setting_font == 'large':
+		font = 2
+	elif game.setting_font == 'medium':
 		font = 1
-	else:
-		font = 0
 	lerp = 1.0
 	descending = True
 	history = game.setting_history
@@ -80,7 +80,7 @@ def change_settings(box, width, height, blitmap=False):
 			libtcod.console_set_default_foreground(box, libtcod.grey)
 			libtcod.console_set_default_background(box, libtcod.black)
 		libtcod.console_rect(box, 26, 5, 13, 1, True, libtcod.BKGND_SET)
-		libtcod.console_print_ex(box, 32, 5, libtcod.BKGND_SET, libtcod.CENTER, fonts[font])
+		libtcod.console_print_ex(box, 32, 5, libtcod.BKGND_SET, libtcod.CENTER, game.fonts[font]['name'].capitalize())
 		libtcod.console_set_default_foreground(box, libtcod.white)
 		if current != 0:
 			libtcod.console_set_default_foreground(box, libtcod.black)
@@ -90,7 +90,7 @@ def change_settings(box, width, height, blitmap=False):
 		libtcod.console_set_default_foreground(box, libtcod.white)
 		if current != 0:
 			libtcod.console_set_default_foreground(box, libtcod.black)
-		elif font == 1:
+		elif font == len(game.fonts) - 1:
 			libtcod.console_set_default_foreground(box, libtcod.darkest_grey)
 		libtcod.console_print_ex(box, 39, 5, libtcod.BKGND_NONE, libtcod.LEFT, chr(26))
 
@@ -135,7 +135,7 @@ def change_settings(box, width, height, blitmap=False):
 					history -= 50
 		elif key.vk == libtcod.KEY_RIGHT:
 			if current == 0:
-				if font < 1:
+				if font < len(game.fonts) - 1:
 					font += 1
 			if current == 1:
 				if history < 1000:
@@ -157,7 +157,7 @@ def change_settings(box, width, height, blitmap=False):
 			game.message.trim_history()
 		f = open('settings.ini', 'wb')
 		f.write('[Font]\n')
-		f.write(fonts[font].lower() + '\n')
+		f.write(game.fonts[font]['name'] + '\n')
 		f.write('[History]\n')
 		f.write(str(history) + '\n')
 		f.close()
@@ -531,7 +531,8 @@ def render_player_stats_panel():
 def render_floating_text_animations():
 	for i, (x, y, line, color, turn) in enumerate(reversed(game.hp_anim)):
 		libtcod.console_set_default_foreground(0, libtcod.color_lerp(libtcod.black, color, 1 - ((turn / 15) * 0.2)))
-		libtcod.console_print_ex(0, game.MAP_X + x - game.curx, game.MAP_Y + y - game.cury - (turn / 15), libtcod.BKGND_NONE, libtcod.CENTER, line)
+		if game.MAP_Y + y - game.cury - (turn / 15) > 0:
+			libtcod.console_print_ex(0, game.MAP_X + x - game.curx, game.MAP_Y + y - game.cury - (turn / 15), libtcod.BKGND_NONE, libtcod.CENTER, line)
 		game.hp_anim[len(game.hp_anim) - i - 1] = (x, y, line, color, turn + 1)
 		if turn > 60:
 			game.hp_anim.pop(len(game.hp_anim) - i - 1)
