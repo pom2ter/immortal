@@ -1,41 +1,41 @@
 // brief monster list
 //
 // humanoid:
-//    humans (@):   bandit (2), cutpurse (3), soldier
-//    kobolds (k):  kobold (1), kobold chieftain (3), kobold shaman
-//    goblins (g):  goblin (2), gnoll (3)
-//    orcs (o):     orc, ogre
-//    trolls (T):   troll, ettin
+//    humans (@):      bandit (2), cutpurse (3), swordman (4)
+//    kobolds (k):     kobold (1), kobold shaman (3), kobold chieftain -5-
+//    goblins (g):     goblin (2), goblin shaman (4), goblin chiftain -6-, gnoll (3)
+//    orcs (o):        orc (4), orc shaman -6-, orc chieftain -8-, ogre -7-, ogre mage
 // giants (G):
-//    mountain giant, frost giant
+//    troll -5-, ettin -7-, hill giant -8-, mountain giant -9-, frost giant -10-, fire giant -11-
 // feline (f):
-//    scrawny cat (1), jaguar (3), panther, tiger, lion
+//    wild cat (1), jaguar (3), panther -5-, tiger -7-, lion -9-
 // canine:
-//    dogs (d):     scrawny dog (1), hound (2), large dog (3), hell hound
-//    wolves (w):   grey wolf (2)
+//    dogs (d):        wild dog (1), hound (2), war dog (3), hell hound -7-
+//    wolves (w):      grey wolf (2), worg (4), dire wolf -6-
 // undead (z):
-//    skeleton (1), zombie (2), ghost, lich
+//    skeleton (1), zombie (2), ghoul (4), wight -5-, mummy -7-, skeleton warrior -8-, spectre -10-, ghost -11-, vampire -13-, lich -14-
 // mammal:
-//    giant rat (1), brown bear (3), grizzly bear
+//    giant rat (1), brown bear (3), grizzly bear -6-
 // insects:
-//    ants (a):     giant ant (1), ant queen
-//    spiders (S):  giant spider (2), cave spider (3)
-//    other:        giant centipede (1), carrion crawler
+//    ants (a):        giant ant (1), giant soldier ant (4), ant queen -8-
+//    spiders (S):     giant spider (2), cave spider (3)
+//    other (c):       giant centipede (1), carrion crawler -5-, bloodwyrm -9-
 // reptiles:
-//    lizards (l):  giant lizard (1), rock lizard, komodo dragon
-//    snakes (s):   large snake (2), large yellow snake (3), python
+//    lizards (l):     giant lizard (1), rock lizard (4), komodo dragon -7-
+//    snakes (s):      large snake (2), large yellow snake (3), python -6-
 // jellies (j):
-//    ooze (2)
+//    green slime (2), gaseous slime (4), stun jelly -5-, mustard jelly -7-, fungus ooze -8-, puxic ooze -10-, gelatinous cube -11-
 // aquatic:
-//    fish (f):     fish (1), piranha (2)
-//    merman (m):   merman (3)
+//    fish (p):        piranha (1), red piranha (2), piranha shark
+//    merman (m):      merman (3)
+//    sea monster (S): leviathan -15-, kraken -17-
 // flying:
-//    bats (b):     large bat (1), blood bat (3), vampire bat
-//    birds (b):    raven (2), fire crow
+//    bats (b):        large bat (1), blood bat (3), vampire bat -7-
+//    birds (b):       raven (2), vulture (4), spectral raven -6-, fire crow -8-
 // dragons (D):
-//    red, green, black
+//    black -16-, green -17-, red -18-
 // robots (R):
-//    cyborg
+//    cyborg -12-
 // bosses:
 //    thanatos, draconis
 
@@ -58,9 +58,8 @@ monster_type "giant rat" {
 	level = 1
 	attack_rating = 6
 	defense_rating = 9
-	health = "1d6"
+	health = "1d4"
 	damage = "1d4"
-	xp = 6
 	weight = 3
 	corpse = 10
 	ai_neutral
@@ -80,16 +79,15 @@ monster_type "giant lizard" {
 	level = 1
 	attack_rating = 8
 	defense_rating = 8
-	health = "1d6"
+	health = "1d4"
 	damage = "1d4"
-	xp = 8
 	weight = 2
 	corpse = 15
 	ai_neutral
 	land
 }
 
-monster_type "scrawny dog" {
+monster_type "wild dog" {
 	type = "canine"
 	unidentified_name = "dog"
 	icon = "d"
@@ -104,7 +102,6 @@ monster_type "scrawny dog" {
 	defense_rating = 6
 	health = "1d6"
 	damage = "1d4"
-	xp = 4
 	weight = 30
 	corpse = 20
 	ai_neutral
@@ -124,9 +121,8 @@ monster_type "giant ant" {
 	level = 1
 	attack_rating = 4
 	defense_rating = 4
-	health = "1d6"
+	health = "1d4"
 	damage = "1d4"
-	xp = 4
 	ai_neutral
 	land
 }
@@ -146,7 +142,6 @@ monster_type "giant centipede" {
 	defense_rating = 6
 	health = "1d6"
 	damage = "1d4+1"
-	xp = 6
 	ai_neutral
 	land
 }
@@ -166,7 +161,6 @@ monster_type "kobold" {
 	defense_rating = 9
 	health = "1d6"
 	damage = "1d6"
-	xp = 10
 	weight = 30
 	corpse = 20
 	ai_hostile
@@ -176,7 +170,7 @@ monster_type "kobold" {
 monster_type "skeleton" {
 	type = "undead"
 	unidentified_name = "skeleton"
-	icon = "u"
+	icon = "z"
 	icon_color3 = "153,162,162"
 	icon_color2 = "119,128,128"
 	icon_color = "85,85,85"
@@ -188,12 +182,11 @@ monster_type "skeleton" {
 	defense_rating = 6
 	health = "1d6"
 	damage = "1d6"
-	xp = 6
 	ai_hostile
 	land
 }
 
-monster_type "scrawny cat" {
+monster_type "wild cat" {
 	type = "feline"
 	unidentified_name = "cat"
 	icon = "f"
@@ -206,9 +199,8 @@ monster_type "scrawny cat" {
 	level = 1
 	attack_rating = 4
 	defense_rating = 4
-	health = "1d6"
+	health = "1d4"
 	damage = "1d4"
-	xp = 4
 	weight = 8
 	corpse = 10
 	ai_neutral
@@ -230,17 +222,16 @@ monster_type "large bat" {
 	defense_rating = 10
 	health = "1d6"
 	damage = "1d4"
-	xp = 5
 	weight = 2
 	corpse = 10
 	ai_neutral
 	flying
 }
 
-monster_type "fish" {
+monster_type "piranha" {
 	type = "fish"
 	unidentified_name = "fish"
-	icon = "f"
+	icon = "p"
 	icon_color3 = "100,223,223"
 	icon_color2 = "56,223,223"
 	icon_color = "0,191,191"
@@ -252,7 +243,6 @@ monster_type "fish" {
 	defense_rating = 4
 	health = "1d6"
 	damage = "1d4"
-	xp = 4
 	weight = 3
 	corpse = 10
 	ai_neutral
@@ -278,9 +268,8 @@ monster_type "bandit" {
 	level = 2
 	attack_rating = 14
 	defense_rating = 10
-	health = "1d6"
+	health = "1d8"
 	damage = "1d6"
-	xp = 12
 	weight = 150
 	corpse = 20
 	ai_hostile
@@ -300,9 +289,8 @@ monster_type "large snake" {
 	level = 2
 	attack_rating = 12
 	defense_rating = 12
-	health = "2d4"
+	health = "1d6"
 	damage = "1d4+1"
-	xp = 10
 	ai_neutral
 	land
 }
@@ -320,9 +308,8 @@ monster_type "giant spider" {
 	level = 2
 	attack_rating = 15
 	defense_rating = 11
-	health = "2d4+1"
+	health = "1d4"
 	damage = "1d6"
-	xp = 10
 	ai_hostile
 	land
 }
@@ -340,9 +327,8 @@ monster_type "grey wolf" {
 	level = 2
 	attack_rating = 16
 	defense_rating = 10
-	health = "2d4"
+	health = "1d6"
 	damage = "1d6"
-	xp = 10
 	weight = 75
 	corpse = 20
 	ai_hostile
@@ -362,9 +348,8 @@ monster_type "hound" {
 	level = 2
 	attack_rating = 12
 	defense_rating = 12
-	health = "2d4"
+	health = "1d6"
 	damage = "1d4+1"
-	xp = 10
 	weight = 50
 	corpse = 15
 	ai_neutral
@@ -384,9 +369,8 @@ monster_type "goblin" {
 	level = 2
 	attack_rating = 13
 	defense_rating = 13
-	health = "2d4"
+	health = "1d8"
 	damage = "1d6"
-	xp = 10
 	weight = 40
 	corpse = 20
 	ai_hostile
@@ -395,8 +379,8 @@ monster_type "goblin" {
 
 monster_type "zombie" {
 	type = "undead"
-	unidentified_name = "zombie"
-	icon = "u"
+	unidentified_name = "undead"
+	icon = "z"
 	icon_color3 = "159,101,208"
 	icon_color2 = "141,63,208"
 	icon_color = "91,11,161"
@@ -406,29 +390,27 @@ monster_type "zombie" {
 	level = 2
 	attack_rating = 16
 	defense_rating = 10
-	health = "2d4+1"
+	health = "1d8"
 	damage = "1d6"
-	xp = 12
 	ai_hostile
 	land
 }
 
-monster_type "ooze" {
+monster_type "green slime" {
 	type = "jelly"
-	unidentified_name = "ooze"
+	unidentified_name = "slime"
 	icon = "j"
-	icon_color3 = "100,223,100"
-	icon_color2 = "56,223,56"
-	icon_color = "0,191,0"
-	icon_color4 = "36,143,36"
-	icon_color5 = "0,124,0"
-	article = "an "
+	icon_color = "92,255,92"
+	icon_color2 = "51,255,51"
+	icon_color3 = "0,255,0"
+	icon_color4 = "63,141,63"
+	icon_color5 = "0,96,0"
+	article = "a "
 	level = 2
 	attack_rating = 10
 	defense_rating = 15
-	health = "2d4"
+	health = "1d6"
 	damage = "1d6+1"
-	xp = 12
 	ai_hostile
 	land
 }
@@ -437,40 +419,38 @@ monster_type "raven" {
 	type = "bird"
 	unidentified_name = "bird"
 	icon = "b"
-	icon_color3 = "43,119,123"
-	icon_color2 = "24,118,123"
-	icon_color = "0,39,41"
-	icon_color4 = "10,20,21"
-	icon_color5 = "0,12,13"
+	icon_color3 = "255,235,199"
+	icon_color2 = "255,240,214"
+	icon_color = "255,228,181"
+	icon_color4 = "191,176,150"
+	icon_color5 = "166,127,59"
 	article = "a "
 	level = 2
 	attack_rating = 10
 	defense_rating = 16
 	health = "1d6"
 	damage = "1d4"
-	xp = 10
 	weight = 3
 	corpse = 10
 	ai_neutral
 	flying
 }
 
-monster_type "piranha" {
+monster_type "red piranha" {
 	type = "fish"
 	unidentified_name = "fish"
 	icon = "f"
-	icon_color3 = "111,97,225"
-	icon_color2 = "84,67,225"
-	icon_color = "47,28,206"
-	icon_color4 = "64,59,105"
-	icon_color5 = "7,0,65"
+	icon_color3 = "255,64,64"
+	icon_color2 = "255,115,155"
+	icon_color = "255,0,0"
+	icon_color4 = "191,48,48"
+	icon_color5 = "166,0,0"
 	article = "a "
 	level = 2
 	attack_rating = 13
 	defense_rating = 12
 	health = "1d6"
 	damage = "1d4"
-	xp = 12
 	weight = 5
 	corpse = 10
 	ai_hostile
@@ -483,7 +463,7 @@ monster_type "piranha" {
 //
 //
 
-monster_type "large dog" {
+monster_type "war dog" {
 	type = "canine"
 	unidentified_name = "dog"
 	icon = "d"
@@ -495,10 +475,9 @@ monster_type "large dog" {
 	article = "a "
 	level = 3
 	attack_rating = 18
-	defense_rating = 16
-	health = "3d4"
+	defense_rating = 18
+	health = "1d6"
 	damage = "2d4"
-	xp = 10
 	weight = 80
 	corpse = 15
 	ai_neutral
@@ -516,11 +495,10 @@ monster_type "gnoll" {
 	icon_color5 = "54,109,166"
 	article = "a "
 	level = 3
-	attack_rating = 20
-	defense_rating = 15
-	health = "2d4+2"
+	attack_rating = 22
+	defense_rating = 17
+	health = "1d8"
 	damage = "1d6"
-	xp = 15
 	weight = 250
 	corpse = 15
 	ai_hostile
@@ -538,18 +516,17 @@ monster_type "cutpurse" {
 	icon_color5 = "0,0,166"
 	article = "a "
 	level = 3
-	attack_rating = 16
+	attack_rating = 20
 	defense_rating = 18
-	health = "2d4"
+	health = "1d8"
 	damage = "1d4"
-	xp = 8
 	weight = 150
 	corpse = 15
 	ai_neutral
 	land
 }
 
-monster_type "kobold chieftain" {
+monster_type "kobold shaman" {
 	type = "humanoid"
 	unidentified_name = "kobold"
 	icon = "k"
@@ -560,11 +537,10 @@ monster_type "kobold chieftain" {
 	icon_color5 = "43,0,80"
 	article = "a "
 	level = 3
-	attack_rating = 18
-	defense_rating = 16
-	health = "1d6"
+	attack_rating = 12
+	defense_rating = 17
+	health = "1d4"
 	damage = "1d6"
-	xp = 10
 	weight = 40
 	corpse = 15
 	ai_hostile
@@ -582,11 +558,10 @@ monster_type "jaguar" {
 	icon_color5 = "36,65,94"
 	article = "a "
 	level = 3
-	attack_rating = 17
-	defense_rating = 16
+	attack_rating = 19
+	defense_rating = 18
 	health = "1d6"
 	damage = "1d4"
-	xp = 4
 	weight = 125
 	corpse = 10
 	ai_neutral
@@ -604,11 +579,10 @@ monster_type "brown bear" {
 	icon_color5 = "30,20,1"
 	article = "a "
 	level = 3
-	attack_rating = 22
-	defense_rating = 15
-	health = "3d4+2"
+	attack_rating = 24
+	defense_rating = 17
+	health = "1d8"
 	damage = "1d8"
-	xp = 20
 	weight = 300
 	corpse = 10
 	ai_neutral
@@ -626,11 +600,10 @@ monster_type "cave spider" {
 	icon_color5 = "15,51,51"
 	article = "a "
 	level = 3
-	attack_rating = 18
-	defense_rating = 16
-	health = "3d4"
+	attack_rating = 20
+	defense_rating = 18
+	health = "1d6"
 	damage = "1d8"
-	xp = 12
 	ai_hostile
 	land
 }
@@ -646,11 +619,10 @@ monster_type "large yellow snake" {
 	icon_color5 = "166,166,0"
 	article = "a "
 	level = 3
-	attack_rating = 15
-	defense_rating = 20
-	health = "3d4"
+	attack_rating = 17
+	defense_rating = 22
+	health = "1d6"
 	damage = "1d6"
-	xp = 10
 	ai_neutral
 	land
 }
@@ -666,11 +638,10 @@ monster_type "blood bat" {
 	icon_color5 = "166,0,0"
 	article = "a "
 	level = 3
-	attack_rating = 16
-	defense_rating = 18
+	attack_rating = 18
+	defense_rating = 22
 	health = "1d6"
 	damage = "1d4"
-	xp = 5
 	weight = 2
 	corpse = 10
 	ai_hostile
@@ -688,11 +659,10 @@ monster_type "merman" {
 	icon_color5 = "0,124,124"
 	article = "a "
 	level = 3
-	attack_rating = 18
-	defense_rating = 17
+	attack_rating = 20
+	defense_rating = 20
 	health = "1d6"
 	damage = "1d4"
-	xp = 4
 	weight = 8
 	corpse = 10
 	ai_hostile
@@ -701,27 +671,198 @@ monster_type "merman" {
 
 //
 //
-// level 4+ monsters
+// level 4 monsters
 //
 //
+
+monster_type "rock lizard" {
+	type = "reptile"
+	unidentified_name = "lizard"
+	icon = "l"
+	icon_color3 = "116,167,167"
+	icon_color2 = "130,167,167"
+	icon_color = "47,79,79"
+	icon_color4 = "41,59,59"
+	icon_color5 = "15,51,51"
+	article = "a "
+	level = 4
+	attack_rating = 25
+	defense_rating = 28
+	health = "1d6"
+	damage = "1d4"
+	weight = 5
+	corpse = 15
+	ai_neutral
+	land
+}
+
+monster_type "giant soldier ant" {
+	type = "insect"
+	unidentified_name = "ant"
+	icon = "a"
+	icon_color3 = "222,217,150"
+	icon_color2 = "222,218,169"
+	icon_color = "189,183,107"
+	icon_color4 = "142,138,96"
+	icon_color5 = "123,116,35"
+	article = "a "
+	level = 4
+	attack_rating = 25
+	defense_rating = 25
+	health = "1d4"
+	damage = "1d4"
+	ai_hostile
+	land
+}
+
+monster_type "gaseous slime" {
+	type = "jelly"
+	unidentified_name = "slime"
+	icon = "j"
+	icon_color3 = "100,223,100"
+	icon_color2 = "56,223,56"
+	icon_color = "0,191,0"
+	icon_color4 = "36,143,36"
+	icon_color5 = "0,124,0"
+	article = "a "
+	level = 4
+	attack_rating = 25
+	defense_rating = 30
+	health = "1d6"
+	damage = "1d6+1"
+	ai_hostile
+	land
+}
+
+monster_type "ghoul" {
+	type = "undead"
+	unidentified_name = "undead"
+	icon = "z"
+	icon_color3 = "155,98,98"
+	icon_color2 = "155,113,113"
+	icon_color = "55,28,28"
+	icon_color4 = "41,26,26"
+	icon_color5 = "36,9,9"
+	article = "a "
+	level = 4
+	attack_rating = 26
+	defense_rating = 26
+	health = "1d6"
+	damage = "1d6"
+	ai_hostile
+	land
+}
+
+monster_type "worg" {
+	type = "canine"
+	unidentified_name = "wolf"
+	icon = "w"
+	icon_color3 = "155,98,98"
+	icon_color2 = "155,113,113"
+	icon_color = "55,28,28"
+	icon_color4 = "41,26,26"
+	icon_color5 = "36,9,9"
+	article = "a "
+	level = 4
+	attack_rating = 28
+	defense_rating = 28
+	health = "1d6"
+	damage = "1d6"
+	weight = 100
+	corpse = 10
+	ai_hostile
+	land
+}
+
+monster_type "goblin shaman" {
+	type = "humanoid"
+	unidentified_name = "goblin"
+	icon = "g"
+	icon_color = "50,199,199"
+	icon_color2 = "90,199,199"
+	icon_color3 = "0,143,143"
+	icon_color4 = "27,107,107"
+	icon_color5 = "0,93,93"
+	article = "a "
+	level = 4
+	attack_rating = 18
+	defense_rating = 25
+	health = "1d4"
+	damage = "1d6"
+	weight = 50
+	corpse = 15
+	ai_hostile
+	land
+}
 
 monster_type "orc" {
 	type = "humanoid"
 	unidentified_name = "orc"
 	icon = "o"
-	icon_color = "0,191,0"
+	icon_color = "100,223,100"
+	icon_color2 = "56,223,56"
+	icon_color3 = "0,191,0"
+	icon_color4 = "36,143,36"
+	icon_color5 = "0,124,0"
 	article = "an "
 	level = 4
-	attack_rating = 16
-	defense_rating = 12
-	health = "3d4+1"
+	attack_rating = 32
+	defense_rating = 28
+	health = "1d8"
 	damage = "1d6"
-	xp = 12
 	weight = 200
 	corpse = 20
 	ai_hostile
 	land
 }
+
+monster_type "swordman" {
+	type = "humanoid"
+	unidentified_name = "human"
+	icon = "@"
+	icon_color = "255,64,64"
+	icon_color2 = "255,115,155"
+	icon_color3 = "255,0,0"
+	icon_color4 = "191,48,48"
+	icon_color5 = "166,0,0"
+	article = "a "
+	level = 4
+	attack_rating = 32
+	defense_rating = 27
+	health = "1d8"
+	damage = "2d6+1"
+	weight = 180
+	corpse = 20
+	ai_hostile
+	land
+}
+
+monster_type "vulture" {
+	type = "bird"
+	unidentified_name = "bird"
+	icon = "b"
+	icon_color3 = "43,119,123"
+	icon_color2 = "24,118,123"
+	icon_color = "0,39,41"
+	icon_color4 = "10,20,21"
+	icon_color5 = "0,12,13"
+	article = "a "
+	level = 4
+	attack_rating = 26
+	defense_rating = 27
+	health = "1d6"
+	damage = "1d4"
+	weight = 5
+	corpse = 10
+	ai_neutral
+	flying
+}
+
+//
+//
+// level 5+ monsters
+//
+//
 
 monster_type "troll" {
 	type = "humanoid"
@@ -733,30 +874,10 @@ monster_type "troll" {
 	level = 5
 	attack_rating = 24
 	defense_rating = 20
-	health = "3d6+2"
+	health = "1d10"
 	damage = "2d6+1"
-	xp = 30
 	weight = 215
 	corpse = 10
-	ai_hostile
-	land
-}
-
-monster_type "soldier" {
-	type = "humanoid"
-	unidentified_name = "human"
-	icon = "@"
-	icon_color = "95,95,95"
-	dark_color = "47,47,47"
-	article = "a "
-	level = 4
-	attack_rating = 16
-	defense_rating = 12
-	health = "3d4+2"
-	damage = "2d6+1"
-	xp = 20
-	weight = 180
-	corpse = 20
 	ai_hostile
 	land
 }
@@ -771,9 +892,8 @@ monster_type "vampire bat" {
 	level = 5
 	attack_rating = 20
 	defense_rating = 25
-	health = "4d8"
+	health = "1d6"
 	damage = "2d6+1"
-	xp = 50
 	weight = 2
 	corpse = 10
 	ai_hostile

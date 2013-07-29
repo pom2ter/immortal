@@ -8,7 +8,7 @@ import map
 
 
 class Monster(object):
-	def __init__(self, typ, name, unid_name, icon, color, dark_color, level, health, damage, article, ar, dr, xp, weight, corpse, flags):
+	def __init__(self, typ, name, unid_name, icon, color, dark_color, level, health, damage, article, ar, dr, weight, corpse, flags):
 		self.type = typ
 		self.name = name
 		self.unidentified_name = unid_name
@@ -21,7 +21,6 @@ class Monster(object):
 		self.article = article
 		self.attack_rating = ar
 		self.defense_rating = dr
-		self.xp = xp
 		self.weight = weight
 		self.corpse = corpse
 		self.flags = flags
@@ -87,6 +86,15 @@ class Monster(object):
 		else:
 			string += self.unidentified_name + '(?)'
 		return string
+
+	# find xp value base on attributes
+	def give_xp(self):
+		xp = self.attack_rating * 0.33
+		xp += self.defense_rating * 0.33
+		xp += self.health * 0.33
+		xp += (self.damage.nb_dices * self.damage.nb_faces + self.damage.bonus) * 0.33
+		xp *= self.level
+		return int(xp)
 
 	# returns true if monster is not touching the ground
 	def is_above_ground(self):
@@ -220,7 +228,6 @@ class MonsterList(object):
 		libtcod.struct_add_property(monster_type_struct, 'defense_rating', libtcod.TYPE_INT, True)
 		libtcod.struct_add_property(monster_type_struct, 'damage', libtcod.TYPE_DICE, True)
 		libtcod.struct_add_property(monster_type_struct, 'article', libtcod.TYPE_STRING, True)
-		libtcod.struct_add_property(monster_type_struct, 'xp', libtcod.TYPE_INT, True)
 		libtcod.struct_add_property(monster_type_struct, 'weight', libtcod.TYPE_INT, False)
 		libtcod.struct_add_property(monster_type_struct, 'corpse', libtcod.TYPE_INT, False)
 		libtcod.struct_add_flag(monster_type_struct, 'ai_friendly')
@@ -268,7 +275,7 @@ class MonsterList(object):
 
 class MonsterListener(object):
 	def new_struct(self, struct, name):
-		self.temp_monster = Monster('', '', '', '', [0, 0, 0], [0, 0, 0], 0, item.Dice(0, 0, 0, 0), item.Dice(0, 0, 0, 0), '', 0, 0, 0, 0, 0, [])
+		self.temp_monster = Monster('', '', '', '', [0, 0, 0], [0, 0, 0], 0, item.Dice(0, 0, 0, 0), item.Dice(0, 0, 0, 0), '', 0, 0, 0, 0, [])
 		self.temp_monster.name = name
 		return True
 
@@ -306,8 +313,6 @@ class MonsterListener(object):
 				self.temp_monster.attack_rating = value
 			if name == 'defense_rating':
 				self.temp_monster.defense_rating = value
-			if name == 'xp':
-				self.temp_monster.xp = value
 			if name == 'weight':
 				self.temp_monster.weight = value
 			if name == 'corpse':
@@ -321,6 +326,8 @@ class MonsterListener(object):
 	def end_struct(self, struct, name):
 		skill_level = ['apprentice ', 'journeyman ', 'adept ', 'master ']
 		self.temp_monster.dark_color = libtcod.color_lerp(libtcod.black, self.temp_monster.color, 0.3)
+		self.temp_monster.health.nb_dices = self.temp_monster.level
+		self.temp_monster.health.bonus = self.temp_monster.level
 		if self.temp_monster.level == 1:
 			self.temp_monster.flags.append('identified')
 		game.monsters.add_to_list(self.temp_monster)
@@ -329,11 +336,11 @@ class MonsterListener(object):
 				self.new_monster = copy.deepcopy(self.temp_monster)
 				self.new_monster.name = skill_level[i] + self.new_monster.name
 				self.new_monster.level += (i * 2) + 1
-				self.new_monster.attack_rating *= int((i + 1) * 0.75)
-				self.new_monster.defense_rating *= int((i + 1) * 0.75)
-				self.new_monster.health.multiplier = i + 2
+				self.new_monster.attack_rating += ((i * 2) + 1) * 8
+				self.new_monster.defense_rating += ((i * 2) + 1) * 8
+				self.new_monster.health.nb_dices = self.new_monster.level
+				self.new_monster.health.bonus = self.new_monster.level
 				self.new_monster.damage.multiplier = i + 2
-				self.new_monster.xp *= int((i + 1) * 0.75)
 				game.monsters.add_to_list(self.new_monster)
 		return True
 

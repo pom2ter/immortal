@@ -99,7 +99,7 @@ class Player(object):
 			target.entity.take_damage(target.x, target.y, damage, 'player')
 			if target.entity.is_dead():
 				game.message.new('The ' + target.entity.get_name() + ' dies!', game.turns, libtcod.light_orange)
-				self.gain_xp(target.entity.xp)
+				self.gain_xp(target.entity.give_xp())
 				self.mks += 1
 				target.entity.loot(target.x, target.y)
 				target.delete()
