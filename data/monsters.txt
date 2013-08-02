@@ -1,43 +1,48 @@
-// brief monster list
+// MONSTER LIST
+//
+// By type
 //
 // humanoid:
-//    humans (@):      bandit (2), cutpurse (3), swordman (4)
-//    kobolds (k):     kobold (1), kobold shaman (3), kobold chieftain -5-
-//    goblins (g):     goblin (2), goblin shaman (4), goblin chiftain -6-, gnoll (3)
-//    orcs (o):        orc (4), orc shaman -6-, orc chieftain -8-, ogre -7-, ogre mage
-// giants (G):
-//    troll -5-, ettin -7-, hill giant -8-, mountain giant -9-, frost giant -10-, fire giant -11-
-// feline (f):
-//    wild cat (1), jaguar (3), panther -5-, tiger -7-, lion -9-
+//     (@) humans          : bandit (2), thief (3), swordman (4), assassin -6-
+//     (g) goblins, gnolls : goblin (2), goblin shaman (4), goblin chieftain -6-, gnoll (3)
+//     (k) kobolds         : kobold (1), kobold shaman (3), kobold chieftain -5-
+//     (o) orcs, ogres     : orc (4), orc shaman -6-, orc chieftain -8-, ogre -7-, ogre mage
+//
 // canine:
-//    dogs (d):        wild dog (1), hound (2), war dog (3), hell hound -7-
-//    wolves (w):      grey wolf (2), worg (4), dire wolf -6-
-// undead (z):
-//    skeleton (1), zombie (2), ghoul (4), wight -5-, mummy -7-, skeleton warrior -8-, spectre -10-, ghost -11-, vampire -13-, lich -14-
+//     (d) dogs            : wild dog (1), hound (2), war dog (3), hell hound -7-
+//     (w) wolves          : grey wolf (2), worg (4), dire wolf -6-
+//
+// insects:
+//     (a) ants            : giant ant (1), giant soldier ant (4), ant queen -8-
+//     (c) carrion         : giant centipede (1), carrion crawler -5-, bloodwyrm -9-
+//     (S) spiders         : giant spider (2), cave spider (3)
+//
+// reptiles:
+//     (l) lizards         : giant lizard (1), rock lizard (4), komodo dragon -7-
+//     (s) snakes          : large snake (2), large yellow snake (3), python -6-
+//
+// aquatic:
+//     (p) fish            : piranha (1), red piranha (2), piranha shark -6-
+//     (m) merfolk         : merman (3), siren -5-
+//     (M) sea monster     : giant squid -13-, leviathan -15-, kraken -17-
+//
+// flying:
+//     (b) bats, birds     : large bat (1), raven (2), blood bat (3), vulture (4), vampire bat -6-, spectral raven -7-, fire crow -9-
+//     (D) dragons         : blue -15-, black -16-, green -17-, red -18-
+//
 // mammal:
 //    giant rat (1), brown bear (3), grizzly bear -6-
-// insects:
-//    ants (a):        giant ant (1), giant soldier ant (4), ant queen -8-
-//    spiders (S):     giant spider (2), cave spider (3)
-//    other (c):       giant centipede (1), carrion crawler -5-, bloodwyrm -9-
-// reptiles:
-//    lizards (l):     giant lizard (1), rock lizard (4), komodo dragon -7-
-//    snakes (s):      large snake (2), large yellow snake (3), python -6-
-// jellies (j):
-//    green slime (2), gaseous slime (4), stun jelly -5-, mustard jelly -7-, fungus ooze -8-, puxic ooze -10-, gelatinous cube -11-
-// aquatic:
-//    fish (p):        piranha (1), red piranha (2), piranha shark
-//    merman (m):      merman (3)
-//    sea monster (S): leviathan -15-, kraken -17-
-// flying:
-//    bats (b):        large bat (1), blood bat (3), vampire bat -7-
-//    birds (b):       raven (2), vulture (4), spectral raven -6-, fire crow -8-
-// dragons (D):
-//    black -16-, green -17-, red -18-
-// robots (R):
-//    cyborg -12-
+//
+// (f) feline   : wild cat (1), jaguar (3), panther -5-, tiger -7-, lion -9-
+// (j) jellies  : green slime (2), gaseous slime (4), stun jelly -5-, mustard jelly -7-, fungus ooze -8-, puxic ooze -10-, gelatinous cube -11-
+// (z) undead   : skeleton (1), zombie (2), ghoul (4), wight -5-, mummy -7-, skeleton warrior -8-, spectre -10-, ghost -11-, vampire -13-, lich -14-
+// (G) giants   : troll -5-, ettin -7-, hill giant -8-, mountain giant -9-, frost giant -10-, fire giant -11-
+// (R) robots   : droid -11-, cyborg -12-
+//
 // bosses:
 //    thanatos, draconis
+//
+// unused letters: e,h,i,n,q,t,u,v,x,y
 
 //
 //
@@ -129,7 +134,7 @@ monster_type "giant ant" {
 
 monster_type "giant centipede" {
 	type = "insect"
-	unidentified_name = "centipede"
+	unidentified_name = "carrion"
 	icon = "c"
 	icon_color3 = "150,126,76"
 	icon_color2 = "150,120,60"
@@ -505,7 +510,7 @@ monster_type "gnoll" {
 	land
 }
 
-monster_type "cutpurse" {
+monster_type "thief" {
 	type = "humanoid"
 	unidentified_name = "human"
 	icon = "@"
@@ -649,8 +654,8 @@ monster_type "blood bat" {
 }
 
 monster_type "merman" {
-	type = "humanoid"
-	unidentified_name = "merman"
+	type = "merfolk"
+	unidentified_name = "merfolk"
 	icon = "m"
 	icon_color3 = "100,223,223"
 	icon_color2 = "56,223,223"
@@ -865,7 +870,7 @@ monster_type "vulture" {
 //
 
 monster_type "troll" {
-	type = "humanoid"
+	type = "giant"
 	unidentified_name = "troll"
 	icon = "T"
 	icon_color = "255,255,0"

@@ -62,10 +62,9 @@ path_dy = -1
 #worldmap
 worldmap = None
 hm = 0
-hmcopy = 0
 precipitation = 0
 temperature = 0
-mask = 0
+biome = 0
 
 #maps
 current_map = None
@@ -103,14 +102,19 @@ draw_map = True
 # burdened, food, money
 # curse, bless
 
-terrain = [{'name': 'Mountain Peak', 'type': 'dirt', 'elevation': 0.950}, {'name': 'Mountains', 'type': 'dirt', 'elevation': 0.850},
-		{'name': 'Hills', 'type': 'dirt', 'elevation': 0.700}, {'name': 'Forest', 'type': 'grass', 'elevation': 0.250},
-		{'name': 'Plains', 'type': 'grass', 'elevation': 0.175}, {'name': 'Coast', 'type': 'sand', 'elevation': 0.120},
-		{'name': 'Shore', 'type': 'shallow water', 'elevation': 0.110}, {'name': 'Sea', 'type': 'deep water', 'elevation': 0.060},
-		{'name': 'Ocean', 'type': 'very deep water', 'elevation': 0.000}, {'name': 'Dungeon', 'type': 'wall', 'elevation': 0.000}]
+terrain = {'Mountain Peak':{'type': 'dirt', 'elevation': 0.950, 'maxelev': 1.000}, 
+		'Mountains':{'type': 'dirt', 'elevation': 0.850, 'maxelev': 0.949},
+		'Hills':{'type': 'dirt', 'elevation': 0.700, 'maxelev': 0.849},
+		'Forest':{'type': 'grass', 'elevation': 0.250, 'maxelev': 0.699},
+		'Plains':{'type': 'grass', 'elevation': 0.160, 'maxelev': 0.249},
+		'Coast':{'type': 'sand', 'elevation': 0.120, 'maxelev': 0.159},
+		'Shore':{'type': 'shallow water', 'elevation': 0.110, 'maxelev': 0.119},
+		'Sea':{'type': 'deep water', 'elevation': 0.060, 'maxelev': 0.109},
+		'Ocean':{'type': 'very deep water', 'elevation': 0.000, 'maxelev': 0.059},
+		'Dungeon':{'type': 'wall', 'elevation': 2.000, 'maxelev': 2.000}}
 
 months = ['Phoenix', 'Manticore', 'Hydra', 'Golem', 'Centaur', 'Siren', 'Dragon', 'Werewolf', 'Gargoyle', 'Kraken', 'Basilisk', 'Unicorn']
-fonts = [{'name': 'small', 'file': 'font-small.png', 'width': 10, 'height': 16}, {'name': 'medium', 'file': 'font-medium.png', 'width': 12, 'height': 19}, {'name': 'large', 'file': 'font-large.png', 'width': 14, 'height': 22}]
+fonts = {'small':{'file': 'font-small.png', 'width': 10, 'height': 16}, 'medium':{'file': 'font-medium.png', 'width': 12, 'height': 19}, 'large':{'file': 'font-large.png', 'width': 14, 'height': 22}}
 
 
 class Game(object):
@@ -120,11 +124,11 @@ class Game(object):
 		debug = dbg.Debug()
 		debug.enable = True
 		img = libtcod.image_load('title.png')
-		for i in range(len(fonts)):
-			if setting_font == fonts[i]['name']:
-				libtcod.console_set_custom_font(fonts[i]['file'], libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_ASCII_INROW)
-				font_width = fonts[i]['width']
-				font_height = fonts[i]['height']
+		for key, value in fonts.items():
+			if setting_font == key:
+				libtcod.console_set_custom_font(value['file'], libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_ASCII_INROW)
+				font_width = value['width']
+				font_height = value['height']
 		os.putenv("SDL_VIDEO_CENTERED", "1")
 		self.init_root_console()
 		#libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, 'Immortal ' + VERSION, False)

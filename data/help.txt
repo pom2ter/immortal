@@ -1,7 +1,7 @@
 KEYBOARD COMMANDS
 
 Arrow keys = Move character
-SPACE = wait 1 turn
+SPACE = Wait 1 turn
 TAB = World map
 CTRL-M = Message history
 CTRL-S = Save game

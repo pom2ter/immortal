@@ -368,7 +368,7 @@ def drop_item():
 		game.message.new('Your inventory is empty.', game.turns)
 	else:
 		output = util.item_stacking(game.player.inventory)
-		choice = game.messages.box('Drop item', 'Up/down to select, ENTER to drop, ESC to exit', 'center_mapx', 'center_mapy', 65, max(16, len(output) + 4), output, inv=True, step=2, mouse_exit=True)
+		choice = game.messages.box('Drop item', 'Up/down to select, ENTER to drop, ESC to exit', 'center_mapx', 'center_mapy', 65, max(19, len(output) + 4), output, inv=True, step=2, mouse_exit=True)
 		if choice != -1:
 			if output[choice].quantity > 1:
 				libtcod.console_print(0, game.PLAYER_STATS_WIDTH + 2, 1, 'Drop how many: _')
@@ -390,7 +390,7 @@ def equip_item():
 		game.message.new("You don't have any equippable items.", game.turns)
 	else:
 		output = util.item_stacking(game.player.inventory, True)
-		choice = game.messages.box('Wear/Equip an item', 'Up/down to select, ENTER to equip, ESC to exit', 'center_mapx', 'center_mapy', 65, max(16, len(output) + 4), output, inv=True, step=2, mouse_exit=True)
+		choice = game.messages.box('Wear/Equip an item', 'Up/down to select, ENTER to equip, ESC to exit', 'center_mapx', 'center_mapy', 65, max(19, len(output) + 4), output, inv=True, step=2, mouse_exit=True)
 		util.reset_quantity(game.player.inventory)
 		if choice != -1:
 			game.player.equip_item(output[choice])
@@ -427,7 +427,7 @@ def inventory():
 		game.message.new('Your inventory is empty.', game.turns)
 	else:
 		output = util.item_stacking(game.player.inventory)
-		choice = game.messages.box('Inventory', 'Up/down to select, ENTER to use, ESC to exit', 'center_mapx', 'center_mapy', 65, max(16, len(output) + 4), output, inv=True, step=2, mouse_exit=True)
+		choice = game.messages.box('Inventory', 'Up/down to select, ENTER to use, ESC to exit', 'center_mapx', 'center_mapy', 65, max(19, len(output) + 4), output, inv=True, step=2, mouse_exit=True)
 		util.reset_quantity(game.player.inventory)
 		if choice != -1:
 			output[choice].use()
@@ -563,7 +563,7 @@ def pickup_item():
 	else:
 		qty = 1
 		output = util.item_stacking(nb_items)
-		choice = game.messages.box('Get an item', 'Up/down to select, ENTER to get, ESC to exit', 'center_mapx', 'center_mapy', 65, max(16, len(output) + 4), output, inv=True, step=2, mouse_exit=True)
+		choice = game.messages.box('Get an item', 'Up/down to select, ENTER to get, ESC to exit', 'center_mapx', 'center_mapy', 65, max(19, len(output) + 4), output, inv=True, step=2, mouse_exit=True)
 		if choice != -1:
 			if output[choice].quantity > 1:
 				libtcod.console_print(0, game.PLAYER_STATS_WIDTH + 2, 1, 'Pickup how many: _')
@@ -602,7 +602,7 @@ def remove_item():
 	if len(game.player.equipment) == 0:
 		game.message.new("You don't have any equipped items.", game.turns)
 	else:
-		choice = game.messages.box('Remove/Unequip an item', 'Up/down to select, ENTER to remove, ESC to exit', 'center_mapx', 'center_mapy', 65, max(16, len(game.player.equipment) + 4), game.player.equipment, inv=True, step=2, mouse_exit=True)
+		choice = game.messages.box('Remove/Unequip an item', 'Up/down to select, ENTER to remove, ESC to exit', 'center_mapx', 'center_mapy', 65, max(19, len(game.player.equipment) + 4), game.player.equipment, inv=True, step=2, mouse_exit=True)
 		if choice != -1:
 			game.player.unequip(choice)
 	game.draw_gui = True
@@ -714,7 +714,7 @@ def use_item():
 		game.message.new('Your inventory is empty.', game.turns)
 	else:
 		output = util.item_stacking(game.player.inventory)
-		choice = game.messages.box('Use an item', 'Up/down to select, ENTER to use, ESC to exit', 'center_mapx', 'center_mapy', 65, max(16, len(output) + 4), output, inv=True, step=2, mouse_exit=True)
+		choice = game.messages.box('Use an item', 'Up/down to select, ENTER to use, ESC to exit', 'center_mapx', 'center_mapy', 65, max(19, len(output) + 4), output, inv=True, step=2, mouse_exit=True)
 		util.reset_quantity(game.player.inventory)
 		if choice != -1:
 			output[choice].use()
@@ -728,11 +728,11 @@ def use_skill():
 		if x.can_use:
 			skills.append(x)
 	output = [x.name for x in skills]
-	choice = game.messages.box('Use a skill', 'Up/down to select, ENTER to use, ESC to exit', 'center_mapx', 'center_mapy', 60, max(16, len(output) + 4), output, step=2, mouse_exit=True)
+	choice = game.messages.box('Use a skill', 'Up/down to select, ENTER to use, ESC to exit', 'center_mapx', 'center_mapy', 65, max(19, len(output) + 4), output, step=2, mouse_exit=True)
 	if choice != -1:
 		if output[choice] == 'Artifacts':
 			output2 = game.player.inventory + game.player.equipment
-			choice2 = game.messages.box('Use skill on which item', 'Up/down to select, ENTER to use, ESC to exit', 'center_mapx', 'center_mapy', 65, max(16, len(output) + 4), output2, inv=True, step=2, mouse_exit=True)
+			choice2 = game.messages.box('Use skill on which item', 'Up/down to select, ENTER to use, ESC to exit', 'center_mapx', 'center_mapy', 65, max(19, len(output) + 4), output2, inv=True, step=2, mouse_exit=True)
 			if choice2 != -1:
 				if output2[choice2].is_identified():
 					game.message.new('That item is already identified.', game.turns)
@@ -826,11 +826,11 @@ def ztats_attributes(con, width, height):
 		libtcod.console_print(con, 2, 8, 'Endurance    : ' + str(game.player.endurance))
 	libtcod.console_print(con, 2, 9, 'Karma        : ' + str(game.player.karma))
 
-	libtcod.console_print(con, 30, 4, 'Health  : ' + str(game.player.health) + '/' + str(game.player.max_health))
-	libtcod.console_print(con, 30, 5, 'Stamina : ' + str(game.player.stamina) + '/' + str(game.player.max_stamina))
-	libtcod.console_print(con, 30, 6, 'Mana    : ' + str(game.player.mana) + '/' + str(game.player.max_mana))
-	libtcod.console_print(con, 30, 7, 'Experience: ' + str(game.player.xp))
-	libtcod.console_print(con, 30, 8, 'Gold: ' + str(game.player.gold))
+	libtcod.console_print(con, 30, 4, 'Health     : ' + str(game.player.health) + '/' + str(game.player.max_health))
+	libtcod.console_print(con, 30, 5, 'Stamina    : ' + str(game.player.stamina) + '/' + str(game.player.max_stamina))
+	libtcod.console_print(con, 30, 6, 'Mana       : ' + str(game.player.mana) + '/' + str(game.player.max_mana))
+	libtcod.console_print(con, 30, 7, 'Experience : ' + str(game.player.xp))
+	libtcod.console_print(con, 30, 8, 'Money      : ' + str(game.player.gold))
 
 	libtcod.console_print(con, 2, 11, 'Attack Rating     : ' + str(game.player.attack_rating()))
 	libtcod.console_print(con, 2, 12, 'Defense Rating    : ' + str(game.player.defense_rating()))

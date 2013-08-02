@@ -57,7 +57,7 @@ def box(header, footer, startx, starty, width, height, contents, default=0, inpu
 	if starty == 'center_screeny':
 		starty = (game.SCREEN_HEIGHT - (len(contents) + 4)) / 2
 	if starty == 'center_mapy':
-		starty = ((game.MAP_HEIGHT + 1) - max(16, len(contents) + 4)) / 2
+		starty = ((game.MAP_HEIGHT + 2) - height) / 2
 	if color is not None:
 		box_gui(box, 0, 0, width, height, color)
 	if header is not None:

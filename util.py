@@ -55,6 +55,7 @@ def add_turn():
 # change game settings
 def change_settings(box, width, height, blitmap=False):
 	confirm, cancel = False, False
+	fonts = sorted(game.fonts, reverse=True)
 	font = 0
 	if game.setting_font == 'large':
 		font = 2
@@ -80,7 +81,7 @@ def change_settings(box, width, height, blitmap=False):
 			libtcod.console_set_default_foreground(box, libtcod.grey)
 			libtcod.console_set_default_background(box, libtcod.black)
 		libtcod.console_rect(box, 26, 5, 13, 1, True, libtcod.BKGND_SET)
-		libtcod.console_print_ex(box, 32, 5, libtcod.BKGND_SET, libtcod.CENTER, game.fonts[font]['name'].capitalize())
+		libtcod.console_print_ex(box, 32, 5, libtcod.BKGND_SET, libtcod.CENTER, fonts[font].capitalize())
 		libtcod.console_set_default_foreground(box, libtcod.white)
 		if current != 0:
 			libtcod.console_set_default_foreground(box, libtcod.black)
@@ -90,7 +91,7 @@ def change_settings(box, width, height, blitmap=False):
 		libtcod.console_set_default_foreground(box, libtcod.white)
 		if current != 0:
 			libtcod.console_set_default_foreground(box, libtcod.black)
-		elif font == len(game.fonts) - 1:
+		elif font == len(fonts) - 1:
 			libtcod.console_set_default_foreground(box, libtcod.darkest_grey)
 		libtcod.console_print_ex(box, 39, 5, libtcod.BKGND_NONE, libtcod.LEFT, chr(26))
 
@@ -135,7 +136,7 @@ def change_settings(box, width, height, blitmap=False):
 					history -= 50
 		elif key.vk == libtcod.KEY_RIGHT:
 			if current == 0:
-				if font < len(game.fonts) - 1:
+				if font < len(fonts) - 1:
 					font += 1
 			if current == 1:
 				if history < 1000:
@@ -157,7 +158,7 @@ def change_settings(box, width, height, blitmap=False):
 			game.message.trim_history()
 		f = open('settings.ini', 'wb')
 		f.write('[Font]\n')
-		f.write(game.fonts[font]['name'] + '\n')
+		f.write(fonts[font] + '\n')
 		f.write('[History]\n')
 		f.write(str(history) + '\n')
 		f.close()
@@ -297,8 +298,11 @@ def reset_quantity(inv):
 
 
 # returns the roll of a die
-def roll_dice(nb_dices, nb_faces, multiplier=1, bonus=0):
-	return libtcod.random_get_int(game.rnd, nb_dices * multiplier, nb_dices * nb_faces * multiplier) + bonus
+def roll_dice(nb_dices, nb_faces, multiplier=1, bonus=0, extra_roll=False):
+	roll = libtcod.random_get_int(game.rnd, nb_dices * multiplier, nb_dices * nb_faces * multiplier) + bonus
+	if extra_roll and 100 * roll / ((nb_dices * nb_faces * multiplier) + bonus) >= 80:
+		roll = libtcod.random_get_int(game.rnd, nb_dices * multiplier, nb_dices * nb_faces * multiplier) + bonus
+	return roll
 
 
 # set map properties based on a fully explore map
@@ -457,13 +461,13 @@ def render_player_stats_panel():
 	libtcod.console_clear(game.ps)
 	libtcod.console_set_color_control(libtcod.COLCTRL_1, libtcod.green, libtcod.black)
 	libtcod.console_set_color_control(libtcod.COLCTRL_2, libtcod.red, libtcod.black)
-	render_bar(game.ps, 0, 5, game.PLAYER_STATS_WIDTH, 'HP', game.player.health, game.player.max_health, libtcod.red, libtcod.darker_red)
-	render_bar(game.ps, 0, 6, game.PLAYER_STATS_WIDTH, 'ST', game.player.stamina, game.player.max_stamina, libtcod.yellow, libtcod.darker_yellow)
-	render_bar(game.ps, 0, 7, game.PLAYER_STATS_WIDTH, 'MP', game.player.mana, game.player.max_mana, libtcod.blue, libtcod.darker_blue)
+	render_bar(game.ps, 0, 6, game.PLAYER_STATS_WIDTH, 'HP', game.player.health, game.player.max_health, libtcod.red, libtcod.darker_red)
+	render_bar(game.ps, 0, 7, game.PLAYER_STATS_WIDTH, 'ST', game.player.stamina, game.player.max_stamina, libtcod.yellow, libtcod.darker_yellow)
+	render_bar(game.ps, 0, 8, game.PLAYER_STATS_WIDTH, 'MP', game.player.mana, game.player.max_mana, libtcod.blue, libtcod.darker_blue)
 	libtcod.console_print(game.ps, 0, 0, game.player.name)
-	libtcod.console_print(game.ps, 0, 1, game.player.race + ' ' + game.player.profession)
-	libtcod.console_print(game.ps, 0, 3, game.current_map.location_abbr + '-' + str(game.current_map.location_level) + '     ')
-	libtcod.console_print(game.ps, 0, 9, 'LV: ' + str(game.player.level))
+	libtcod.console_print(game.ps, 0, 1, 'Level ' + str(game.player.level))
+	libtcod.console_print(game.ps, 0, 2, game.player.race + ' ' + game.player.profession)
+	libtcod.console_print(game.ps, 0, 4, game.current_map.location_abbr + '-' + str(game.current_map.location_level) + '     ')
 	libtcod.console_print(game.ps, 0, 10, 'XP: ' + str(game.player.xp))
 
 	if game.player.strength > game.player.base_strength:
@@ -480,23 +484,23 @@ def render_player_stats_panel():
 	else:
 		libtcod.console_print(game.ps, 0, 12, 'Dex: ' + str(game.player.dexterity) + ' ')
 
-	if game.player.intelligence > game.player.intelligence:
+	if game.player.intelligence > game.player.base_intelligence:
 		libtcod.console_print(game.ps, 0, 13, 'Int: %c%i%c ' % (libtcod.COLCTRL_1, game.player.intelligence, libtcod.COLCTRL_STOP))
-	elif game.player.intelligence < game.player.intelligence:
+	elif game.player.intelligence < game.player.base_intelligence:
 		libtcod.console_print(game.ps, 0, 13, 'Int: %c%i%c ' % (libtcod.COLCTRL_2, game.player.intelligence, libtcod.COLCTRL_STOP))
 	else:
 		libtcod.console_print(game.ps, 0, 13, 'Int: ' + str(game.player.intelligence) + ' ')
 
-	if game.player.wisdom > game.player.wisdom:
+	if game.player.wisdom > game.player.base_wisdom:
 		libtcod.console_print(game.ps, 0, 14, 'Wis: %c%i%c ' % (libtcod.COLCTRL_1, game.player.wisdom, libtcod.COLCTRL_STOP))
-	elif game.player.wisdom < game.player.wisdom:
+	elif game.player.wisdom < game.player.base_wisdom:
 		libtcod.console_print(game.ps, 0, 14, 'Wis: %c%i%c ' % (libtcod.COLCTRL_2, game.player.wisdom, libtcod.COLCTRL_STOP))
 	else:
 		libtcod.console_print(game.ps, 0, 14, 'Wis: ' + str(game.player.wisdom) + ' ')
 
-	if game.player.endurance > game.player.endurance:
+	if game.player.endurance > game.player.base_endurance:
 		libtcod.console_print(game.ps, 0, 15, 'End: %c%i%c ' % (libtcod.COLCTRL_1, game.player.endurance, libtcod.COLCTRL_STOP))
-	elif game.player.endurance < game.player.endurance:
+	elif game.player.endurance < game.player.base_endurance:
 		libtcod.console_print(game.ps, 0, 15, 'End: %c%i%c ' % (libtcod.COLCTRL_2, game.player.endurance, libtcod.COLCTRL_STOP))
 	else:
 		libtcod.console_print(game.ps, 0, 15, 'End: ' + str(game.player.endurance) + ' ')
