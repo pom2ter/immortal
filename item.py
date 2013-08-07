@@ -104,7 +104,7 @@ class Item(object):
 		if self.type == 'money':
 			gold = util.roll_dice(1, 20)
 			game.message.new('You pick up ' + str(gold) + ' ' + self.name + ' pieces', game.turns, libtcod.gold)
-			game.player.gold += gold
+			game.player.money += gold
 		else:
 			self.quantity = 1
 			game.message.new('You pick up ' + self.get_name(True), game.turns, libtcod.green)

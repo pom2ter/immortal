@@ -75,7 +75,7 @@ class Debug(object):
 
 	def menu(self):
 		if self.enable:
-			contents = ['Edit strength stat', 'Edit dexterity stat', 'Edit intelligence stat', 'Edit wisdom stat', 'Edit endurance stat', 'Edit karma stat', 'Heal health', 'Heal stamina', 'Heal mana', 'Add player flag', 'Fully identify inventory', 'Reset dungeon level', 'Show current map', 'Hide current map', 'Teleport (manual)']
+			contents = ['Edit strength stat', 'Edit dexterity stat', 'Edit intelligence stat', 'Edit wisdom stat', 'Edit endurance stat', 'Edit karma stat', 'Edit gold', 'Heal health', 'Heal stamina', 'Heal mana', 'Add player flag', 'Fully identify inventory', 'Reset dungeon level', 'Show current map', 'Hide current map', 'Teleport (manual)']
 			choice = game.messages.box('Debug Menu', None, game.PLAYER_STATS_WIDTH + (((game.MAP_WIDTH + 3) - (len(max(contents, key=len)) + 4)) / 2), ((game.MAP_HEIGHT + 1) - (len(contents) + 2)) / 2, len(max(contents, key=len)) + 4, len(contents) + 2, contents, mouse_exit=True)
 			if choice == 0:
 				game.player.strength = self.edit_attribute('Strength: ')
@@ -90,21 +90,23 @@ class Debug(object):
 			if choice == 5:
 				game.player.karma = self.edit_attribute('Karma: ')
 			if choice == 6:
-				game.player.heal_health(1000)
+				game.player.gold = self.edit_attribute('Money: ')
 			if choice == 7:
-				game.player.heal_stamina(1000)
+				game.player.heal_health(1000)
 			if choice == 8:
-				game.player.heal_mana(1000)
+				game.player.heal_stamina(1000)
 			if choice == 9:
-				self.add_player_flag()
+				game.player.heal_mana(1000)
 			if choice == 10:
-				self.fully_identify_inventory()
+				self.add_player_flag()
 			if choice == 11:
-				self.reset_dungeon_level()
+				self.fully_identify_inventory()
 			if choice == 12:
-				self.show_current_map()
+				self.reset_dungeon_level()
 			if choice == 13:
-				self.hide_current_map()
+				self.show_current_map()
 			if choice == 14:
+				self.hide_current_map()
+			if choice == 15:
 				self.teleport_anywhere_manual()
 			game.draw_gui = True

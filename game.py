@@ -15,7 +15,7 @@ import effects
 import death
 import debug as dbg
 
-VERSION = 'v0.3.3'
+VERSION = 'v0.3.4'
 
 #size of the gui windows
 MAP_WIDTH = 71
@@ -61,7 +61,7 @@ path_dy = -1
 
 #worldmap
 worldmap = None
-hm = 0
+heightmap = 0
 precipitation = 0
 temperature = 0
 biome = 0
@@ -75,6 +75,7 @@ old_maps = []
 #settings
 setting_font = 'small'
 setting_history = 50
+setting_fullscreen = 'off'
 
 #miscellaneous variables
 char = None
@@ -95,12 +96,15 @@ old_msg = 0
 draw_gui = True
 draw_map = True
 
+# to-do's...
 # thanatos, draconis, valamar, otatop, maurice the goblin
 # mountains peak type, transitions
 # caverns, maze types
 # scrolling, lockpicks, chest
-# burdened, food, money
+# burdened, food
 # curse, bless
+# monsters powers, location
+# ranged combat
 
 terrain = {'Mountain Peak':{'type': 'dirt', 'elevation': 0.950, 'maxelev': 1.000}, 
 		'Mountains':{'type': 'dirt', 'elevation': 0.850, 'maxelev': 0.949},
@@ -158,7 +162,7 @@ class Game(object):
 
 	# create the root console based on desktop resolution and font size
 	def init_root_console(self):
-		global MAP_WIDTH, MAP_HEIGHT, SCREEN_WIDTH, SCREEN_HEIGHT, MESSAGE_WIDTH, PLAYER_STATS_HEIGHT, MESSAGE_Y
+		global MAP_WIDTH, MAP_HEIGHT, SCREEN_WIDTH, SCREEN_HEIGHT, MESSAGE_WIDTH, PLAYER_STATS_HEIGHT, MESSAGE_Y, setting_fullscreen
 		user32 = ctypes.windll.user32
 		desktop_width = user32.GetSystemMetrics(0)
 		desktop_height = user32.GetSystemMetrics(1)
@@ -178,6 +182,8 @@ class Game(object):
 			PLAYER_STATS_HEIGHT = SCREEN_HEIGHT - 2
 			MESSAGE_Y = MAP_HEIGHT + 2
 		libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, 'Immortal ' + VERSION, False)
+		if setting_fullscreen == 'on':
+			libtcod.console_set_fullscreen(True)
 
 	# new game setup
 	def new_game(self):
@@ -354,7 +360,7 @@ class Game(object):
 	# load game settings
 	# stuff to do: add more options
 	def load_settings(self):
-		global setting_font, setting_history
+		global setting_font, setting_history, setting_fullscreen
 		if os.path.exists('settings.ini'):
 			contents = open('settings.ini', 'r')
 			while 1:
@@ -363,6 +369,8 @@ class Game(object):
 					setting_font = contents.readline().rstrip()
 				if line == '[History]':
 					setting_history = int(contents.readline().rstrip())
+				if line == '[Fullscreen]':
+					setting_fullscreen = contents.readline().rstrip()
 				if not line:
 					break
 			contents.close()
@@ -370,6 +378,8 @@ class Game(object):
 				setting_font = 'small'
 			if not setting_history in range(50, 1000):
 				setting_history = 50
+			if not any(setting_fullscreen == i for i in ['on', 'off']):
+				setting_fullscreen = 'off'
 
 	# loading and showing the high scores screen
 	def show_high_scores(self):

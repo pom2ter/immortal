@@ -55,21 +55,27 @@ def add_turn():
 # change game settings
 def change_settings(box, width, height, blitmap=False):
 	confirm, cancel = False, False
+	lerp = 1.0
+	descending = True
+	current = 0
+
 	fonts = sorted(game.fonts, reverse=True)
 	font = 0
 	if game.setting_font == 'large':
 		font = 2
 	elif game.setting_font == 'medium':
 		font = 1
-	lerp = 1.0
-	descending = True
 	history = game.setting_history
-	current = 0
+	fullscreen = ['on', 'off']
+	fs = 0
+	if game.setting_fullscreen == 'off':
+		fs = 1
 
 	key = libtcod.Key()
 	libtcod.console_print_rect(box, 2, 2, width - 4, 2, '(You may need to restart the game for the changes to take effect)')
 	libtcod.console_print(box, 2, 5, 'Font size: ')
 	libtcod.console_print(box, 2, 6, 'Message history size: ')
+	libtcod.console_print(box, 2, 7, 'Fullscreen: ')
 	while not confirm and not cancel:
 		color, lerp, descending = color_lerp(lerp, descending)
 
@@ -82,18 +88,6 @@ def change_settings(box, width, height, blitmap=False):
 			libtcod.console_set_default_background(box, libtcod.black)
 		libtcod.console_rect(box, 26, 5, 13, 1, True, libtcod.BKGND_SET)
 		libtcod.console_print_ex(box, 32, 5, libtcod.BKGND_SET, libtcod.CENTER, fonts[font].capitalize())
-		libtcod.console_set_default_foreground(box, libtcod.white)
-		if current != 0:
-			libtcod.console_set_default_foreground(box, libtcod.black)
-		elif font == 0:
-			libtcod.console_set_default_foreground(box, libtcod.darkest_grey)
-		libtcod.console_print_ex(box, 25, 5, libtcod.BKGND_NONE, libtcod.LEFT, chr(27))
-		libtcod.console_set_default_foreground(box, libtcod.white)
-		if current != 0:
-			libtcod.console_set_default_foreground(box, libtcod.black)
-		elif font == len(fonts) - 1:
-			libtcod.console_set_default_foreground(box, libtcod.darkest_grey)
-		libtcod.console_print_ex(box, 39, 5, libtcod.BKGND_NONE, libtcod.LEFT, chr(26))
 
 		# message history size setting
 		if current == 1:
@@ -104,18 +98,21 @@ def change_settings(box, width, height, blitmap=False):
 			libtcod.console_set_default_background(box, libtcod.black)
 		libtcod.console_rect(box, 26, 6, 13, 1, True, libtcod.BKGND_SET)
 		libtcod.console_print_ex(box, 32, 6, libtcod.BKGND_SET, libtcod.CENTER, str(history))
-		libtcod.console_set_default_foreground(box, libtcod.white)
-		if current != 1:
-			libtcod.console_set_default_foreground(box, libtcod.black)
-		elif history == 50:
-			libtcod.console_set_default_foreground(box, libtcod.darkest_grey)
-		libtcod.console_print_ex(box, 25, 6, libtcod.BKGND_NONE, libtcod.LEFT, chr(27))
-		libtcod.console_set_default_foreground(box, libtcod.white)
-		if current != 1:
-			libtcod.console_set_default_foreground(box, libtcod.black)
-		elif history == 1000:
-			libtcod.console_set_default_foreground(box, libtcod.darkest_grey)
-		libtcod.console_print_ex(box, 39, 6, libtcod.BKGND_NONE, libtcod.LEFT, chr(26))
+
+		# full screen mode
+		if current == 2:
+			libtcod.console_set_default_foreground(box, libtcod.white)
+			libtcod.console_set_default_background(box, color)
+		else:
+			libtcod.console_set_default_foreground(box, libtcod.grey)
+			libtcod.console_set_default_background(box, libtcod.black)
+		libtcod.console_rect(box, 26, 7, 13, 1, True, libtcod.BKGND_SET)
+		libtcod.console_print_ex(box, 32, 7, libtcod.BKGND_SET, libtcod.CENTER, fullscreen[fs].capitalize())
+
+		for i in range(5, 8):
+			libtcod.console_set_default_foreground(box, libtcod.white)
+			libtcod.console_print_ex(box, 25, i, libtcod.BKGND_NONE, libtcod.LEFT, chr(27))
+			libtcod.console_print_ex(box, 39, i, libtcod.BKGND_NONE, libtcod.LEFT, chr(26))
 
 		if blitmap:
 			libtcod.console_blit(box, 0, 0, width, height, 0, ((game.MAP_WIDTH - width) / 2) + game.MAP_X, (game.MAP_HEIGHT - height) / 2, 1.0, 1.0)
@@ -129,24 +126,40 @@ def change_settings(box, width, height, blitmap=False):
 			descending = True
 		if key.vk == libtcod.KEY_LEFT:
 			if current == 0:
-				if font > 0:
-					font -= 1
+				font -= 1
+				if font == -1:
+					font = len(fonts) - 1
 			if current == 1:
-				if history > 50:
-					history -= 50
+				history -= 50
+				if history == 0:
+					history = 1000
+			if current == 2:
+				if fs == 0:
+					fs = 1
+				else:
+					fs = 0
 		elif key.vk == libtcod.KEY_RIGHT:
 			if current == 0:
-				if font < len(fonts) - 1:
-					font += 1
+				font += 1
+				if font == len(fonts):
+					font = 0
 			if current == 1:
-				if history < 1000:
-					history += 50
+				history += 50
+				if history > 1000:
+					history = 50
+			if current == 2:
+				if fs == 0:
+					fs = 1
+				else:
+					fs = 0
 		elif key.vk == libtcod.KEY_UP:
-			if current > 0:
-				current -= 1
+			current -= 1
+			if current == -1:
+				current = 2
 		elif key.vk == libtcod.KEY_DOWN:
-			if current < 1:
-				current += 1
+			current += 1
+			if current == 3:
+				current = 0
 		elif key.vk == libtcod.KEY_ESCAPE:
 			cancel = True
 		elif key.vk == libtcod.KEY_ENTER:
@@ -154,6 +167,11 @@ def change_settings(box, width, height, blitmap=False):
 
 	if confirm:
 		game.setting_history = history
+		game.setting_fullscreen = fullscreen[fs]
+		if game.setting_fullscreen == 'on':
+			libtcod.console_set_fullscreen(True)
+		else:
+			libtcod.console_set_fullscreen(False)			
 		if blitmap:
 			game.message.trim_history()
 		f = open('settings.ini', 'wb')
@@ -161,6 +179,8 @@ def change_settings(box, width, height, blitmap=False):
 		f.write(fonts[font] + '\n')
 		f.write('[History]\n')
 		f.write(str(history) + '\n')
+		f.write('[Fullscreen]\n')
+		f.write(fullscreen[fs] + '\n')
 		f.close()
 
 
@@ -178,6 +198,11 @@ def color_lerp(lerp, descending, base=libtcod.black, light=libtcod.light_blue):
 			descending = True
 	color = libtcod.color_lerp(base, light, lerp)
 	return color, lerp, descending
+
+
+# returns currency in gold, silver and copper
+def convert_money(money):
+	return money / 10000, (money / 100) % 100, money % 100
 
 
 # returns a particular point on the map (when you see the worldmap)
@@ -582,7 +607,7 @@ def fov_radius():
 		game.FOV_RADIUS = 9 - (game.gametime.minute / 10)
 	if game.gametime.hour == 6:
 		game.FOV_RADIUS = 3 + (game.gametime.minute / 10)
-	if game.gametime.hour >= 21 or game.gametime.hour < 6 or game.current_map.location_id != 0:
+	if game.gametime.hour < 6 or game.gametime.hour >= 21 or game.current_map.location_id != 0:
 		game.FOV_RADIUS = 3
 	if game.fov_torch:
 		if game.FOV_RADIUS < game.TORCH_RADIUS:

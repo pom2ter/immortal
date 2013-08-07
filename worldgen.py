@@ -26,10 +26,10 @@ class World(object):
 			radius = self.randomize('float', 50 * (1.0 - 0.7), 50 * (1.0 + 0.7), 3)
 			x = self.randomize('int', 0, game.WORLDMAP_WIDTH, 3)
 			y = self.randomize('int', 0, game.WORLDMAP_HEIGHT, 3)
-			libtcod.heightmap_add_hill(game.hm, x, y, radius, 0.3)
-		libtcod.heightmap_normalize(game.hm)
-		libtcod.heightmap_add_fbm(game.hm, self.noise, 6.5, 6.5, 0, 0, 8.0, 1.0, 4.0)
-		libtcod.heightmap_normalize(game.hm)
+			libtcod.heightmap_add_hill(game.heightmap, x, y, radius, 0.3)
+		libtcod.heightmap_normalize(game.heightmap)
+		libtcod.heightmap_add_fbm(game.heightmap, self.noise, 6.5, 6.5, 0, 0, 8.0, 1.0, 4.0)
+		libtcod.heightmap_normalize(game.heightmap)
 
 	# create and save worldmap image in different sizes
 	def create_map_images(self, mode=0):
@@ -38,7 +38,7 @@ class World(object):
 		for x in range(game.WORLDMAP_WIDTH):
 			for y in range(game.WORLDMAP_HEIGHT):
 				if mode == 0:
-					cellheight = libtcod.heightmap_get_value(game.hm, x, y)
+					cellheight = libtcod.heightmap_get_value(game.heightmap, x, y)
 				else:
 					cellheight = self.hm_list[(y * game.WORLDMAP_WIDTH) + x]
 				if cellheight >= game.terrain['Mountain Peak']['elevation']:
@@ -108,7 +108,7 @@ class World(object):
 			while not done and attempt <= 1000:
 				x = libtcod.random_get_int(self.rnd, 0, game.WORLDMAP_WIDTH - 1)
 				y = libtcod.random_get_int(self.rnd, 0, game.WORLDMAP_HEIGHT - 1)
-				cellheight = int(libtcod.heightmap_get_value(game.hm, x, y) * 1000)
+				cellheight = int(libtcod.heightmap_get_value(game.heightmap, x, y) * 1000)
 				threat = self.set_threat_level(x, y, path_dijk)
 				if cellheight in range(int(game.terrain['Plains']['elevation'] * 1000), int(game.terrain['Hills']['maxelev'] * 1000)) and threat == i + 1:
 					self.dungeons.append((len(self.dungeons) + 1, 'Dungeon', 'Dng', x, y, threat + 1))
@@ -151,7 +151,7 @@ class World(object):
 		heightcount = [0] * 256
 		for x in range(game.WORLDMAP_WIDTH):
 			for y in range(game.WORLDMAP_HEIGHT):
-				h = int(libtcod.heightmap_get_value(game.hm, x, y) * 255)
+				h = int(libtcod.heightmap_get_value(game.heightmap, x, y) * 255)
 				heightcount[h] += 1
 
 		i, totalcount = 0, 0
@@ -164,12 +164,12 @@ class World(object):
 
 		for x in range(game.WORLDMAP_WIDTH):
 			for y in range(game.WORLDMAP_HEIGHT):
-				h = libtcod.heightmap_get_value(game.hm, x, y)
+				h = libtcod.heightmap_get_value(game.heightmap, x, y)
 				if h > newwaterlevel:
 					h = waterlevel + (h - newwaterlevel) * landcoef
 				else:
 					h = h * watercoef
-				libtcod.heightmap_set_value(game.hm, x, y, h)
+				libtcod.heightmap_set_value(game.heightmap, x, y, h)
 
 	# set threat level of a overworld map based on the player point of origin
 	# the farther it is, the more dangerous it is
@@ -201,16 +201,16 @@ class World(object):
 				h = min(ix, iy)
 				libtcod.heightmap_set_value(mask, x, y, h)
 		libtcod.heightmap_normalize(mask)
-		libtcod.heightmap_copy(game.hm, hmcopy)
-		libtcod.heightmap_multiply_hm(hmcopy, mask, game.hm)
-		libtcod.heightmap_normalize(game.hm)
+		libtcod.heightmap_copy(game.heightmap, hmcopy)
+		libtcod.heightmap_multiply_hm(hmcopy, mask, game.heightmap)
+		libtcod.heightmap_normalize(game.heightmap)
 
 	# main function for generating the worldmap
 	# stuff to do: add rivers, place towns
 	def generate(self):
 		self.noise = libtcod.noise_new(2, self.rnd)
 		libtcod.noise_set_type(self.noise, libtcod.NOISE_PERLIN)
-		game.hm = libtcod.heightmap_new(game.WORLDMAP_WIDTH, game.WORLDMAP_HEIGHT)
+		game.heightmap = libtcod.heightmap_new(game.WORLDMAP_WIDTH, game.WORLDMAP_HEIGHT)
 		#game.precipitation = libtcod.heightmap_new(game.WORLDMAP_WIDTH, game.WORLDMAP_HEIGHT)
 		#game.temperature = libtcod.heightmap_new(game.WORLDMAP_WIDTH, game.WORLDMAP_HEIGHT)
 		#game.biome = libtcod.heightmap_new(game.WORLDMAP_WIDTH, game.WORLDMAP_HEIGHT)
@@ -218,6 +218,6 @@ class World(object):
 		self.add_landmass()
 		self.smooth_edges()
 		self.set_landmass(self.randomize('float', 0.30, 0.44, 3), self.sandheight)
-		#libtcod.heightmap_rain_erosion(game.hm, (game.WORLDMAP_WIDTH * game.WORLDMAP_HEIGHT) / 7, 0.70, 0.01, self.rnd)
+		#libtcod.heightmap_rain_erosion(game.heightmap, (game.WORLDMAP_WIDTH * game.WORLDMAP_HEIGHT) / 7, 0.70, 0.01, self.rnd)
 		self.create_map_images()
 		self.place_dungeons()

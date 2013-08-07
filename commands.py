@@ -788,7 +788,11 @@ def ztats_attributes(con, width, height):
 	ztats_box(con, width, height, ' Player stats ')
 	libtcod.console_set_color_control(libtcod.COLCTRL_1, libtcod.green, libtcod.black)
 	libtcod.console_set_color_control(libtcod.COLCTRL_2, libtcod.red, libtcod.black)
+	libtcod.console_set_color_control(libtcod.COLCTRL_3, libtcod.gold, libtcod.black)
+	libtcod.console_set_color_control(libtcod.COLCTRL_4, libtcod.silver, libtcod.black)
+	libtcod.console_set_color_control(libtcod.COLCTRL_5, libtcod.copper, libtcod.black)
 	libtcod.console_print(con, 2, 2, game.player.name + ', a level ' + str(game.player.level) + ' ' + game.player.gender + ' ' + game.player.race + ' ' + game.player.profession)
+	g, s, c = util.convert_money(game.player.money)
 
 	if game.player.strength > game.player.base_strength:
 		libtcod.console_print(con, 2, 4, 'Strength     : %c%i%c' % (libtcod.COLCTRL_1, game.player.strength, libtcod.COLCTRL_STOP))
@@ -830,7 +834,7 @@ def ztats_attributes(con, width, height):
 	libtcod.console_print(con, 30, 5, 'Stamina    : ' + str(game.player.stamina) + '/' + str(game.player.max_stamina))
 	libtcod.console_print(con, 30, 6, 'Mana       : ' + str(game.player.mana) + '/' + str(game.player.max_mana))
 	libtcod.console_print(con, 30, 7, 'Experience : ' + str(game.player.xp))
-	libtcod.console_print(con, 30, 8, 'Money      : ' + str(game.player.gold))
+	libtcod.console_print(con, 30, 8, 'Money      : %c%s%c%c%c%c%i %c%s%c%c%c%c%i %c%s%c%c%c%c%i%c' % (libtcod.COLCTRL_3, chr(23), libtcod.COLCTRL_FORE_RGB,255,255,255, g, libtcod.COLCTRL_4, chr(23), libtcod.COLCTRL_FORE_RGB,255,255,255, s, libtcod.COLCTRL_5, chr(23), libtcod.COLCTRL_FORE_RGB,255,255,255, c, libtcod.COLCTRL_STOP))
 
 	libtcod.console_print(con, 2, 11, 'Attack Rating     : ' + str(game.player.attack_rating()))
 	libtcod.console_print(con, 2, 12, 'Defense Rating    : ' + str(game.player.defense_rating()))

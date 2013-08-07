@@ -71,7 +71,7 @@ class Player(object):
 		self.base_stamina = 0
 		self.inventory = []
 		self.equipment = []
-		self.gold = 0
+		self.money = 0
 		self.mks = 0
 		self.skills = [Skill('Sword', 'Combat', 0, 0), Skill('Axe', 'Combat', 0, 0), Skill('Mace', 'Combat', 0, 0),
 						Skill('Dagger', 'Combat', 0, 0), Skill('Polearm', 'Combat', 0, 0), Skill('Staff', 'Combat', 0, 0),
@@ -781,7 +781,7 @@ def show_stats_panel(stats, text, attr=-1, roll=-1):
 # starting stats and equipment after character generation
 def starting_stats():
 	game.player.inventory = []
-	game.player.gold = util.roll_dice(1, 50)
+	game.player.money = util.roll_dice(1, 50)
 	if game.player.profession == 'Fighter':
 		game.player.base_health = libtcod.random_get_int(game.rnd, 2, FIGHTER_HP_GAIN)
 		game.player.base_mana = libtcod.random_get_int(game.rnd, 2, FIGHTER_MP_GAIN)
