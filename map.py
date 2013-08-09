@@ -33,7 +33,7 @@ class Map(object):
 		if game.char.x >= self.map_width or game.char.y >= self.map_height:
 			x = libtcod.random_get_int(game.rnd, 0, self.map_width - 1)
 			y = libtcod.random_get_int(game.rnd, 0, self.map_height - 1)
-			while self.is_blocked(x, y):
+			while self.tile_is_blocked(x, y):
 				x = libtcod.random_get_int(game.rnd, 0, self.map_width - 1)
 				y = libtcod.random_get_int(game.rnd, 0, self.map_height - 1)
 			game.char.x = x
@@ -219,40 +219,6 @@ class Map(object):
 		for y in range(min(y1, y2), max(y1, y2) + 1):
 			self.set_tile_values('floor', x, y)
 
-	# returns true if tile is animated
-	def is_animate(self, x, y):
-		if 'animate' in self.tile[x][y]:
-			return True
-		return False
-
-	# returns true if tile is blocked
-	def is_blocked(self, x, y, include_obj=True):
-		if 'blocked' in self.tile[x][y]:
-			return True
-		if include_obj:
-			for obj in self.objects:
-				if obj.x == x and obj.y == y and obj.blocks:
-					return True
-		return False
-
-	# returns true if tile is explored
-	def is_explored(self, x, y):
-		if 'explored' in self.tile[x][y]:
-			return True
-		return False
-
-	# returns true if tile is invisible
-	def is_invisible(self, x, y):
-		if 'invisible' in self.tile[x][y]:
-			return True
-		return False
-
-	# returns true if tile block your view
-	def is_sight_blocked(self, x, y):
-		if 'block_sight' in self.tile[x][y]:
-			return True
-		return False
-
 	# place doors in dungeon level
 	# stuff to do: add locked doors
 	def place_doors(self):
@@ -296,7 +262,7 @@ class Map(object):
 	def place_monsters(self):
 		x = libtcod.random_get_int(game.rnd, 0, self.map_width - 1)
 		y = libtcod.random_get_int(game.rnd, 0, self.map_height - 1)
-		while (self.is_blocked(x, y)):
+		while (self.tile_is_blocked(x, y)):
 			x = libtcod.random_get_int(game.rnd, 0, self.map_width - 1)
 			y = libtcod.random_get_int(game.rnd, 0, self.map_height - 1)
 
@@ -323,7 +289,7 @@ class Map(object):
 		for i in range(num_items):
 			x = libtcod.random_get_int(game.rnd, 0, self.map_width - 1)
 			y = libtcod.random_get_int(game.rnd, 0, self.map_height - 1)
-			while (self.is_blocked(x, y) or self.tile[x][y]['name'] in ['deep water', 'very deep water']):
+			while (self.tile_is_blocked(x, y) or self.tile[x][y]['name'] in ['deep water', 'very deep water']):
 				x = libtcod.random_get_int(game.rnd, 0, self.map_width - 1)
 				y = libtcod.random_get_int(game.rnd, 0, self.map_height - 1)
 			loot = game.baseitems.loot_generation(x, y, self.threat_level)
@@ -402,10 +368,44 @@ class Map(object):
 			fore_color = libtcod.color_lerp(temp_tile.color, temp_tile.color_low, fore_lerp)
 		else:
 			fore_color = temp_tile.color
-		if self.is_animate(x, y):
+		if self.tile_is_animated(x, y):
 			self.tile[x][y].update({'back_light_color': temp_tile.back_color_high, 'back_dark_color': temp_tile.back_color_low, 'lerp': back_lerp})
 		else:
 			self.tile[x][y].update({'color': fore_color, 'back_light_color': back_color, 'back_dark_color': libtcod.color_lerp(libtcod.black, back_color, 0.2), 'lerp': back_lerp})
+
+	# returns true if tile is animated
+	def tile_is_animated(self, x, y):
+		if 'animate' in self.tile[x][y]:
+			return True
+		return False
+
+	# returns true if tile is blocked
+	def tile_is_blocked(self, x, y, include_obj=True):
+		if 'blocked' in self.tile[x][y]:
+			return True
+		if include_obj:
+			for obj in self.objects:
+				if obj.x == x and obj.y == y and obj.blocks:
+					return True
+		return False
+
+	# returns true if tile is explored
+	def tile_is_explored(self, x, y):
+		if 'explored' in self.tile[x][y]:
+			return True
+		return False
+
+	# returns true if tile is invisible
+	def tile_is_invisible(self, x, y):
+		if 'invisible' in self.tile[x][y]:
+			return True
+		return False
+
+	# returns true if tile block your view
+	def tile_is_sight_blocked(self, x, y):
+		if 'block_sight' in self.tile[x][y]:
+			return True
+		return False
 
 	# main function for generating a map
 	def generate(self, empty=False):
@@ -625,22 +625,12 @@ class Object(object):
 
 	# move by the given amount, if the destination is not blocked
 	def move(self, dx, dy, map):
-		if not map.is_blocked(self.x + dx, self.y + dy):
+		if not map.tile_is_blocked(self.x + dx, self.y + dy):
 			self.x += dx
 			self.y += dy
 			util.add_turn()
 		elif map.tile[self.x + dx][self.y + dy]['type'] == 'wall':
 			game.message.new('The wall laughs at your attempt to pass through it.', game.turns)
-
-	# return the distance to another object
-	def distance_to(self, other):
-		dx = other.x - self.x
-		dy = other.y - self.y
-		return math.sqrt(dx ** 2 + dy ** 2)
-
-	# return the distance to some coordinates
-	def distance(self, x, y):
-		return math.sqrt((x - self.x) ** 2 + (y - self.y) ** 2)
 
 	# make this object be drawn first, so all others appear above it if they're in the same tile.
 	def send_to_back(self):
@@ -662,14 +652,6 @@ class Object(object):
 		elif self.can_be_pickup:
 			libtcod.console_set_default_foreground(con, self.item.dark_color)
 			libtcod.console_put_char(con, self.x - game.curx, self.y - game.cury, self.char, libtcod.BKGND_NONE)
-
-	# erase the character that represents this object
-	def clear(self, con):
-		libtcod.console_put_char(con, self.x, self.y, ' ', libtcod.BKGND_NONE)
-
-	# return coordinates of object
-	def coordinates(self):
-		return self.x, self.y
 
 
 # main functions for building the overworld maps
@@ -775,6 +757,7 @@ def decombine_maps():
 
 # find terrain type base on elevation
 def find_terrain_type(coord):
+	terrain = 'Forest'
 	heightmap = game.worldmap.hm_list[coord]
 	for key, value in game.terrain.items():
 		if value['elevation'] <= heightmap <= value['maxelev']:

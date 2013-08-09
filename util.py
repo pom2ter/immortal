@@ -41,7 +41,7 @@ def add_turn():
 				for i, (x, y) in enumerate(game.traps):
 					if i == dice:
 						game.current_map.set_tile_values(game.current_map.tile[x][y]['name'], x, y)
-						if game.current_map.is_invisible(x, y):
+						if game.current_map.tile_is_invisible(x, y):
 							game.current_map.tile[x][y].pop('invisible', None)
 				game.message.new('You detect a trap!', game.turns)
 				game.player.skills[skill].gain_xp(3)
@@ -225,7 +225,7 @@ def get_names_under_mouse():
 	(x, y) = (game.mouse.cx - game.MAP_X, game.mouse.cy - 1)
 	px = x + game.curx
 	py = y + game.cury
-	if x in range(game.MAP_WIDTH) and y in range(game.MAP_HEIGHT) and game.current_map.is_explored(px, py):
+	if y in range(game.MAP_HEIGHT) and x in range(game.MAP_WIDTH) and game.current_map.tile_is_explored(px, py):
 		names = [obj for obj in game.current_map.objects if obj.x == px and obj.y == py]
 		prefix = 'you see '
 		if not libtcod.map_is_in_fov(game.fov_map, px, py):
@@ -236,7 +236,7 @@ def get_names_under_mouse():
 		if (px, py) == (game.char.x, game.char.y):
 			return 'you see yourself'
 		if names == []:
-			if game.current_map.is_invisible(px, py):
+			if game.current_map.tile_is_invisible(px, py):
 				return prefix + 'a floor'
 			return prefix + game.current_map.tile[px][py]['article'] + game.current_map.tile[px][py]['name']
 
@@ -335,48 +335,86 @@ def set_full_explore_map():
 	set_map = libtcod.map_new(game.current_map.map_width, game.current_map.map_height)
 	for py in range(game.current_map.map_height):
 		for px in range(game.current_map.map_width):
-			libtcod.map_set_properties(set_map, px, py, not game.current_map.is_sight_blocked(px, py), not game.current_map.is_blocked(px, py, False))
+			libtcod.map_set_properties(set_map, px, py, not game.current_map.tile_is_sight_blocked(px, py), not game.current_map.tile_is_blocked(px, py, False))
 	path = libtcod.dijkstra_new(set_map)
 	return path
 
 
 # show the worldmap
-# stuff to do: add towns, zoom
-def showmap(box, box_width, box_height):
+# stuff to do: add towns
+def showmap(box):
 	lerp, choice = 1.0, -1
 	descending, keypress = True, False
-	libtcod.image_blit_2x(game.worldmap.map_image_small, box, 1, 1)
-	mapposx = game.worldmap.player_positionx * (float(game.SCREEN_WIDTH - 2) / float(game.WORLDMAP_WIDTH))
-	mapposy = game.worldmap.player_positiony * (float(game.SCREEN_HEIGHT - 2) / float(game.WORLDMAP_HEIGHT))
-	char = find_map_position(mapposx, mapposy)
-	libtcod.console_set_default_foreground(box, libtcod.black)
-	for (id, name, abbr, x, y, tlevel) in game.worldmap.dungeons:
-		dmapposx = x * (float(game.SCREEN_WIDTH - 2) / float(game.WORLDMAP_WIDTH))
-		dmapposy = y * (float(game.SCREEN_HEIGHT - 2) / float(game.WORLDMAP_HEIGHT))
-		dchar = find_map_position(dmapposx, dmapposy)
-		libtcod.console_print_ex(box, int(dmapposx) + 1, int(dmapposy) + 1, libtcod.BKGND_NONE, libtcod.LEFT, dchar)
-	while not keypress:
+	choice, zoom = False, False
+	key = libtcod.Key()
+	startx = game.worldmap.player_positionx - (game.SCREEN_WIDTH / 2)
+	if startx < 0:
+		startx = 0
+	starty = game.worldmap.player_positiony - (game.SCREEN_HEIGHT / 2)
+	if starty < 0:
+		starty = 0
+	con = libtcod.console_new(game.WORLDMAP_WIDTH, game.WORLDMAP_HEIGHT)
+	game.worldmap.create_map_legend(con, 3)
+
+	while not choice:
+		ev = libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS, key, libtcod.Mouse())
+		if not zoom:
+			libtcod.image_blit_2x(game.worldmap.map_image_small, box, 1, 1)
+			mapposx = game.worldmap.player_positionx * (float(game.SCREEN_WIDTH - 2) / float(game.WORLDMAP_WIDTH))
+			mapposy = game.worldmap.player_positiony * (float(game.SCREEN_HEIGHT - 2) / float(game.WORLDMAP_HEIGHT))
+			char = find_map_position(mapposx, mapposy)
+			libtcod.console_set_default_foreground(box, libtcod.black)
+			for (id, name, abbr, x, y, tlevel) in game.worldmap.dungeons:
+				dmapposx = x * (float(game.SCREEN_WIDTH - 2) / float(game.WORLDMAP_WIDTH))
+				dmapposy = y * (float(game.SCREEN_HEIGHT - 2) / float(game.WORLDMAP_HEIGHT))
+				dchar = find_map_position(dmapposx, dmapposy)
+				libtcod.console_print_ex(box, int(dmapposx) + 1, int(dmapposy) + 1, libtcod.BKGND_NONE, libtcod.LEFT, dchar)
+
+		if zoom:
+			libtcod.console_blit(con, startx, starty, game.SCREEN_WIDTH - 2, game.SCREEN_HEIGHT - 2, box, 1, 1, 1.0, 1.0)
+			libtcod.console_set_default_background(box, libtcod.black)
+			for (id, name, abbr, x, y, tlevel) in game.worldmap.dungeons:
+				if y in range(starty, starty + game.SCREEN_HEIGHT - 2) and x in range(startx, startx + game.SCREEN_WIDTH - 2):
+					libtcod.console_print_ex(box, x - startx + 1, y - starty + 1, libtcod.BKGND_SET, libtcod.LEFT, ' ')
+
 		color, lerp, descending = color_lerp(lerp, descending, light=libtcod.red)
 		libtcod.console_set_default_foreground(box, color)
-		libtcod.console_print_ex(box, int(mapposx) + 1, int(mapposy) + 1, libtcod.BKGND_NONE, libtcod.LEFT, char)
-		libtcod.console_blit(box, 0, 0, box_width, box_height, 0, (game.SCREEN_WIDTH - box_width) / 2, (game.SCREEN_HEIGHT - box_height) / 2, 1.0, 1.0)
+		if not zoom:
+			libtcod.console_print_ex(box, int(mapposx) + 1, int(mapposy) + 1, libtcod.BKGND_NONE, libtcod.LEFT, char)
+		if zoom and game.worldmap.player_positiony in range(starty, starty + game.SCREEN_HEIGHT - 2) and game.worldmap.player_positionx in range(startx, startx + game.SCREEN_WIDTH - 2):
+			libtcod.console_print_ex(box, game.worldmap.player_positionx - startx + 1, game.worldmap.player_positiony - starty + 1, libtcod.BKGND_NONE, libtcod.LEFT, '@')
+		libtcod.console_blit(box, 0, 0, game.SCREEN_WIDTH, game.SCREEN_HEIGHT, 0, 0, 0, 1.0, 1.0)
 		libtcod.console_flush()
-		key = libtcod.Key()
-		ev = libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS, key, libtcod.Mouse())
+
 		if ev == libtcod.EVENT_KEY_PRESS:
-			if chr(key.c) == 's':
+			key_char = chr(key.c)
+			if key_char == 's':
 				libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, game.SCREEN_HEIGHT / 2, libtcod.BKGND_DARKEN, libtcod.CENTER, ' Saving map... ')
 				libtcod.console_flush()
 				game.worldmap.create_map_images(2)
-			else:
-				break
+			elif key_char == 'z':
+				zoom = not zoom
+			elif key.vk == libtcod.KEY_UP and zoom:
+				if starty > 0:
+					starty -= 1
+			elif key.vk == libtcod.KEY_DOWN and zoom:
+				if starty < game.WORLDMAP_HEIGHT - game.SCREEN_HEIGHT + 2:
+					starty += 1
+			elif key.vk == libtcod.KEY_LEFT and zoom:
+				if startx > 0:
+					startx -= 1
+			elif key.vk == libtcod.KEY_RIGHT and zoom:
+				if startx < game.WORLDMAP_WIDTH - game.SCREEN_WIDTH + 2:
+					startx += 1
+			elif key.vk == libtcod.KEY_TAB and ev == libtcod.EVENT_KEY_PRESS:
+				choice = True
 
 
 # someone set off a trap :O
 def spring_trap(x, y, victim='You'):
-	explored = game.current_map.is_explored(x, y)
+	explored = game.current_map.tile_is_explored(x, y)
 	game.current_map.set_tile_values(game.current_map.tile[x][y]['name'], x, y)
-	if game.current_map.is_invisible(x, y):
+	if game.current_map.tile_is_invisible(x, y):
 		game.current_map.tile[x][y].pop('invisible', None)
 	if explored:
 		game.current_map.tile[x][y].update({'explored': True})
@@ -405,15 +443,14 @@ def initialize_fov(update=False):
 		game.fov_map = libtcod.map_new(game.current_map.map_width, game.current_map.map_height)
 		for y in range(game.current_map.map_height):
 			for x in range(game.current_map.map_width):
-				libtcod.map_set_properties(game.fov_map, x, y, not game.current_map.is_sight_blocked(x, y), game.current_map.is_explored(x, y) and (not game.current_map.is_blocked(x, y)))
+				libtcod.map_set_properties(game.fov_map, x, y, not game.current_map.tile_is_sight_blocked(x, y), game.current_map.tile_is_explored(x, y) and (not game.current_map.tile_is_blocked(x, y)))
 	else:
 		for y in range(game.char.y - game.FOV_RADIUS, game.char.y + game.FOV_RADIUS):
 			for x in range(game.char.x - game.FOV_RADIUS, game.char.x + game.FOV_RADIUS):
-				if x < game.current_map.map_width and y < game.current_map.map_height:
-					libtcod.map_set_properties(game.fov_map, x, y, not game.current_map.is_sight_blocked(x, y), game.current_map.is_explored(x, y) and (not game.current_map.is_blocked(x, y)))
-					if libtcod.map_is_in_fov(game.fov_map, x, y):
-						if game.current_map.tile[x][y]['type'] == 'trap' and game.current_map.is_invisible(x, y):
-							game.traps.append((x, y))
+				if y < game.current_map.map_height and x < game.current_map.map_width:
+					libtcod.map_set_properties(game.fov_map, x, y, not game.current_map.tile_is_sight_blocked(x, y), game.current_map.tile_is_explored(x, y) and (not game.current_map.tile_is_blocked(x, y)))
+					if libtcod.map_is_in_fov(game.fov_map, x, y) and game.current_map.tile[x][y]['type'] == 'trap' and game.current_map.tile_is_invisible(x, y):
+						game.traps.append((x, y))
 	# compute paths using dijkstra algorithm
 	game.path_dijk = libtcod.dijkstra_new(game.fov_map)
 	libtcod.dijkstra_compute(game.path_dijk, game.char.x, game.char.y)
@@ -609,9 +646,8 @@ def fov_radius():
 		game.FOV_RADIUS = 3 + (game.gametime.minute / 10)
 	if game.gametime.hour < 6 or game.gametime.hour >= 21 or game.current_map.location_id != 0:
 		game.FOV_RADIUS = 3
-	if game.fov_torch:
-		if game.FOV_RADIUS < game.TORCH_RADIUS:
-			game.FOV_RADIUS = game.TORCH_RADIUS
+	if game.fov_torch and game.FOV_RADIUS < game.TORCH_RADIUS:
+		game.FOV_RADIUS = game.TORCH_RADIUS
 
 
 # master function of the game, everything pass through here on every turn
@@ -640,14 +676,14 @@ def render_map():
 			px = x + game.curx
 			py = y + game.cury
 			if not libtcod.map_is_in_fov(game.fov_map, px, py):
-				if game.draw_map and game.current_map.is_explored(px, py):
-					if game.current_map.is_animate(px, py):
+				if game.draw_map and game.current_map.tile_is_explored(px, py):
+					if game.current_map.tile_is_animated(px, py):
 						libtcod.console_put_char_ex(game.con, x, y, game.current_map.tile[px][py]['icon'], game.current_map.tile[px][py]['dark_color'], game.current_map.tile[px][py]['dark_back_color'])
 					else:
 						libtcod.console_put_char_ex(game.con, x, y, game.current_map.tile[px][py]['icon'], game.current_map.tile[px][py]['dark_color'], game.current_map.tile[px][py]['back_dark_color'])
 			else:
 				if not game.fov_torch:
-					if game.current_map.is_animate(px, py) or 'duration' in game.current_map.tile[px][py]:
+					if game.current_map.tile_is_animated(px, py) or 'duration' in game.current_map.tile[px][py]:
 						(front, back, game.current_map.tile[px][py]['lerp']) = render_tiles_animations(px, py, game.current_map.tile[px][py]['color'], game.current_map.tile[px][py]['back_light_color'], game.current_map.tile[px][py]['back_dark_color'], game.current_map.tile[px][py]['lerp'])
 						libtcod.console_put_char_ex(game.con, x, y, game.current_map.tile[px][py]['icon'], front, back)
 					elif game.draw_map:
@@ -663,12 +699,12 @@ def render_map():
 							l = 1.0
 						base = libtcod.color_lerp(base, libtcod.gold, l)
 					libtcod.console_put_char_ex(game.con, x, y, game.current_map.tile[px][py]['icon'], game.current_map.tile[px][py]['color'], base)
-				if not game.current_map.is_explored(px, py):
+				if not game.current_map.tile_is_explored(px, py):
 					game.current_map.tile[px][py].update({'explored': True})
 
 	# draw all objects in the map (if in the map viewport), except the player who his drawn last
 	for obj in reversed(game.current_map.objects):
-		if obj.x in range(game.curx, game.curx + game.MAP_WIDTH) and obj.y in range(game.cury, game.cury + game.MAP_HEIGHT) and game.current_map.is_explored(obj.x, obj.y) and obj.name != 'player':
+		if obj.y in range(game.cury, game.cury + game.MAP_HEIGHT) and obj.x in range(game.curx, game.curx + game.MAP_WIDTH) and game.current_map.tile_is_explored(obj.x, obj.y) and obj.name != 'player':
 			if game.draw_map and obj.entity is not None:
 				if libtcod.map_is_in_fov(game.fov_map, obj.x, obj.y) and not obj.entity.is_identified():
 					skill = game.player.find_skill('Mythology')
@@ -685,12 +721,11 @@ def render_map():
 	game.draw_map = False
 
 	# draw a line between the player and the mouse cursor
-	if game.path_dx in range(game.current_map.map_width) and game.path_dy in range(game.current_map.map_height):
-		if game.current_map.is_explored(game.path_dx, game.path_dy) and not game.current_map.is_blocked(game.path_dx, game.path_dy):
-			for i in range(libtcod.dijkstra_size(game.path_dijk)):
-				x, y = libtcod.dijkstra_get(game.path_dijk, i)
-				if (x - game.curx) in range(game.MAP_WIDTH) and (y - game.cury) in range(game.MAP_HEIGHT):
-					libtcod.console_set_char_background(0, game.MAP_X + x - game.curx, game.MAP_Y + y - game.cury, libtcod.desaturated_yellow, libtcod.BKGND_SET)
+	if game.path_dy in range(game.current_map.map_height) and game.path_dx in range(game.current_map.map_width) and game.current_map.tile_is_explored(game.path_dx, game.path_dy) and not game.current_map.tile_is_blocked(game.path_dx, game.path_dy):
+		for i in range(libtcod.dijkstra_size(game.path_dijk)):
+			x, y = libtcod.dijkstra_get(game.path_dijk, i)
+			if (y - game.cury) in range(game.MAP_HEIGHT) and (x - game.curx) in range(game.MAP_WIDTH):
+				libtcod.console_set_char_background(0, game.MAP_X + x - game.curx, game.MAP_Y + y - game.cury, libtcod.desaturated_yellow, libtcod.BKGND_SET)
 
 	# move the player if using mouse
 	if game.mouse_move:
@@ -709,14 +744,14 @@ def render_map():
 		py = my + game.cury
 		game.path_dx = -1
 		game.path_dy = -1
-		if mx in range(game.MAP_WIDTH) and my in range(game.MAP_HEIGHT):
+		if my in range(game.MAP_HEIGHT) and mx in range(game.MAP_WIDTH):
 			libtcod.console_set_char_background(0, mx + game.MAP_X, my + 1, libtcod.white, libtcod.BKGND_SET)
-			if game.current_map.is_explored(px, py) and not game.current_map.is_blocked(px, py):
+			if game.current_map.tile_is_explored(px, py) and not game.current_map.tile_is_blocked(px, py):
 				game.path_dx = px
 				game.path_dy = py
 				if game.mouse.lbutton_pressed:
 					game.mouse_move = mouse_auto_move()
-				if not game.current_map.is_blocked(game.path_dx, game.path_dy):
+				if not game.current_map.tile_is_blocked(game.path_dx, game.path_dy):
 					libtcod.dijkstra_path_set(game.path_dijk, game.path_dx, game.path_dy)
 
 	libtcod.console_set_default_foreground(0, libtcod.light_yellow)

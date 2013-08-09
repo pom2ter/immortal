@@ -22,7 +22,7 @@ class World(object):
 
 	# add some land by creating hills
 	def add_landmass(self):
-		for i in range(game.WORLDMAP_WIDTH / 2):
+		for i in range(int(game.WORLDMAP_WIDTH * 0.55)):
 			radius = self.randomize('float', 50 * (1.0 - 0.7), 50 * (1.0 + 0.7), 3)
 			x = self.randomize('int', 0, game.WORLDMAP_WIDTH, 3)
 			y = self.randomize('int', 0, game.WORLDMAP_HEIGHT, 3)
@@ -31,50 +31,17 @@ class World(object):
 		libtcod.heightmap_add_fbm(game.heightmap, self.noise, 6.5, 6.5, 0, 0, 8.0, 1.0, 4.0)
 		libtcod.heightmap_normalize(game.heightmap)
 
+	# add some rivers, lets limit this to the rain erosion function for now
+	def add_rivers(self):
+		libtcod.heightmap_rain_erosion(game.heightmap, int((game.WORLDMAP_WIDTH * game.WORLDMAP_HEIGHT) * 0.75), 0.13, 0.01, self.rnd)
+
 	# create and save worldmap image in different sizes
 	def create_map_images(self, mode=0):
 		con = libtcod.console_new(game.WORLDMAP_WIDTH, game.WORLDMAP_HEIGHT)
 		self.map_image_small = libtcod.image_new(game.WORLDMAP_WIDTH, game.WORLDMAP_HEIGHT)
-		for x in range(game.WORLDMAP_WIDTH):
-			for y in range(game.WORLDMAP_HEIGHT):
-				if mode == 0:
-					cellheight = libtcod.heightmap_get_value(game.heightmap, x, y)
-				else:
-					cellheight = self.hm_list[(y * game.WORLDMAP_WIDTH) + x]
-				if cellheight >= game.terrain['Mountain Peak']['elevation']:
-					# mountain peak
-					bcolor = libtcod.color_lerp(libtcod.white, libtcod.silver, (1.000 - cellheight) / 0.050)
-				elif cellheight >= game.terrain['Mountains']['elevation']:
-					# mountains
-					bcolor = libtcod.color_lerp(libtcod.silver, libtcod.grey, (0.950 - cellheight) / 0.100)
-				elif cellheight >= game.terrain['Hills']['elevation']:
-					# hills
-					bcolor = libtcod.color_lerp(libtcod.grey, libtcod.Color(53, 33, 16), (0.850 - cellheight) / 0.150)
-				elif cellheight >= game.terrain['Forest']['elevation']:
-					# forest
-					bcolor = libtcod.color_lerp(libtcod.Color(53, 33, 16), libtcod.dark_green, (0.700 - cellheight) / 0.450)
-				elif cellheight >= game.terrain['Plains']['elevation']:
-					# plains
-					bcolor = libtcod.color_lerp(libtcod.dark_green, libtcod.green, (0.250 - cellheight) / 0.090)
-				elif cellheight >= game.terrain['Coast']['elevation']:
-					# coast
-					bcolor = libtcod.color_lerp(libtcod.light_green, libtcod.Color(252, 208, 160), (0.160 - cellheight) / 0.040)
-				elif cellheight >= game.terrain['Shore']['elevation']:
-					# shallow water
-					bcolor = libtcod.color_lerp(libtcod.Color(135, 135, 255), libtcod.Color(24, 24, 240), (0.120 - cellheight) / 0.010)
-				elif cellheight >= game.terrain['Sea']['elevation']:
-					# deep water
-					bcolor = libtcod.color_lerp(libtcod.Color(24, 24, 240), libtcod.Color(0, 0, 80), (0.110 - cellheight) / 0.050)
-				else:
-					# ocean
-					bcolor = libtcod.Color(0, 0, 80)
-
-				libtcod.console_put_char_ex(con, x, y, ' ', bcolor, bcolor)
-				libtcod.image_put_pixel(self.map_image_small, x, y, bcolor)
-				if mode == 0:
-					self.hm_list[(y * game.WORLDMAP_WIDTH) + x] = float("{0:.4f}".format(cellheight))
-
+		self.create_map_legend(con, mode)
 		libtcod.image_scale(self.map_image_small, (game.SCREEN_WIDTH - 2) * 2, (game.SCREEN_HEIGHT - 2) * 2)
+
 		if mode == 0:
 			while self.player_positionx == 0:
 				start = self.randomize('int', 0, (game.WORLDMAP_WIDTH * game.WORLDMAP_HEIGHT) - 1, 3)
@@ -98,6 +65,47 @@ class World(object):
 				os.makedirs('maps')
 			libtcod.image_save(self.map_image_big, 'maps/worldmap-' + game.player.name + '.png')
 			self.map_image_big = None
+
+	# colors for the map legend
+	def create_map_legend(self, con, mode=0):
+		for x in range(game.WORLDMAP_WIDTH):
+			for y in range(game.WORLDMAP_HEIGHT):
+				if mode == 0:
+					cellheight = libtcod.heightmap_get_value(game.heightmap, x, y)
+				else:
+					cellheight = self.hm_list[(y * game.WORLDMAP_WIDTH) + x]
+				if cellheight >= game.terrain['Mountain Peak']['elevation']:
+					# mountain peak
+					bcolor = libtcod.color_lerp(libtcod.white, libtcod.silver, (1.000 - cellheight) / 0.050)
+				elif cellheight >= game.terrain['Mountains']['elevation']:
+					# mountains
+					bcolor = libtcod.color_lerp(libtcod.silver, libtcod.grey, (0.950 - cellheight) / 0.100)
+				elif cellheight >= game.terrain['Hills']['elevation']:
+					# hills
+					bcolor = libtcod.color_lerp(libtcod.grey, libtcod.Color(53, 33, 16), (0.850 - cellheight) / 0.150)
+				elif cellheight >= game.terrain['Forest']['elevation']:
+					# forest
+					bcolor = libtcod.color_lerp(libtcod.Color(53, 33, 16), libtcod.darker_green, (0.700 - cellheight) / 0.450)
+				elif cellheight >= game.terrain['Plains']['elevation']:
+					# plains
+					bcolor = libtcod.color_lerp(libtcod.darker_green, libtcod.dark_green, (0.250 - cellheight) / 0.090)
+				elif cellheight >= game.terrain['Coast']['elevation']:
+					# coast
+					bcolor = libtcod.color_lerp(libtcod.dark_green, libtcod.Color(228, 202, 148), (0.160 - cellheight) / 0.040)
+				elif cellheight >= game.terrain['Shore']['elevation']:
+					# shallow water
+					bcolor = libtcod.color_lerp(libtcod.Color(0, 111, 223), libtcod.Color(0, 40, 80), (0.120 - cellheight) / 0.010)
+				elif cellheight >= game.terrain['Sea']['elevation']:
+					# deep water
+					bcolor = libtcod.color_lerp(libtcod.Color(0, 40, 80), libtcod.darkest_blue, (0.110 - cellheight) / 0.050)
+				else:
+					# ocean
+					bcolor = libtcod.darkest_blue
+				libtcod.console_put_char_ex(con, x, y, ' ', bcolor, bcolor)
+				if mode != 3:
+					libtcod.image_put_pixel(self.map_image_small, x, y, bcolor)
+				if mode == 0:
+					self.hm_list[(y * game.WORLDMAP_WIDTH) + x] = float("{0:.4f}".format(cellheight))
 
 	# place all dungeons after terrain generation
 	def place_dungeons(self):
@@ -206,7 +214,7 @@ class World(object):
 		libtcod.heightmap_normalize(game.heightmap)
 
 	# main function for generating the worldmap
-	# stuff to do: add rivers, place towns
+	# stuff to do: place towns
 	def generate(self):
 		self.noise = libtcod.noise_new(2, self.rnd)
 		libtcod.noise_set_type(self.noise, libtcod.NOISE_PERLIN)
@@ -217,7 +225,7 @@ class World(object):
 
 		self.add_landmass()
 		self.smooth_edges()
-		self.set_landmass(self.randomize('float', 0.30, 0.44, 3), self.sandheight)
-		#libtcod.heightmap_rain_erosion(game.heightmap, (game.WORLDMAP_WIDTH * game.WORLDMAP_HEIGHT) / 7, 0.70, 0.01, self.rnd)
+		self.set_landmass(self.randomize('float', 0.30, 0.45, 3), self.sandheight)
+		self.add_rivers()
 		self.create_map_images()
 		self.place_dungeons()

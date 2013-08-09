@@ -10,9 +10,9 @@ def check_active_effects():
 		for x in range(game.current_map.map_width):
 			if 'duration' in game.current_map.tile[x][y]:
 				if game.current_map.tile[x][y]['duration'] < game.turns + 1:
-					explored = game.current_map.is_explored(x, y)
+					explored = game.current_map.tile_is_explored(x, y)
 					game.current_map.set_tile_values(game.current_map.tile[x][y]['name'], x, y)
-					if game.current_map.is_invisible(x, y):
+					if game.current_map.tile_is_invisible(x, y):
 						game.current_map.tile[x][y].pop('invisible', None)
 					if explored:
 						game.current_map.tile[x][y].update({'explored': True})
@@ -173,7 +173,7 @@ def teleportation(x, y, victim='You'):
 				victims.pop()
 	dx = libtcod.random_get_int(game.rnd, 0, game.current_map.map_width - 1)
 	dy = libtcod.random_get_int(game.rnd, 0, game.current_map.map_height - 1)
-	while (game.current_map.is_blocked(dx, dy)):
+	while (game.current_map.tile_is_blocked(dx, dy)):
 		dx = libtcod.random_get_int(game.rnd, 0, game.current_map.map_width - 1)
 		dy = libtcod.random_get_int(game.rnd, 0, game.current_map.map_height - 1)
 	for i in range(len(victims)):

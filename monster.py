@@ -148,7 +148,7 @@ class Monster(object):
 		#normalize it to length 1 (preserving direction), then round it and convert to integer so the movement is restricted to the map grid
 		dx = int(round(dx / distance))
 		dy = int(round(dy / distance))
-		while (game.current_map.is_blocked(x + dx, y + dy)):
+		while (game.current_map.tile_is_blocked(x + dx, y + dy)):
 			if dx == 0 and dy == 0:
 				break
 			dx, dy = libtcod.random_get_int(game.rnd, -1, 1), libtcod.random_get_int(game.rnd, -1, 1)
@@ -194,7 +194,7 @@ class Monster(object):
 				if return_neutral <= 10:
 					self.flags[:] = (value for value in self.flags if value != 'ai_hostile')
 			#retry if destination is blocked
-			while (game.current_map.is_blocked(x + dx, y + dy)):
+			while (game.current_map.tile_is_blocked(x + dx, y + dy)):
 				if dx == 0 and dy == 0:
 					break
 				dx, dy = libtcod.random_get_int(game.rnd, -1, 1), libtcod.random_get_int(game.rnd, -1, 1)
@@ -254,9 +254,9 @@ class MonsterList(object):
 	# choose a random monster based on its level
 	def get_monster_by_level(self, level, tilename):
 		if tilename in ['deep water', 'very deep water']:
-			mob = [x for x in self.list if x.level <= level and 'land' not in x.flags]
+			mob = [x for x in self.list if level - 6 <= x.level <= level and 'land' not in x.flags]
 		else:
-			mob = [x for x in self.list if x.level <= level and 'aquatic' not in x.flags]
+			mob = [x for x in self.list if level - 6 <= x.level <= level and 'aquatic' not in x.flags]
 		if mob:
 			return mob[libtcod.random_get_int(game.rnd, 0, len(mob) - 1)]
 		return None

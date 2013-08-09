@@ -151,7 +151,7 @@ def player_move(dx, dy):
 		else:
 			game.char.move(dx, dy, game.current_map)
 			if game.current_map.tile[game.char.x][game.char.y]['type'] == 'trap' and not game.player.is_above_ground():
-				if game.current_map.is_invisible(game.char.x, game.char.y):
+				if game.current_map.tile_is_invisible(game.char.x, game.char.y):
 					util.spring_trap(game.char.x, game.char.y)
 				else:
 					game.message.new('You sidestep the ' + game.current_map.tile[game.char.x][game.char.y]['name'], game.turns)
@@ -224,7 +224,7 @@ def attack():
 			for obj in game.current_map.objects:
 				if obj.x == px and obj.y == py and obj.entity:
 					target = obj
-			if not game.current_map.is_explored(px, py):
+			if not game.current_map.tile_is_explored(px, py):
 				game.message.new("You can't fight darkness.", game.turns)
 			elif target is None:
 				game.message.new('There is no one here.', game.turns)
@@ -467,7 +467,7 @@ def look():
 		py = dy + game.cury
 
 		# create a list with the names of all objects at the cursor coordinates
-		if dx in range(game.MAP_WIDTH - 1) and dy in range(game.MAP_HEIGHT - 1) and game.current_map.is_explored(px, py):
+		if dx in range(game.MAP_WIDTH - 1) and dy in range(game.MAP_HEIGHT - 1) and game.current_map.tile_is_explored(px, py):
 			names = [obj for obj in game.current_map.objects if obj.x == px and obj.y == py]
 			prefix = 'you see '
 			if not libtcod.map_is_in_fov(game.fov_map, px, py):
@@ -478,7 +478,7 @@ def look():
 			if (px, py) == (game.char.x, game.char.y):
 				text = 'you see yourself'
 			elif names == []:
-				if game.current_map.is_invisible(px, py):
+				if game.current_map.tile_is_invisible(px, py):
 					text = prefix + 'a floor'
 				else:
 					text = prefix + game.current_map.tile[px][py]['article'] + game.current_map.tile[px][py]['name']
@@ -702,9 +702,9 @@ def show_worldmap():
 	libtcod.console_print_ex(box, game.SCREEN_WIDTH / 2, 0, libtcod.BKGND_SET, libtcod.CENTER, ' World Map ')
 	libtcod.console_set_default_foreground(box, libtcod.green)
 	libtcod.console_set_default_background(box, libtcod.black)
-	libtcod.console_print_ex(box, game.SCREEN_WIDTH / 2, game.SCREEN_HEIGHT - 1, libtcod.BKGND_SET, libtcod.CENTER, '[ Red dot - You, Black dots - Dungeons, S - Save map ]')
+	libtcod.console_print_ex(box, game.SCREEN_WIDTH / 2, game.SCREEN_HEIGHT - 1, libtcod.BKGND_SET, libtcod.CENTER, '[ Red dot - You, Black dots - Dungeons, S - Save map, Z - Zoom, TAB - Exit ]')
 	libtcod.console_set_default_foreground(box, libtcod.white)
-	util.showmap(box, game.SCREEN_WIDTH, game.SCREEN_HEIGHT)
+	util.showmap(box)
 	game.draw_gui = True
 
 

@@ -15,7 +15,7 @@ import effects
 import death
 import debug as dbg
 
-VERSION = 'v0.3.4'
+VERSION = 'v0.3.4.1'
 
 #size of the gui windows
 MAP_WIDTH = 71
@@ -105,6 +105,7 @@ draw_map = True
 # curse, bless
 # monsters powers, location
 # ranged combat
+# spells, scrolls, tomes, npcs, towns, quests...
 
 terrain = {'Mountain Peak':{'type': 'dirt', 'elevation': 0.950, 'maxelev': 1.000}, 
 		'Mountains':{'type': 'dirt', 'elevation': 0.850, 'maxelev': 0.949},
@@ -138,7 +139,7 @@ class Game(object):
 		#libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, 'Immortal ' + VERSION, False)
 		libtcod.image_scale(img, SCREEN_WIDTH * 2, SCREEN_HEIGHT * 2)
 
-		libtcod.sys_set_fps(500)
+		libtcod.sys_set_fps(400)
 		rnd = libtcod.random_new()
 		con = libtcod.console_new(MAP_WIDTH, MAP_HEIGHT)
 		panel = libtcod.console_new(MESSAGE_WIDTH, MESSAGE_HEIGHT)
@@ -212,7 +213,7 @@ class Game(object):
 		util.initialize_fov()
 		while not libtcod.console_is_window_closed():
 			if draw_gui:
-				util.render_gui(libtcod.red)
+				util.render_gui(libtcod.Color(70, 80, 90))
 				util.render_message_panel()
 				util.render_player_stats_panel()
 				draw_gui = False
@@ -246,7 +247,7 @@ class Game(object):
 						if not obj.entity.is_disabled():
 							obj.x, obj.y = obj.entity.take_turn(obj.x, obj.y)
 							if game.current_map.tile[obj.x][obj.y]['type'] == 'trap' and not obj.entity.is_above_ground() and obj.entity.can_move(obj.x, obj.y):
-								if game.current_map.is_invisible(obj.x, obj.y):
+								if game.current_map.tile_is_invisible(obj.x, obj.y):
 									util.spring_trap(obj.x, obj.y, obj.entity.article.capitalize() + obj.entity.get_name())
 								elif libtcod.map_is_in_fov(game.fov_map, obj.x, obj.y):
 									game.message.new('The ' + obj.entity.get_name() + ' sidestep the ' + game.current_map.tile[obj.x][obj.y]['name'], game.turns)
