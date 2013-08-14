@@ -181,7 +181,7 @@ class Player(object):
 	def drop_item(self, item, qty=1):
 		for i in range(qty):
 			for j in xrange(len(self.inventory)):
-				if self.inventory[j].full_name == item.full_name:
+				if self.inventory[j] == item:
 					pos = j
 					break
 			obj = map.Object(game.char.x, game.char.y, self.inventory[pos].icon, self.inventory[pos].name, self.inventory[pos].color, True, item=self.inventory[pos])
@@ -205,7 +205,7 @@ class Player(object):
 	# equips an item
 	def equip_item(self, item):
 		for i in xrange(len(self.inventory)):
-			if self.inventory[i].full_name == item.full_name:
+			if self.inventory[i] == item:
 				item = i
 				break
 
