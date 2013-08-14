@@ -12,7 +12,7 @@ import effects
 def add_turn():
 	game.turns += 1
 	game.gametime.update(1)
-	game.player_move = True
+#	game.player_move = True
 	game.draw_gui = True
 	game.draw_map = True
 	libtcod.console_clear(game.con)
@@ -295,7 +295,6 @@ def items_at_feet():
 	elif len(objects) == 1:
 		if objects[0].item.type == 'money':
 			commands.pickup_item()
-			game.turns -= 1
 		else:
 			game.message.new('You see ' + objects[0].item.get_name(True), game.turns)
 
@@ -372,10 +371,10 @@ def showmap(box):
 
 		if zoom:
 			libtcod.console_blit(con, startx, starty, game.SCREEN_WIDTH - 2, game.SCREEN_HEIGHT - 2, box, 1, 1, 1.0, 1.0)
-			libtcod.console_set_default_background(box, libtcod.black)
+			libtcod.console_set_default_foreground(box, libtcod.black)
 			for (id, name, abbr, x, y, tlevel) in game.worldmap.dungeons:
 				if y in range(starty, starty + game.SCREEN_HEIGHT - 2) and x in range(startx, startx + game.SCREEN_WIDTH - 2):
-					libtcod.console_print_ex(box, x - startx + 1, y - starty + 1, libtcod.BKGND_SET, libtcod.LEFT, ' ')
+					libtcod.console_print_ex(box, x - startx + 1, y - starty + 1, libtcod.BKGND_NONE, libtcod.LEFT, chr(23))
 
 		color, lerp, descending = color_lerp(lerp, descending, light=libtcod.red)
 		libtcod.console_set_default_foreground(box, color)
@@ -408,6 +407,7 @@ def showmap(box):
 					startx += 1
 			elif key.vk == libtcod.KEY_TAB and ev == libtcod.EVENT_KEY_PRESS:
 				choice = True
+	libtcod.console_delete(con)
 
 
 # someone set off a trap :O
@@ -438,23 +438,27 @@ def spring_trap(x, y, victim='You'):
 
 # initialize the field of vision
 def initialize_fov(update=False):
+#	print 'Loading/Generating map chunks...'
+#	t0 = libtcod.sys_elapsed_seconds()
 	game.traps = []
 	if not update:
 		game.fov_map = libtcod.map_new(game.current_map.map_width, game.current_map.map_height)
 		for y in range(game.current_map.map_height):
 			for x in range(game.current_map.map_width):
-				libtcod.map_set_properties(game.fov_map, x, y, not game.current_map.tile_is_sight_blocked(x, y), game.current_map.tile_is_explored(x, y) and (not game.current_map.tile_is_blocked(x, y)))
+				libtcod.map_set_properties(game.fov_map, x, y, not 'block_sight' in game.current_map.tile[x][y], 'explored' in game.current_map.tile[x][y] and not game.current_map.tile_is_blocked(x, y))
 	else:
 		for y in range(game.char.y - game.FOV_RADIUS, game.char.y + game.FOV_RADIUS):
 			for x in range(game.char.x - game.FOV_RADIUS, game.char.x + game.FOV_RADIUS):
 				if y < game.current_map.map_height and x < game.current_map.map_width:
-					libtcod.map_set_properties(game.fov_map, x, y, not game.current_map.tile_is_sight_blocked(x, y), game.current_map.tile_is_explored(x, y) and (not game.current_map.tile_is_blocked(x, y)))
-					if libtcod.map_is_in_fov(game.fov_map, x, y) and game.current_map.tile[x][y]['type'] == 'trap' and game.current_map.tile_is_invisible(x, y):
+					libtcod.map_set_properties(game.fov_map, x, y, not 'block_sight' in game.current_map.tile[x][y], 'explored' in game.current_map.tile[x][y] and not game.current_map.tile_is_blocked(x, y))
+					if game.current_map.tile_is_invisible(x, y) and game.current_map.tile[x][y]['type'] == 'trap' and libtcod.map_is_in_fov(game.fov_map, x, y):
 						game.traps.append((x, y))
 	# compute paths using dijkstra algorithm
 	game.path_dijk = libtcod.dijkstra_new(game.fov_map)
 	libtcod.dijkstra_compute(game.path_dijk, game.char.x, game.char.y)
 	libtcod.dijkstra_path_set(game.path_dijk, game.path_dx, game.path_dy)
+#	t1 = libtcod.sys_elapsed_seconds()
+#	print '    done (%.3f seconds)' % (t1 - t0)
 
 
 # render the hp and mana bar
@@ -506,11 +510,11 @@ def render_gui(color):
 def render_message_panel():
 	y = 0
 	libtcod.console_clear(game.panel)
-	for i in range(max(0, len(game.message.log) - 5 - game.old_msg), len(game.message.log) - game.old_msg):
+	for i in range(max(0, len(game.message.log) - game.MESSAGE_HEIGHT - game.old_msg), len(game.message.log) - game.old_msg):
 		libtcod.console_set_default_foreground(game.panel, game.message.log[i][1])
 		libtcod.console_print(game.panel, 0, y, game.message.log[i][0])
 		y += 1
-	if game.old_msg + 5 < len(game.message.log):
+	if game.old_msg + game.MESSAGE_HEIGHT < len(game.message.log):
 		libtcod.console_put_char_ex(game.panel, game.MESSAGE_WIDTH - 1, 0, chr(24), libtcod.white, libtcod.black)
 	if game.old_msg > 0:
 		libtcod.console_put_char_ex(game.panel, game.MESSAGE_WIDTH - 1, game.MESSAGE_HEIGHT - 1, chr(25), libtcod.white, libtcod.black)
@@ -596,11 +600,11 @@ def render_player_stats_panel():
 # stuff to do: anim should start and end before next anim
 def render_floating_text_animations():
 	for i, (x, y, line, color, turn) in enumerate(reversed(game.hp_anim)):
-		libtcod.console_set_default_foreground(0, libtcod.color_lerp(libtcod.black, color, 1 - ((turn / 15) * 0.2)))
-		if game.MAP_Y + y - game.cury - (turn / 15) > 0:
-			libtcod.console_print_ex(0, game.MAP_X + x - game.curx, game.MAP_Y + y - game.cury - (turn / 15), libtcod.BKGND_NONE, libtcod.CENTER, line)
+		libtcod.console_set_default_foreground(0, libtcod.color_lerp(libtcod.black, color, 1 - ((turn / 14) * 0.2)))
+		if game.MAP_Y + y - game.cury - (turn / 14) > 0:
+			libtcod.console_print_ex(0, game.MAP_X + x - game.curx, game.MAP_Y + y - game.cury - (turn / 14), libtcod.BKGND_NONE, libtcod.CENTER, line)
 		game.hp_anim[len(game.hp_anim) - i - 1] = (x, y, line, color, turn + 1)
-		if turn > 60:
+		if turn > 56:
 			game.hp_anim.pop(len(game.hp_anim) - i - 1)
 
 
@@ -732,7 +736,8 @@ def render_map():
 		if mouse_auto_move() and not libtcod.dijkstra_is_empty(game.path_dijk):
 			game.char.x, game.char.y = libtcod.dijkstra_path_walk(game.path_dijk)
 			game.fov_recompute = True
-			add_turn()
+#			add_turn()
+			game.player_move = True
 		else:
 			items_at_feet()
 			game.mouse_move = False

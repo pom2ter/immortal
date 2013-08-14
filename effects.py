@@ -9,7 +9,7 @@ def check_active_effects():
 	for y in range(game.current_map.map_height):
 		for x in range(game.current_map.map_width):
 			if 'duration' in game.current_map.tile[x][y]:
-				if game.current_map.tile[x][y]['duration'] < game.turns + 1:
+				if game.current_map.tile[x][y]['duration'] < game.turns:
 					explored = game.current_map.tile_is_explored(x, y)
 					game.current_map.set_tile_values(game.current_map.tile[x][y]['name'], x, y)
 					if game.current_map.tile_is_invisible(x, y):
@@ -169,11 +169,11 @@ def teleportation(x, y, victim='You'):
 	for obj in game.current_map.objects:
 		if obj.x == x and obj.y == y:
 			victims.append(obj)
-			if (obj.entity.is_above_ground() and obj.entity) or (obj.name == 'player' and game.player.is_above_ground()):
+			if (obj.entity and obj.entity.is_above_ground()) or (obj.name == 'player' and game.player.is_above_ground()):
 				victims.pop()
 	dx = libtcod.random_get_int(game.rnd, 0, game.current_map.map_width - 1)
 	dy = libtcod.random_get_int(game.rnd, 0, game.current_map.map_height - 1)
-	while (game.current_map.tile_is_blocked(dx, dy)):
+	while game.current_map.tile_is_blocked(dx, dy):
 		dx = libtcod.random_get_int(game.rnd, 0, game.current_map.map_width - 1)
 		dy = libtcod.random_get_int(game.rnd, 0, game.current_map.map_height - 1)
 	for i in range(len(victims)):

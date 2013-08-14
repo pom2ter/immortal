@@ -73,11 +73,13 @@ def box(header, footer, startx, starty, width, height, contents, default=0, inpu
 	libtcod.console_set_default_foreground(box, libtcod.white)
 
 	if input:
-		choice = box_options(box, startx, starty, width - 2, height - 2, contents, default, inv, step, mouse_exit)
+		choice = box_options(box, startx, starty, width - 2, height - 2, contents, default, inv, step, mouse_exit, align)
 	else:
 		for i, line in enumerate(contents):
 			if align == libtcod.LEFT:
 				libtcod.console_print_ex(box, 2, 2 + i, libtcod.BKGND_SET, libtcod.LEFT, line)
+			if align == libtcod.RIGHT:
+				libtcod.console_print_ex(box, width - 2, 2 + i, libtcod.BKGND_SET, libtcod.RIGHT, line)
 			if align == libtcod.CENTER:
 				libtcod.console_print_ex(box, width / 2, 2 + i, libtcod.BKGND_SET, libtcod.CENTER, line)
 		libtcod.console_blit(box, 0, 0, width, height, 0, startx, starty, 1.0, 0.9)
@@ -85,11 +87,12 @@ def box(header, footer, startx, starty, width, height, contents, default=0, inpu
 		if not nokeypress:
 			libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, libtcod.Key(), libtcod.Mouse(), True)
 		choice = default
+	libtcod.console_delete(box)
 	return choice
 
 
 # outline of the text box
-def box_gui(con, x1, y1, x2, y2, color=libtcod.green):
+def box_gui(con, x1, y1, x2, y2, color=libtcod.green, lines=None):
 	buffer = libtcod.ConsoleBuffer(x2 - x1, y2 - y1)
 	for i in range(x1, x2):
 		buffer.set_fore(i, y1, color.r, color.g, color.b, chr(205))
@@ -97,6 +100,20 @@ def box_gui(con, x1, y1, x2, y2, color=libtcod.green):
 	for i in range(y1, y2):
 		buffer.set_fore(x1, i, color.r, color.g, color.b, chr(186))
 		buffer.set_fore(x2 - 1, i, color.r, color.g, color.b, chr(186))
+
+	if lines is not None:
+		for i in lines:
+			if i['dir'] == 'h':
+				for x in range(i['x'], x2):
+					buffer.set_fore(x, i['y'], color.r, color.g, color.b, chr(205))
+				buffer.set_back(i['x'], i['y'], color.r, color.g, color.b)
+				buffer.set_back(x2 - 1, i['y'], color.r, color.g, color.b)
+			if i['dir'] == 'v':
+				for y in range(i['y'], y2):
+					buffer.set_fore(i['x'], y, color.r, color.g, color.b, chr(186))
+				buffer.set_back(i['x'], i['y'], color.r, color.g, color.b)
+				buffer.set_back(i['x'], y2 - 1, color.r, color.g, color.b)
+
 	buffer.set_back(x1, y1, color.r, color.g, color.b)
 	buffer.set_back(x1, y2 - 1, color.r, color.g, color.b)
 	buffer.set_back(x2 - 1, y1, color.r, color.g, color.b)
@@ -105,7 +122,7 @@ def box_gui(con, x1, y1, x2, y2, color=libtcod.green):
 
 
 # output options in the text box
-def box_options(con, posx, posy, width, height, options, default, inv, step, mouse_exit):
+def box_options(con, posx, posy, width, height, options, default, inv, step, mouse_exit, align):
 	choice = False
 	current = default
 	key = libtcod.Key()
@@ -133,7 +150,10 @@ def box_options(con, posx, posy, width, height, options, default, inv, step, mou
 				text_left = options[y]
 				text_right = ''
 			libtcod.console_rect(con, step, y + step, width - ((step - 1) * 2), 1, True, libtcod.BKGND_SET)
-			libtcod.console_print_ex(con, 1 + step, y + step, libtcod.BKGND_SET, libtcod.LEFT, text_left)
+			if align == libtcod.LEFT:
+				libtcod.console_print_ex(con, 1 + step, y + step, libtcod.BKGND_SET, libtcod.LEFT, text_left)
+			if align == libtcod.RIGHT:
+				libtcod.console_print_ex(con, width - 1 + step, y + step, libtcod.BKGND_SET, libtcod.RIGHT, text_left)
 			libtcod.console_print_ex(con, width - step, y + step, libtcod.BKGND_SET, libtcod.RIGHT, text_right)
 
 		libtcod.console_blit(con, 0, 0, width + 2, height + 2, 0, posx, posy, 1.0, 0.9)
@@ -162,7 +182,7 @@ def box_options(con, posx, posy, width, height, options, default, inv, step, mou
 
 
 # waits for player input
-def input(typ, con, posx, posy, con2=None, min=0, max=100):
+def input(typ, con, posx, posy, min=0, max=100):
 	command = ''
 	x = 0
 	done = False
@@ -177,12 +197,13 @@ def input(typ, con, posx, posy, con2=None, min=0, max=100):
 			x -= 1
 		elif key.vk == libtcod.KEY_ENTER:
 			if not len(command) in range(min, max):
-				contents = ['Names must be between ' + str(min) + ' to ' + str(max - 1) + ' characters!']
-				game.messages.box('Error', None, 'center_screenx', 'center_screeny', 51, len(contents) + 4, contents, input=False, align=libtcod.CENTER)
+				libtcod.console_set_default_foreground(0, libtcod.dark_red)
+				libtcod.console_print(con, 2, posy + 2, 'Player name must be between ' + str(min) + ' to ' + str(max - 1) + ' characters!')
 			elif typ == 'chargen':
 				if command.lower() in game.savefiles:
-					contents = ['Name already exist!']
-					game.messages.box('Error', None, 'center_screenx', 'center_screeny', 51, len(contents) + 4, contents, input=False, align=libtcod.CENTER)
+					libtcod.console_set_default_foreground(0, libtcod.dark_red)
+					libtcod.console_rect(con, 2, posy + 2, 50, 1, True)
+					libtcod.console_print(con, 2, posy + 2, 'That name already exist!')
 				else:
 					done = True
 			else:
@@ -195,8 +216,6 @@ def input(typ, con, posx, posy, con2=None, min=0, max=100):
 			command += chr(key.c)  # add to the string
 			x += 1
 
-		libtcod.console_blit(con, 0, 0, game.SCREEN_WIDTH - 35, game.SCREEN_HEIGHT, 0, 0, 0)
-		if con2 is not None:
-			libtcod.console_blit(con2, 0, 0, 35, game.SCREEN_HEIGHT, 0, game.SCREEN_WIDTH - 35, 0)
+		libtcod.console_blit(con, 0, 0, game.SCREEN_WIDTH, game.SCREEN_HEIGHT, 0, 0, 0)
 		libtcod.console_flush()
 	return command

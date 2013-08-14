@@ -2,7 +2,6 @@ import libtcodpy as libtcod
 import game
 import util
 import map
-import messages
 
 RACES = ['Human', 'Elf', 'Dwarf', 'Halfling']
 CLASSES = ['Fighter', 'Rogue', 'Priest', 'Mage', 'Explorer']
@@ -40,10 +39,10 @@ EXPLORER_STAMINA_GAIN = 4
 
 class Player(object):
 	def __init__(self):
-		self.name = ""
-		self.race = RACES[0]
-		self.gender = GENDER[0]
-		self.profession = CLASSES[0]
+		self.name = ''
+		self.race = ''
+		self.gender = ''
+		self.profession = ''
 		self.strength = 9
 		self.base_strength = 9
 		self.dexterity = 9
@@ -110,7 +109,8 @@ class Player(object):
 		self.stamina -= 1
 		if self.no_stamina():
 			game.message.new('You fall unconscious from exaustion!', game.turns)
-		util.add_turn()
+#		util.add_turn()
+		game.player_move = True
 
 	# calculates your attack rating....
 	def attack_rating(self):
@@ -142,19 +142,19 @@ class Player(object):
 	# checks player condition each turn
 	def check_condition(self):
 		if 'stuck' in self.flags:
-			dice = util.roll_dice(1, 100)
+			dice = util.roll_dice(1, 120)
 			if self.strength + (self.karma / 2) >= dice:
 				game.message.new('You can move freely again!', game.turns)
 				self.flags.remove('stuck')
 		if 'poison' in self.flags:
-			dice = util.roll_dice(1, 100)
+			dice = util.roll_dice(1, 120)
 			if self.endurance + (self.karma / 2) >= dice:
 				game.message.new('You are no longer poisoned.', game.turns)
 				self.flags.remove('poison')
 			else:
 				self.take_damage(1, 'poison')
 		if 'sleep' in self.flags:
-			dice = util.roll_dice(1, 100)
+			dice = util.roll_dice(1, 120)
 			if self.wisdom + (self.karma / 2) >= dice:
 				game.message.new('You wake up.', game.turns)
 				self.flags.remove('sleep')
@@ -199,7 +199,8 @@ class Player(object):
 				util.spring_trap(game.char.x, game.char.y, obj.item.article.capitalize() + obj.item.get_name())
 			else:
 				util.spring_trap(game.char.x, game.char.y)
-		util.add_turn()
+#		util.add_turn()
+		game.player_move = True
 
 	# equips an item
 	def equip_item(self, item):
@@ -237,12 +238,13 @@ class Player(object):
 
 		self.equipment.append(self.inventory[item])
 		self.stats_bonus()
-		util.add_turn()
+#		util.add_turn()
 		if switch:
 			game.message.new('You unequip the ' + old.get_name() + ' before equipping the ' + self.inventory[item].get_name(), game.turns, libtcod.green)
 		else:
 			game.message.new('You equip the ' + self.inventory[item].get_name(), game.turns, libtcod.green)
 		self.inventory.pop(item)
+		game.player_move = True
 
 	# return skill index
 	def find_skill(self, skill):
@@ -512,10 +514,11 @@ class Player(object):
 	# unequip an item
 	def unequip(self, item):
 		self.inventory.append(self.equipment[item])
-		util.add_turn()
+#		util.add_turn()
 		game.message.new('You unequip the ' + self.equipment[item].get_name(), game.turns, libtcod.red)
 		self.equipment.pop(item)
 		self.stats_bonus()
+		game.player_move = True
 
 	# return carried weight
 	# stuff to do: burdened, overburdened
@@ -619,11 +622,11 @@ class Time(object):
 def character_description(typ, id):
 	libtcod.console_set_default_foreground(0, libtcod.white)
 	libtcod.console_set_default_background(0, libtcod.black)
-	libtcod.console_rect(0, 0, 10, 50, 10, True, libtcod.BKGND_SET)
+	libtcod.console_rect(0, 1, 11, 52, 10, True, libtcod.BKGND_SET)
 	if typ == 'race':
-		libtcod.console_print_rect(0, 1, 11, 45, 10, RACE_DESC[id])
+		libtcod.console_print_rect(0, 2, 12, 50, 10, RACE_DESC[id])
 	if typ == 'class':
-		libtcod.console_print_rect(0, 1, 11, 45, 10, CLASS_DESC[id])
+		libtcod.console_print_rect(0, 2, 12, 50, 10, CLASS_DESC[id])
 
 
 # output all options during character generation
@@ -672,86 +675,101 @@ def chargen_options(posx, posy, width, options, typ):
 # main function for character generation
 def create_character():
 	cancel = False
+	cs_width = 55
+	cs_height = game.SCREEN_HEIGHT - 4
+	cs = libtcod.console_new(cs_width, cs_height)
+	stats = libtcod.console_new(34, cs_height)
 	while not cancel:
-		cs_width = game.SCREEN_WIDTH - 35
-		cs = libtcod.console_new(cs_width, game.SCREEN_HEIGHT)
-		stats = libtcod.console_new(35, game.SCREEN_HEIGHT)
-		show_stats_panel(stats, '')
-
-		libtcod.console_print(cs, 1, 1, 'CHARACTER GENERATION')
-		libtcod.console_print(cs, 1, 3, 'Enter a name for your character: _' + game.player.name)
-		libtcod.console_blit(cs, 0, 0, cs_width, game.SCREEN_HEIGHT, 0, 0, 0)
+		game.messages.box_gui(0, 0, 0, game.SCREEN_WIDTH, game.SCREEN_HEIGHT, color=libtcod.Color(245, 222, 179), lines=[{'dir':'h', 'x':0, 'y':2}, {'dir':'v', 'x':game.SCREEN_WIDTH - 36, 'y':2}])
+		libtcod.console_set_default_foreground(0, libtcod.white)
+		libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 1, libtcod.BKGND_NONE, libtcod.CENTER, 'CHARACTER GENERATION')
+		show_stats_panel(stats)
+		libtcod.console_print(0, 2, 4, 'Enter a name for your character: _')
 		libtcod.console_flush()
 
-		game.player.name = messages.input('chargen', cs, 34, 3, stats, min=3, max=17)
-		show_stats_panel(stats, '')
-		libtcod.console_rect(cs, 0, 2, cs_width, game.SCREEN_HEIGHT, True, libtcod.BKGND_SET)
-		libtcod.console_print(cs, 1, 3, 'Select a gender:')
-		libtcod.console_blit(cs, 0, 0, cs_width, game.SCREEN_HEIGHT, 0, 0, 0)
-		game.player.gender = GENDER[chargen_options(1, 5, 10, GENDER, None)]
+		game.player.name = game.messages.input('chargen', 0, 35, 4, min=3, max=17)
+		show_stats_panel(stats)
+		libtcod.console_clear(cs)
+		libtcod.console_print(cs, 1, 1, 'Select a gender:')
+		libtcod.console_blit(cs, 0, 0, cs_width, cs_height, 0, 1, 3)
+		game.player.gender = GENDER[chargen_options(2, 6, 10, GENDER, None)]
 
-		show_stats_panel(stats, game.player.gender, 0)
-		libtcod.console_rect(cs, 0, 2, cs_width, game.SCREEN_HEIGHT, True, libtcod.BKGND_SET)
-		libtcod.console_print(cs, 1, 3, 'Select a race:')
-		libtcod.console_print(cs, 16, 4, 'Modifiers')
-		libtcod.console_print(cs, 16, 5, 'None')
-		libtcod.console_print(cs, 16, 6, '+2 Int, +1 Wis, -2 Str, -1 End')
-		libtcod.console_print(cs, 16, 7, '+2 Str, +3 End, -2 Dex, -2 Int, -1 Wis')
-		libtcod.console_print(cs, 16, 8, '+1 Dex, +1 Int, -1 Str, -1 Wis')
-		libtcod.console_blit(cs, 0, 0, cs_width, game.SCREEN_HEIGHT, 0, 0, 0)
-		index = chargen_options(1, 5, 12, RACES, 'race')
+		show_stats_panel(stats, 0)
+		libtcod.console_clear(cs)
+		libtcod.console_print(cs, 1, 1, 'Select a race:')
+		libtcod.console_print(cs, 16, 2, 'Modifiers')
+		libtcod.console_print(cs, 16, 3, 'None')
+		libtcod.console_print(cs, 16, 4, '+2 Int, +1 Wis, -2 Str, -1 End')
+		libtcod.console_print(cs, 16, 5, '+2 Str, +3 End, -2 Dex, -2 Int, -1 Wis')
+		libtcod.console_print(cs, 16, 6, '+1 Dex, +1 Int, -1 Str, -1 Wis')
+		libtcod.console_blit(cs, 0, 0, cs_width, cs_height, 0, 1, 3)
+		index = chargen_options(2, 6, 12, RACES, 'race')
 		game.player.race = RACES[index]
 
-		show_stats_panel(stats, game.player.gender + ' ' + game.player.race, index * 6)
-		libtcod.console_rect(cs, 0, 2, cs_width, game.SCREEN_HEIGHT, True, libtcod.BKGND_SET)
-		libtcod.console_print(cs, 1, 3, 'Select a class:')
-		libtcod.console_print(cs, 16, 4, 'Modifiers')
-		libtcod.console_print(cs, 16, 5, '+3 Str, +2 End, -2 Int, -1 Wis')
-		libtcod.console_print(cs, 16, 6, '+3 Dex, +1 Str, -1 Int, -1 End')
-		libtcod.console_print(cs, 16, 7, '+3 Wis, +1 Str, -1 Dex, -1 End')
-		libtcod.console_print(cs, 16, 8, '+4 Int, +1 Wis, -2 Str, -1 End')
-		libtcod.console_print(cs, 16, 9, 'None')
-		libtcod.console_blit(cs, 0, 0, cs_width, game.SCREEN_HEIGHT, 0, 0, 0)
-		indexr = chargen_options(1, 5, 12, CLASSES, 'class')
+		show_stats_panel(stats, index * 6)
+		libtcod.console_clear(cs)
+		libtcod.console_print(cs, 1, 1, 'Select a class:')
+		libtcod.console_print(cs, 16, 2, 'Modifiers')
+		libtcod.console_print(cs, 16, 3, '+3 Str, +2 End, -2 Int, -1 Wis')
+		libtcod.console_print(cs, 16, 4, '+3 Dex, +1 Str, -1 Int, -1 End')
+		libtcod.console_print(cs, 16, 5, '+3 Wis, +1 Str, -1 Dex, -1 End')
+		libtcod.console_print(cs, 16, 6, '+4 Int, +1 Wis, -2 Str, -1 End')
+		libtcod.console_print(cs, 16, 7, 'None')
+		libtcod.console_blit(cs, 0, 0, cs_width, cs_height, 0, 1, 3)
+		indexr = chargen_options(2, 6, 12, CLASSES, 'class')
 		game.player.profession = CLASSES[indexr]
 
-		show_stats_panel(stats, game.player.gender + ' ' + game.player.race + ' ' + game.player.profession, (index * 6) + indexr + 1, 0)
-		libtcod.console_rect(cs, 0, 2, cs_width, game.SCREEN_HEIGHT, True, libtcod.BKGND_SET)
-		libtcod.console_print(cs, 1, 3, 'Options:')
-		libtcod.console_blit(cs, 0, 0, cs_width, game.SCREEN_HEIGHT, 0, 0, 0)
+		show_stats_panel(stats, (index * 6) + indexr + 1, 0)
+		libtcod.console_clear(cs)
+		libtcod.console_print(cs, 1, 1, 'Options:')
+		libtcod.console_blit(cs, 0, 0, cs_width, cs_height, 0, 1, 3)
 		final_choice = False
 		while not final_choice:
-			choice = chargen_options(1, 5, 33, ['Reroll stats', 'Keep character and start game', 'Cancel and restart', 'Return to main menu'], None)
+			choice = chargen_options(2, 6, 33, ['Reroll stats', 'Keep character and start game', 'Cancel and restart', 'Return to main menu'], None)
 			if choice == 0:
-				show_stats_panel(stats, game.player.gender + ' ' + game.player.race + ' ' + game.player.profession, (index * 6) + indexr + 1, 0)
+				show_stats_panel(stats, (index * 6) + indexr + 1, 0)
 			if choice == 1:
 				final_choice = True
+				libtcod.console_delete(cs)
+				libtcod.console_delete(stats)
 				return 'playing'
 			if choice == 2:
-				game.player.name = ""
+				game.player.name = ''
+				game.player.gender = ''
+				game.player.race = ''
+				game.player.profession = ''
 				final_choice = True
 			if choice == 3:
 				final_choice = True
+				libtcod.console_delete(cs)
+				libtcod.console_delete(stats)
 				return 'quit'
 
 
 # output the stats panel during character generation
-def show_stats_panel(stats, text, attr=-1, roll=-1):
+def show_stats_panel(stats, attr=-1, roll=-1):
+	libtcod.console_clear(stats)
 	libtcod.console_set_default_foreground(stats, libtcod.light_red)
-	libtcod.console_print(stats, 2, 1, game.player.name)
+	libtcod.console_print(stats, 10, 1, game.player.name)
 	libtcod.console_set_default_foreground(stats, libtcod.light_yellow)
-	libtcod.console_print(stats, 2, 2, text)
+	libtcod.console_print(stats, 10, 2, game.player.gender)
+	libtcod.console_print(stats, 10, 3, game.player.race)
+	libtcod.console_print(stats, 10, 4, game.player.profession)
 	libtcod.console_set_default_foreground(stats, libtcod.white)
-	libtcod.console_print(stats, 16, 4, 'Base  Bonus  Total')
-	libtcod.console_print(stats, 2, 5, 'Strength:      ')
-	libtcod.console_print(stats, 2, 6, 'Dexterity:     ')
-	libtcod.console_print(stats, 2, 7, 'Intelligence:  ')
-	libtcod.console_print(stats, 2, 8, 'Wisdom:        ')
-	libtcod.console_print(stats, 2, 9, 'Endurance:     ')
+	libtcod.console_print(stats, 1, 1, 'Name   : ')
+	libtcod.console_print(stats, 1, 2, 'Gender : ')
+	libtcod.console_print(stats, 1, 3, 'Race   : ')
+	libtcod.console_print(stats, 1, 4, 'Class  : ')
+	libtcod.console_print(stats, 15, 7, 'Base  Bonus  Total')
+	libtcod.console_print(stats, 1, 8, 'Strength:      ')
+	libtcod.console_print(stats, 1, 9, 'Dexterity:     ')
+	libtcod.console_print(stats, 1, 10, 'Intelligence:  ')
+	libtcod.console_print(stats, 1, 11, 'Wisdom:        ')
+	libtcod.console_print(stats, 1, 12, 'Endurance:     ')
 
 	if not attr == -1:
 		for i in range(5):
-			libtcod.console_print_ex(stats, 18, i + 5, libtcod.BKGND_SET, libtcod.RIGHT, str(BASE_STATS[attr][i]))
+			libtcod.console_print_ex(stats, 17, i + 8, libtcod.BKGND_SET, libtcod.RIGHT, str(BASE_STATS[attr][i]))
 
 	if not roll == -1:
 		stat = []
@@ -762,8 +780,8 @@ def show_stats_panel(stats, text, attr=-1, roll=-1):
 		stat.append(libtcod.random_get_int(game.rnd, 0, 6))
 		stat.append(libtcod.random_get_int(game.rnd, 0, 20))
 		for i in range(5):
-			libtcod.console_print(stats, 24, i + 5, str(stat[i]))
-			libtcod.console_print_ex(stats, 31, i + 5, libtcod.BKGND_SET, libtcod.RIGHT, ' ' + str(BASE_STATS[attr][i] + stat[i]))
+			libtcod.console_print(stats, 23, i + 8, str(stat[i]))
+			libtcod.console_print_ex(stats, 30, i + 8, libtcod.BKGND_SET, libtcod.RIGHT, ' ' + str(BASE_STATS[attr][i] + stat[i]))
 		game.player.base_strength = BASE_STATS[attr][0] + stat[0]
 		game.player.base_dexterity = BASE_STATS[attr][1] + stat[1]
 		game.player.base_intelligence = BASE_STATS[attr][2] + stat[2]
@@ -772,9 +790,7 @@ def show_stats_panel(stats, text, attr=-1, roll=-1):
 		game.player.base_karma = stat[5]
 		starting_stats()
 
-	for i in range(game.SCREEN_HEIGHT):
-		libtcod.console_print(stats, 0, i, chr(179))
-	libtcod.console_blit(stats, 0, 0, 35, game.SCREEN_HEIGHT, 0, game.SCREEN_WIDTH - 35, 0)
+	libtcod.console_blit(stats, 0, 0, 34, 20, 0, game.SCREEN_WIDTH - 35, 3)
 	libtcod.console_flush()
 
 

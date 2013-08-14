@@ -58,14 +58,14 @@ class Monster(object):
 			if dice == 10:
 				self.flags.remove('stuck')
 		if 'poison' in self.flags:
-			dice = util.roll_dice(1, 5)
-			if dice == 5:
+			dice = util.roll_dice(1, 10)
+			if dice == 10:
 				self.flags.remove('poison')
 			else:
 				self.take_damage(x, y, 1, 'poison')
 		if 'sleep' in self.flags:
-			dice = util.roll_dice(1, 5)
-			if dice == 5:
+			dice = util.roll_dice(1, 10)
+			if dice == 10:
 				if libtcod.map_is_in_fov(game.fov_map, x, y):
 					game.message.new('The ' + self.get_name() + 'woke up.', game.turns)
 				self.flags.remove('sleep')
@@ -98,7 +98,7 @@ class Monster(object):
 
 	# returns true if monster is not touching the ground
 	def is_above_ground(self):
-		if 'levitate' in self.flags:
+		if 'flying' in self.flags:
 			return True
 		return False
 
@@ -133,10 +133,12 @@ class Monster(object):
 			d = game.baseitems.create_corpse(self.name, self.weight)
 			drop = map.Object(x, y, d.icon, d.name, d.color, True, item=d)
 			game.current_map.objects.append(drop)
+			drop.send_to_back()
 		drop_chance = util.roll_dice(1, 100)
 		if drop_chance >= 80:
 			drop = game.baseitems.loot_generation(x, y, self.level)
 			game.current_map.objects.append(drop)
+			drop.send_to_back()
 
 	# monster move towards player
 	def move_towards_player(self, player, x, y):
@@ -148,7 +150,7 @@ class Monster(object):
 		#normalize it to length 1 (preserving direction), then round it and convert to integer so the movement is restricted to the map grid
 		dx = int(round(dx / distance))
 		dy = int(round(dy / distance))
-		while (game.current_map.tile_is_blocked(x + dx, y + dy)):
+		while game.current_map.tile_is_blocked(x + dx, y + dy):
 			if dx == 0 and dy == 0:
 				break
 			dx, dy = libtcod.random_get_int(game.rnd, -1, 1), libtcod.random_get_int(game.rnd, -1, 1)
@@ -194,7 +196,7 @@ class Monster(object):
 				if return_neutral <= 10:
 					self.flags[:] = (value for value in self.flags if value != 'ai_hostile')
 			#retry if destination is blocked
-			while (game.current_map.tile_is_blocked(x + dx, y + dy)):
+			while game.current_map.tile_is_blocked(x + dx, y + dy):
 				if dx == 0 and dy == 0:
 					break
 				dx, dy = libtcod.random_get_int(game.rnd, -1, 1), libtcod.random_get_int(game.rnd, -1, 1)

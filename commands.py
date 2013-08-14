@@ -144,7 +144,8 @@ def player_move(dx, dy):
 		game.player.attack(target)
 	elif not game.player.can_move():
 		game.message.new("You can't move!", game.turns)
-		util.add_turn()
+#		util.add_turn()
+		game.player_move = True
 	else:
 		if game.current_map.tile[game.char.x + dx][game.char.y + dy]['type'] == 'door':
 			open_door(dx, dy)
@@ -290,9 +291,10 @@ def climb_down_stairs():
 
 		game.current_map.overworld_position = op
 		game.current_map.check_player_position()
-		util.add_turn()
+#		util.add_turn()
 		util.initialize_fov()
 		game.fov_recompute = True
+		game.player_move = True
 
 
 # climb up some stairs
@@ -335,8 +337,9 @@ def climb_up_stairs():
 			map.combine_maps()
 		game.current_map.check_player_position()
 		util.initialize_fov()
-		util.add_turn()
+#		util.add_turn()
 		game.fov_recompute = True
+		game.player_move = True
 
 
 # close door
@@ -351,9 +354,10 @@ def close_door():
 
 	if game.current_map.tile[game.char.x + dx][game.char.y + dy]['name'] == 'opened door':
 		game.current_map.set_tile_values('door', game.char.x + dx, game.char.y + dy)
-		util.add_turn()
+#		util.add_turn()
 		game.message.new('You close the door.', game.turns)
 		game.fov_recompute = True
+		game.player_move = True
 	elif game.current_map.tile[game.char.x + dx][game.char.y + dy]['name'] == 'door':
 		game.message.new('That door is already closed!', game.turns)
 	elif dx != 0 or dy != 0:
@@ -520,9 +524,10 @@ def open_door(x=None, y=None):
 
 	if game.current_map.tile[game.char.x + dx][game.char.y + dy]['name'] == 'door':
 		game.current_map.set_tile_values('opened door', game.char.x + dx, game.char.y + dy)
-		util.add_turn()
+#		util.add_turn()
 		game.message.new('You open the door.', game.turns)
 		game.fov_recompute = True
+		game.player_move = True
 	elif game.current_map.tile[game.char.x + dx][game.char.y + dy]['name'] == 'opened door':
 		game.message.new('That door is already opened!', game.turns)
 	elif dx != 0 or dy != 0:
@@ -659,13 +664,14 @@ def see_message_history():
 			elif key.vk == libtcod.KEY_DOWN or key.vk == libtcod.KEY_KP2:
 				if box_height - 4 + scroll < len(game.message.history):
 					scroll += 1
+	libtcod.console_delete(box)
 	game.draw_gui = True
 
 
 # show some of the old messages
 def see_message_log(up=False, down=False):
 	if up:
-		if game.old_msg < len(game.message.log) - 5:
+		if game.old_msg < len(game.message.log) - game.MESSAGE_HEIGHT:
 			game.old_msg += 1
 	if down:
 		if game.old_msg > 0:
@@ -676,7 +682,7 @@ def see_message_log(up=False, down=False):
 
 # settings screen
 def settings():
-	width, height = 44, 9
+	width, height = 44, 10
 	box = libtcod.console_new(width, height)
 	game.messages.box_gui(box, 0, 0, width, height, libtcod.green)
 	libtcod.console_set_default_foreground(box, libtcod.black)
@@ -684,6 +690,7 @@ def settings():
 	libtcod.console_print_ex(box, width / 2, 0, libtcod.BKGND_SET, libtcod.CENTER, ' Settings ')
 	libtcod.console_set_default_foreground(box, libtcod.white)
 	util.change_settings(box, width, height, blitmap=True)
+	libtcod.console_delete(box)
 	game.draw_gui = True
 
 
@@ -705,6 +712,7 @@ def show_worldmap():
 	libtcod.console_print_ex(box, game.SCREEN_WIDTH / 2, game.SCREEN_HEIGHT - 1, libtcod.BKGND_SET, libtcod.CENTER, '[ Red dot - You, Black dots - Dungeons, S - Save map, Z - Zoom, TAB - Exit ]')
 	libtcod.console_set_default_foreground(box, libtcod.white)
 	util.showmap(box)
+	libtcod.console_delete(box)
 	game.draw_gui = True
 
 
@@ -737,7 +745,7 @@ def use_skill():
 				if output2[choice2].is_identified():
 					game.message.new('That item is already identified.', game.turns)
 				else:
-					util.add_turn()
+#					util.add_turn()
 					if output2[choice2].level * 5 > skills[choice].level:
 						game.message.new('Your skill is not high enough to identity that item.', game.turns)
 						skills[choice].gain_xp(1)
@@ -745,6 +753,7 @@ def use_skill():
 						game.message.new('You identify the item!', game.turns)
 						output2[choice2].flags.append('identified')
 						skills[choice].gain_xp(5)
+					game.player_move = True
 
 		if output[choice] == 'Detect Traps':
 			skills[choice].active()
@@ -758,7 +767,7 @@ def use_skill():
 			dx, dy = key_check(key, dx, dy)
 
 			if game.current_map.tile[game.char.x + dx][game.char.y + dy]['type'] == 'trap':
-				util.add_turn()
+#				util.add_turn()
 				dice = libtcod.random_get_int(game.rnd, 0, 200)
 				if skills[choice].level >= dice:
 					game.current_map.set_tile_values('floor', game.char.x + dx, game.char.y + dy)
@@ -771,6 +780,7 @@ def use_skill():
 					else:
 						game.message.new('You failed to disarm the trap.', game.turns)
 					skills[choice].gain_xp(1)
+				game.player_move = True
 			elif dx != 0 or dy != 0:
 				game.message.new('You found no trap in that direction.', game.turns)
 	game.draw_gui = True
@@ -779,8 +789,9 @@ def use_skill():
 # passing one turn
 def wait_turn():
 	game.message.new('Time passes...', game.turns)
-	util.add_turn()
+#	util.add_turn()
 	game.fov_recompute = True
+	game.player_move = True
 
 
 # character sheet for stats
@@ -968,4 +979,5 @@ def ztats():
 				screen = 0
 		elif key.vk == libtcod.KEY_ESCAPE:
 			exit = True
+	libtcod.console_delete(stats)
 	game.draw_gui = True

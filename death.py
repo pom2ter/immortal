@@ -16,7 +16,7 @@ def death_screen(quit=False):
 	while exit is False:
 		libtcod.console_set_default_foreground(0, libtcod.white)
 		libtcod.console_set_default_background(0, libtcod.black)
-		libtcod.console_hline(0, 0, game.SCREEN_HEIGHT - 5, game.SCREEN_WIDTH, libtcod.BKGND_SET)
+#		libtcod.console_hline(0, 0, game.SCREEN_HEIGHT - 5, game.SCREEN_WIDTH, libtcod.BKGND_SET)
 		libtcod.console_print(0, 4, game.SCREEN_HEIGHT - 3, '[T] - Tombstone and final score       [M] - Fully explored last map')
 		libtcod.console_print(0, 4, game.SCREEN_HEIGHT - 2, '[I] - Fully identified inventory      [L] - Show message log            [X] - Exit')
 		libtcod.console_flush()
@@ -85,9 +85,7 @@ def death_inventory(scroll):
 	libtcod.console_set_color_control(libtcod.COLCTRL_1, libtcod.gray, libtcod.black)
 	libtcod.console_set_default_foreground(0, libtcod.white)
 	libtcod.console_set_default_background(0, libtcod.black)
-	libtcod.console_clear(0)
-	libtcod.console_hline(0, 0, 0, game.SCREEN_WIDTH, libtcod.BKGND_SET)
-	libtcod.console_hline(0, 0, 2, game.SCREEN_WIDTH, libtcod.BKGND_SET)
+	game.messages.box_gui(0, 0, 0, game.SCREEN_WIDTH, game.SCREEN_HEIGHT, color=libtcod.Color(245, 222, 179), lines=[{'dir':'h', 'x':0, 'y':2}, {'dir':'h', 'x':0, 'y':game.SCREEN_HEIGHT - 4}])
 	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 1, libtcod.BKGND_SET, libtcod.CENTER, 'INVENTORY')
 	libtcod.console_rect(0, 1, 4, game.SCREEN_WIDTH - 2, game.SCREEN_HEIGHT - 10, True, libtcod.BKGND_SET)
 	output = game.player.inventory + game.player.equipment
@@ -107,9 +105,7 @@ def death_inventory(scroll):
 def death_messagelog(scroll):
 	libtcod.console_set_default_foreground(0, libtcod.white)
 	libtcod.console_set_default_background(0, libtcod.black)
-	libtcod.console_clear(0)
-	libtcod.console_hline(0, 0, 0, game.SCREEN_WIDTH, libtcod.BKGND_SET)
-	libtcod.console_hline(0, 0, 2, game.SCREEN_WIDTH, libtcod.BKGND_SET)
+	game.messages.box_gui(0, 0, 0, game.SCREEN_WIDTH, game.SCREEN_HEIGHT, color=libtcod.Color(245, 222, 179), lines=[{'dir':'h', 'x':0, 'y':2}, {'dir':'h', 'x':0, 'y':game.SCREEN_HEIGHT - 4}])
 	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 1, libtcod.BKGND_SET, libtcod.CENTER, 'MESSAGE LOG')
 	libtcod.console_rect(0, 1, 4, game.SCREEN_WIDTH - 2, game.SCREEN_HEIGHT - 10, True, libtcod.BKGND_SET)
 	for i in range(min(game.SCREEN_HEIGHT - 10, len(game.message.history))):
@@ -126,9 +122,7 @@ def death_messagelog(scroll):
 def death_showmap(scrollx, scrolly):
 	libtcod.console_set_default_foreground(0, libtcod.white)
 	libtcod.console_set_default_background(0, libtcod.black)
-	libtcod.console_clear(0)
-	libtcod.console_hline(0, 0, 0, game.SCREEN_WIDTH, libtcod.BKGND_SET)
-	libtcod.console_hline(0, 0, 2, game.SCREEN_WIDTH, libtcod.BKGND_SET)
+	game.messages.box_gui(0, 0, 0, game.SCREEN_WIDTH, game.SCREEN_HEIGHT, color=libtcod.Color(245, 222, 179), lines=[{'dir':'h', 'x':0, 'y':2}, {'dir':'h', 'x':0, 'y':game.SCREEN_HEIGHT - 4}])
 	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 1, libtcod.BKGND_SET, libtcod.CENTER, 'LAST MAP')
 
 	if scrollx > 0:
@@ -154,6 +148,7 @@ def death_showmap(scrollx, scrolly):
 	if game.char.x in range(scrollx, game.SCREEN_WIDTH - 8 + scrollx) and game.char.y in range(scrolly, game.SCREEN_HEIGHT - 14 + scrolly):
 		libtcod.console_put_char_ex(box, game.char.x - scrollx, game.char.y - scrolly, '@', libtcod.white, libtcod.BKGND_NONE)
 	libtcod.console_blit(box, 0, 0, game.SCREEN_WIDTH - 8, game.SCREEN_HEIGHT - 14, 0, 4, 6, 1.0, 1.0)
+	libtcod.console_delete(box)
 	return 'map'
 
 
@@ -161,10 +156,9 @@ def death_showmap(scrollx, scrolly):
 def death_tombstone(quit=False):
 	libtcod.console_set_default_foreground(0, libtcod.white)
 	libtcod.console_set_default_background(0, libtcod.black)
-	libtcod.console_clear(0)
-	libtcod.console_hline(0, 0, 0, game.SCREEN_WIDTH, libtcod.BKGND_SET)
-	libtcod.console_hline(0, 0, 2, game.SCREEN_WIDTH, libtcod.BKGND_SET)
+	game.messages.box_gui(0, 0, 0, game.SCREEN_WIDTH, game.SCREEN_HEIGHT, color=libtcod.Color(245, 222, 179), lines=[{'dir':'h', 'x':0, 'y':2}, {'dir':'h', 'x':0, 'y':game.SCREEN_HEIGHT - 4}])
 	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 1, libtcod.BKGND_SET, libtcod.CENTER, 'TOMBSTONE AND FINAL SCORE')
+
 	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 4, libtcod.BKGND_SET, libtcod.CENTER, '_________________')
 	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 5, libtcod.BKGND_SET, libtcod.CENTER, '  /                 \ ')
 	libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 6, libtcod.BKGND_SET, libtcod.CENTER, '  /                   \ ')

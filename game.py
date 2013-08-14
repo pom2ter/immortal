@@ -15,14 +15,14 @@ import effects
 import death
 import debug as dbg
 
-VERSION = 'v0.3.4.1'
+VERSION = '0.3.4.2'
 
 #size of the gui windows
 MAP_WIDTH = 71
 MAP_HEIGHT = 31
 MESSAGE_WIDTH = MAP_WIDTH
-MESSAGE_HEIGHT = 5
-PLAYER_STATS_WIDTH = 21
+MESSAGE_HEIGHT = 6
+PLAYER_STATS_WIDTH = 22
 SCREEN_WIDTH = MAP_WIDTH + PLAYER_STATS_WIDTH + 3
 SCREEN_HEIGHT = MAP_HEIGHT + MESSAGE_HEIGHT + 3
 PLAYER_STATS_HEIGHT = SCREEN_HEIGHT - 2
@@ -106,16 +106,18 @@ draw_map = True
 # monsters powers, location
 # ranged combat
 # spells, scrolls, tomes, npcs, towns, quests...
+# worldmap travel?
 
 terrain = {'Mountain Peak':{'type': 'dirt', 'elevation': 0.950, 'maxelev': 1.000}, 
 		'Mountains':{'type': 'dirt', 'elevation': 0.850, 'maxelev': 0.949},
-		'Hills':{'type': 'dirt', 'elevation': 0.700, 'maxelev': 0.849},
-		'Forest':{'type': 'grass', 'elevation': 0.250, 'maxelev': 0.699},
-		'Plains':{'type': 'grass', 'elevation': 0.160, 'maxelev': 0.249},
-		'Coast':{'type': 'sand', 'elevation': 0.120, 'maxelev': 0.159},
+		'High Hills':{'type': 'dirt', 'elevation': 0.700, 'maxelev': 0.849},
+		'Low Hills':{'type': 'dirt', 'elevation': 0.575, 'maxelev': 0.699},
+		'Forest':{'type': 'grass', 'elevation': 0.225, 'maxelev': 0.574},
+		'Plains':{'type': 'grass', 'elevation': 0.140, 'maxelev': 0.224},
+		'Coast':{'type': 'sand', 'elevation': 0.120, 'maxelev': 0.139},
 		'Shore':{'type': 'shallow water', 'elevation': 0.110, 'maxelev': 0.119},
-		'Sea':{'type': 'deep water', 'elevation': 0.060, 'maxelev': 0.109},
-		'Ocean':{'type': 'very deep water', 'elevation': 0.000, 'maxelev': 0.059},
+		'Sea':{'type': 'deep water', 'elevation': 0.070, 'maxelev': 0.109},
+		'Ocean':{'type': 'very deep water', 'elevation': 0.000, 'maxelev': 0.069},
 		'Dungeon':{'type': 'wall', 'elevation': 2.000, 'maxelev': 2.000}}
 
 months = ['Phoenix', 'Manticore', 'Hydra', 'Golem', 'Centaur', 'Siren', 'Dragon', 'Werewolf', 'Gargoyle', 'Kraken', 'Basilisk', 'Unicorn']
@@ -124,11 +126,10 @@ fonts = {'small':{'file': 'font-small.png', 'width': 10, 'height': 16}, 'medium'
 
 class Game(object):
 	def __init__(self):
-		global debug, img, font_width, font_height, rnd, con, panel, ps, fov_noise, savefiles, baseitems, prefix, suffix, tiles, monsters
+		global debug, font_width, font_height, rnd, con, panel, ps, fov_noise, savefiles, baseitems, prefix, suffix, tiles, monsters
 		self.load_settings()
 		debug = dbg.Debug()
 		debug.enable = True
-		img = libtcod.image_load('title.png')
 		for key, value in fonts.items():
 			if setting_font == key:
 				libtcod.console_set_custom_font(value['file'], libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_ASCII_INROW)
@@ -137,7 +138,6 @@ class Game(object):
 		os.putenv("SDL_VIDEO_CENTERED", "1")
 		self.init_root_console()
 		#libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, 'Immortal ' + VERSION, False)
-		libtcod.image_scale(img, SCREEN_WIDTH * 2, SCREEN_HEIGHT * 2)
 
 		libtcod.sys_set_fps(400)
 		rnd = libtcod.random_new()
@@ -224,7 +224,8 @@ class Game(object):
 			if not game.player.is_disabled():
 				player_action = commands.keyboard_commands()
 			else:
-				util.add_turn()
+#				util.add_turn()
+				player_move = True
 			if player_action == 'save':
 				self.save_game()
 				break
@@ -236,31 +237,33 @@ class Game(object):
 
 			# let monsters take their turn
 			if player_move:
-				monsters.spawn()
 				for obj in reversed(current_map.objects):
-					if obj.item is not None:
-						if obj.item.is_active():
-							obj.delete()
-						if obj.item.is_expired() or ((turns >= (obj.first_appearance + obj.item.expiration)) and obj.item.expiration > 0):
-							obj.delete()
-					if obj.entity is not None and game_state != 'death':
-						if not obj.entity.is_disabled():
-							obj.x, obj.y = obj.entity.take_turn(obj.x, obj.y)
-							if game.current_map.tile[obj.x][obj.y]['type'] == 'trap' and not obj.entity.is_above_ground() and obj.entity.can_move(obj.x, obj.y):
-								if game.current_map.tile_is_invisible(obj.x, obj.y):
-									util.spring_trap(obj.x, obj.y, obj.entity.article.capitalize() + obj.entity.get_name())
-								elif libtcod.map_is_in_fov(game.fov_map, obj.x, obj.y):
-									game.message.new('The ' + obj.entity.get_name() + ' sidestep the ' + game.current_map.tile[obj.x][obj.y]['name'], game.turns)
-						obj.entity.check_condition(obj.x, obj.y)
-						if obj.entity.is_dead():
-							if libtcod.map_is_in_fov(game.fov_map, obj.x, obj.y):
-								game.message.new('The ' + obj.entity.get_name() + ' dies!', game.turns, libtcod.light_orange)
-							else:
-								game.message.new('You hear a dying scream.', game.turns)
-							obj.entity.loot(obj.x, obj.y)
-							obj.delete()
+					if game_state != 'death':
+						if obj.item:
+							if obj.item.is_active():
+								obj.delete()
+							if obj.item.is_expired() or ((turns >= (obj.first_appearance + obj.item.expiration)) and obj.item.expiration > 0):
+								obj.delete()
+						if obj.entity:
+							if not obj.entity.is_disabled():
+								obj.x, obj.y = obj.entity.take_turn(obj.x, obj.y)
+								if game.current_map.tile[obj.x][obj.y]['type'] == 'trap' and not obj.entity.is_above_ground() and obj.entity.can_move(obj.x, obj.y):
+									if game.current_map.tile_is_invisible(obj.x, obj.y):
+										util.spring_trap(obj.x, obj.y, obj.entity.article.capitalize() + obj.entity.get_name())
+									elif libtcod.map_is_in_fov(game.fov_map, obj.x, obj.y):
+										game.message.new('The ' + obj.entity.get_name() + ' sidestep the ' + game.current_map.tile[obj.x][obj.y]['name'], game.turns)
+							obj.entity.check_condition(obj.x, obj.y)
+							if obj.entity.is_dead():
+								if libtcod.map_is_in_fov(game.fov_map, obj.x, obj.y):
+									game.message.new('The ' + obj.entity.get_name() + ' dies!', game.turns, libtcod.light_orange)
+								else:
+									game.message.new('You hear a dying scream.', game.turns)
+								obj.entity.loot(obj.x, obj.y)
+								obj.delete()
 				if game_state != 'death':
+					monsters.spawn()
 					effects.check_active_effects()
+					util.add_turn()
 				player_move = False
 
 			# death screen summary
@@ -348,7 +351,7 @@ class Game(object):
 
 	# brings up settings menu
 	def settings(self):
-		width, height = 44, 9
+		width, height = 44, 10
 		box = libtcod.console_new(width, height)
 		messages.box_gui(box, 0, 0, width, height, libtcod.green)
 		libtcod.console_set_default_foreground(box, libtcod.black)
@@ -356,6 +359,7 @@ class Game(object):
 		libtcod.console_print_ex(box, 20, 0, libtcod.BKGND_SET, libtcod.CENTER, ' Settings ')
 		libtcod.console_set_default_foreground(box, libtcod.white)
 		util.change_settings(box, width, height, blitmap=False)
+		libtcod.console_delete(box)
 		self.load_settings()
 
 	# load game settings
@@ -415,26 +419,30 @@ class Game(object):
 
 	# brings up the main menu
 	def main_menu(self):
+		contents = ['Start a new game  ', 'Load a saved game  ', 'Read the manual  ', 'Change settings  ', 'View high scores  ', 'Quit game  ']
+		img = libtcod.image_load('title.png')
+		libtcod.image_scale(img, int(SCREEN_WIDTH * 2.2), SCREEN_HEIGHT * 2)
 		choice = 0
+
 		while not libtcod.console_is_window_closed():
 			libtcod.console_clear(0)
 			libtcod.image_blit_2x(img, 0, 0, 0)
+#			libtcod.console_print_ex(0, 10, 1, libtcod.BKGND_NONE, libtcod.LEFT, "#.")
+#			libtcod.console_print_ex(0, 10, 2, libtcod.BKGND_NONE, libtcod.LEFT, "##. .######.  .######.  .######.  .######.  .#######. .######.  .#")
+#			libtcod.console_print_ex(0, 10, 3, libtcod.BKGND_NONE, libtcod.LEFT, "#.# ## ## ##. ## ## ##. ##    ##. ##    ##.    #.#    ##    ##. ##")
+#			libtcod.console_print_ex(0, 10, 4, libtcod.BKGND_NONE, libtcod.LEFT, "#.# ## ## #.# ## ## #.# ##    #.# ##    #.#    #.#    ##    #.# ##")
+#			libtcod.console_print_ex(0, 10, 5, libtcod.BKGND_NONE, libtcod.LEFT, "#.# ## ## #.# ## ## #.# ##    #.# ## .####.    #.#    ####. #.# ##")
+#			libtcod.console_print_ex(0, 10, 6, libtcod.BKGND_NONE, libtcod.LEFT, "#.# ##    #.# ##    #.# ##    #.# ##    #.#    #.#    ##    #.# ##")
+#			libtcod.console_print_ex(0, 10, 7, libtcod.BKGND_NONE, libtcod.LEFT, "#.# ##    #.# ##    #.# ##    #.# ##    #.#    #.#    ##    #.# ##")
+#			libtcod.console_print_ex(0, 10, 8, libtcod.BKGND_NONE, libtcod.LEFT, "#.# ##    #.# ##    #.# ##    #.# ##    #.#    #.#    ##    #.# ##    ###")
+#			libtcod.console_print_ex(0, 10, 9, libtcod.BKGND_NONE, libtcod.LEFT, "##' ##    ##' ##    ##' `#######' `#    ##'    ##'    ##    ##' `#######'")
 			libtcod.console_set_default_foreground(0, libtcod.light_yellow)
-			libtcod.console_print_ex(0, 10, 1, libtcod.BKGND_NONE, libtcod.LEFT, "#.")
-			libtcod.console_print_ex(0, 10, 2, libtcod.BKGND_NONE, libtcod.LEFT, "##. .######.  .######.  .######.  .######.  .#######. .######.  .#")
-			libtcod.console_print_ex(0, 10, 3, libtcod.BKGND_NONE, libtcod.LEFT, "#.# ## ## ##. ## ## ##. ##    ##. ##    ##.    #.#    ##    ##. ##")
-			libtcod.console_print_ex(0, 10, 4, libtcod.BKGND_NONE, libtcod.LEFT, "#.# ## ## #.# ## ## #.# ##    #.# ##    #.#    #.#    ##    #.# ##")
-			libtcod.console_print_ex(0, 10, 5, libtcod.BKGND_NONE, libtcod.LEFT, "#.# ## ## #.# ## ## #.# ##    #.# ## .####.    #.#    ####. #.# ##")
-			libtcod.console_print_ex(0, 10, 6, libtcod.BKGND_NONE, libtcod.LEFT, "#.# ##    #.# ##    #.# ##    #.# ##    #.#    #.#    ##    #.# ##")
-			libtcod.console_print_ex(0, 10, 7, libtcod.BKGND_NONE, libtcod.LEFT, "#.# ##    #.# ##    #.# ##    #.# ##    #.#    #.#    ##    #.# ##")
-			libtcod.console_print_ex(0, 10, 8, libtcod.BKGND_NONE, libtcod.LEFT, "#.# ##    #.# ##    #.# ##    #.# ##    #.#    #.#    ##    #.# ##    ###")
-			libtcod.console_print_ex(0, 10, 9, libtcod.BKGND_NONE, libtcod.LEFT, "##' ##    ##' ##    ##' `#######' `#    ##'    ##'    ##    ##' `#######'")
-			libtcod.console_print_ex(0, 1, SCREEN_HEIGHT - 2, libtcod.BKGND_NONE, libtcod.LEFT, VERSION)
-			libtcod.console_print_ex(0, SCREEN_WIDTH / 2, SCREEN_HEIGHT - 2, libtcod.BKGND_NONE, libtcod.CENTER, 'Copyright (c) 2012-13 -- Mr.Potatoman')
-			contents = ['Start a new game', 'Load a saved game', 'Read the manual', 'Change settings', 'View high scores', 'Quit game']
+			libtcod.console_print_ex(0, 2, SCREEN_HEIGHT - 2, libtcod.BKGND_NONE, libtcod.LEFT, 'Immortal ' + VERSION)
+			libtcod.console_print_ex(0, SCREEN_WIDTH - 3, SCREEN_HEIGHT - 2, libtcod.BKGND_NONE, libtcod.RIGHT, 'Copyright (c) 2012-13 -- Mr.Potatoman')
+			libtcod.console_print_ex(0, SCREEN_WIDTH - 5, SCREEN_HEIGHT - 22, libtcod.BKGND_NONE, libtcod.RIGHT, 'Main Menu')
 			if choice == -1:
 				choice = 0
-			choice = messages.box(None, None, ((SCREEN_WIDTH - 4) - len(max(contents, key=len))) / 2, ((SCREEN_HEIGHT + 4) - len(contents)) / 2, len(max(contents, key=len)) + 4, len(contents) + 2, contents, choice)
+			choice = messages.box(None, None, (SCREEN_WIDTH - len(max(contents, key=len)) - 6), ((SCREEN_HEIGHT + 4) - len(contents)) / 2, len(max(contents, key=len)) + 5, len(contents) + 2, contents, choice, color=None, align=libtcod.RIGHT)
 
 			if choice == 0:  # start new game
 				self.new_game()

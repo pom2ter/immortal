@@ -1,5 +1,4 @@
 import libtcodpy as libtcod
-import math
 import copy
 import game
 import util
@@ -114,7 +113,7 @@ class Map(object):
 
 		# assign values per terrain types
 		heightmap = game.worldmap.hm_list[self.location_level]
-		if self.type in ['Hills', 'Mountains', 'Mountain Peak']:
+		if self.type in ['High Hills', 'Low Hills', 'Mountains', 'Mountain Peak']:
 			tiles[rocks_tiles] = self.randomize(40, 200, 3)
 			tiles[dirt_tiles] = self.randomize(int(map_size * heightmap * 0.05), int(map_size * heightmap), 3)
 			tiles[grass_tiles] = self.randomize(int(map_size * heightmap * 0.05), int(map_size * heightmap), 3)
@@ -152,7 +151,7 @@ class Map(object):
 			for i in range(tiles[j]):
 				x = libtcod.random_get_int(game.rnd, 0, self.map_width - 1)
 				y = libtcod.random_get_int(game.rnd, 0, self.map_height - 1)
-				while (self.tile[x][y]['name'] != default_tile):
+				while self.tile[x][y]['name'] != default_tile:
 					x = libtcod.random_get_int(game.rnd, 0, self.map_width - 1)
 					y = libtcod.random_get_int(game.rnd, 0, self.map_height - 1)
 				self.set_tile_values(icons[j], x, y)
@@ -262,7 +261,7 @@ class Map(object):
 	def place_monsters(self):
 		x = libtcod.random_get_int(game.rnd, 0, self.map_width - 1)
 		y = libtcod.random_get_int(game.rnd, 0, self.map_height - 1)
-		while (self.tile_is_blocked(x, y)):
+		while self.tile_is_blocked(x, y) or libtcod.map_is_in_fov(game.fov_map, x, y):
 			x = libtcod.random_get_int(game.rnd, 0, self.map_width - 1)
 			y = libtcod.random_get_int(game.rnd, 0, self.map_height - 1)
 
@@ -270,10 +269,8 @@ class Map(object):
 		dice = util.roll_dice(1, 100, extra_roll=True)
 		if dice <= 85:
 			d = game.monsters.get_monster_by_level(self.threat_level, self.tile[x][y]['name'])
-		elif dice <= 99:
-			d = game.monsters.get_monster_by_level(self.threat_level + 1, self.tile[x][y]['name'])
 		else:
-			d = game.monsters.get_monster_by_level(self.threat_level + 2, self.tile[x][y]['name'])
+			d = game.monsters.get_monster_by_level(self.threat_level + 1, self.tile[x][y]['name'])
 		monster = Object(x, y, d.icon, d.name, d.color, blocks=True, entity=d)
 		self.objects.insert(1, monster)
 
@@ -289,7 +286,7 @@ class Map(object):
 		for i in range(num_items):
 			x = libtcod.random_get_int(game.rnd, 0, self.map_width - 1)
 			y = libtcod.random_get_int(game.rnd, 0, self.map_height - 1)
-			while (self.tile_is_blocked(x, y) or self.tile[x][y]['name'] in ['deep water', 'very deep water']):
+			while self.tile_is_blocked(x, y) or self.tile[x][y]['name'] in ['deep water', 'very deep water']:
 				x = libtcod.random_get_int(game.rnd, 0, self.map_width - 1)
 				y = libtcod.random_get_int(game.rnd, 0, self.map_height - 1)
 			loot = game.baseitems.loot_generation(x, y, self.threat_level)
@@ -324,7 +321,7 @@ class Map(object):
 		for i in range(0, traps):
 			x = libtcod.random_get_int(game.rnd, 0, self.map_width - 1)
 			y = libtcod.random_get_int(game.rnd, 0, self.map_height - 1)
-			while (self.tile[x][y]['type'] != 'floor'):
+			while self.tile[x][y]['type'] != 'floor':
 				x = libtcod.random_get_int(game.rnd, 0, self.map_width - 1)
 				y = libtcod.random_get_int(game.rnd, 0, self.map_height - 1)
 			self.set_tile_values('trap', x, y, 'trap')
@@ -385,7 +382,7 @@ class Map(object):
 			return True
 		if include_obj:
 			for obj in self.objects:
-				if obj.x == x and obj.y == y and obj.blocks:
+				if obj.y == y and obj.x == x and obj.blocks:
 					return True
 		return False
 
@@ -409,12 +406,13 @@ class Map(object):
 
 	# main function for generating a map
 	def generate(self, empty=False):
-		default_block_tiles = {'Dungeon': 'wall', 'Mountain Peak': 'high mountains', 'Mountains': 'mountains', 'Hills': 'hills', 'Forest': 'grass', 'Plains': 'grass', 'Coast': 'sand', 'Shore': 'shallow water', 'Sea': 'deep water', 'Ocean': 'very deep water'}
+		default_block_tiles = {'Dungeon': 'wall', 'Mountain Peak': 'high mountains', 'Mountains': 'mountains', 'High Hills': 'hills', 'Low Hills': 'hills', 'Forest': 'grass', 'Plains': 'grass', 'Coast': 'sand', 'Shore': 'shallow water', 'Sea': 'deep water', 'Ocean': 'very deep water'}
 		self.objects = [game.char]
 		self.tile = [[{} for y in range(self.map_height)] for x in range(self.map_width)]
-		for x in range(self.map_width):
-			for y in range(self.map_height):
-				self.set_tile_values(default_block_tiles[self.type], x, y, reset=False)
+		if not empty:
+			for x in range(self.map_width):
+				for y in range(self.map_height):
+					self.set_tile_values(default_block_tiles[self.type], x, y, reset=False)
 		game.fov_noise = libtcod.noise_new(1, 1.0, 1.0)
 		game.fov_torchx = 0.0
 
@@ -628,7 +626,8 @@ class Object(object):
 		if not map.tile_is_blocked(self.x + dx, self.y + dy):
 			self.x += dx
 			self.y += dy
-			util.add_turn()
+#			util.add_turn()
+			game.player_move = True
 		elif map.tile[self.x + dx][self.y + dy]['type'] == 'wall':
 			game.message.new('The wall laughs at your attempt to pass through it.', game.turns)
 
@@ -664,7 +663,6 @@ def change_maps(did, dlevel):
 	load_old_maps(did, dlevel)
 	combine_maps()
 	util.initialize_fov()
-	game.fov_recompute = True
 
 
 # check to see if destination map already exist, if so fetch it, if not generate it

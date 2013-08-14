@@ -110,7 +110,8 @@ class Item(object):
 			game.message.new('You pick up ' + self.get_name(True), game.turns, libtcod.green)
 			self.turn_created = ts
 			game.player.inventory.append(self)
-		util.add_turn()
+#		util.add_turn()
+		game.player_move = True
 
 	# use the item
 	def use(self):
@@ -154,7 +155,8 @@ class Item(object):
 				self.charges -= 1
 				if self.charges == 0:
 					game.player.inventory.remove(self)
-			util.add_turn()
+#			util.add_turn()
+			game.player_move = True
 		else:
 			game.message.new("You can't use that item.", game.turns)
 
