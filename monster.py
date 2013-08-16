@@ -3,8 +3,8 @@ import math
 import copy
 import game
 import util
+import mapgen
 import item
-import map
 
 
 class Monster(object):
@@ -131,7 +131,7 @@ class Monster(object):
 		corpse = util.roll_dice(1, 100)
 		if corpse <= self.corpse:
 			d = game.baseitems.create_corpse(self.name, self.weight)
-			drop = map.Object(x, y, d.icon, d.name, d.color, True, item=d)
+			drop = mapgen.Object(x, y, d.icon, d.name, d.color, True, item=d)
 			game.current_map.objects.append(drop)
 			drop.send_to_back()
 		drop_chance = util.roll_dice(1, 100)

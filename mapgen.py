@@ -98,53 +98,91 @@ class Map(object):
 	# create any outdoor map
 	# stuff to do: add mountains, mtns peak maps, transitions
 	def create_outdoor_map(self, default_tile):
-		trees_tiles = 0
-		rocks_tiles = 1
-		shallow_water_tiles = 2
-		deep_water_tiles = 3
+		deep_water_tiles = 0
+		shallow_water_tiles = 1
+		sand_tiles = 2
+		grass_tiles = 3
 		dirt_tiles = 4
-		grass_tiles = 5
-		medium_grass_tiles = 6
+		medium_grass_tiles = 5
+		rocks_tiles = 6
 		tall_grass_tiles = 7
-		sand_tiles = 8
-		tiles = [0] * 9
-		icons = ['tree', 'rock', 'shallow water', 'deep water', 'dirt', 'grass', 'medium grass', 'tall grass', 'sand']
+		trees_tiles = 8
+		hills_tiles = 9
+		tiles = [0] * 10
+		icons = ['deep water', 'shallow water', 'sand', 'grass', 'dirt', 'medium grass', 'rock', 'tall grass', 'tree', 'hills']
 		map_size = self.map_width * self.map_height
+		heightmap = game.worldmap.hm_list[self.location_level]
 
 		# assign values per terrain types
-		heightmap = game.worldmap.hm_list[self.location_level]
-		if self.type in ['High Hills', 'Low Hills', 'Mountains', 'Mountain Peak']:
-			tiles[rocks_tiles] = self.randomize(40, 200, 3)
-			tiles[dirt_tiles] = self.randomize(int(map_size * heightmap * 0.05), int(map_size * heightmap), 3)
-			tiles[grass_tiles] = self.randomize(int(map_size * heightmap * 0.05), int(map_size * heightmap), 3)
-			tiles[medium_grass_tiles] = self.randomize(int(map_size * heightmap * 0.05), int(map_size * heightmap), 3)
-			tiles[tall_grass_tiles] = self.randomize(15, 75, 3)
+		if self.type in ['Mountains']:
+			tiles[hills_tiles] = self.randomize(int(map_size * 0.045), int(map_size * 0.180), 3)
+			tiles[tall_grass_tiles] = self.randomize(int(map_size * 0.035), int(map_size * 0.140), 3)
+
+		if self.type in ['High Hills']:
+			tiles[trees_tiles] = self.randomize(int(map_size * 0.035), int(map_size * 0.140), 3)
+			tiles[tall_grass_tiles] = self.randomize(int(map_size * 0.045), int(map_size * 0.180), 3)
+			tiles[rocks_tiles] = self.randomize(int(map_size * 0.025), int(map_size * 0.100), 3)
+			tiles[medium_grass_tiles] = self.randomize(int(map_size * 0.040), int(map_size * 0.160), 3)
+			tiles[dirt_tiles] = self.randomize(int(map_size * 0.006), int(map_size * 0.024), 3)
+
+		if self.type in ['Low Hills']:
+			maxhm = (game.terrain['Low Hills']['maxelev'] - game.terrain['Low Hills']['elevation']) * 1000
+			hm = int(max(1, (heightmap - game.terrain['Low Hills']['elevation']) * 1000))
+			bonus = float(hm) / float(maxhm)
+			tiles[hills_tiles] = self.randomize(int((map_size * 0.060) + (map_size * 0.060 * (bonus * 0.4))), int((map_size * 0.240) + (map_size * 0.240 * (bonus * 0.4))), 3)
+			tiles[trees_tiles] = self.randomize(int(map_size * 0.035), int(map_size * 0.140), 3)
+			tiles[tall_grass_tiles] = self.randomize(int(map_size * 0.025), int(map_size * 0.100), 3)
+			tiles[rocks_tiles] = self.randomize(int((map_size * 0.012) + (map_size * 0.012 * (bonus * 0.4))), int((map_size * 0.050) + (map_size * 0.050 * (bonus * 0.4))), 3)
+			tiles[dirt_tiles] = self.randomize(int(map_size * 0.006), int(map_size * 0.024), 3)
+			tiles[grass_tiles] = self.randomize(int(max(1, (map_size * 0.010) - (map_size * 0.010 * (bonus * 0.4)))), int(max(map_size * 0.010, (map_size * 0.040) - (map_size * 0.040 * (bonus * 0.4)))), 3)
+
 		if self.type == 'Forest':
-			tiles[trees_tiles] = self.randomize(int(map_size * 0.006), int(map_size * 0.030), 3) * int(max(1, abs((250 - (heightmap * 1000)) / 80)))
-			tiles[rocks_tiles] = self.randomize(30, 150, 3)
-			tiles[shallow_water_tiles] = self.randomize(2, 10, 3)
-			tiles[dirt_tiles] = self.randomize(40, 200, 3)
-			tiles[medium_grass_tiles] = self.randomize(int(map_size * 0.006), int(map_size * 0.030), 3) * int(max(1, abs((250 - (heightmap * 1000)) / 80)))
-			tiles[tall_grass_tiles] = self.randomize(int(map_size * 0.006), int(map_size * 0.030), 3) * int(max(1, abs((250 - (heightmap * 1000)) / 80)))
+			maxhm = (game.terrain['Forest']['maxelev'] - game.terrain['Forest']['elevation']) * 1000
+			hm = int(max(1, (heightmap - game.terrain['Forest']['elevation']) * 1000))
+			bonus = float(hm) / float(maxhm)
+			tiles[trees_tiles] = self.randomize(int((map_size * 0.052) + (map_size * 0.052 * (bonus * 0.4))), int((map_size * 0.210) + (map_size * 0.210 * (bonus * 0.4))), 3)
+			tiles[tall_grass_tiles] = self.randomize(int((map_size * 0.018) + (map_size * 0.018 * (bonus * 0.4))), int((map_size * 0.075) + (map_size * 0.075 * (bonus * 0.4))), 3)
+			tiles[rocks_tiles] = self.randomize(int(map_size * 0.012), int(map_size * 0.050), 3)
+			tiles[medium_grass_tiles] = self.randomize(int((map_size * 0.025) + (map_size * 0.025 * (bonus * 0.4))), int((map_size * 0.100) + (map_size * 0.100 * (bonus * 0.4))), 3)
+			tiles[dirt_tiles] = self.randomize(int(map_size * 0.006), int(map_size * 0.024), 3)
+
 		if self.type == 'Plains':
-			tiles[trees_tiles] = self.randomize(int(map_size * 0.003), int(map_size * 0.015), 3) * int(max(1, abs((160 - (heightmap * 1000)) / 12)))
-			tiles[rocks_tiles] = self.randomize(20, 100, 3)
-			tiles[shallow_water_tiles] = self.randomize(5, 25, 3)
-			tiles[dirt_tiles] = self.randomize(30, 150, 3)
-			tiles[medium_grass_tiles] = self.randomize(int(map_size * 0.003), int(map_size * 0.015), 3) * int(max(1, abs((160 - (heightmap * 1000)) / 12)))
-			tiles[tall_grass_tiles] = self.randomize(int(map_size * 0.003), int(map_size * 0.015), 3) * int(max(1, abs((160 - (heightmap * 1000)) / 12)))
-			tiles[sand_tiles] = self.randomize(int(map_size * 0.003), int(map_size * 0.015), 3) * int(max(1, abs((250 - (heightmap * 1000)) / 12)))
+			maxhm = (game.terrain['Plains']['maxelev'] - game.terrain['Plains']['elevation']) * 1000
+			hm = int(max(1, (heightmap - game.terrain['Plains']['elevation']) * 1000))
+			bonus = float(hm) / float(maxhm)
+			tiles[trees_tiles] = self.randomize(int((map_size * 0.012) + (map_size * 0.012 * (bonus * 0.4))), int((map_size * 0.050) + (map_size * 0.050 * (bonus * 0.4))), 3)
+			tiles[tall_grass_tiles] = self.randomize(int((map_size * 0.012) + (map_size * 0.012 * (bonus * 0.4))), int((map_size * 0.050) + (map_size * 0.050 * (bonus * 0.4))), 3)
+			tiles[rocks_tiles] = self.randomize(int(map_size * 0.006), int(map_size * 0.024), 3)
+			tiles[medium_grass_tiles] = self.randomize(int((map_size * 0.012) + (map_size * 0.012 * (bonus * 0.4))), int((map_size * 0.050) + (map_size * 0.050 * (bonus * 0.4))), 3)
+			tiles[dirt_tiles] = self.randomize(int(map_size * 0.006), int(map_size * 0.024), 3)
+			tiles[sand_tiles] = self.randomize(int(max(1, (map_size * 0.006) - (map_size * 0.006 * (bonus * 0.4)))), int(max(map_size * 0.006, (map_size * 0.024) - (map_size * 0.024 * (bonus * 0.4)))), 3)
+			tiles[shallow_water_tiles] = self.randomize(int(map_size * 0.001), int(map_size * 0.004), 3)
+
 		if self.type == 'Coast':
-			tiles[rocks_tiles] = self.randomize(int(map_size * 0.005), int(map_size * 0.025), 3)
-			tiles[shallow_water_tiles] = self.randomize(int(map_size * 0.002), int(map_size * 0.010), 3)
-			tiles[dirt_tiles] = self.randomize(int(map_size * 0.005), int(map_size * 0.025), 3)
-			tiles[grass_tiles] = self.randomize(int(map_size * 0.005), int(map_size * 0.025), 3)
+			tiles[rocks_tiles] = self.randomize(int(map_size * 0.012), int(map_size * 0.050), 3)
+			tiles[dirt_tiles] = self.randomize(int(map_size * 0.012), int(map_size * 0.050), 3)
+			tiles[grass_tiles] = self.randomize(int(map_size * 0.006), int(map_size * 0.024), 3)
+			tiles[shallow_water_tiles] = self.randomize(int(map_size * 0.001), int(map_size * 0.004), 3)
+
 		if self.type == 'Shore':
-			tiles[rocks_tiles] = self.randomize(int(map_size * 0.003), int(map_size * 0.015), 3)
-			tiles[deep_water_tiles] = self.randomize(int(map_size * 0.002), int(map_size * 0.010), 3) * int(max(1, abs((120 - (heightmap * 1000)) / 2)))
-			tiles[sand_tiles] = self.randomize(int(map_size * 0.005), int(map_size * 0.025), 3)
-		if self.type == 'Sea':
-			tiles[shallow_water_tiles] = self.randomize(int(map_size * 0.002), int(map_size * 0.010), 3) * int(max(1, abs((60 - (heightmap * 1000)) / 9)))
+			maxhm = (game.terrain['Shore']['maxelev'] - game.terrain['Shore']['elevation']) * 1000
+			hm = int(max(1, (heightmap - game.terrain['Shore']['elevation']) * 1000))
+			bonus = float(hm) / float(maxhm)
+			tiles[sand_tiles] = self.randomize(int((map_size * 0.001) + (map_size * 0.001 * (bonus * 0.4))), int((map_size * 0.004) + (map_size * 0.004 * (bonus * 0.4))), 3)
+
+#		print "---"
+#		print "Level:", self.location_level, " x:", self.location_level % game.WORLDMAP_WIDTH, " y:", self.location_level / game.WORLDMAP_WIDTH
+#		print "Heightmap:", heightmap
+#		print "Hills:", tiles[hills_tiles]
+#		print "Trees:", tiles[trees_tiles]
+#		print "Tall grass:", tiles[tall_grass_tiles]
+#		print "Rocks:", tiles[rocks_tiles]
+#		print "Medium grass:", tiles[medium_grass_tiles]
+#		print "Dirt:", tiles[dirt_tiles]
+#		print "Grass:", tiles[grass_tiles]
+#		print "Sand:", tiles[sand_tiles]
+#		print "Shallow water:", tiles[shallow_water_tiles]
+#		print "Deep water:", tiles[deep_water_tiles]
 
 		# place tiles on map
 		for j in range(len(tiles)):
@@ -160,7 +198,7 @@ class Map(object):
 					if dice % 2 == 0:
 						self.set_tile_values(icons[j], x, y, type='trees2')
 
-				if icons[j] == 'shallow water' or (self.type == 'Shore' and icons[j] == 'deep water'):
+				if icons[j] == 'shallow water' or (self.type == 'Shore' and icons[j] in ['sand', 'deep water']):
 					length = self.randomize(10, 20, 3)
 					direction = self.randomize(1, 40, 3)
 					startx = x
@@ -278,15 +316,17 @@ class Map(object):
 	def place_objects(self):
 		num_monsters = self.randomize(self.max_monsters / 5, self.max_monsters, 3)
 		num_items = self.randomize(self.max_items / 5, self.max_items, 3)
-		if self.type in ['Sea', 'Ocean']:
+		if self.type in ['Mountain Peak', 'Sea', 'Ocean']:
 			num_items = 0
+			if self.type == 'Mountain Peak':
+				num_monsters = 0
 		for i in range(num_monsters):
 			self.place_monsters()
 
 		for i in range(num_items):
 			x = libtcod.random_get_int(game.rnd, 0, self.map_width - 1)
 			y = libtcod.random_get_int(game.rnd, 0, self.map_height - 1)
-			while self.tile_is_blocked(x, y) or self.tile[x][y]['name'] in ['deep water', 'very deep water']:
+			while self.tile_is_blocked(x, y) or self.tile[x][y]['name'] in ['high mountains', 'deep water', 'very deep water']:
 				x = libtcod.random_get_int(game.rnd, 0, self.map_width - 1)
 				y = libtcod.random_get_int(game.rnd, 0, self.map_height - 1)
 			loot = game.baseitems.loot_generation(x, y, self.threat_level)
@@ -406,7 +446,7 @@ class Map(object):
 
 	# main function for generating a map
 	def generate(self, empty=False):
-		default_block_tiles = {'Dungeon': 'wall', 'Mountain Peak': 'high mountains', 'Mountains': 'mountains', 'High Hills': 'hills', 'Low Hills': 'hills', 'Forest': 'grass', 'Plains': 'grass', 'Coast': 'sand', 'Shore': 'shallow water', 'Sea': 'deep water', 'Ocean': 'very deep water'}
+		default_block_tiles = {'Dungeon': 'wall', 'Mountain Peak': 'high mountains', 'Mountains': 'mountains', 'High Hills': 'hills', 'Low Hills': 'medium grass', 'Forest': 'grass', 'Plains': 'grass', 'Coast': 'sand', 'Shore': 'shallow water', 'Sea': 'deep water', 'Ocean': 'very deep water'}
 		self.objects = [game.char]
 		self.tile = [[{} for y in range(self.map_height)] for x in range(self.map_width)]
 		if not empty:
@@ -423,7 +463,7 @@ class Map(object):
 				self.place_objects()
 				self.place_traps()
 				self.place_stairs(rooms)
-			elif not self.type in ['Mountains', 'Mountain Peak']:
+			else:
 				self.create_outdoor_map(default_block_tiles[self.type])
 				self.place_objects()
 
@@ -626,10 +666,11 @@ class Object(object):
 		if not map.tile_is_blocked(self.x + dx, self.y + dy):
 			self.x += dx
 			self.y += dy
-#			util.add_turn()
 			game.player_move = True
 		elif map.tile[self.x + dx][self.y + dy]['type'] == 'wall':
 			game.message.new('The wall laughs at your attempt to pass through it.', game.turns)
+		elif map.tile[self.x + dx][self.y + dy]['type'] in ['mountains', 'high mountains']:
+			game.message.new("You can't climb those mountains.", game.turns)
 
 	# make this object be drawn first, so all others appear above it if they're in the same tile.
 	def send_to_back(self):
@@ -663,6 +704,7 @@ def change_maps(did, dlevel):
 	load_old_maps(did, dlevel)
 	combine_maps()
 	util.initialize_fov()
+	game.fov_recompute = True
 
 
 # check to see if destination map already exist, if so fetch it, if not generate it

@@ -1,7 +1,7 @@
 import libtcodpy as libtcod
 import game
 import util
-import map
+import mapgen
 
 
 class Debug(object):
@@ -32,7 +32,7 @@ class Debug(object):
 
 	def reset_dungeon_level(self):
 		temp_map = game.current_map
-		game.current_map = map.Map(temp_map.location_name, temp_map.location_abbr, temp_map.location_id, temp_map.location_level, temp_map.threat_level, 90, 52)
+		game.current_map = mapgen.Map(temp_map.location_name, temp_map.location_abbr, temp_map.location_id, temp_map.location_level, temp_map.threat_level, 90, 52)
 		game.current_map.overworld_position = temp_map.overworld_position
 		util.initialize_fov()
 		game.fov_recompute = True
@@ -69,7 +69,7 @@ class Debug(object):
 					util.loadgen_message()
 					game.old_maps.append(game.current_map)
 				else:
-					map.change_maps(0, (game.worldmap.player_positiony * game.WORLDMAP_WIDTH + game.worldmap.player_positionx))
+					mapgen.change_maps(0, (game.worldmap.player_positiony * game.WORLDMAP_WIDTH + game.worldmap.player_positionx))
 			game.draw_map = True
 			libtcod.console_clear(game.con)
 

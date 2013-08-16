@@ -1,6 +1,5 @@
 import libtcodpy as libtcod
 import math
-import os
 import game
 
 
@@ -72,8 +71,6 @@ class World(object):
 
 		if mode == 2:
 			self.map_image_big = libtcod.image_from_console(con)
-			if not os.path.exists('maps'):
-				os.makedirs('maps')
 			libtcod.image_save(self.map_image_big, 'maps/worldmap-' + game.player.name + '.png')
 			self.map_image_big = None
 		libtcod.console_delete(con)
@@ -91,31 +88,31 @@ class World(object):
 					cellheight = self.hm_list[(y * game.WORLDMAP_WIDTH) + x]
 				if cellheight >= game.terrain['Mountain Peak']['elevation']:
 					# mountain peak
-					bcolor = libtcod.color_lerp(libtcod.white, libtcod.silver, (1.000 - cellheight) / 0.050)
+					bcolor = libtcod.color_lerp(libtcod.silver, libtcod.grey, (1.000 - cellheight) / 0.050)
 				elif cellheight >= game.terrain['Mountains']['elevation']:
 					# mountains
-					bcolor = libtcod.color_lerp(libtcod.silver, libtcod.grey, (game.terrain['Mountain Peak']['elevation'] - cellheight) / 0.100)
+					bcolor = libtcod.color_lerp(libtcod.grey, libtcod.Color(40, 24, 12), (game.terrain['Mountain Peak']['elevation'] - cellheight) / 0.125)
 				elif cellheight >= game.terrain['High Hills']['elevation']:
 					# hills
-					bcolor = libtcod.color_lerp(libtcod.grey, libtcod.Color(53, 33, 16), (game.terrain['Mountains']['elevation'] - cellheight) / 0.150)
+					bcolor = libtcod.color_lerp(libtcod.Color(40, 24, 12), libtcod.Color(53, 33, 16), (game.terrain['Mountains']['elevation'] - cellheight) / 0.125)
 				elif cellheight >= game.terrain['Low Hills']['elevation']:
 					# forest
-					bcolor = libtcod.color_lerp(libtcod.Color(53, 33, 16), libtcod.Color(48, 96, 32), (game.terrain['High Hills']['elevation'] - cellheight) / 0.125)
+					bcolor = libtcod.color_lerp(libtcod.Color(53, 33, 16), libtcod.Color(40, 67, 25), (game.terrain['High Hills']['elevation'] - cellheight) / 0.125)
 				elif cellheight >= game.terrain['Forest']['elevation']:
 					# forest
-					bcolor = libtcod.color_lerp(libtcod.Color(48, 96, 32), libtcod.Color(80, 134, 50), (game.terrain['Low Hills']['elevation'] - cellheight) / 0.350)
+					bcolor = libtcod.color_lerp(libtcod.Color(40, 67, 25), libtcod.Color(80, 134, 50), (game.terrain['Low Hills']['elevation'] - cellheight) / 0.350)
 				elif cellheight >= game.terrain['Plains']['elevation']:
 					# plains
 					bcolor = libtcod.color_lerp(libtcod.Color(80, 134, 50), libtcod.Color(112, 150, 80), (game.terrain['Forest']['elevation'] - cellheight) / 0.085)
 				elif cellheight >= game.terrain['Coast']['elevation']:
 					# coast
-					bcolor = libtcod.color_lerp(libtcod.Color(112, 150, 80), libtcod.Color(180, 180, 156), (game.terrain['Plains']['elevation'] - cellheight) / 0.020)
+					bcolor = libtcod.color_lerp(libtcod.Color(112, 150, 80), libtcod.Color(176, 176, 153), (game.terrain['Plains']['elevation'] - cellheight) / 0.020)
 				elif cellheight >= game.terrain['Shore']['elevation']:
 					# shallow water
-					bcolor = libtcod.color_lerp(libtcod.Color(180, 180, 156), libtcod.Color(50, 70, 105), (game.terrain['Coast']['elevation'] - cellheight) / 0.010)
+					bcolor = libtcod.color_lerp(libtcod.Color(176, 176, 153), libtcod.Color(47, 67, 103), (game.terrain['Coast']['elevation'] - cellheight) / 0.010)
 				elif cellheight >= game.terrain['Sea']['elevation']:
 					# deep water
-					bcolor = libtcod.color_lerp(libtcod.Color(50, 70, 105), libtcod.Color(8, 32, 72), (game.terrain['Shore']['elevation'] - cellheight) / 0.040)
+					bcolor = libtcod.color_lerp(libtcod.Color(47, 67, 103), libtcod.Color(8, 32, 72), (game.terrain['Shore']['elevation'] - cellheight) / 0.040)
 				else:
 					# ocean
 					bcolor = libtcod.Color(8, 32, 72)
@@ -257,7 +254,7 @@ class World(object):
 
 		self.add_landmass()
 		self.smooth_edges()
-		self.set_landmass(self.randomize('float', 0.30, 0.44, 3), self.sandheight)
+		self.set_landmass(self.randomize('float', 0.30, 0.45, 3), self.sandheight)
 		self.add_rivers()
 		self.create_map_images()
 		self.place_dungeons()

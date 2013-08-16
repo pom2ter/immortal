@@ -8,14 +8,15 @@ from item import *
 from monster import *
 import util
 import commands
-import map
+import mapgen
 import worldgen
+import chargen
 import messages
 import effects
 import death
 import debug as dbg
 
-VERSION = '0.3.4.2'
+VERSION = '0.3.4.3'
 
 #size of the gui windows
 MAP_WIDTH = 71
@@ -96,9 +97,57 @@ old_msg = 0
 draw_gui = True
 draw_map = True
 
+#character generation stuff
+RACES = ['Human', 'Elf', 'Dwarf', 'Halfling']
+CLASSES = ['Fighter', 'Rogue', 'Priest', 'Mage', 'Explorer']
+GENDER = ['Male', 'Female']
+RACE_DESC = ["Humans are the most common race in the Realm. They are average at everything and thus don't have any racial bonuses or penalties.",
+			"Elves are more dedicated to magic than combat. They have bonuses to intelligence and wisdow but penalties to strength and endurance.",
+			"Dwarves are the strongest (but stupidest) people in the Realm. They are primarily used has 'tanks'. They have a bonus to strength and endurance and a penalty to everything else.",
+			"Halfling are a small, friendly and clever folk, known for their thieving prowess. They have a bonus to dexterity and intelligence but a penalty to strength and wisdom."]
+CLASS_DESC = ["Fighters are master of arms especially melee weapons but their magic skills are very limited. Their primary attribute is strength. This is the perfect class for dwarves. They start with moderate knowledge in all combat skills except ranged weapons.",
+			"Rogues uses stealth to survive rather than weapons or magic. Their primary attribute is dexterity. This is a good class for halflings. They start with moderate knowledge in thieving skills.",
+			"Priests are decent fighters that can use defensive and curative magic. Their primary attribute is wisdom. They start with some knowledge in both combat and magic skills.",
+			"Mages are the opposite of fighters; great with magic, weak with weapons (except staves). Their primary attribute is intelligence. This is a good class for elves. They start with moderate knowledge in all magic skills.",
+			"An explorer is basically a classless character so he doesnt have any specialties but gains more skill points per level to compensate. This 'class' is for those who likes to fine-tune their character from the very beginning."]
+BASE_STATS = [[9, 9, 9, 9, 9], [12, 9, 7, 8, 11], [10, 12, 8, 9, 8], [10, 8, 9, 12, 8], [7, 9, 13, 10, 8], [9, 9, 9, 9, 9],
+				[7, 9, 11, 10, 8], [10, 9, 9, 9, 10], [8, 12, 10, 10, 7], [8, 8, 11, 13, 7], [5, 9, 15, 11, 7], [7, 9, 11, 10, 8],
+				[11, 7, 7, 8, 12], [14, 7, 5, 7, 14], [12, 10, 6, 8, 11], [12, 6, 7, 11, 11], [9, 7, 11, 9, 11], [11, 7, 7, 8, 12],
+				[8, 10, 10, 8, 9], [11, 10, 8, 7, 11], [9, 13, 9, 8, 8], [9, 9, 10, 11, 8], [6, 10, 14, 9, 8], [8, 10, 10, 8, 9]]
+EXPERIENCE_TABLES = [0, 100, 250, 500, 800, 1250, 1750, 2450, 3250, 4150, 5200, 6400, 7800, 9400, 11200, 13200, 16400, 18800, 21400, 24200, 27000]
+FIGHTER_HP_GAIN = 10
+FIGHTER_MP_GAIN = 2
+FIGHTER_STAMINA_GAIN = 8
+ROGUE_HP_GAIN = 8
+ROGUE_MP_GAIN = 4
+ROGUE_STAMINA_GAIN = 6
+PRIEST_HP_GAIN = 6
+PRIEST_MP_GAIN = 8
+PRIEST_STAMINA_GAIN = 5
+MAGE_HP_GAIN = 4
+MAGE_MP_GAIN = 10
+MAGE_STAMINA_GAIN = 2
+EXPLORER_HP_GAIN = 6
+EXPLORER_MP_GAIN = 6
+EXPLORER_STAMINA_GAIN = 4
+
+terrain = {'Mountain Peak': {'type': 'high mountains', 'elevation': 0.950, 'maxelev': 1.000},
+		'Mountains': {'type': 'mountains', 'elevation': 0.825, 'maxelev': 0.949},
+		'High Hills': {'type': 'hills', 'elevation': 0.700, 'maxelev': 0.824},
+		'Low Hills': {'type': 'medium grass', 'elevation': 0.575, 'maxelev': 0.699},
+		'Forest': {'type': 'grass', 'elevation': 0.225, 'maxelev': 0.574},
+		'Plains': {'type': 'grass', 'elevation': 0.140, 'maxelev': 0.224},
+		'Coast': {'type': 'sand', 'elevation': 0.120, 'maxelev': 0.139},
+		'Shore': {'type': 'shallow water', 'elevation': 0.110, 'maxelev': 0.119},
+		'Sea': {'type': 'deep water', 'elevation': 0.070, 'maxelev': 0.109},
+		'Ocean': {'type': 'very deep water', 'elevation': 0.000, 'maxelev': 0.069},
+		'Dungeon': {'type': 'wall', 'elevation': 2.000, 'maxelev': 2.000}}
+
+months = ['Phoenix', 'Manticore', 'Hydra', 'Golem', 'Centaur', 'Siren', 'Dragon', 'Werewolf', 'Gargoyle', 'Kraken', 'Basilisk', 'Unicorn']
+fonts = {'small': {'file': 'font-small.png', 'width': 10, 'height': 16}, 'medium': {'file': 'font-medium.png', 'width': 12, 'height': 19}, 'large': {'file': 'font-large.png', 'width': 14, 'height': 22}}
+
 # to-do's...
 # thanatos, draconis, valamar, otatop, maurice the goblin
-# mountains peak type, transitions
 # caverns, maze types
 # scrolling, lockpicks, chest
 # burdened, food
@@ -106,22 +155,8 @@ draw_map = True
 # monsters powers, location
 # ranged combat
 # spells, scrolls, tomes, npcs, towns, quests...
-# worldmap travel?
-
-terrain = {'Mountain Peak':{'type': 'dirt', 'elevation': 0.950, 'maxelev': 1.000}, 
-		'Mountains':{'type': 'dirt', 'elevation': 0.850, 'maxelev': 0.949},
-		'High Hills':{'type': 'dirt', 'elevation': 0.700, 'maxelev': 0.849},
-		'Low Hills':{'type': 'dirt', 'elevation': 0.575, 'maxelev': 0.699},
-		'Forest':{'type': 'grass', 'elevation': 0.225, 'maxelev': 0.574},
-		'Plains':{'type': 'grass', 'elevation': 0.140, 'maxelev': 0.224},
-		'Coast':{'type': 'sand', 'elevation': 0.120, 'maxelev': 0.139},
-		'Shore':{'type': 'shallow water', 'elevation': 0.110, 'maxelev': 0.119},
-		'Sea':{'type': 'deep water', 'elevation': 0.070, 'maxelev': 0.109},
-		'Ocean':{'type': 'very deep water', 'elevation': 0.000, 'maxelev': 0.069},
-		'Dungeon':{'type': 'wall', 'elevation': 2.000, 'maxelev': 2.000}}
-
-months = ['Phoenix', 'Manticore', 'Hydra', 'Golem', 'Centaur', 'Siren', 'Dragon', 'Werewolf', 'Gargoyle', 'Kraken', 'Basilisk', 'Unicorn']
-fonts = {'small':{'file': 'font-small.png', 'width': 10, 'height': 16}, 'medium':{'file': 'font-medium.png', 'width': 12, 'height': 19}, 'large':{'file': 'font-large.png', 'width': 14, 'height': 22}}
+# transitions, worldmap travel?
+# monsters blocks
 
 
 class Game(object):
@@ -135,18 +170,14 @@ class Game(object):
 				libtcod.console_set_custom_font(value['file'], libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_ASCII_INROW)
 				font_width = value['width']
 				font_height = value['height']
-		os.putenv("SDL_VIDEO_CENTERED", "1")
 		self.init_root_console()
 		#libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, 'Immortal ' + VERSION, False)
 
-		libtcod.sys_set_fps(400)
 		rnd = libtcod.random_new()
 		con = libtcod.console_new(MAP_WIDTH, MAP_HEIGHT)
 		panel = libtcod.console_new(MESSAGE_WIDTH, MESSAGE_HEIGHT)
 		ps = libtcod.console_new(PLAYER_STATS_WIDTH, PLAYER_STATS_HEIGHT)
 		fov_noise = libtcod.noise_new(1, 1.0, 1.0)
-		if not os.path.exists('saves'):
-			os.makedirs('saves')
 		savefiles = os.listdir('saves')
 		self.load_high_scores()
 		baseitems = BaseItemList()
@@ -155,7 +186,7 @@ class Game(object):
 		prefix.init_parser()
 		suffix = SuffixList()
 		suffix.init_parser()
-		tiles = map.TileList()
+		tiles = mapgen.TileList()
 		tiles.init_parser()
 		monsters = MonsterList()
 		monsters.init_parser()
@@ -192,16 +223,16 @@ class Game(object):
 		cardinal = [-(WORLDMAP_WIDTH - 1), -(WORLDMAP_WIDTH), -(WORLDMAP_WIDTH + 1), -1, 1, WORLDMAP_WIDTH - 1, WORLDMAP_WIDTH, WORLDMAP_WIDTH + 1]
 		message = messages.Message()
 		player = Player()
-		char = map.Object(libtcod.random_get_int(rnd, 40, 80), libtcod.random_get_int(rnd, 26, 46), player.icon, 'player', player.icon_color, blocks=True)
-		game_state = create_character()
+		char = mapgen.Object(libtcod.random_get_int(rnd, 40, 80), libtcod.random_get_int(rnd, 26, 46), player.icon, 'player', player.icon_color, blocks=True)
+		game_state = chargen.create_character()
 		if game_state == 'playing':
 			contents = ['Generating world map...']
 			messages.box(None, None, 'center_screenx', 'center_screeny', len(max(contents, key=len)) + 16, len(contents) + 4, contents, input=False, align=libtcod.CENTER, nokeypress=True)
 			worldmap = worldgen.World()
-			current_map = map.Map('Wilderness', 'WD', 0, (worldmap.player_positiony * WORLDMAP_WIDTH) + worldmap.player_positionx, typ=map.find_terrain_type((worldmap.player_positiony * WORLDMAP_WIDTH) + worldmap.player_positionx))
+			current_map = mapgen.Map('Wilderness', 'WD', 0, (worldmap.player_positiony * WORLDMAP_WIDTH) + worldmap.player_positionx, typ=mapgen.find_terrain_type((worldmap.player_positiony * WORLDMAP_WIDTH) + worldmap.player_positionx))
 			for i in range(len(border_maps)):
-				border_maps[i] = map.Map('Wilderness', 'WD', 0, (worldmap.player_positiony * WORLDMAP_WIDTH) + worldmap.player_positionx + cardinal[i], typ=map.find_terrain_type((worldmap.player_positiony * WORLDMAP_WIDTH) + worldmap.player_positionx + cardinal[i]))
-			map.combine_maps()
+				border_maps[i] = mapgen.Map('Wilderness', 'WD', 0, (worldmap.player_positiony * WORLDMAP_WIDTH) + worldmap.player_positionx + cardinal[i], typ=mapgen.find_terrain_type((worldmap.player_positiony * WORLDMAP_WIDTH) + worldmap.player_positionx + cardinal[i]))
+			mapgen.combine_maps()
 			message.new('Welcome to Immortal, ' + player.name + '!', turns, libtcod.Color(96, 212, 238))
 			gametime = Time()
 			self.play_game()
@@ -224,7 +255,6 @@ class Game(object):
 			if not game.player.is_disabled():
 				player_action = commands.keyboard_commands()
 			else:
-#				util.add_turn()
 				player_move = True
 			if player_action == 'save':
 				self.save_game()
@@ -283,7 +313,7 @@ class Game(object):
 		contents = ['Saving.....']
 		messages.box(None, None, 'center_screenx', 'center_screeny', len(max(contents, key=len)) + 28, len(contents) + 4, contents, input=False, align=libtcod.CENTER, nokeypress=True)
 		if current_map.location_id == 0:
-			map.decombine_maps()
+			mapgen.decombine_maps()
 			old_maps.append(current_map)
 			for i in range(len(border_maps)):
 				old_maps.append(border_maps[i])
@@ -336,8 +366,8 @@ class Game(object):
 				message.trim_history()
 				message.new('Welcome back, ' + player.name + '!', turns, libtcod.Color(96, 212, 238))
 				if current_map.location_id == 0:
-					map.load_old_maps(0, current_map.location_level)
-					map.combine_maps()
+					mapgen.load_old_maps(0, current_map.location_level)
+					mapgen.combine_maps()
 				current_map.check_player_position()
 				#print worldmap.dungeons
 				self.play_game()
@@ -427,15 +457,6 @@ class Game(object):
 		while not libtcod.console_is_window_closed():
 			libtcod.console_clear(0)
 			libtcod.image_blit_2x(img, 0, 0, 0)
-#			libtcod.console_print_ex(0, 10, 1, libtcod.BKGND_NONE, libtcod.LEFT, "#.")
-#			libtcod.console_print_ex(0, 10, 2, libtcod.BKGND_NONE, libtcod.LEFT, "##. .######.  .######.  .######.  .######.  .#######. .######.  .#")
-#			libtcod.console_print_ex(0, 10, 3, libtcod.BKGND_NONE, libtcod.LEFT, "#.# ## ## ##. ## ## ##. ##    ##. ##    ##.    #.#    ##    ##. ##")
-#			libtcod.console_print_ex(0, 10, 4, libtcod.BKGND_NONE, libtcod.LEFT, "#.# ## ## #.# ## ## #.# ##    #.# ##    #.#    #.#    ##    #.# ##")
-#			libtcod.console_print_ex(0, 10, 5, libtcod.BKGND_NONE, libtcod.LEFT, "#.# ## ## #.# ## ## #.# ##    #.# ## .####.    #.#    ####. #.# ##")
-#			libtcod.console_print_ex(0, 10, 6, libtcod.BKGND_NONE, libtcod.LEFT, "#.# ##    #.# ##    #.# ##    #.# ##    #.#    #.#    ##    #.# ##")
-#			libtcod.console_print_ex(0, 10, 7, libtcod.BKGND_NONE, libtcod.LEFT, "#.# ##    #.# ##    #.# ##    #.# ##    #.#    #.#    ##    #.# ##")
-#			libtcod.console_print_ex(0, 10, 8, libtcod.BKGND_NONE, libtcod.LEFT, "#.# ##    #.# ##    #.# ##    #.# ##    #.#    #.#    ##    #.# ##    ###")
-#			libtcod.console_print_ex(0, 10, 9, libtcod.BKGND_NONE, libtcod.LEFT, "##' ##    ##' ##    ##' `#######' `#    ##'    ##'    ##    ##' `#######'")
 			libtcod.console_set_default_foreground(0, libtcod.light_yellow)
 			libtcod.console_print_ex(0, 2, SCREEN_HEIGHT - 2, libtcod.BKGND_NONE, libtcod.LEFT, 'Immortal ' + VERSION)
 			libtcod.console_print_ex(0, SCREEN_WIDTH - 3, SCREEN_HEIGHT - 2, libtcod.BKGND_NONE, libtcod.RIGHT, 'Copyright (c) 2012-13 -- Mr.Potatoman')

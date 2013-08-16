@@ -177,14 +177,21 @@ tile_type "sand" {
 tile_type "hills" {
 	type = "hills"
 	icon = "~"
-	icon_color_h = "127,101,63"
+	icon_color_h = "106,66,32"
+	icon_color_l = "79,49,24"
+	back_color_h = "53,33,16"
+	back_color_l = "26,16,8"
 	article = ""
+	block_sight
 }
 
 tile_type "mountains" {
 	type = "mountains"
 	icon = "^"
-	icon_color_h = "95,95,95"
+	icon_color_h = "96,96,96"
+	icon_color_l = "72,72,72"
+	back_color_h = "48,48,48"
+	back_color_l = "24,24,24"
 	article = ""
 	blocked
 }
@@ -193,7 +200,22 @@ tile_type "high mountains" {
 	type = "mountains"
 	icon = "^"
 	icon_color_h = "255,255,255"
+	icon_color_l = "212,212,212"
+	back_color_h = "170,170,170"
+	back_color_l = "128,128,128"
 	article = ""
+	blocked
+	block_sight
+}
+
+tile_type "glacier" {
+	type = "ice"
+	icon = "^"
+	icon_color_h = "192,208,219"
+	icon_color_l = "147,165,176"
+	back_color_h = "216,225,238"
+	back_color_l = "185,194,209"
+	article = "a "
 	blocked
 	block_sight
 }

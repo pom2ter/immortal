@@ -47,7 +47,7 @@ class Message(object):
 			self.history = self.history[(len(self.history) - game.setting_history):]
 
 
-# main function for the text box
+# main function for the dialog box
 def box(header, footer, startx, starty, width, height, contents, default=0, input=True, color=libtcod.green, align=libtcod.LEFT, nokeypress=False, inv=False, step=1, mouse_exit=False):
 	box = libtcod.console_new(width, height)
 	if startx == 'center_screenx':

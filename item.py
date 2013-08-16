@@ -1,7 +1,7 @@
 import libtcodpy as libtcod
 import game
 import util
-import map
+import mapgen
 
 
 #########################################
@@ -110,7 +110,6 @@ class Item(object):
 			game.message.new('You pick up ' + self.get_name(True), game.turns, libtcod.green)
 			self.turn_created = ts
 			game.player.inventory.append(self)
-#		util.add_turn()
 		game.player_move = True
 
 	# use the item
@@ -155,7 +154,6 @@ class Item(object):
 				self.charges -= 1
 				if self.charges == 0:
 					game.player.inventory.remove(self)
-#			util.add_turn()
 			game.player_move = True
 		else:
 			game.message.new("You can't use that item.", game.turns)
@@ -360,7 +358,7 @@ class BaseItemList(object):
 				status = 'cursed '
 
 		loot = self.generate_item_stats(status, prefix, d, suffix)
-		obj = map.Object(x, y, loot.icon, loot.name, loot.color, True, item=loot)
+		obj = mapgen.Object(x, y, loot.icon, loot.name, loot.color, True, item=loot)
 		return obj
 
 
@@ -455,6 +453,8 @@ class PrefixList(object):
 		libtcod.struct_add_flag(prefix_type_struct, 'weapon')
 		libtcod.struct_add_flag(prefix_type_struct, 'ring')
 		libtcod.struct_add_flag(prefix_type_struct, 'potion')
+		libtcod.struct_add_flag(prefix_type_struct, 'leather')
+		libtcod.struct_add_flag(prefix_type_struct, 'metal')
 		libtcod.struct_add_flag(prefix_type_struct, 'damage_bonus1')
 		libtcod.struct_add_flag(prefix_type_struct, 'damage_bonus2')
 		libtcod.struct_add_flag(prefix_type_struct, 'damage_bonus3')

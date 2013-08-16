@@ -12,7 +12,6 @@ import effects
 def add_turn():
 	game.turns += 1
 	game.gametime.update(1)
-#	game.player_move = True
 	game.draw_gui = True
 	game.draw_map = True
 	libtcod.console_clear(game.con)
@@ -171,7 +170,7 @@ def change_settings(box, width, height, blitmap=False):
 		if game.setting_fullscreen == 'on':
 			libtcod.console_set_fullscreen(True)
 		else:
-			libtcod.console_set_fullscreen(False)			
+			libtcod.console_set_fullscreen(False)
 		if blitmap:
 			game.message.trim_history()
 		f = open('settings.ini', 'wb')
@@ -736,7 +735,6 @@ def render_map():
 		if mouse_auto_move() and not libtcod.dijkstra_is_empty(game.path_dijk):
 			game.char.x, game.char.y = libtcod.dijkstra_path_walk(game.path_dijk)
 			game.fov_recompute = True
-#			add_turn()
 			game.player_move = True
 		else:
 			items_at_feet()

@@ -2,7 +2,7 @@ import libtcodpy as libtcod
 import os
 import game
 import util
-import map
+import mapgen
 
 
 # handles all the keyboard input commands
@@ -135,7 +135,7 @@ def player_move(dx, dy):
 	#try to find an attackable object there
 	target = None
 	for object in game.current_map.objects:
-		if object.x == x and object.y == y and object.entity:
+		if object.y == y and object.x == x and object.entity:
 			target = object
 			break
 
@@ -144,7 +144,6 @@ def player_move(dx, dy):
 		game.player.attack(target)
 	elif not game.player.can_move():
 		game.message.new("You can't move!", game.turns)
-#		util.add_turn()
 		game.player_move = True
 	else:
 		if game.current_map.tile[game.char.x + dx][game.char.y + dy]['type'] == 'door':
@@ -184,7 +183,7 @@ def player_move(dx, dy):
 					if game.worldmap.player_positiony not in range(game.WORLDMAP_HEIGHT):
 						game.worldmap.player_positiony = game.WORLDMAP_HEIGHT - abs(game.worldmap.player_positiony)
 					level = (game.worldmap.player_positiony * game.WORLDMAP_WIDTH) + game.worldmap.player_positionx
-					map.change_maps(0, level)
+					mapgen.change_maps(0, level)
 			util.items_at_feet()
 		game.fov_recompute = True
 
@@ -291,7 +290,6 @@ def climb_down_stairs():
 
 		game.current_map.overworld_position = op
 		game.current_map.check_player_position()
-#		util.add_turn()
 		util.initialize_fov()
 		game.fov_recompute = True
 		game.player_move = True
@@ -337,7 +335,6 @@ def climb_up_stairs():
 			map.combine_maps()
 		game.current_map.check_player_position()
 		util.initialize_fov()
-#		util.add_turn()
 		game.fov_recompute = True
 		game.player_move = True
 
@@ -354,7 +351,6 @@ def close_door():
 
 	if game.current_map.tile[game.char.x + dx][game.char.y + dy]['name'] == 'opened door':
 		game.current_map.set_tile_values('door', game.char.x + dx, game.char.y + dy)
-#		util.add_turn()
 		game.message.new('You close the door.', game.turns)
 		game.fov_recompute = True
 		game.player_move = True
@@ -524,7 +520,6 @@ def open_door(x=None, y=None):
 
 	if game.current_map.tile[game.char.x + dx][game.char.y + dy]['name'] == 'door':
 		game.current_map.set_tile_values('opened door', game.char.x + dx, game.char.y + dy)
-#		util.add_turn()
 		game.message.new('You open the door.', game.turns)
 		game.fov_recompute = True
 		game.player_move = True
@@ -745,7 +740,6 @@ def use_skill():
 				if output2[choice2].is_identified():
 					game.message.new('That item is already identified.', game.turns)
 				else:
-#					util.add_turn()
 					if output2[choice2].level * 5 > skills[choice].level:
 						game.message.new('Your skill is not high enough to identity that item.', game.turns)
 						skills[choice].gain_xp(1)
@@ -767,7 +761,6 @@ def use_skill():
 			dx, dy = key_check(key, dx, dy)
 
 			if game.current_map.tile[game.char.x + dx][game.char.y + dy]['type'] == 'trap':
-#				util.add_turn()
 				dice = libtcod.random_get_int(game.rnd, 0, 200)
 				if skills[choice].level >= dice:
 					game.current_map.set_tile_values('floor', game.char.x + dx, game.char.y + dy)
@@ -789,7 +782,6 @@ def use_skill():
 # passing one turn
 def wait_turn():
 	game.message.new('Time passes...', game.turns)
-#	util.add_turn()
 	game.fov_recompute = True
 	game.player_move = True
 
@@ -845,7 +837,7 @@ def ztats_attributes(con, width, height):
 	libtcod.console_print(con, 30, 5, 'Stamina    : ' + str(game.player.stamina) + '/' + str(game.player.max_stamina))
 	libtcod.console_print(con, 30, 6, 'Mana       : ' + str(game.player.mana) + '/' + str(game.player.max_mana))
 	libtcod.console_print(con, 30, 7, 'Experience : ' + str(game.player.xp))
-	libtcod.console_print(con, 30, 8, 'Money      : %c%s%c%c%c%c%i %c%s%c%c%c%c%i %c%s%c%c%c%c%i%c' % (libtcod.COLCTRL_3, chr(23), libtcod.COLCTRL_FORE_RGB,255,255,255, g, libtcod.COLCTRL_4, chr(23), libtcod.COLCTRL_FORE_RGB,255,255,255, s, libtcod.COLCTRL_5, chr(23), libtcod.COLCTRL_FORE_RGB,255,255,255, c, libtcod.COLCTRL_STOP))
+	libtcod.console_print(con, 30, 8, 'Money      : %c%s%c%c%c%c%i %c%s%c%c%c%c%i %c%s%c%c%c%c%i%c' % (libtcod.COLCTRL_3, chr(23), libtcod.COLCTRL_FORE_RGB, 255, 255, 255, g, libtcod.COLCTRL_4, chr(23), libtcod.COLCTRL_FORE_RGB, 255, 255, 255, s, libtcod.COLCTRL_5, chr(23), libtcod.COLCTRL_FORE_RGB, 255, 255, 255, c, libtcod.COLCTRL_STOP))
 
 	libtcod.console_print(con, 2, 11, 'Attack Rating     : ' + str(game.player.attack_rating()))
 	libtcod.console_print(con, 2, 12, 'Defense Rating    : ' + str(game.player.defense_rating()))

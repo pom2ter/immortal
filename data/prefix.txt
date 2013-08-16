@@ -1,15 +1,13 @@
-prefix_type "low quality " {
+prefix_type "rusted " {
 	type = "quality"
 	cost_multiplier = 0.5
 	level = 1
 	quality = 0
-	armor
-	shield
 	weapon
 	ring
 }
 
-prefix_type "crude " {
+prefix_type "damaged " {
 	type = "quality"
 	cost_multiplier = 0.5
 	level = 2
@@ -20,10 +18,21 @@ prefix_type "crude " {
 	ring
 }
 
-prefix_type "damaged " {
+prefix_type "low quality " {
 	type = "quality"
 	cost_multiplier = 0.5
 	level = 3
+	quality = 0
+	armor
+	shield
+	weapon
+	ring
+}
+
+prefix_type "crude " {
+	type = "quality"
+	cost_multiplier = 0.5
+	level = 4
 	quality = 0
 	armor
 	shield
@@ -53,11 +62,23 @@ prefix_type "exceptional " {
 	ring
 }
 
+prefix_type "flawless " {
+	type = "quality"
+	cost_multiplier = 6.0
+	level = 7
+	quality = 4
+	armor
+	shield
+	weapon
+	ring
+}
+
 prefix_type "leather " {
 	type = "material"
 	cost_multiplier = 1.0
 	level = 1
 	armor
+	leather
 }
 
 prefix_type "hard leather " {
@@ -66,6 +87,7 @@ prefix_type "hard leather " {
 	level = 2
 	quality = 2
 	armor
+	leather
 }
 
 prefix_type "bronze " {
@@ -76,6 +98,7 @@ prefix_type "bronze " {
 	weapon
 	shield
 	ring
+	metal
 }
 
 prefix_type "scale " {
@@ -84,6 +107,7 @@ prefix_type "scale " {
 	level = 3
 	quality = 3
 	armor
+	metal
 }
 
 prefix_type "iron " {
@@ -94,6 +118,7 @@ prefix_type "iron " {
 	weapon
 	shield
 	ring
+	metal
 }
 
 prefix_type "plate " {
@@ -102,6 +127,7 @@ prefix_type "plate " {
 	level = 5
 	quality = 4
 	armor
+	metal
 }
 
 prefix_type "steel " {
@@ -112,6 +138,7 @@ prefix_type "steel " {
 	shield
 	weapon
 	ring
+	metal
 }
 
 prefix_type "mithril " {
