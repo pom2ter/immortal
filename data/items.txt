@@ -261,11 +261,28 @@ item_type "ration" {
 	icon = "%"
 	icon_color = "0,0,255"
 	level = 1
-	weight = 2
-	cost = 5
+	weight = 8
+	cost = 25
 	article = "some "
 	charge = 1
 	expiration = 5000
+	hunger = 500
+	usable
+	consumable
+}
+
+item_type "apple" {
+	type = "food"
+	plural = "apples"
+	icon = "%"
+	icon_color = "255,0,0"
+	level = 1
+	weight = 1
+	cost = 5
+	article = "an "
+	charge = 1
+	expiration = 1000
+	hunger = 100
 	usable
 	consumable
 }

@@ -9,32 +9,32 @@
 //     (o) orcs           : orc (4), orc shaman (6), orc chieftain -8-
 //
 // mammal:
-//     (f) feline         : wild cat (1), jaguar (3), panther (5), tiger -7-, lion -10-
+//     (f) feline         : wild cat (1), jaguar (3), panther (5), tiger (7), lion -10-
 //     (r) rats           : giant rat (1), ratman (3), wererat -9-
 //     (B) bears          : black bear (5), grizzly -9-, cave bear -10-
 //
 // canine:
 //     (d) dogs           : wild dog (1), hound (2), war dog (5), hell hound -8-
-//     (w) wolves         : grey wolf (2), worg (4), dire wolf -7-
+//     (w) wolves         : grey wolf (2), worg (4), dire wolf (7)
 //
 // insects:
 //     (a) ants           : giant ant (1), giant soldier ant (4), ant queen -9-
 //     (S) spiders        : giant spider (2), cave spider (3), fire spider (6)
 //     (v) vermin         : giant centipede (1), giant bee (2), giant mantis (3), giant wasp (4), carrion crawler (5)
-//     (i) insect swarms  : ant swarm (5), spider swarm -7-, wasp swarm -10-
+//     (i) insect swarms  : ant swarm (5), spider swarm (7), wasp swarm -10-
 //
 // reptiles:
-//     (l) lizards        : giant lizard (1), rock lizard (4), komodo dragon -7-
+//     (l) lizards        : giant lizard (1), rock lizard (4), komodo dragon (7)
 //     (s) snakes         : large snake (2), large yellow snake (3), python (6)
 //
 // aquatic:
 //     (p) fish           : piranha (1), red piranha (2), piranha shark (6)
-//     (m) merfolk        : merman (3), siren (5), merman shaman -7-
+//     (m) merfolk        : merman (3), siren (5), merman shaman (7)
 //     (n) naga           : red naga -9-, spirit naga -10-, dark naga -11-
 //     (M) sea monster    : giant squid -13-, hydra -14-, leviathan -16-, kraken -17-
 //
 // flying:
-//     (b) bats, birds    : large bat (1), raven (2), blood bat (3), vulture (4), night hunter (6), spectral raven -7-, vampire bat -8-, fire crow -9-
+//     (b) bats, birds    : large bat (1), raven (2), blood bat (3), vulture (4), night hunter (6), spectral raven (7), vampire bat -8-, fire crow -9-
 //     (D) dragons        : black -15-, blue -16-, green -17-, red -18-
 //
 // devils:
@@ -43,9 +43,9 @@
 //
 // (j) jellies       : green slime (5), gaseous slime (6), stun jelly (7), mustard jelly -8-, fungus ooze -9-, puxic ooze -10-, gelatinous cube -11-
 // (q) magical beast : cockatrice (6), basilisk -8-, medusa -10-, gorgon -12-
-// (u) undead        : skeleton (1), zombie (2), ghoul (4), wight (5), mummy -7-, skeleton warrior -8-, spectre -10-, ghost -11-, vampire -13-, lich -14-
+// (u) undead        : skeleton (1), zombie (2), ghoul (4), wight (5), mummy (7), skeleton warrior -8-, spectre -10-, ghost -11-, vampire -13-, lich -14-
 // (E) elementals    : earth -12-, water -13-, fire -15-, air -17-
-// (G) giants        : troll -7-, ogre -8-, ettin -9-, ogre magi -10-, hill giant -11-, mountain giant -12-, frost giant -13-, fire giant -14-
+// (G) giants        : troll (7), ogre -8-, ettin -9-, ogre magi -10-, hill giant -11-, mountain giant -12-, frost giant -13-, fire giant -14-
 // (C) golems        : clay -12-, stone -14-, iron -16-, bone -18-
 // (R) robots        : droid -11-, cyborg -12-, -13-, -14-, -15-, -16-, -17-, -18-
 //
@@ -203,7 +203,7 @@ monster_type "large bat" {
 	level = 1
 	attack_rating = 6
 	defense_rating = 10
-	health = "1d6"
+	health = "1d4"
 	damage = "1d4"
 	weight = 2
 	corpse = 10
@@ -376,12 +376,12 @@ monster_type "raven" {
 	type = "bird"
 	unidentified_name = "bird"
 	icon = "b"
-	icon_color = "255,228,181"
+	icon_color = "123,104,238"
 	article = "a "
 	level = 2
 	attack_rating = 12
 	defense_rating = 16
-	health = "1d6"
+	health = "1d4"
 	damage = "1d4"
 	weight = 3
 	corpse = 10
@@ -565,7 +565,7 @@ monster_type "blood bat" {
 	level = 3
 	attack_rating = 22
 	defense_rating = 27
-	health = "1d6"
+	health = "1d4"
 	damage = "1d4"
 	weight = 2
 	corpse = 10
@@ -747,7 +747,7 @@ monster_type "vulture" {
 	level = 4
 	attack_rating = 33
 	defense_rating = 34
-	health = "1d6"
+	health = "1d4"
 	damage = "1d4"
 	weight = 5
 	corpse = 10
@@ -1052,7 +1052,7 @@ monster_type "night hunter" {
 	level = 6
 	attack_rating = 52
 	defense_rating = 57
-	health = "1d6"
+	health = "1d4"
 	damage = "1d4"
 	weight = 3
 	corpse = 10
@@ -1079,7 +1079,145 @@ monster_type "piranha shark" {
 
 //
 //
-// level 7+ monsters
+// level 7 monsters
+//
+//
+
+monster_type "tiger" {
+	type = "feline"
+	unidentified_name = "feline"
+	icon = "f"
+	icon_color = "218,165,32"
+	article = "a "
+	level = 7
+	attack_rating = 63
+	defense_rating = 65
+	health = "1d6"
+	damage = "1d4"
+	weight = 140
+	corpse = 10
+	ai_neutral
+	land
+}
+
+monster_type "dire wolf" {
+	type = "canine"
+	unidentified_name = "wolf"
+	icon = "w"
+	icon_color = "100,149,237"
+	article = "a "
+	level = 7
+	attack_rating = 68
+	defense_rating = 62
+	health = "1d6"
+	damage = "1d6"
+	weight = 90
+	corpse = 15
+	ai_hostile
+	land
+}
+
+monster_type "spider swarm" {
+	type = "insect"
+	unidentified_name = "insect swarm"
+	icon = "i"
+	icon_color = "0,128,128"
+	article = "a "
+	level = 7
+	attack_rating = 66
+	defense_rating = 61
+	health = "1d4"
+	damage = "1d4"
+	ai_hostile
+	land
+}
+
+monster_type "komodo dragon" {
+	type = "reptile"
+	unidentified_name = "lizard"
+	icon = "l"
+	icon_color = "128,128,0"
+	article = "a "
+	level = 7
+	attack_rating = 70
+	defense_rating = 64
+	health = "1d8"
+	damage = "1d4"
+	weight = 50
+	corpse = 15
+	ai_hostile
+	land
+}
+
+monster_type "troll" {
+	type = "giant"
+	unidentified_name = "giant"
+	icon = "G"
+	icon_color = "50,205,50"
+	article = "a "
+	level = 7
+	attack_rating = 72
+	defense_rating = 64
+	health = "1d10"
+	damage = "2d6+1"
+	weight = 215
+	corpse = 10
+	ai_hostile
+	land
+}
+
+monster_type "mummy" {
+	type = "undead"
+	unidentified_name = "undead"
+	icon = "u"
+	icon_color = "240,230,140"
+	article = "a "
+	level = 7
+	attack_rating = 68
+	defense_rating = 64
+	health = "1d6"
+	damage = "1d6"
+	ai_hostile
+	land
+}
+
+monster_type "spectral raven" {
+	type = "bird"
+	unidentified_name = "bird"
+	icon = "b"
+	icon_color = "75,0,130"
+	article = "a "
+	level = 7
+	attack_rating = 64
+	defense_rating = 70
+	health = "1d4"
+	damage = "1d4"
+	weight = 6
+	corpse = 10
+	ai_hostile
+	flying
+}
+
+monster_type "merman shaman" {
+	type = "merfolk"
+	unidentified_name = "merfolk"
+	icon = "m"
+	icon_color = "191,191,0"
+	article = "a "
+	level = 7
+	attack_rating = 50
+	defense_rating = 65
+	health = "1d6"
+	damage = "1d4"
+	weight = 80
+	corpse = 15
+	ai_hostile
+	aquatic
+}
+
+//
+//
+// level 8+ monsters
 //
 //
 
@@ -1111,23 +1249,6 @@ monster_type "stun jelly" {
 	defense_rating = 40
 	health = "1d6"
 	damage = "1d6+1"
-	ai_hostile
-	land
-}
-
-monster_type "troll" {
-	type = "giant"
-	unidentified_name = "giant"
-	icon = "G"
-	icon_color = "255,255,0"
-	article = "a "
-	level = 7
-	attack_rating = 40
-	defense_rating = 36
-	health = "1d10"
-	damage = "2d6+1"
-	weight = 215
-	corpse = 10
 	ai_hostile
 	land
 }

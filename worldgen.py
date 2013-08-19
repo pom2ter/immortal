@@ -100,10 +100,10 @@ class World(object):
 					bcolor = libtcod.color_lerp(libtcod.Color(53, 33, 16), libtcod.Color(40, 67, 25), (game.terrain['High Hills']['elevation'] - cellheight) / 0.125)
 				elif cellheight >= game.terrain['Forest']['elevation']:
 					# forest
-					bcolor = libtcod.color_lerp(libtcod.Color(40, 67, 25), libtcod.Color(80, 134, 50), (game.terrain['Low Hills']['elevation'] - cellheight) / 0.350)
+					bcolor = libtcod.color_lerp(libtcod.Color(40, 67, 25), libtcod.Color(80, 134, 50), (game.terrain['Low Hills']['elevation'] - cellheight) / 0.345)
 				elif cellheight >= game.terrain['Plains']['elevation']:
 					# plains
-					bcolor = libtcod.color_lerp(libtcod.Color(80, 134, 50), libtcod.Color(112, 150, 80), (game.terrain['Forest']['elevation'] - cellheight) / 0.085)
+					bcolor = libtcod.color_lerp(libtcod.Color(80, 134, 50), libtcod.Color(112, 150, 80), (game.terrain['Forest']['elevation'] - cellheight) / 0.090)
 				elif cellheight >= game.terrain['Coast']['elevation']:
 					# coast
 					bcolor = libtcod.color_lerp(libtcod.Color(112, 150, 80), libtcod.Color(176, 176, 153), (game.terrain['Plains']['elevation'] - cellheight) / 0.020)

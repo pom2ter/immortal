@@ -159,11 +159,12 @@ def box_options(con, posx, posy, width, height, options, default, inv, step, mou
 		libtcod.console_blit(con, 0, 0, width + 2, height + 2, 0, posx, posy, 1.0, 0.9)
 		libtcod.console_flush()
 
-		(mx, my) = (mouse.cx, mouse.cy)
-		if my in range(posy + step, height + posy + step) and mx in range(posx + step, width + posx + 2 - step):
-			mpos = my - posy - step
-			if mpos <= len(options) - 1:
-				current = mpos
+		if ev == libtcod.EVENT_MOUSE_MOVE:
+			(mx, my) = (mouse.cx, mouse.cy)
+			if my in range(posy + step, height + posy + step) and mx in range(posx + step, width + posx + 2 - step):
+				mpos = my - posy - step
+				if mpos <= len(options) - 1:
+					current = mpos
 
 		if key.vk == libtcod.KEY_DOWN and ev == libtcod.EVENT_KEY_PRESS:
 			current = (current + 1) % len(options)

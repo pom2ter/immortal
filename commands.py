@@ -161,7 +161,7 @@ def player_move(dx, dy):
 				stamina_loss = (100 - game.player.skills[game.player.find_skill('Swimming')].level) / 2
 				if stamina_loss == 0:
 					stamina_loss = 1
-				game.player.stamina -= stamina_loss
+				game.player.lose_stamina(stamina_loss)
 				if game.player.no_stamina():
 					game.message.new('You drown!', game.turns, libtcod.light_orange)
 					game.message.new('*** Press space ***', game.turns)
@@ -270,7 +270,7 @@ def climb_down_stairs():
 					location_abbr = abbr
 					threat_level = tlevel
 			game.message.new('You enter the ' + location_name + '.', game.turns)
-			map.decombine_maps()
+			mapgen.decombine_maps()
 			game.old_maps.append(game.current_map)
 			op = (game.current_map.location_level, game.char.x, game.char.y)
 			for i in range(len(game.border_maps)):
@@ -286,7 +286,7 @@ def climb_down_stairs():
 				generate = False
 				break
 		if generate:
-			game.current_map = map.Map(location_name, location_abbr, location_id, level, threat_level, 90, 52)
+			game.current_map = mapgen.Map(location_name, location_abbr, location_id, level, threat_level, 90, 52)
 
 		game.current_map.overworld_position = op
 		game.current_map.check_player_position()
@@ -329,10 +329,10 @@ def climb_up_stairs():
 					generate = False
 					break
 			if generate:
-				game.current_map = map.Map(location_name, location_abbr, location_id, level, threat_level, 90, 52)
+				game.current_map = mapgen.Map(location_name, location_abbr, location_id, level, threat_level, 90, 52)
 		else:
-			map.load_old_maps(location_id, level)
-			map.combine_maps()
+			mapgen.load_old_maps(location_id, level)
+			mapgen.combine_maps()
 		game.current_map.check_player_position()
 		util.initialize_fov()
 		game.fov_recompute = True
@@ -364,7 +364,7 @@ def close_door():
 # stuff to do: drop lit torch
 def drop_item():
 	qty = 1
-	if len(game.player.inventory) == 0:
+	if not game.player.inventory:
 		game.message.new('Your inventory is empty.', game.turns)
 	else:
 		output = util.item_stacking(game.player.inventory)
@@ -423,7 +423,7 @@ def highscores():
 
 # see your inventory
 def inventory():
-	if len(game.player.inventory) == 0:
+	if not game.player.inventory:
 		game.message.new('Your inventory is empty.', game.turns)
 	else:
 		output = util.item_stacking(game.player.inventory)
@@ -555,7 +555,7 @@ def pickup_item():
 			nb_items.append(game.current_map.objects[i].item)
 			itempos.append(i)
 
-	if len(nb_items) == 0:
+	if not nb_items:
 		game.message.new('There is nothing to pick up.', game.turns)
 	elif len(nb_items) == 1:
 		nb_items[0].pick_up(nb_items[0].turn_created)
@@ -599,7 +599,7 @@ def quit_game():
 
 # remove/unequip an item
 def remove_item():
-	if len(game.player.equipment) == 0:
+	if not game.player.equipment:
 		game.message.new("You don't have any equipped items.", game.turns)
 	else:
 		choice = game.messages.box('Remove/Unequip an item', 'Up/down to select, ENTER to remove, ESC to exit', 'center_mapx', 'center_mapy', 65, max(19, len(game.player.equipment) + 4), game.player.equipment, inv=True, step=2, mouse_exit=True)
@@ -713,7 +713,7 @@ def show_worldmap():
 
 # use an item
 def use_item():
-	if len(game.player.inventory) == 0:
+	if not game.player.inventory:
 		game.message.new('Your inventory is empty.', game.turns)
 	else:
 		output = util.item_stacking(game.player.inventory)

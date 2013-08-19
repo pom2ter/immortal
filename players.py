@@ -37,6 +37,7 @@ class Player(object):
 		self.base_stamina = 0
 		self.inventory = []
 		self.equipment = []
+		self.hunger = 500
 		self.money = 0
 		self.mks = 0
 		self.skills = [Skill('Sword', 'Combat', 0, 0), Skill('Axe', 'Combat', 0, 0), Skill('Mace', 'Combat', 0, 0),
@@ -44,7 +45,7 @@ class Player(object):
 						Skill('Bow', 'Combat', 0, 0), Skill('Missile', 'Combat', 0, 0), Skill('Hands', 'Combat', 0, 0),
 						Skill('Detect Traps', 'Physical', 0, 0, True, 'detect_trap'), Skill('Disarm Traps', 'Physical', 0, 0, True), Skill('Swimming', 'Physical', 0, 0),
 						Skill('Artifacts', 'Academic', 0, 0, True), Skill('Mythology', 'Academic', 0, 0)]
-		self.flags = []
+		self.flags = ['normal']
 
 	# attack an enemy
 	def attack(self, target):
@@ -73,9 +74,7 @@ class Player(object):
 		else:
 			game.message.new('You missed the ' + target.entity.get_name() + '.', game.turns)
 			self.skills[self.find_weapon_type()].gain_xp(1)
-		self.stamina -= 1
-		if self.no_stamina():
-			game.message.new('You fall unconscious from exaustion!', game.turns)
+		self.lose_stamina(1)
 		game.player_move = True
 
 	# calculates your attack rating....
@@ -97,6 +96,18 @@ class Player(object):
 				modifier += util.roll_dice(1, 4, 2)
 			if 'ar_bonus3' in self.equipment[i].flags:
 				modifier += util.roll_dice(1, 4, 3)
+			if 'burdened' in self.player.flags:
+				modifier -= util.roll_dice(1, 4)
+			if 'strained' in self.player.flags:
+				modifier -= util.roll_dice(1, 4, 2)
+			if 'overburdened' in self.player.flags:
+				modifier -= util.roll_dice(1, 4, 3)
+			if 'hungry' in self.player.flags:
+				modifier -= util.roll_dice(1, 4)
+			if 'famished' in self.player.flags:
+				modifier -= util.roll_dice(1, 4, 2)
+			if 'starving' in self.player.flags:
+				modifier -= util.roll_dice(1, 4, 3)
 		return modifier
 
 	# returns true if player can move
@@ -104,6 +115,30 @@ class Player(object):
 		if 'stuck' in self.flags:
 			return False
 		return True
+
+	# check weight carried for burdened status
+	def check_burdened_status(self):
+		self.flags[:] = (value for value in self.flags if value not in ['burdened', 'strained', 'overburdened'])
+		weight = 100 * (self.weight_carried() / self.max_carrying_capacity())
+		nb, hunger = 35, 0
+		if weight >= 150:
+			self.flags.append('overburdened')
+			if game.turns % 9 == 0 and not self.is_disabled():
+				self.lose_stamina(1)
+			hunger = 2
+		elif weight >= 100:
+			self.flags.append('strained')
+			hunger = 1
+			nb = 100
+		elif weight >= 75:
+			self.flags.append('burdened')
+			nb = 70
+		if game.turns % (nb - self.strength) == 0:
+			self.heal_stamina(1)
+			if 'unconscious' in self.flags:
+				game.message.new('You regain consciousness.', game.turns)
+				self.flags.remove('unconscious')
+		game.player.check_hunger_level(hunger)
 
 	# checks player condition each turn
 	def check_condition(self):
@@ -124,6 +159,16 @@ class Player(object):
 			if self.wisdom + (self.karma / 2) >= dice:
 				game.message.new('You wake up.', game.turns)
 				self.flags.remove('sleep')
+
+	# check hunger level
+	def check_hunger_level(self, hunger=0):
+		self.flags[:] = (value for value in self.flags if value not in ['bloated', 'full', 'normal', 'hungry', 'famished', 'starving'])
+		self.hunger += hunger
+		if self.hunger < 0:
+			self.hunger = 0
+		for key, value in game.hunger_levels.items():
+			if value['start'] <= self.hunger <= value['end']:
+				self.flags.append(key.lower())
 
 	# calculates damage modifiers
 	def damage_modifiers(self, obj):
@@ -344,6 +389,11 @@ class Player(object):
 				game.message.new('An item in your inventory just rotted away.', game.turns, libtcod.red)
 				self.equipment.pop(i)
 
+	# reduce stamina
+	def lose_stamina(self, damage):
+		self.stamina -= damage
+		self.no_stamina(True)
+
 	# calculates your mana bonus
 	def mana_bonus(self):
 		mb = self.intelligence
@@ -359,11 +409,13 @@ class Player(object):
 		return round(cc, 2)
 
 	# check if player has no stamina
-	def no_stamina(self):
+	def no_stamina(self, text=False):
 		if self.stamina <= 0:
 			self.stamina == 0
 			if 'unconscious' not in self.flags:
 				self.flags.append('unconscious')
+				if text:
+					game.message.new('You fall unconscious from exaustion!', game.turns)
 			return True
 		return False
 
@@ -484,10 +536,10 @@ class Player(object):
 		game.player_move = True
 
 	# return carried weight
-	# stuff to do: burdened, overburdened
 	def weight_carried(self):
 		weight = sum(item.weight for item in self.inventory)
 		weight += sum(item.weight for item in self.equipment)
+
 		return round(weight, 2)
 
 
@@ -555,6 +607,7 @@ class Time(object):
 		if self.month > 12:
 			self.month -= 12
 			self.year += 1
+		game.player.check_hunger_level(min)
 
 	# returns a formatted string of the game time
 	def time_to_text(self):

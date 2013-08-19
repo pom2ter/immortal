@@ -421,9 +421,9 @@ class Map(object):
 		if 'blocked' in self.tile[x][y]:
 			return True
 		if include_obj:
-			for obj in self.objects:
-				if obj.y == y and obj.x == x and obj.blocks:
-					return True
+			objects = []
+			objects[:] = (obj for obj in self.objects if obj.y == y and obj.x == x and obj.blocks)
+			return objects
 		return False
 
 	# returns true if tile is explored

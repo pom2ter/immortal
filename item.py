@@ -9,7 +9,7 @@ import mapgen
 #########################################
 
 class Item(object):
-	def __init__(self, type, name, status, prefix, suffix, plural, icon, color, dark_color, level, weight, cost, prefix_cost, suffix_cost, dice, article, charge, duration, expiration, bonus, quality, flags):
+	def __init__(self, type, name, status, prefix, suffix, plural, icon, color, dark_color, level, weight, cost, prefix_cost, suffix_cost, dice, article, charge, duration, expiration, bonus, quality, hunger, flags):
 		self.type = type
 		self.name = name
 		self.full_name = status + prefix + name + suffix
@@ -33,6 +33,7 @@ class Item(object):
 		self.quantity = 1
 		self.quality = quality
 		self.bonus = bonus
+		self.hunger = hunger
 		self.turn_created = 0
 		self.active = False
 		self.flags = flags
@@ -150,6 +151,10 @@ class Item(object):
 					game.message.new('You light the ' + self.name, game.turns, libtcod.gold)
 				game.fov_recompute = True
 
+			if self.type == 'food':
+				game.message.new('You eat the ' + self.name, game.turns, libtcod.light_blue)
+				game.player.check_hunger_level(-self.hunger)
+
 			if self.charges > 0:
 				self.charges -= 1
 				if self.charges == 0:
@@ -164,7 +169,7 @@ class Item(object):
 #########################################
 
 class BaseItem(object):
-	def __init__(self, typ, name, plural, icon, color, dark_color, level, weight, cost, dice, article, charge, duration, expiration, flags):
+	def __init__(self, typ, name, plural, icon, color, dark_color, level, weight, cost, dice, article, charge, duration, expiration, hunger, flags):
 		self.type = typ
 		self.name = name
 		self.plural = plural
@@ -183,6 +188,7 @@ class BaseItem(object):
 		self.expiration = expiration
 		self.cur_expiration = 0
 		self.quantity = 1
+		self.hunger = hunger
 		self.active = False
 
 	# return true (equal) if conditions are met
@@ -211,6 +217,7 @@ class BaseItemList(object):
 		libtcod.struct_add_property(item_type_struct, 'charge', libtcod.TYPE_INT, False)
 		libtcod.struct_add_property(item_type_struct, 'duration', libtcod.TYPE_INT, False)
 		libtcod.struct_add_property(item_type_struct, 'expiration', libtcod.TYPE_INT, False)
+		libtcod.struct_add_property(item_type_struct, 'hunger', libtcod.TYPE_INT, False)
 		libtcod.struct_add_flag(item_type_struct, 'healing')
 		libtcod.struct_add_flag(item_type_struct, 'mana_healing')
 		libtcod.struct_add_flag(item_type_struct, 'stamina_healing')
@@ -244,7 +251,8 @@ class BaseItemList(object):
 	# create a corpse 'item'
 	def create_corpse(self, mname, weight):
 		item = self.get_item('corpse')
-		loot = Item(item.type, mname + ' ' + item.name, 'uncursed ', '', '', item.plural, item.icon, item.color, item.dark_color, item.level, weight, item.cost, 1, 1, item.dice, item.article, item.charges, item.duration, item.expiration, 0, 1, item.flags)
+		hunger = min(50, item.weight * 8)
+		loot = Item(item.type, mname + ' ' + item.name, 'uncursed ', '', '', item.plural, item.icon, item.color, item.dark_color, item.level, weight, item.cost, 1, 1, item.dice, item.article, item.charges, item.duration, item.expiration, 0, 1, hunger, item.flags)
 		return loot
 
 	# create specific item
@@ -291,7 +299,7 @@ class BaseItemList(object):
 			if len(suffix.flags):
 				flags += suffix.flags
 #		flags.append('fully_identified')
-		loot = Item(item.type, item.name, status, pname, sname, item.plural, item.icon, item.color, item.dark_color, ilvl, item.weight, item.cost, pcost, scost, dice, item.article, item.charges, item.duration, item.expiration, bonus, pquality, list(set(flags)))
+		loot = Item(item.type, item.name, status, pname, sname, item.plural, item.icon, item.color, item.dark_color, ilvl, item.weight, item.cost, pcost, scost, dice, item.article, item.charges, item.duration, item.expiration, bonus, pquality, item.hunger, list(set(flags)))
 		return loot
 
 	# fetch an item from the list
@@ -364,7 +372,7 @@ class BaseItemList(object):
 
 class BaseItemListener(object):
 	def new_struct(self, struct, name):
-		self.temp_item = BaseItem('', '', '', '', [0, 0, 0], [0, 0, 0], 0, 0, 0, Dice(0, 0, 0, 0), '', 0, 0, 0, [])
+		self.temp_item = BaseItem('', '', '', '', [0, 0, 0], [0, 0, 0], 0, 0, 0, Dice(0, 0, 0, 0), '', 0, 0, 0, 0, [])
 		self.temp_item.name = name
 		return True
 
@@ -406,6 +414,8 @@ class BaseItemListener(object):
 			if name == 'expiration':
 				self.temp_item.expiration = value
 				self.temp_item.cur_expiration = value
+			if name == 'hunger':
+				self.temp_item.hunger = value
 			if name == 'plural':
 				self.temp_item.plural = value
 		return True

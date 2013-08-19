@@ -16,7 +16,7 @@ import effects
 import death
 import debug as dbg
 
-VERSION = '0.3.4.3'
+VERSION = '0.3.4.4'
 
 #size of the gui windows
 MAP_WIDTH = 71
@@ -135,22 +135,31 @@ terrain = {'Mountain Peak': {'type': 'high mountains', 'elevation': 0.950, 'maxe
 		'Mountains': {'type': 'mountains', 'elevation': 0.825, 'maxelev': 0.949},
 		'High Hills': {'type': 'hills', 'elevation': 0.700, 'maxelev': 0.824},
 		'Low Hills': {'type': 'medium grass', 'elevation': 0.575, 'maxelev': 0.699},
-		'Forest': {'type': 'grass', 'elevation': 0.225, 'maxelev': 0.574},
-		'Plains': {'type': 'grass', 'elevation': 0.140, 'maxelev': 0.224},
+		'Forest': {'type': 'grass', 'elevation': 0.230, 'maxelev': 0.574},
+		'Plains': {'type': 'grass', 'elevation': 0.140, 'maxelev': 0.229},
 		'Coast': {'type': 'sand', 'elevation': 0.120, 'maxelev': 0.139},
 		'Shore': {'type': 'shallow water', 'elevation': 0.110, 'maxelev': 0.119},
 		'Sea': {'type': 'deep water', 'elevation': 0.070, 'maxelev': 0.109},
 		'Ocean': {'type': 'very deep water', 'elevation': 0.000, 'maxelev': 0.069},
 		'Dungeon': {'type': 'wall', 'elevation': 2.000, 'maxelev': 2.000}}
 
+hunger_levels = {'Bloated': {'start': 0, 'end': 249},
+		'Full': {'start': 250, 'end': 499},
+		'Normal': {'start': 500, 'end': 1599},
+		'Hungry': {'start': 1600, 'end': 1799},
+		'Famished': {'start': 1800, 'end': 1999},
+		'Starving': {'start': 2000, 'end': 9999}}
+
+fonts = {'small': {'file': 'font-small.png', 'width': 10, 'height': 16},
+		'medium': {'file': 'font-medium.png', 'width': 12, 'height': 19},
+		'large': {'file': 'font-large.png', 'width': 14, 'height': 22}}
+
 months = ['Phoenix', 'Manticore', 'Hydra', 'Golem', 'Centaur', 'Siren', 'Dragon', 'Werewolf', 'Gargoyle', 'Kraken', 'Basilisk', 'Unicorn']
-fonts = {'small': {'file': 'font-small.png', 'width': 10, 'height': 16}, 'medium': {'file': 'font-medium.png', 'width': 12, 'height': 19}, 'large': {'file': 'font-large.png', 'width': 14, 'height': 22}}
 
 # to-do's...
 # thanatos, draconis, valamar, otatop, maurice the goblin
 # caverns, maze types
 # scrolling, lockpicks, chest
-# burdened, food
 # curse, bless
 # monsters powers, location
 # ranged combat
@@ -242,6 +251,7 @@ class Game(object):
 		global player_action, draw_gui, player_move
 		libtcod.console_clear(0)
 		util.initialize_fov()
+		player_action = ''
 		while not libtcod.console_is_window_closed():
 			if draw_gui:
 				util.render_gui(libtcod.Color(70, 80, 90))
@@ -252,7 +262,7 @@ class Game(object):
 			libtcod.console_flush()
 
 			# player movement
-			if not game.player.is_disabled():
+			if not game.player.is_disabled() and not ('overburdened' in game.player.flags and game.turns % 3 == 0):
 				player_action = commands.keyboard_commands()
 			else:
 				player_move = True
@@ -334,7 +344,7 @@ class Game(object):
 	# load the game using the shelve module
 	def load_game(self):
 		global worldmap, current_map, current_backup, border_maps, old_maps, player, message, turns, gametime, fov_torch, game_state, times_saved, char, draw_gui
-		if len(savefiles) == 0:
+		if not savefiles:
 			contents = ['There are no saved games.']
 			messages.box('Saved games', None, 'center_screenx', 'center_screeny', len(max(contents, key=len)) + 16, len(contents) + 4, contents, input=False, align=libtcod.CENTER)
 		else:

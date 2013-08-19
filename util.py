@@ -16,26 +16,30 @@ def add_turn():
 	game.draw_map = True
 	libtcod.console_clear(game.con)
 
-	if game.turns % (50 - game.player.endurance) == 0:
-		game.player.heal_health(1)
-	if game.turns % (50 - game.player.intelligence) == 0:
-		game.player.heal_mana(1)
-	if game.turns % (40 - game.player.strength) == 0:
-		game.player.heal_stamina(1)
-		if 'unconscious' in game.player.flags:
-			game.message.new('You regain consciousness.', game.turns)
-			game.player.flags.remove('unconscious')
-
 	game.player.item_expiration()
 	game.player.item_is_active()
 	game.player.check_condition()
+	game.player.check_burdened_status()
 	game.fov_torch = any('torchlight' in x.flags and x.active for x in game.player.inventory)
+
+	nb = 50
+	if 'hungry' in game.player.flags:
+		nb = 75
+	if 'famished' in game.player.flags:
+		nb = 100
+	if 'starving' in game.player.flags:
+		if game.turns % 9 == 0 and not game.player.is_disabled():
+			game.player.take_damage(1, 'starvation')
+	if game.turns % (nb - game.player.endurance) == 0:
+		game.player.heal_health(1)
+	if game.turns % (50 - game.player.intelligence) == 0:
+		game.player.heal_mana(1)
 
 	if 'detect_trap' in game.player.flags:
 		game.gametime.update(1)
 		skill = game.player.find_skill('Detect Traps')
 		if game.player.skills[skill].level >= libtcod.random_get_int(game.rnd, 0, 200):
-			if len(game.traps) > 0:
+			if game.traps:
 				dice = libtcod.random_get_int(game.rnd, 0, len(game.traps) - 1)
 				for i, (x, y) in enumerate(game.traps):
 					if i == dice:
@@ -346,11 +350,15 @@ def showmap(box):
 	choice, zoom = False, False
 	key = libtcod.Key()
 	startx = game.worldmap.player_positionx - (game.SCREEN_WIDTH / 2)
+	starty = game.worldmap.player_positiony - (game.SCREEN_HEIGHT / 2)
 	if startx < 0:
 		startx = 0
-	starty = game.worldmap.player_positiony - (game.SCREEN_HEIGHT / 2)
+	if startx > game.WORLDMAP_WIDTH - game.SCREEN_WIDTH + 2:
+		startx = game.WORLDMAP_WIDTH - game.SCREEN_WIDTH + 2
 	if starty < 0:
 		starty = 0
+	if starty > game.WORLDMAP_HEIGHT - game.SCREEN_HEIGHT + 2:
+		starty = game.WORLDMAP_HEIGHT - game.SCREEN_HEIGHT + 2
 	con = libtcod.console_new(game.WORLDMAP_WIDTH, game.WORLDMAP_HEIGHT)
 	game.worldmap.create_map_legend(con, 3)
 
@@ -572,26 +580,27 @@ def render_player_stats_panel():
 
 	libtcod.console_print(game.ps, 0, 16, 'Karma: ' + str(game.player.karma) + ' ')
 	libtcod.console_print(game.ps, 0, game.PLAYER_STATS_HEIGHT - 2, 'Turns: ' + str(game.turns) + ' ')
-	libtcod.console_print(game.ps, 0, 18, 'Active skills: ')
-	libtcod.console_print(game.ps, 0, 21, 'Condition: ')
+	libtcod.console_print(game.ps, 0, 18, 'Hunger level: ')
+	libtcod.console_print(game.ps, 0, 21, 'Active skills: ')
+	libtcod.console_print(game.ps, 0, 24, 'Condition: ')
 	libtcod.console_set_default_foreground(game.ps, libtcod.light_sepia)
+
+	for flags in game.player.flags:
+		if flags in ['hungry', 'famished', 'starving', 'bloated', 'full', 'normal']:
+			libtcod.console_print(game.ps, 0, 19, '%c%c%c%c%s%c' % (libtcod.COLCTRL_FORE_RGB, 115, 255, 115, flags.capitalize(), libtcod.COLCTRL_STOP))
+
 	act_skill = ''
 	if 'detect_trap' in game.player.flags:
 		act_skill += 'DetTrap '
 	if 'swimming' in game.player.flags:
 		act_skill += 'Swimming '
-	libtcod.console_print(game.ps, 0, 19, act_skill)
+	libtcod.console_print(game.ps, 0, 22, act_skill)
 
 	cond = ''
-	if 'stuck' in game.player.flags:
-		cond += 'Stuck '
-	if 'poison' in game.player.flags:
-		cond += 'Poisoned '
-	if 'sleep' in game.player.flags:
-		cond += 'Sleep '
-	if 'unconscious' in game.player.flags:
-		cond += 'Unconscious '
-	libtcod.console_print(game.ps, 0, 22, cond)
+	for flags in game.player.flags:
+		if flags in ['stuck', 'poison', 'sleep', 'unconscious', 'burdened', 'strained', 'overburdened']:
+			cond += flags.capitalize() + ' '
+	libtcod.console_print(game.ps, 0, 25, cond)
 	libtcod.console_blit(game.ps, 0, 0, game.PLAYER_STATS_WIDTH, game.PLAYER_STATS_HEIGHT, 0, game.PLAYER_STATS_X, game.PLAYER_STATS_Y)
 
 
