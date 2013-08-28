@@ -39,7 +39,7 @@ class Debug(object):
 
 	def reset_dungeon_level(self):
 		temp_map = game.current_map
-		game.current_map = mapgen.Map(temp_map.location_name, temp_map.location_abbr, temp_map.location_id, temp_map.location_level, temp_map.threat_level, 90, 52)
+		game.current_map = mapgen.Map(temp_map.location_name, temp_map.location_abbr, temp_map.location_id, temp_map.location_level, temp_map.threat_level, temp_map.map_width, temp_map.map_height, temp_map.type)
 		game.current_map.overworld_position = temp_map.overworld_position
 		util.initialize_fov()
 		game.fov_recompute = True
@@ -97,7 +97,7 @@ class Debug(object):
 			if choice == 5:
 				game.player.karma = self.edit_attribute('Karma: ')
 			if choice == 6:
-				game.player.gold = self.edit_attribute('Money: ')
+				game.player.money = self.edit_attribute('Coins: ')
 			if choice == 7:
 				game.player.heal_health(1000)
 			if choice == 8:

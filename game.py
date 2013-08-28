@@ -16,7 +16,7 @@ import effects
 import death
 import debug as dbg
 
-VERSION = '0.3.4.4'
+VERSION = '0.3.4.5'
 
 #size of the gui windows
 MAP_WIDTH = 71
@@ -141,7 +141,9 @@ terrain = {'Mountain Peak': {'type': 'high mountains', 'elevation': 0.950, 'maxe
 		'Shore': {'type': 'shallow water', 'elevation': 0.110, 'maxelev': 0.119},
 		'Sea': {'type': 'deep water', 'elevation': 0.070, 'maxelev': 0.109},
 		'Ocean': {'type': 'very deep water', 'elevation': 0.000, 'maxelev': 0.069},
-		'Dungeon': {'type': 'wall', 'elevation': 2.000, 'maxelev': 2.000}}
+		'Dungeon': {'type': 'wall', 'elevation': 2.000, 'maxelev': 2.000},
+		'Cave': {'type': 'cavern wall', 'elevation': 3.000, 'maxelev': 3.000},
+		'Maze': {'type': 'wall', 'elevation': 4.000, 'maxelev': 4.000}}
 
 hunger_levels = {'Bloated': {'start': 0, 'end': 249},
 		'Full': {'start': 250, 'end': 499},
@@ -158,7 +160,6 @@ months = ['Phoenix', 'Manticore', 'Hydra', 'Golem', 'Centaur', 'Siren', 'Dragon'
 
 # to-do's...
 # thanatos, draconis, valamar, otatop, maurice the goblin
-# caverns, maze types
 # scrolling, lockpicks, chest
 # curse, bless
 # monsters powers, location
@@ -166,6 +167,7 @@ months = ['Phoenix', 'Manticore', 'Hydra', 'Golem', 'Centaur', 'Siren', 'Dragon'
 # spells, scrolls, tomes, npcs, towns, quests...
 # transitions, worldmap travel?
 # monsters blocks
+# worldmap minmax each type
 
 
 class Game(object):
@@ -238,9 +240,9 @@ class Game(object):
 			contents = ['Generating world map...']
 			messages.box(None, None, 'center_screenx', 'center_screeny', len(max(contents, key=len)) + 16, len(contents) + 4, contents, input=False, align=libtcod.CENTER, nokeypress=True)
 			worldmap = worldgen.World()
-			current_map = mapgen.Map('Wilderness', 'WD', 0, (worldmap.player_positiony * WORLDMAP_WIDTH) + worldmap.player_positionx, typ=mapgen.find_terrain_type((worldmap.player_positiony * WORLDMAP_WIDTH) + worldmap.player_positionx))
+			current_map = mapgen.Map('Wilderness', 'WD', 0, (worldmap.player_positiony * WORLDMAP_WIDTH) + worldmap.player_positionx, type=mapgen.find_terrain_type((worldmap.player_positiony * WORLDMAP_WIDTH) + worldmap.player_positionx))
 			for i in range(len(border_maps)):
-				border_maps[i] = mapgen.Map('Wilderness', 'WD', 0, (worldmap.player_positiony * WORLDMAP_WIDTH) + worldmap.player_positionx + cardinal[i], typ=mapgen.find_terrain_type((worldmap.player_positiony * WORLDMAP_WIDTH) + worldmap.player_positionx + cardinal[i]))
+				border_maps[i] = mapgen.Map('Wilderness', 'WD', 0, (worldmap.player_positiony * WORLDMAP_WIDTH) + worldmap.player_positionx + cardinal[i], type=mapgen.find_terrain_type((worldmap.player_positiony * WORLDMAP_WIDTH) + worldmap.player_positionx + cardinal[i]))
 			mapgen.combine_maps()
 			message.new('Welcome to Immortal, ' + player.name + '!', turns, libtcod.Color(96, 212, 238))
 			gametime = Time()

@@ -245,10 +245,13 @@ def attack():
 
 # climb down some stairs
 def climb_down_stairs():
-	location_id = game.current_map.location_id
 	location_name = game.current_map.location_name
 	location_abbr = game.current_map.location_abbr
+	location_id = game.current_map.location_id
 	threat_level = game.current_map.threat_level
+	dungeon_type = game.current_map.type
+	map_width = 90
+	map_height = 52
 	op = (0, 0, 0)
 
 	if game.current_map.tile[game.char.x][game.char.y]['icon'] != '>':
@@ -258,17 +261,23 @@ def climb_down_stairs():
 			level = game.current_map.location_level + 1
 			game.message.new('You climb down the stairs.', game.turns)
 			game.old_maps.append(game.current_map)
+			map_width = game.current_map.map_width
+			map_height = game.current_map.map_height
 			dice = util.roll_dice(1, 10)
 			if dice == 10:
 				threat_level += 1
 		else:
 			level = 1
-			for (id, name, abbr, x, y, tlevel) in game.worldmap.dungeons:
+			for (id, name, abbr, x, y, tlevel, dtype) in game.worldmap.dungeons:
 				if y * game.WORLDMAP_WIDTH + x == game.current_map.location_level:
 					location_id = id
 					location_name = name
 					location_abbr = abbr
 					threat_level = tlevel
+					dungeon_type = dtype
+					if dtype == 'Maze':
+						map_width = game.MAP_WIDTH
+						map_height = game.MAP_HEIGHT
 			game.message.new('You enter the ' + location_name + '.', game.turns)
 			mapgen.decombine_maps()
 			game.old_maps.append(game.current_map)
@@ -286,7 +295,7 @@ def climb_down_stairs():
 				generate = False
 				break
 		if generate:
-			game.current_map = mapgen.Map(location_name, location_abbr, location_id, level, threat_level, 90, 52)
+			game.current_map = mapgen.Map(location_name, location_abbr, location_id, level, threat_level, map_width, map_height, dungeon_type)
 
 		game.current_map.overworld_position = op
 		game.current_map.check_player_position()
@@ -298,10 +307,13 @@ def climb_down_stairs():
 # climb up some stairs
 def climb_up_stairs():
 	combine = False
-	location_id = game.current_map.location_id
 	location_name = game.current_map.location_name
 	location_abbr = game.current_map.location_abbr
+	location_id = game.current_map.location_id
 	threat_level = game.current_map.threat_level
+	dungeon_type = game.current_map.type
+	map_width = 90
+	map_height = 52
 
 	if game.current_map.tile[game.char.x][game.char.y]['icon'] != '<':
 		game.message.new('You see no stairs going in that direction!', game.turns)
@@ -329,7 +341,7 @@ def climb_up_stairs():
 					generate = False
 					break
 			if generate:
-				game.current_map = mapgen.Map(location_name, location_abbr, location_id, level, threat_level, 90, 52)
+				game.current_map = mapgen.Map(location_name, location_abbr, location_id, level, threat_level, map_width, map_height, dungeon_type)
 		else:
 			mapgen.load_old_maps(location_id, level)
 			mapgen.combine_maps()
@@ -795,7 +807,7 @@ def ztats_attributes(con, width, height):
 	libtcod.console_set_color_control(libtcod.COLCTRL_4, libtcod.silver, libtcod.black)
 	libtcod.console_set_color_control(libtcod.COLCTRL_5, libtcod.copper, libtcod.black)
 	libtcod.console_print(con, 2, 2, game.player.name + ', a level ' + str(game.player.level) + ' ' + game.player.gender + ' ' + game.player.race + ' ' + game.player.profession)
-	g, s, c = util.convert_money(game.player.money)
+	g, s, c = util.convert_coins(game.player.money)
 
 	if game.player.strength > game.player.base_strength:
 		libtcod.console_print(con, 2, 4, 'Strength     : %c%i%c' % (libtcod.COLCTRL_1, game.player.strength, libtcod.COLCTRL_STOP))
@@ -837,7 +849,7 @@ def ztats_attributes(con, width, height):
 	libtcod.console_print(con, 30, 5, 'Stamina    : ' + str(game.player.stamina) + '/' + str(game.player.max_stamina))
 	libtcod.console_print(con, 30, 6, 'Mana       : ' + str(game.player.mana) + '/' + str(game.player.max_mana))
 	libtcod.console_print(con, 30, 7, 'Experience : ' + str(game.player.xp))
-	libtcod.console_print(con, 30, 8, 'Money      : %c%s%c%c%c%c%i %c%s%c%c%c%c%i %c%s%c%c%c%c%i%c' % (libtcod.COLCTRL_3, chr(23), libtcod.COLCTRL_FORE_RGB, 255, 255, 255, g, libtcod.COLCTRL_4, chr(23), libtcod.COLCTRL_FORE_RGB, 255, 255, 255, s, libtcod.COLCTRL_5, chr(23), libtcod.COLCTRL_FORE_RGB, 255, 255, 255, c, libtcod.COLCTRL_STOP))
+	libtcod.console_print(con, 30, 8, 'Coins      : %c%s%c%c%c%c%i %c%s%c%c%c%c%i %c%s%c%c%c%c%i%c' % (libtcod.COLCTRL_3, chr(23), libtcod.COLCTRL_FORE_RGB, 255, 255, 255, g, libtcod.COLCTRL_4, chr(23), libtcod.COLCTRL_FORE_RGB, 255, 255, 255, s, libtcod.COLCTRL_5, chr(23), libtcod.COLCTRL_FORE_RGB, 255, 255, 255, c, libtcod.COLCTRL_STOP))
 
 	libtcod.console_print(con, 2, 11, 'Attack Rating     : ' + str(game.player.attack_rating()))
 	libtcod.console_print(con, 2, 12, 'Defense Rating    : ' + str(game.player.defense_rating()))

@@ -57,7 +57,7 @@ def check_active_effects():
 
 # fireball effect
 def fireball(x, y, radius):
-	path_dijk = util.set_full_explore_map()
+	path_dijk = util.set_full_explore_map(game.current_map)
 	libtcod.dijkstra_compute(path_dijk, x, y)
 	for step in range(0, radius + 1):
 		player_fov = False
@@ -90,7 +90,7 @@ def fireball(x, y, radius):
 
 # poison gas effect
 def poison_gas(x, y, radius, duration):
-	path_dijk = util.set_full_explore_map()
+	path_dijk = util.set_full_explore_map(game.current_map)
 	libtcod.dijkstra_compute(path_dijk, x, y)
 	for i in range(-radius, radius + 1):
 		for j in range(-radius, radius + 1):
@@ -117,7 +117,7 @@ def poison_gas(x, y, radius, duration):
 
 # sleeping gas effect
 def sleeping_gas(x, y, radius, duration):
-	path_dijk = util.set_full_explore_map()
+	path_dijk = util.set_full_explore_map(game.current_map)
 	libtcod.dijkstra_compute(path_dijk, x, y)
 	for i in range(-radius, radius + 1):
 		for j in range(-radius, radius + 1):

@@ -9,13 +9,13 @@ import util
 #########################################
 
 class Map(object):
-	def __init__(self, name, abbr, id, level, tlevel=1, mw=130, mh=60, typ='Dungeon', empty=False):
+	def __init__(self, name, abbr, id, level, tlevel=1, mw=130, mh=60, type='Dungeon', empty=False):
 		self.location_name = name
 		self.location_abbr = abbr
 		self.location_id = id
 		self.location_level = level
 		self.threat_level = tlevel
-		self.type = typ
+		self.type = type
 		self.map_width = mw
 		self.map_height = mh
 		self.max_monsters = min(25, (mw * mh) / 300)
@@ -26,6 +26,25 @@ class Map(object):
 		self.overworld_position = (0, 0, 0)
 		self.tile = None
 		self.generate(empty)
+
+	# add some stalagmites in cave maps
+	def add_stalagmites(self):
+		for i in range(int(self.map_width * self.map_height * 0.08)):
+			x = libtcod.random_get_int(game.rnd, 1, self.map_width - 2)
+			y = libtcod.random_get_int(game.rnd, 1, self.map_height - 2)
+			while self.tile_is_blocked(x, y):
+				x = libtcod.random_get_int(game.rnd, 1, self.map_width - 2)
+				y = libtcod.random_get_int(game.rnd, 1, self.map_height - 2)
+				self.set_tile_values('stalagmite', x, y)
+
+	# check cell neighbours to see if its walkable of not
+	def check_cell_neighbours(self, x, y):
+		count = 0
+		for i in range(-1, 2):
+			for j in range(-1, 2):
+				if 'blocked' in self.tile[x + i][y + j]:
+					count += 1
+		return count
 
 	# check if player position is inside map boundaries
 	def check_player_position(self):
@@ -39,8 +58,61 @@ class Map(object):
 			game.char.y = y
 			game.message.new('You suddenly feel disoriented', game.turns)
 
-	# create a map with a dungeon type
-	# stuff to do: add cavern, town, maze type
+	# create a cavern of maze type map
+	def create_cave_maze(self, type, floor, wall, prob, oper):
+		rooms = [0] * 2
+		for x in range(1, self.map_width - 1):
+			for y in range(1, self.map_height - 1):
+				if libtcod.random_get_int(game.rnd, 1, 100) < prob:
+					self.set_tile_values(floor, x, y)
+		for i in range(self.map_width * self.map_height * 5):
+			x = libtcod.random_get_int(game.rnd, 1, self.map_width - 2)
+			y = libtcod.random_get_int(game.rnd, 1, self.map_height - 2)
+			if oper:
+				if self.check_cell_neighbours(x, y) > 4:
+					self.set_tile_values(wall, x, y)
+				else:
+					self.set_tile_values(floor, x, y)
+			else:
+				if self.check_cell_neighbours(x, y) > 4:
+					self.set_tile_values(floor, x, y)
+				else:
+					self.set_tile_values(wall, x, y)
+
+		# create rooms with up and down stairs
+		x = libtcod.random_get_int(game.rnd, 2, self.map_width - 6)
+		y = libtcod.random_get_int(game.rnd, 2, self.map_height - 6)
+		rooms[0] = Rect(x, y, 5, 5)
+		self.create_room(rooms[0], floor)
+		(new_x1, new_y1) = rooms[0].center()
+		game.char.x = new_x1
+		game.char.y = new_y1
+
+		count = 0
+		while (abs(x - new_x1) < 25) or (abs(y - new_y1) < 12):
+			x = libtcod.random_get_int(game.rnd, 2, self.map_width - 6)
+			y = libtcod.random_get_int(game.rnd, 2, self.map_height - 6)
+			count += 1
+			if count == 50:
+				return False
+		rooms[1] = Rect(x, y, 5, 5)
+		self.create_room(rooms[1], floor)
+		(new_x2, new_y2) = rooms[1].center()
+
+		# check if path to stairs is blocked if yes dig a tunnel
+		path_dijk = util.set_full_explore_map(self)
+		libtcod.dijkstra_compute(path_dijk, game.char.x, game.char.y)
+		if libtcod.dijkstra_get_distance(path_dijk, new_x2, new_y2) < 0:
+			return False
+
+		self.set_tile_values('stairs going up', game.char.x, game.char.y)
+		self.up_staircase = (game.char.x, game.char.y)
+		self.set_tile_values('stairs going down', new_x2, new_y2)
+		self.down_staircase = (new_x2, new_y2)
+		return True
+
+	# create a dungeon type map
+	# stuff to do: town type
 	def create_dungeon(self):
 		rooms = []
 		num_rooms = 0
@@ -96,7 +168,7 @@ class Map(object):
 		return rooms
 
 	# create any outdoor map
-	# stuff to do: add mountains, mtns peak maps, transitions
+	# stuff to do: transitions
 	def create_outdoor_map(self, default_tile):
 		deep_water_tiles = 0
 		shallow_water_tiles = 1
@@ -241,20 +313,20 @@ class Map(object):
 		self.place_dungeons()
 
 	# go through the tiles in the rectangle and make them passable
-	def create_room(self, room):
-		for x in range(room.x1 + 1, room.x2):
-			for y in range(room.y1 + 1, room.y2):
-				self.set_tile_values('floor', x, y)
+	def create_room(self, room, tile='floor'):
+		for x in range(room.x1, room.x2):
+			for y in range(room.y1, room.y2):
+				self.set_tile_values(tile, x, y)
 
 	# horizontal tunnel. min() and max() are used in case x1>x2
-	def create_h_tunnel(self, x1, x2, y):
+	def create_h_tunnel(self, x1, x2, y, tile='floor'):
 		for x in range(min(x1, x2), max(x1, x2) + 1):
-			self.set_tile_values('floor', x, y)
+			self.set_tile_values(tile, x, y)
 
 	# vertical tunnel
-	def create_v_tunnel(self, y1, y2, x):
+	def create_v_tunnel(self, y1, y2, x, tile='floor'):
 		for y in range(min(y1, y2), max(y1, y2) + 1):
-			self.set_tile_values('floor', x, y)
+			self.set_tile_values(tile, x, y)
 
 	# place doors in dungeon level
 	# stuff to do: add locked doors
@@ -267,33 +339,124 @@ class Map(object):
 
 	# place dungeon entrance on map if there is one
 	def place_dungeons(self):
-		for (id, name, abbr, x, y, tlevel) in game.worldmap.dungeons:
+		for (id, name, abbr, x, y, tlevel, dtype) in game.worldmap.dungeons:
 			if (y * game.WORLDMAP_WIDTH) + x == self.location_level:
-				dx = libtcod.random_get_int(game.rnd, 0, self.map_width - 9)
-				dy = libtcod.random_get_int(game.rnd, 0, self.map_height - 9)
-				room = Rect(dx, dy, 8, 8)
-				self.create_room(room)
-				for i in range(dx, dx + 7):
-					self.set_tile_values('wall', i + 1, dy + 1)
-					self.set_tile_values('wall', i + 1, dy + 7)
-				for i in range(dy, dy + 7):
-					self.set_tile_values('wall', dx + 1, i + 1)
-					self.set_tile_values('wall', dx + 7, i + 1)
-				door = libtcod.random_get_int(game.rnd, 0, 4)
-				doorx, doory = dx + 1, dy + 4
-				if door == 0:
-					doorx = dx + 4
-					doory = dy + 1
-				elif door == 1:
-					doorx = dx + 7
-					doory = dy + 4
-				elif door == 2:
-					doorx = dx + 4
-					doory = dy + 7
-				self.set_tile_values('opened door', doorx, doory)
-				(stairs_x, stairs_y) = room.center()
-				self.set_tile_values('stairs going down', stairs_x, stairs_y)
-				self.down_staircase = (stairs_x, stairs_y)
+				# place a dungeon
+				if dtype == 'Dungeon':
+					dx = libtcod.random_get_int(game.rnd, 5, self.map_width - 9)
+					dy = libtcod.random_get_int(game.rnd, 5, self.map_height - 9)
+					room = Rect(dx, dy, 7, 7)
+					self.create_room(room)
+					for i in range(dx, dx + 7):
+						self.set_tile_values('wall', i, dy)
+						self.set_tile_values('wall', i, dy + 6)
+					for i in range(dy, dy + 7):
+						self.set_tile_values('wall', dx, i)
+						self.set_tile_values('wall', dx + 6, i)
+					door = libtcod.random_get_int(game.rnd, 0, 4)
+					doorx, doory = dx, dy + 3
+					if door == 0:
+						doorx = dx + 3
+						doory = dy
+					elif door == 1:
+						doorx = dx + 6
+						doory = dy + 3
+					elif door == 2:
+						doorx = dx + 3
+						doory = dy + 6
+					self.set_tile_values('opened door', doorx, doory)
+					(stairs_x, stairs_y) = room.center()
+					self.set_tile_values('stairs going down', stairs_x, stairs_y)
+					self.down_staircase = (stairs_x, stairs_y)
+
+				# place a cavern
+				if dtype == 'Cave':
+					dx = libtcod.random_get_int(game.rnd, 5, self.map_width - 9)
+					dy = libtcod.random_get_int(game.rnd, 5, self.map_height - 9)
+					room = Rect(dx, dy, 7, 7)
+					self.create_room(room, 'cavern wall')
+					self.set_tile_values('dirt', dx, dy)
+					self.set_tile_values('dirt', dx + 6, dy)
+					self.set_tile_values('dirt', dx, dy + 6)
+					self.set_tile_values('dirt', dx + 6, dy + 6)
+					direction = libtcod.random_get_int(game.rnd, 0, 4)
+					if direction == 0:
+						for i in range(0, 3):
+							self.set_tile_values('dirt', dx + i, dy + 3)
+						self.set_tile_values('stalagmite', dx + 3, dy + 2)
+						self.set_tile_values('stalagmite', dx + 3, dy + 4)
+						self.set_tile_values('stalagmite', dx + 4, dy + 3)
+					if direction == 1:
+						for i in range(0, 3):
+							self.set_tile_values('dirt', dx + 3, dy + i)
+						self.set_tile_values('stalagmite', dx + 2, dy + 3)
+						self.set_tile_values('stalagmite', dx + 4, dy + 3)
+						self.set_tile_values('stalagmite', dx + 3, dy + 4)
+					if direction == 2:
+						for i in range(0, 3):
+							self.set_tile_values('dirt', dx + 4 + i, dy + 3)
+						self.set_tile_values('stalagmite', dx + 3, dy + 2)
+						self.set_tile_values('stalagmite', dx + 3, dy + 4)
+						self.set_tile_values('stalagmite', dx + 2, dy + 3)
+					if direction == 3:
+						for i in range(0, 3):
+							self.set_tile_values('dirt', dx + 3, dy + 4 + i)
+						self.set_tile_values('stalagmite', dx + 2, dy + 3)
+						self.set_tile_values('stalagmite', dx + 4, dy + 3)
+						self.set_tile_values('stalagmite', dx + 3, dy + 2)
+					(stairs_x, stairs_y) = room.center()
+					self.set_tile_values('stairs going down', stairs_x, stairs_y)
+					self.down_staircase = (stairs_x, stairs_y)
+
+				# place a labyrinth
+				if dtype == 'Maze':
+					dx = libtcod.random_get_int(game.rnd, 5, self.map_width - 9)
+					dy = libtcod.random_get_int(game.rnd, 5, self.map_height - 9)
+					room = Rect(dx, dy, 7, 7)
+					self.create_room(room)
+					for i in range(dx, dx + 7):
+						self.set_tile_values('wall', i, dy)
+						self.set_tile_values('wall', i, dy + 6)
+					for i in range(dy, dy + 7):
+						self.set_tile_values('wall', dx, i)
+						self.set_tile_values('wall', dx + 6, i)
+					for i in range(dx + 2, dx + 5):
+						self.set_tile_values('wall', i, dy + 2)
+						self.set_tile_values('wall', i, dy + 4)
+					for i in range(dy + 2, dy + 5):
+						self.set_tile_values('wall', dx + 2, i)
+						self.set_tile_values('wall', dx + 4, i)
+					direction = libtcod.random_get_int(game.rnd, 0, 4)
+					floorx1, floory1 = dx, dy + 3
+					floorx2, floory2 = dx + 4, dy + 3
+					wallx1, wally1 = dx + 3, dy + 1
+					if direction == 0:
+						floorx1 = dx + 3
+						floory1 = dy
+						floorx2 = dx + 3
+						floory2 = dy + 4
+						wallx1 = dx + 1
+						wally1 = dy + 3
+					elif direction == 1:
+						floorx1 = dx + 6
+						floory1 = dy + 3
+						floorx2 = dx + 2
+						floory2 = dy + 3
+						wallx1 = dx + 3
+						wally1 = dy + 5
+					elif direction == 2:
+						floorx1 = dx + 3
+						floory1 = dy + 6
+						floorx2 = dx + 3
+						floory2 = dy + 2
+						wallx1 = dx + 5
+						wally1 = dy + 3
+					self.set_tile_values('floor', floorx1, floory1)
+					self.set_tile_values('floor', floorx2, floory2)
+					self.set_tile_values('wall', wallx1, wally1)
+					(stairs_x, stairs_y) = room.center()
+					self.set_tile_values('stairs going down', stairs_x, stairs_y)
+					self.down_staircase = (stairs_x, stairs_y)
 
 	# place monsters on current map
 	def place_monsters(self):
@@ -356,16 +519,16 @@ class Map(object):
 		self.down_staircase = (x, y)
 
 	# place up to 3 traps in a dungeon level
-	def place_traps(self):
+	def place_traps(self, ground):
 		traps = libtcod.random_get_int(game.rnd, 1, 3)
 		for i in range(0, traps):
 			x = libtcod.random_get_int(game.rnd, 0, self.map_width - 1)
 			y = libtcod.random_get_int(game.rnd, 0, self.map_height - 1)
-			while self.tile[x][y]['type'] != 'floor':
+			while self.tile[x][y]['type'] != ground:
 				x = libtcod.random_get_int(game.rnd, 0, self.map_width - 1)
 				y = libtcod.random_get_int(game.rnd, 0, self.map_height - 1)
 			self.set_tile_values('trap', x, y, 'trap')
-			temp_tile = game.tiles.get_tile('floor')
+			temp_tile = game.tiles.get_tile(ground)
 			self.tile[x][y].update({'icon': temp_tile.icon, 'color': temp_tile.color, 'dark_color': libtcod.color_lerp(libtcod.black, temp_tile.color, 0.3)})
 
 	# randomize the random generator
@@ -446,7 +609,7 @@ class Map(object):
 
 	# main function for generating a map
 	def generate(self, empty=False):
-		default_block_tiles = {'Dungeon': 'wall', 'Mountain Peak': 'high mountains', 'Mountains': 'mountains', 'High Hills': 'hills', 'Low Hills': 'medium grass', 'Forest': 'grass', 'Plains': 'grass', 'Coast': 'sand', 'Shore': 'shallow water', 'Sea': 'deep water', 'Ocean': 'very deep water'}
+		default_block_tiles = {'Dungeon': 'wall', 'Cave': 'cavern wall', 'Maze': 'wall', 'Mountain Peak': 'high mountains', 'Mountains': 'mountains', 'High Hills': 'hills', 'Low Hills': 'medium grass', 'Forest': 'grass', 'Plains': 'grass', 'Coast': 'sand', 'Shore': 'shallow water', 'Sea': 'deep water', 'Ocean': 'very deep water'}
 		self.objects = [game.char]
 		self.tile = [[{} for y in range(self.map_height)] for x in range(self.map_width)]
 		if not empty:
@@ -455,14 +618,26 @@ class Map(object):
 					self.set_tile_values(default_block_tiles[self.type], x, y, reset=False)
 		game.fov_noise = libtcod.noise_new(1, 1.0, 1.0)
 		game.fov_torchx = 0.0
+		success = False
 
 		if not empty:
 			if self.type == 'Dungeon':
 				rooms = self.create_dungeon()
 				self.place_doors()
 				self.place_objects()
-				self.place_traps()
+				self.place_traps('floor')
 				self.place_stairs(rooms)
+			elif self.type == 'Cave':
+				while not success:
+					success = self.create_cave_maze('cave', 'dirt', 'cavern wall', 55, True)
+				self.place_objects()
+				self.place_traps('dirt')
+				self.add_stalagmites()
+			elif self.type == 'Maze':
+				while not success:
+					success = self.create_cave_maze('maze', 'floor', 'wall', 45, False)
+				self.place_objects()
+				self.place_traps('floor')
 			else:
 				self.create_outdoor_map(default_block_tiles[self.type])
 				self.place_objects()
@@ -473,11 +648,11 @@ class Map(object):
 #########################################
 
 class Tile(object):
-	def __init__(self, icon, name, color, color_low, dark_color, back_color_high, back_color_low, dark_back_color, blocked, block_sight=None, article=None, flags=None, typ=None):
+	def __init__(self, icon, name, color, color_low, dark_color, back_color_high, back_color_low, dark_back_color, blocked, block_sight=None, article=None, flags=None, type=None):
 		self.blocked = blocked
 		self.name = name
 		self.icon = icon
-		self.type = typ
+		self.type = type
 		self.color = libtcod.Color(color[0], color[1], color[2])
 		self.color_low = libtcod.Color(color_low[0], color_low[1], color_low[2])
 		self.dark_color = libtcod.Color(dark_color[0], dark_color[1], dark_color[2])
@@ -572,7 +747,7 @@ class TileListener(object):
 		self.temp_tile.flags.append(name)
 		return True
 
-	def new_property(self, name, typ, value):
+	def new_property(self, name, type, value):
 		if name == 'icon_color_h':
 			self.temp_tile.color.r = value.r
 			self.temp_tile.color.g = value.g
@@ -605,6 +780,8 @@ class TileListener(object):
 			self.temp_tile.icon = chr(5)
 		if self.temp_tile.type == 'trees2':
 			self.temp_tile.icon = chr(6)
+		if self.temp_tile.name == 'stalagmite':
+			self.temp_tile.icon = chr(24)
 		game.tiles.add_to_list(self.temp_tile)
 		return True
 

@@ -204,8 +204,8 @@ def color_lerp(lerp, descending, base=libtcod.black, light=libtcod.light_blue):
 
 
 # returns currency in gold, silver and copper
-def convert_money(money):
-	return money / 10000, (money / 100) % 100, money % 100
+def convert_coins(coins):
+	return coins / 10000, (coins / 100) % 100, coins % 100
 
 
 # returns a particular point on the map (when you see the worldmap)
@@ -333,11 +333,11 @@ def roll_dice(nb_dices, nb_faces, multiplier=1, bonus=0, extra_roll=False):
 
 
 # set map properties based on a fully explore map
-def set_full_explore_map():
-	set_map = libtcod.map_new(game.current_map.map_width, game.current_map.map_height)
-	for py in range(game.current_map.map_height):
-		for px in range(game.current_map.map_width):
-			libtcod.map_set_properties(set_map, px, py, not game.current_map.tile_is_sight_blocked(px, py), not game.current_map.tile_is_blocked(px, py, False))
+def set_full_explore_map(map):
+	set_map = libtcod.map_new(map.map_width, map.map_height)
+	for py in range(map.map_height):
+		for px in range(map.map_width):
+			libtcod.map_set_properties(set_map, px, py, not map.tile_is_sight_blocked(px, py), not map.tile_is_blocked(px, py, False))
 	path = libtcod.dijkstra_new(set_map)
 	return path
 
@@ -370,7 +370,7 @@ def showmap(box):
 			mapposy = game.worldmap.player_positiony * (float(game.SCREEN_HEIGHT - 2) / float(game.WORLDMAP_HEIGHT))
 			char = find_map_position(mapposx, mapposy)
 			libtcod.console_set_default_foreground(box, libtcod.black)
-			for (id, name, abbr, x, y, tlevel) in game.worldmap.dungeons:
+			for (id, name, abbr, x, y, tlevel, dtype) in game.worldmap.dungeons:
 				dmapposx = x * (float(game.SCREEN_WIDTH - 2) / float(game.WORLDMAP_WIDTH))
 				dmapposy = y * (float(game.SCREEN_HEIGHT - 2) / float(game.WORLDMAP_HEIGHT))
 				dchar = find_map_position(dmapposx, dmapposy)
@@ -379,7 +379,7 @@ def showmap(box):
 		if zoom:
 			libtcod.console_blit(con, startx, starty, game.SCREEN_WIDTH - 2, game.SCREEN_HEIGHT - 2, box, 1, 1, 1.0, 1.0)
 			libtcod.console_set_default_foreground(box, libtcod.black)
-			for (id, name, abbr, x, y, tlevel) in game.worldmap.dungeons:
+			for (id, name, abbr, x, y, tlevel, dtype) in game.worldmap.dungeons:
 				if y in range(starty, starty + game.SCREEN_HEIGHT - 2) and x in range(startx, startx + game.SCREEN_WIDTH - 2):
 					libtcod.console_print_ex(box, x - startx + 1, y - starty + 1, libtcod.BKGND_NONE, libtcod.LEFT, chr(23))
 
@@ -412,7 +412,7 @@ def showmap(box):
 			elif key.vk == libtcod.KEY_RIGHT and zoom:
 				if startx < game.WORLDMAP_WIDTH - game.SCREEN_WIDTH + 2:
 					startx += 1
-			elif key.vk == libtcod.KEY_TAB and ev == libtcod.EVENT_KEY_PRESS:
+			elif (key.vk == libtcod.KEY_TAB or key.vk == libtcod.KEY_ESCAPE) and ev == libtcod.EVENT_KEY_PRESS:
 				choice = True
 	libtcod.console_delete(con)
 

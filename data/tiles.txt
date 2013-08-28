@@ -10,6 +10,18 @@ tile_type "wall" {
 	block_sight
 }
 
+tile_type "cavern wall" {
+	type = "wall"
+	icon = "#"
+	icon_color_h = "64,51,32"
+	icon_color_l = "32,25,16"
+	back_color_h = "127,101,63"
+	back_color_l = "96,76,47"
+	article = "a "
+	blocked
+	block_sight
+}
+
 tile_type "floor" {
 	type = "floor"
 	icon = "."
@@ -209,7 +221,7 @@ tile_type "high mountains" {
 }
 
 tile_type "glacier" {
-	type = "ice"
+	type = "obstruction"
 	icon = "^"
 	icon_color_h = "192,208,219"
 	icon_color_l = "147,165,176"
@@ -217,6 +229,17 @@ tile_type "glacier" {
 	back_color_l = "185,194,209"
 	article = "a "
 	blocked
+	block_sight
+}
+
+tile_type "stalagmite" {
+	type = "obstruction"
+	icon = "s"
+	icon_color_h = "127,101,63"
+	icon_color_l = "96,76,47"
+	back_color_h = "64,51,32"
+	back_color_l = "32,25,16"
+	article = "a "
 	block_sight
 }
 

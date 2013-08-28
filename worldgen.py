@@ -135,20 +135,27 @@ class World(object):
 				y = libtcod.random_get_int(self.rnd, 0, game.WORLDMAP_HEIGHT - 1)
 				cellheight = int(libtcod.heightmap_get_value(game.heightmap, x, y) * 1000)
 				threat = self.set_threat_level(x, y, path_dijk)
+				dice = libtcod.random_get_int(self.rnd, 1, 100)
+				if dice <= 65:
+					dtype = 'Dungeon'
+				elif dice <= 95:
+					dtype = 'Cave'
+				else:
+					dtype = 'Maze'
 				if cellheight in range(int(game.terrain['Plains']['elevation'] * 1000), int(game.terrain['High Hills']['maxelev'] * 1000)) and threat == i + 1:
-					self.dungeons.append((len(self.dungeons) + 1, 'Dungeon', 'Dng', x, y, threat + 1))
+					self.dungeons.append((len(self.dungeons) + 1, 'Dungeon', 'Dng', x, y, threat + 1, dtype))
 					done = True
 				attempt += 1
 
 		starter_dungeon = libtcod.random_get_int(self.rnd, 0, 4)
 		if starter_dungeon == 1:
-			self.dungeons.append((len(self.dungeons) + 1, 'Starter Dungeon', 'SD', self.player_positionx, self.player_positiony - 1, 1))
+			self.dungeons.append((len(self.dungeons) + 1, 'Starter Dungeon', 'SD', self.player_positionx, self.player_positiony - 1, 1, 'Dungeon'))
 		elif starter_dungeon == 2:
-			self.dungeons.append((len(self.dungeons) + 1, 'Starter Dungeon', 'SD', self.player_positionx + 1, self.player_positiony, 1))
+			self.dungeons.append((len(self.dungeons) + 1, 'Starter Dungeon', 'SD', self.player_positionx + 1, self.player_positiony, 1, 'Dungeon'))
 		elif starter_dungeon == 3:
-			self.dungeons.append((len(self.dungeons) + 1, 'Starter Dungeon', 'SD', self.player_positionx, self.player_positiony + 1, 1))
+			self.dungeons.append((len(self.dungeons) + 1, 'Starter Dungeon', 'SD', self.player_positionx, self.player_positiony + 1, 1, 'Dungeon'))
 		else:
-			self.dungeons.append((len(self.dungeons) + 1, 'Starter Dungeon', 'SD', self.player_positionx - 1, self.player_positiony, 1))
+			self.dungeons.append((len(self.dungeons) + 1, 'Starter Dungeon', 'SD', self.player_positionx - 1, self.player_positiony, 1, 'Dungeon'))
 		t1 = libtcod.sys_elapsed_seconds()
 		print '    done! (%.3f seconds)' % (t1 - t0)
 
