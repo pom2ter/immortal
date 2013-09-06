@@ -18,8 +18,8 @@ class Map(object):
 		self.type = type
 		self.map_width = mw
 		self.map_height = mh
-		self.max_monsters = min(25, (mw * mh) / 300)
-		self.max_items = min(25, (mw * mh) / 300)
+		self.max_monsters = min(22, (mw * mh) / 300)
+		self.max_items = min(22, (mw * mh) / 300)
 		self.objects = None
 		self.up_staircase = (0, 0)
 		self.down_staircase = (0, 0)
@@ -469,11 +469,12 @@ class Map(object):
 		# fetch monster to place base on threat level
 		dice = util.roll_dice(1, 100, extra_roll=True)
 		if dice <= 85:
-			d = game.monsters.get_monster_by_level(self.threat_level, self.tile[x][y]['name'])
+			d = game.monsters.get_monster_by_level(self.threat_level, self.tile[x][y]['name'], self.type)
 		else:
-			d = game.monsters.get_monster_by_level(self.threat_level + 1, self.tile[x][y]['name'])
-		monster = Object(x, y, d.icon, d.name, d.color, blocks=True, entity=d)
-		self.objects.insert(1, monster)
+			d = game.monsters.get_monster_by_level(self.threat_level + 1, self.tile[x][y]['name'], self.type)
+		if d:
+			monster = Object(x, y, d.icon, d.name, d.color, blocks=True, entity=d)
+			self.objects.insert(1, monster)
 
 	# place the different 'objects' on current map
 	def place_objects(self):
@@ -580,13 +581,9 @@ class Map(object):
 		return False
 
 	# returns true if tile is blocked
-	def tile_is_blocked(self, x, y, include_obj=True):
+	def tile_is_blocked(self, x, y):
 		if 'blocked' in self.tile[x][y]:
 			return True
-		if include_obj:
-			objects = []
-			objects[:] = (obj for obj in self.objects if obj.y == y and obj.x == x and obj.blocks)
-			return objects
 		return False
 
 	# returns true if tile is explored

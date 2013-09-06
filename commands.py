@@ -250,8 +250,8 @@ def climb_down_stairs():
 	location_id = game.current_map.location_id
 	threat_level = game.current_map.threat_level
 	dungeon_type = game.current_map.type
-	map_width = 90
-	map_height = 52
+	map_width = game.DUNGEON_MAP_WIDTH
+	map_height = game.DUNGEON_MAP_HEIGHT
 	op = (0, 0, 0)
 
 	if game.current_map.tile[game.char.x][game.char.y]['icon'] != '>':
@@ -312,8 +312,8 @@ def climb_up_stairs():
 	location_id = game.current_map.location_id
 	threat_level = game.current_map.threat_level
 	dungeon_type = game.current_map.type
-	map_width = 90
-	map_height = 52
+	map_width = game.DUNGEON_MAP_WIDTH
+	map_height = game.DUNGEON_MAP_HEIGHT
 
 	if game.current_map.tile[game.char.x][game.char.y]['icon'] != '<':
 		game.message.new('You see no stairs going in that direction!', game.turns)
@@ -544,7 +544,7 @@ def open_door(x=None, y=None):
 # ingame options menu
 def options_menu():
 	contents = ['Read the manual', 'Change settings', 'View high scores', 'Save and quit game', 'Quit without saving']
-	choice = game.messages.box('Menu', None, game.PLAYER_STATS_WIDTH + (((game.MAP_WIDTH + 3) - (len(max(contents, key=len)) + 4)) / 2), ((game.MAP_HEIGHT + 1) - (len(contents) + 2)) / 2, len(max(contents, key=len)) + 4, len(contents) + 2, contents, mouse_exit=True)
+	choice = game.messages.box('Menu', None, game.PLAYER_STATS_WIDTH + (((game.MAP_WIDTH + 3) - (len(max(contents, key=len)) + 4)) / 2), ((game.MAP_HEIGHT + 1) - (len(contents) + 2)) / 2, len(max(contents, key=len)) + 4, len(contents) + 2, contents, mouse_exit=True, scrollbar=False)
 	if choice == 0:
 		help()
 	if choice == 1:
@@ -655,10 +655,7 @@ def see_message_history():
 		for i in range(min(box_height - 4, len(game.message.history))):
 			libtcod.console_set_default_foreground(box, game.message.history[i + scroll][1])
 			libtcod.console_print(box, 2, i + 2, game.message.history[i + scroll][0])
-		if scroll > 0:
-			libtcod.console_put_char_ex(box, box_width - 2, 1, chr(24), libtcod.white, libtcod.black)
-		if box_height - 4 + scroll < len(game.message.history):
-			libtcod.console_put_char_ex(box, box_width - 2, box_height - 2, chr(25), libtcod.white, libtcod.black)
+		util.scrollbar(box, box_width - 2, 2, scroll, box_height - 4, len(game.message.history))
 		libtcod.console_blit(box, 0, 0, box_width, box_height, 0, (game.SCREEN_WIDTH - box_width) / 2, (game.MAP_HEIGHT - box_height + 2) / 2, 1.0, 1.0)
 		libtcod.console_flush()
 		ev = libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS, key, libtcod.Mouse())

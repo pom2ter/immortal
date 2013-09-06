@@ -1,4 +1,5 @@
 import libtcodpy as libtcod
+import math
 import game
 import commands
 import effects
@@ -342,6 +343,37 @@ def set_full_explore_map(map):
 	return path
 
 
+# scrollbar management
+def scrollbar(con, x, y, start, size, length, reverse=False):
+	fore1 = libtcod.darkest_grey
+	fore2 = libtcod.darkest_grey
+	if reverse:
+		if start > 0:
+			fore2 = libtcod.white
+		if start + size < length:
+			fore1 = libtcod.white
+	else:
+		if start > 0:
+			fore1 = libtcod.white
+		if start + size < length:
+			fore2 = libtcod.white
+	libtcod.console_put_char_ex(con, x, y, chr(24), fore1, libtcod.black)
+	libtcod.console_put_char_ex(con, x, y + size - 1, chr(25), fore2, libtcod.black)
+	for i in range(size - 2):
+		libtcod.console_put_char_ex(con, x, y + i + 1, chr(179), libtcod.darkest_grey, libtcod.black)
+	if length - size > 0:
+		step = float(size - 2) / float(length - size)
+		bar = int(math.ceil(start * step))
+		if bar < 1 and start == 0:
+			bar = 1
+		if bar > size - 2 and start + size == length:
+			bar = size - 2
+		if reverse:
+			libtcod.console_put_char_ex(con, x, y + (size - 1) - bar, chr(179), libtcod.white, libtcod.black)
+		else:
+			libtcod.console_put_char_ex(con, x, y + bar, chr(179), libtcod.white, libtcod.black)
+
+
 # show the worldmap
 # stuff to do: add towns
 def showmap(box):
@@ -452,13 +484,13 @@ def initialize_fov(update=False):
 		game.fov_map = libtcod.map_new(game.current_map.map_width, game.current_map.map_height)
 		for y in range(game.current_map.map_height):
 			for x in range(game.current_map.map_width):
-				libtcod.map_set_properties(game.fov_map, x, y, not 'block_sight' in game.current_map.tile[x][y], 'explored' in game.current_map.tile[x][y] and not game.current_map.tile_is_blocked(x, y))
+				libtcod.map_set_properties(game.fov_map, x, y, not 'block_sight' in game.current_map.tile[x][y], 'explored' in game.current_map.tile[x][y] and not 'blocked' in game.current_map.tile[x][y])
 	else:
 		for y in range(game.char.y - game.FOV_RADIUS, game.char.y + game.FOV_RADIUS):
 			for x in range(game.char.x - game.FOV_RADIUS, game.char.x + game.FOV_RADIUS):
 				if y < game.current_map.map_height and x < game.current_map.map_width:
-					libtcod.map_set_properties(game.fov_map, x, y, not 'block_sight' in game.current_map.tile[x][y], 'explored' in game.current_map.tile[x][y] and not game.current_map.tile_is_blocked(x, y))
-					if game.current_map.tile_is_invisible(x, y) and game.current_map.tile[x][y]['type'] == 'trap' and libtcod.map_is_in_fov(game.fov_map, x, y):
+					libtcod.map_set_properties(game.fov_map, x, y, not 'block_sight' in game.current_map.tile[x][y], 'explored' in game.current_map.tile[x][y] and not 'blocked' in game.current_map.tile[x][y])
+					if 'invisible' in game.current_map.tile[x][y] and game.current_map.tile[x][y]['type'] == 'trap' and libtcod.map_is_in_fov(game.fov_map, x, y):
 						game.traps.append((x, y))
 	# compute paths using dijkstra algorithm
 	game.path_dijk = libtcod.dijkstra_new(game.fov_map)
@@ -521,10 +553,7 @@ def render_message_panel():
 		libtcod.console_set_default_foreground(game.panel, game.message.log[i][1])
 		libtcod.console_print(game.panel, 0, y, game.message.log[i][0])
 		y += 1
-	if game.old_msg + game.MESSAGE_HEIGHT < len(game.message.log):
-		libtcod.console_put_char_ex(game.panel, game.MESSAGE_WIDTH - 1, 0, chr(24), libtcod.white, libtcod.black)
-	if game.old_msg > 0:
-		libtcod.console_put_char_ex(game.panel, game.MESSAGE_WIDTH - 1, game.MESSAGE_HEIGHT - 1, chr(25), libtcod.white, libtcod.black)
+	scrollbar(game.panel, game.MESSAGE_WIDTH - 1, 0, game.old_msg, game.MESSAGE_HEIGHT, len(game.message.log), True)
 	libtcod.console_blit(game.panel, 0, 0, game.MESSAGE_WIDTH, game.MESSAGE_HEIGHT, 0, game.MESSAGE_X, game.MESSAGE_Y)
 
 
@@ -695,7 +724,7 @@ def render_map():
 						libtcod.console_put_char_ex(game.con, x, y, game.current_map.tile[px][py]['icon'], game.current_map.tile[px][py]['dark_color'], game.current_map.tile[px][py]['back_dark_color'])
 			else:
 				if not game.fov_torch:
-					if game.current_map.tile_is_animated(px, py) or 'duration' in game.current_map.tile[px][py]:
+					if 'animate' in game.current_map.tile[px][py] or 'duration' in game.current_map.tile[px][py]:
 						(front, back, game.current_map.tile[px][py]['lerp']) = render_tiles_animations(px, py, game.current_map.tile[px][py]['color'], game.current_map.tile[px][py]['back_light_color'], game.current_map.tile[px][py]['back_dark_color'], game.current_map.tile[px][py]['lerp'])
 						libtcod.console_put_char_ex(game.con, x, y, game.current_map.tile[px][py]['icon'], front, back)
 					elif game.draw_map:

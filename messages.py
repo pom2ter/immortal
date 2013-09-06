@@ -48,7 +48,7 @@ class Message(object):
 
 
 # main function for the dialog box
-def box(header, footer, startx, starty, width, height, contents, default=0, input=True, color=libtcod.green, align=libtcod.LEFT, nokeypress=False, inv=False, step=1, mouse_exit=False):
+def box(header, footer, startx, starty, width, height, contents, default=0, input=True, color=libtcod.green, align=libtcod.LEFT, nokeypress=False, inv=False, step=1, mouse_exit=False, scrollbar=True):
 	box = libtcod.console_new(width, height)
 	if startx == 'center_screenx':
 		startx = (game.SCREEN_WIDTH - (len(max(contents, key=len)) + 16)) / 2
@@ -73,7 +73,7 @@ def box(header, footer, startx, starty, width, height, contents, default=0, inpu
 	libtcod.console_set_default_foreground(box, libtcod.white)
 
 	if input:
-		choice = box_options(box, startx, starty, width - 2, height - 2, contents, default, inv, step, mouse_exit, align)
+		choice = box_options(box, startx, starty, width - 2, height - 2, contents, default, inv, step, mouse_exit, align, scrollbar)
 	else:
 		for i, line in enumerate(contents):
 			if align == libtcod.LEFT:
@@ -122,13 +122,17 @@ def box_gui(con, x1, y1, x2, y2, color=libtcod.green, lines=None):
 
 
 # output options in the text box
-def box_options(con, posx, posy, width, height, options, default, inv, step, mouse_exit, align):
+def box_options(con, posx, posy, width, height, options, default, inv, step, mouse_exit, align, scrollbar):
 	choice = False
-	current = default
+	current, up, down = default, 0, height
 	key = libtcod.Key()
 	mouse = libtcod.Mouse()
 	lerp = 1.0
 	descending = True
+	scroll = 0
+	if scrollbar:
+		scroll = 1
+		down -= 2
 
 	while not choice:
 		ev = libtcod.sys_check_for_event(libtcod.EVENT_ANY, key, mouse)
@@ -136,48 +140,68 @@ def box_options(con, posx, posy, width, height, options, default, inv, step, mou
 		libtcod.console_set_default_background(con, libtcod.black)
 		libtcod.console_rect(con, 1, 1, width, height, True, libtcod.BKGND_SET)
 
-		for y in range(len(options)):
-			if y == current:
-				libtcod.console_set_default_foreground(con, libtcod.white)
-				color, lerp, descending = util.color_lerp(lerp, descending)
-				libtcod.console_set_default_background(con, color)
-			else:
-				libtcod.console_set_default_foreground(con, libtcod.grey)
-				libtcod.console_set_default_background(con, libtcod.black)
-			if inv:
-				text_left, text_right = util.inventory_output(options[y])
-			else:
-				text_left = options[y]
-				text_right = ''
-			libtcod.console_rect(con, step, y + step, width - ((step - 1) * 2), 1, True, libtcod.BKGND_SET)
-			if align == libtcod.LEFT:
-				libtcod.console_print_ex(con, 1 + step, y + step, libtcod.BKGND_SET, libtcod.LEFT, text_left)
-			if align == libtcod.RIGHT:
-				libtcod.console_print_ex(con, width - 1 + step, y + step, libtcod.BKGND_SET, libtcod.RIGHT, text_left)
-			libtcod.console_print_ex(con, width - step, y + step, libtcod.BKGND_SET, libtcod.RIGHT, text_right)
+		for y in range(up, down):
+			if y < len(options):
+				if y == current:
+					libtcod.console_set_default_foreground(con, libtcod.white)
+					color, lerp, descending = util.color_lerp(lerp, descending)
+					libtcod.console_set_default_background(con, color)
+				else:
+					libtcod.console_set_default_foreground(con, libtcod.grey)
+					libtcod.console_set_default_background(con, libtcod.black)
+				if inv:
+					text_left, text_right = util.inventory_output(options[y])
+				else:
+					text_left = options[y]
+					text_right = ''
+				libtcod.console_rect(con, step, y + step - up, width - ((step - 1) * 2) - scroll, 1, True, libtcod.BKGND_SET)
+				if align == libtcod.LEFT:
+					libtcod.console_print_ex(con, 1 + step, y + step - up, libtcod.BKGND_SET, libtcod.LEFT, text_left)
+				if align == libtcod.RIGHT:
+					libtcod.console_print_ex(con, width - 1 + step, y + step - up, libtcod.BKGND_SET, libtcod.RIGHT, text_left)
+				libtcod.console_print_ex(con, width - step - scroll, y + step - up, libtcod.BKGND_SET, libtcod.RIGHT, text_right)
 
+		if scrollbar:
+			util.scrollbar(con, width, 2, up, height - 2, len(options))
 		libtcod.console_blit(con, 0, 0, width + 2, height + 2, 0, posx, posy, 1.0, 0.9)
 		libtcod.console_flush()
 
 		if ev == libtcod.EVENT_MOUSE_MOVE:
 			(mx, my) = (mouse.cx, mouse.cy)
 			if my in range(posy + step, height + posy + step) and mx in range(posx + step, width + posx + 2 - step):
-				mpos = my - posy - step
+				mpos = my - posy - step + up
 				if mpos <= len(options) - 1:
 					current = mpos
 
 		if key.vk == libtcod.KEY_DOWN and ev == libtcod.EVENT_KEY_PRESS:
 			current = (current + 1) % len(options)
+			if current == down:
+				down += 1
+				up += 1
+			if current == 0:
+				down = height
+				up = 0
+				if scrollbar:
+					down -= 2
 			lerp = 1.0
 			descending = True
 		elif key.vk == libtcod.KEY_UP and ev == libtcod.EVENT_KEY_PRESS:
 			current = (current - 1) % len(options)
+			if current < up:
+				up -= 1
+				down -= 1
+			if current == len(options) - 1:
+				if current > height - 3:
+					up = len(options) - height
+					down = len(options)
+					if scrollbar:
+						up += 2
 			lerp = 1.0
 			descending = True
 		elif (key.vk == libtcod.KEY_ESCAPE and ev == libtcod.EVENT_KEY_PRESS) or (mouse_exit and mouse.lbutton_pressed and mx == width + posx - 2 and my == posy):
 			current = -1
 			choice = -1
-		elif (key.vk == libtcod.KEY_ENTER and ev == libtcod.EVENT_KEY_PRESS) or (mouse.lbutton_pressed and my in range(posy + step, height + posy + step) and mx in range(posx + step, width + posx + 2 - step) and (my - posy - step) <= len(options) - 1):
+		elif (key.vk == libtcod.KEY_ENTER and ev == libtcod.EVENT_KEY_PRESS) or (mouse.lbutton_pressed and my in range(posy + step, height + posy + step) and mx in range(posx + step, width + posx + 2 - step) and (my - posy - step + up) <= len(options) - 1):
 			choice = True
 	return current
 

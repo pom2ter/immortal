@@ -261,7 +261,6 @@ class Player(object):
 
 	# returns the weapon type
 	def find_weapon_type(self):
-		weapon_type = self.find_skill('Hands')
 		for i in range(len(self.equipment)):
 			if 'weapon_sword' in self.equipment[i].flags:
 				return self.find_skill('Sword')
@@ -279,7 +278,7 @@ class Player(object):
 				return self.find_skill('Bow')
 			if 'weapon_missile' in self.equipment[i].flags:
 				return self.find_skill('Missile')
-		return weapon_type
+		return self.find_skill('Hands')
 
 	# stuff to do when you gain a level
 	def gain_level(self):
@@ -539,7 +538,6 @@ class Player(object):
 	def weight_carried(self):
 		weight = sum(item.weight for item in self.inventory)
 		weight += sum(item.weight for item in self.equipment)
-
 		return round(weight, 2)
 
 

@@ -16,7 +16,7 @@ import effects
 import death
 import debug as dbg
 
-VERSION = '0.3.4.5'
+VERSION = '0.3.4.6'
 
 #size of the gui windows
 MAP_WIDTH = 71
@@ -30,6 +30,10 @@ PLAYER_STATS_HEIGHT = SCREEN_HEIGHT - 2
 
 WORLDMAP_WIDTH = 400
 WORLDMAP_HEIGHT = 240
+OVERWORLD_MAP_WIDTH = 130
+OVERWORLD_MAP_HEIGHT = 60
+DUNGEON_MAP_WIDTH = 96
+DUNGEON_MAP_HEIGHT = 50
 MAX_THREAT_LEVEL = 20
 
 #sizes and coordinates relevant for the GUI
@@ -156,18 +160,17 @@ fonts = {'small': {'file': 'font-small.png', 'width': 10, 'height': 16},
 		'medium': {'file': 'font-medium.png', 'width': 12, 'height': 19},
 		'large': {'file': 'font-large.png', 'width': 14, 'height': 22}}
 
-months = ['Phoenix', 'Manticore', 'Hydra', 'Golem', 'Centaur', 'Siren', 'Dragon', 'Werewolf', 'Gargoyle', 'Kraken', 'Basilisk', 'Unicorn']
+months = ['Phoenix', 'Manticore', 'Hydra', 'Golem', 'Centaur', 'Medusa', 'Dragon', 'Werewolf', 'Gargoyle', 'Kraken', 'Basilisk', 'Unicorn']
 
 # to-do's...
-# thanatos, draconis, valamar, otatop, maurice the goblin
 # scrolling, lockpicks, chest
 # curse, bless
-# monsters powers, location
-# ranged combat
+# monsters powers
+# ranged combat, attack auto target
 # spells, scrolls, tomes, npcs, towns, quests...
 # transitions, worldmap travel?
-# monsters blocks
 # worldmap minmax each type
+# mouse support everywhere
 
 
 class Game(object):
@@ -475,7 +478,7 @@ class Game(object):
 			libtcod.console_print_ex(0, SCREEN_WIDTH - 5, SCREEN_HEIGHT - 22, libtcod.BKGND_NONE, libtcod.RIGHT, 'Main Menu')
 			if choice == -1:
 				choice = 0
-			choice = messages.box(None, None, (SCREEN_WIDTH - len(max(contents, key=len)) - 6), ((SCREEN_HEIGHT + 4) - len(contents)) / 2, len(max(contents, key=len)) + 5, len(contents) + 2, contents, choice, color=None, align=libtcod.RIGHT)
+			choice = messages.box(None, None, (SCREEN_WIDTH - len(max(contents, key=len)) - 6), ((SCREEN_HEIGHT + 4) - len(contents)) / 2, len(max(contents, key=len)) + 5, len(contents) + 2, contents, choice, color=None, align=libtcod.RIGHT, scrollbar=False)
 
 			if choice == 0:  # start new game
 				self.new_game()

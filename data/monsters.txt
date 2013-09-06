@@ -6,22 +6,22 @@
 //     (@) humans         : bandit (2), thief (3), swordman (4), assassin (6)
 //     (g) goblinoids     : goblin (2), goblin shaman (4), goblin chieftain (6), gnoll (3)
 //     (k) kobolds        : kobold (1), kobold shaman (3), kobold chieftain (5)
-//     (o) orcs           : orc (4), orc shaman (6), orc chieftain -8-
+//     (o) orcs           : orc (4), orc shaman (6), orc chieftain (8)
 //
 // mammal:
 //     (f) feline         : wild cat (1), jaguar (3), panther (5), tiger (7), lion -10-
 //     (r) rats           : giant rat (1), ratman (3), wererat -9-
-//     (B) bears          : black bear (5), grizzly -9-, cave bear -10-
+//     (B) bears          : black bear (5), grizzly -9-, cave bear -11-
 //
 // canine:
-//     (d) dogs           : wild dog (1), hound (2), war dog (5), hell hound -8-
+//     (d) dogs           : wild dog (1), hound (2), war dog (5), hell hound -9-
 //     (w) wolves         : grey wolf (2), worg (4), dire wolf (7)
 //
 // insects:
 //     (a) ants           : giant ant (1), giant soldier ant (4), ant queen -9-
 //     (S) spiders        : giant spider (2), cave spider (3), fire spider (6)
 //     (v) vermin         : giant centipede (1), giant bee (2), giant mantis (3), giant wasp (4), carrion crawler (5)
-//     (i) insect swarms  : ant swarm (5), spider swarm (7), wasp swarm -10-
+//     (i) insect swarms  : ant swarm (5), spider swarm (8), wasp swarm -10-
 //
 // reptiles:
 //     (l) lizards        : giant lizard (1), rock lizard (4), komodo dragon (7)
@@ -34,23 +34,25 @@
 //     (M) sea monster    : giant squid -13-, hydra -14-, leviathan -16-, kraken -17-
 //
 // flying:
-//     (b) bats, birds    : large bat (1), raven (2), blood bat (3), vulture (4), night hunter (6), spectral raven (7), vampire bat -8-, fire crow -9-
+//     (b) bats, birds    : large bat (1), raven (2), blood bat (3), vulture (4), night hunter (6), spectral raven (7), vampire bat (8), fire crow -9-
 //     (D) dragons        : black -15-, blue -16-, green -17-, red -18-
 //
 // devils:
-//     (x) lesser devils  : imp -8-, succubus -9-, fallen angel -11-
+//     (x) lesser devils  : imp (8), succubus -10-, fallen angel -12-
 //     (X) greater devils : -15-, -16-, -17-, -18-
 //
-// (j) jellies       : green slime (5), gaseous slime (6), stun jelly (7), mustard jelly -8-, fungus ooze -9-, puxic ooze -10-, gelatinous cube -11-
-// (q) magical beast : cockatrice (6), basilisk -8-, medusa -10-, gorgon -12-
-// (u) undead        : skeleton (1), zombie (2), ghoul (4), wight (5), mummy (7), skeleton warrior -8-, spectre -10-, ghost -11-, vampire -13-, lich -14-
+// (j) jellies       : green slime (5), gaseous slime (6), stun jelly (7), mustard jelly (8), fungus ooze -9-, puxic ooze -10-, gelatinous cube -11-
+// (q) magical beast : cockatrice (6), basilisk (8), medusa -10-, gorgon -12-
+// (u) undead        : skeleton (1), zombie (2), ghoul (4), wight (5), mummy (7), skeleton warrior (8), spectre -10-, ghost -11-, vampire -13-, lich -14-
 // (E) elementals    : earth -12-, water -13-, fire -15-, air -17-
-// (G) giants        : troll (7), ogre -8-, ettin -9-, ogre magi -10-, hill giant -11-, mountain giant -12-, frost giant -13-, fire giant -14-
+// (G) giants        : troll (7), ogre (8), ettin -9-, ogre magi -10-, hill giant -11-, mountain giant -12-, frost giant -13-, fire giant -14-
 // (C) golems        : clay -12-, stone -14-, iron -16-, bone -18-
 // (R) robots        : droid -11-, cyborg -12-, -13-, -14-, -15-, -16-, -17-, -18-
 //
 // bosses:
 //    thanatos, draconis
+// npcs:
+//    valamar, otatop, maurice the goblin
 //
 // unused letters: c,e,h,t,y,z
 
@@ -73,8 +75,7 @@ monster_type "giant rat" {
 	damage = "1d4"
 	weight = 3
 	corpse = 10
-	ai_neutral
-	land
+	ai_hostile land underground
 }
 
 monster_type "giant lizard" {
@@ -90,8 +91,7 @@ monster_type "giant lizard" {
 	damage = "1d4"
 	weight = 2
 	corpse = 15
-	ai_neutral
-	land
+	ai_neutral land all
 }
 
 monster_type "wild dog" {
@@ -107,8 +107,7 @@ monster_type "wild dog" {
 	damage = "1d4"
 	weight = 30
 	corpse = 20
-	ai_neutral
-	land
+	ai_hostile land all
 }
 
 monster_type "giant ant" {
@@ -122,8 +121,7 @@ monster_type "giant ant" {
 	defense_rating = 4
 	health = "1d4"
 	damage = "1d4"
-	ai_neutral
-	land
+	ai_neutral land all
 }
 
 monster_type "giant centipede" {
@@ -137,8 +135,7 @@ monster_type "giant centipede" {
 	defense_rating = 6
 	health = "1d6"
 	damage = "1d4+1"
-	ai_neutral
-	land
+	ai_neutral land all
 }
 
 monster_type "kobold" {
@@ -158,8 +155,7 @@ monster_type "kobold" {
 	damage = "1d6"
 	weight = 30
 	corpse = 20
-	ai_hostile
-	land
+	ai_hostile land all
 }
 
 monster_type "skeleton" {
@@ -173,11 +169,10 @@ monster_type "skeleton" {
 	defense_rating = 6
 	health = "1d6"
 	damage = "1d6"
-	ai_hostile
-	land
+	ai_hostile land all
 }
 
-monster_type "wild cat" {
+monster_type "stray cat" {
 	type = "feline"
 	unidentified_name = "cat"
 	icon = "f"
@@ -190,8 +185,7 @@ monster_type "wild cat" {
 	damage = "1d4"
 	weight = 8
 	corpse = 10
-	ai_neutral
-	land
+	ai_neutral land overworld
 }
 
 monster_type "large bat" {
@@ -207,8 +201,7 @@ monster_type "large bat" {
 	damage = "1d4"
 	weight = 2
 	corpse = 10
-	ai_neutral
-	flying
+	ai_neutral flying all
 }
 
 monster_type "piranha" {
@@ -224,8 +217,7 @@ monster_type "piranha" {
 	damage = "1d4"
 	weight = 3
 	corpse = 10
-	ai_neutral
-	aquatic
+	ai_hostile aquatic all
 }
 
 //
@@ -251,8 +243,7 @@ monster_type "bandit" {
 	damage = "1d6"
 	weight = 150
 	corpse = 20
-	ai_hostile
-	land
+	ai_hostile land all
 }
 
 monster_type "large snake" {
@@ -268,8 +259,7 @@ monster_type "large snake" {
 	damage = "1d4+1"
 	weight = 15
 	corpse = 15
-	ai_neutral
-	land
+	ai_neutral land all
 }
 
 monster_type "giant spider" {
@@ -283,8 +273,7 @@ monster_type "giant spider" {
 	defense_rating = 11
 	health = "1d4"
 	damage = "1d6"
-	ai_hostile
-	land
+	ai_hostile land underground
 }
 
 monster_type "giant bee" {
@@ -298,8 +287,7 @@ monster_type "giant bee" {
 	defense_rating = 12
 	health = "1d6"
 	damage = "1d4+1"
-	ai_neutral
-	land
+	ai_neutral land overworld
 }
 
 monster_type "grey wolf" {
@@ -315,8 +303,7 @@ monster_type "grey wolf" {
 	damage = "1d6"
 	weight = 75
 	corpse = 20
-	ai_hostile
-	land
+	ai_hostile land all
 }
 
 monster_type "hound" {
@@ -332,8 +319,7 @@ monster_type "hound" {
 	damage = "1d4+1"
 	weight = 50
 	corpse = 15
-	ai_neutral
-	land
+	ai_neutral land all
 }
 
 monster_type "goblin" {
@@ -353,8 +339,7 @@ monster_type "goblin" {
 	damage = "1d6"
 	weight = 40
 	corpse = 20
-	ai_hostile
-	land
+	ai_hostile land all
 }
 
 monster_type "zombie" {
@@ -368,8 +353,7 @@ monster_type "zombie" {
 	defense_rating = 11
 	health = "1d8"
 	damage = "1d6"
-	ai_hostile
-	land
+	ai_hostile land all
 }
 
 monster_type "raven" {
@@ -385,8 +369,7 @@ monster_type "raven" {
 	damage = "1d4"
 	weight = 3
 	corpse = 10
-	ai_neutral
-	flying
+	ai_neutral flying all
 }
 
 monster_type "red piranha" {
@@ -402,8 +385,7 @@ monster_type "red piranha" {
 	damage = "1d4"
 	weight = 5
 	corpse = 10
-	ai_hostile
-	aquatic
+	ai_hostile aquatic all
 }
 
 //
@@ -425,8 +407,7 @@ monster_type "ratman" {
 	damage = "1d4"
 	weight = 30
 	corpse = 10
-	ai_hostile
-	land
+	ai_hostile land all
 }
 
 monster_type "gnoll" {
@@ -446,8 +427,7 @@ monster_type "gnoll" {
 	damage = "1d6"
 	weight = 250
 	corpse = 15
-	ai_hostile
-	land
+	ai_hostile land all
 }
 
 monster_type "thief" {
@@ -467,8 +447,7 @@ monster_type "thief" {
 	damage = "1d4"
 	weight = 150
 	corpse = 15
-	ai_hostile
-	land
+	ai_hostile land all
 }
 
 monster_type "giant mantis" {
@@ -482,8 +461,7 @@ monster_type "giant mantis" {
 	defense_rating = 25
 	health = "1d6"
 	damage = "1d4+1"
-	ai_hostile
-	land
+	ai_hostile land overworld
 }
 
 monster_type "kobold shaman" {
@@ -503,8 +481,7 @@ monster_type "kobold shaman" {
 	damage = "1d6"
 	weight = 40
 	corpse = 15
-	ai_hostile
-	land
+	ai_hostile land all
 }
 
 monster_type "jaguar" {
@@ -520,8 +497,7 @@ monster_type "jaguar" {
 	damage = "1d4"
 	weight = 125
 	corpse = 10
-	ai_neutral
-	land
+	ai_neutral land all
 }
 
 monster_type "cave spider" {
@@ -535,8 +511,7 @@ monster_type "cave spider" {
 	defense_rating = 21
 	health = "1d6"
 	damage = "1d8"
-	ai_hostile
-	land
+	ai_hostile land cave
 }
 
 monster_type "large yellow snake" {
@@ -552,8 +527,7 @@ monster_type "large yellow snake" {
 	damage = "1d6"
 	weight = 20
 	corpse = 15
-	ai_neutral
-	land
+	ai_neutral land all
 }
 
 monster_type "blood bat" {
@@ -569,8 +543,7 @@ monster_type "blood bat" {
 	damage = "1d4"
 	weight = 2
 	corpse = 10
-	ai_hostile
-	flying
+	ai_hostile flying all
 }
 
 monster_type "merman" {
@@ -586,8 +559,7 @@ monster_type "merman" {
 	damage = "1d4"
 	weight = 100
 	corpse = 15
-	ai_hostile
-	aquatic
+	ai_hostile aquatic all
 }
 
 //
@@ -607,10 +579,9 @@ monster_type "rock lizard" {
 	defense_rating = 35
 	health = "1d6"
 	damage = "1d4"
-	weight = 5
+	weight = 10
 	corpse = 15
-	ai_neutral
-	land
+	ai_neutral land all
 }
 
 monster_type "giant soldier ant" {
@@ -624,8 +595,7 @@ monster_type "giant soldier ant" {
 	defense_rating = 31
 	health = "1d4"
 	damage = "1d4"
-	ai_hostile
-	land
+	ai_hostile land underground
 }
 
 monster_type "giant wasp" {
@@ -639,8 +609,7 @@ monster_type "giant wasp" {
 	defense_rating = 33
 	health = "1d6"
 	damage = "1d4+1"
-	ai_neutral
-	land
+	ai_neutral land all
 }
 
 monster_type "ghoul" {
@@ -654,8 +623,7 @@ monster_type "ghoul" {
 	defense_rating = 32
 	health = "1d6"
 	damage = "1d6"
-	ai_hostile
-	land
+	ai_hostile land all
 }
 
 monster_type "worg" {
@@ -671,8 +639,7 @@ monster_type "worg" {
 	damage = "1d6"
 	weight = 100
 	corpse = 10
-	ai_hostile
-	land
+	ai_hostile land all
 }
 
 monster_type "goblin shaman" {
@@ -692,8 +659,7 @@ monster_type "goblin shaman" {
 	damage = "1d6"
 	weight = 50
 	corpse = 15
-	ai_hostile
-	land
+	ai_hostile land all
 }
 
 monster_type "orc" {
@@ -713,8 +679,7 @@ monster_type "orc" {
 	damage = "1d6"
 	weight = 200
 	corpse = 20
-	ai_hostile
-	land
+	ai_hostile land all
 }
 
 monster_type "swordman" {
@@ -734,8 +699,7 @@ monster_type "swordman" {
 	damage = "2d6+1"
 	weight = 180
 	corpse = 20
-	ai_hostile
-	land
+	ai_hostile land all
 }
 
 monster_type "vulture" {
@@ -751,8 +715,7 @@ monster_type "vulture" {
 	damage = "1d4"
 	weight = 5
 	corpse = 10
-	ai_neutral
-	flying
+	ai_neutral flying overworld
 }
 
 //
@@ -772,8 +735,7 @@ monster_type "ant swarm" {
 	defense_rating = 50
 	health = "1d4"
 	damage = "1d4"
-	ai_hostile
-	land
+	ai_hostile land all
 }
 
 monster_type "carrion crawler" {
@@ -787,8 +749,7 @@ monster_type "carrion crawler" {
 	defense_rating = 41
 	health = "1d4"
 	damage = "1d4+1"
-	ai_hostile
-	land
+	ai_hostile land all
 }
 
 monster_type "war dog" {
@@ -804,8 +765,7 @@ monster_type "war dog" {
 	damage = "2d4"
 	weight = 80
 	corpse = 15
-	ai_neutral
-	land
+	ai_neutral land all
 }
 
 monster_type "kobold chieftain" {
@@ -825,8 +785,7 @@ monster_type "kobold chieftain" {
 	damage = "1d6"
 	weight = 45
 	corpse = 20
-	ai_hostile
-	land
+	ai_hostile land all
 }
 
 monster_type "panther" {
@@ -842,8 +801,7 @@ monster_type "panther" {
 	damage = "1d4"
 	weight = 125
 	corpse = 15
-	ai_neutral
-	land
+	ai_neutral land overworld
 }
 
 monster_type "black bear" {
@@ -859,8 +817,7 @@ monster_type "black bear" {
 	damage = "1d8"
 	weight = 300
 	corpse = 10
-	ai_neutral
-	land
+	ai_neutral land all
 }
 
 monster_type "green slime" {
@@ -874,8 +831,7 @@ monster_type "green slime" {
 	defense_rating = 50
 	health = "1d6"
 	damage = "1d6+1"
-	ai_hostile
-	land
+	ai_hostile land dungeon
 }
 
 monster_type "wight" {
@@ -889,8 +845,7 @@ monster_type "wight" {
 	defense_rating = 43
 	health = "1d6"
 	damage = "1d6"
-	ai_hostile
-	land
+	ai_hostile land all
 }
 
 monster_type "siren" {
@@ -906,8 +861,7 @@ monster_type "siren" {
 	damage = "1d4"
 	weight = 80
 	corpse = 15
-	ai_hostile
-	aquatic
+	ai_hostile aquatic all
 }
 
 //
@@ -927,8 +881,7 @@ monster_type "fire spider" {
 	defense_rating = 55
 	health = "1d6"
 	damage = "1d6"
-	ai_hostile
-	land
+	ai_hostile land all
 }
 
 monster_type "python" {
@@ -944,8 +897,7 @@ monster_type "python" {
 	damage = "1d4+1"
 	weight = 30
 	corpse = 15
-	ai_neutral
-	land
+	ai_neutral land overworld
 }
 
 monster_type "gaseous slime" {
@@ -959,8 +911,7 @@ monster_type "gaseous slime" {
 	defense_rating = 60
 	health = "1d6"
 	damage = "1d6+1"
-	ai_hostile
-	land
+	ai_hostile land underground
 }
 
 monster_type "assassin" {
@@ -980,8 +931,7 @@ monster_type "assassin" {
 	damage = "1d4"
 	weight = 140
 	corpse = 15
-	ai_hostile
-	land
+	ai_hostile land all
 }
 
 monster_type "goblin chieftain" {
@@ -1001,8 +951,7 @@ monster_type "goblin chieftain" {
 	damage = "1d6"
 	weight = 50
 	corpse = 20
-	ai_hostile
-	land
+	ai_hostile land all
 }
 
 monster_type "orc shaman" {
@@ -1022,8 +971,7 @@ monster_type "orc shaman" {
 	damage = "1d6"
 	weight = 160
 	corpse = 15
-	ai_hostile
-	land
+	ai_hostile land all
 }
 
 monster_type "cockatrice" {
@@ -1039,8 +987,7 @@ monster_type "cockatrice" {
 	damage = "1d6+1"
 	weight = 25
 	corpse = 5
-	ai_hostile
-	flying
+	ai_neutral flying all
 }
 
 monster_type "night hunter" {
@@ -1056,8 +1003,7 @@ monster_type "night hunter" {
 	damage = "1d4"
 	weight = 3
 	corpse = 10
-	ai_hostile
-	flying
+	ai_hostile flying dungeon
 }
 
 monster_type "piranha shark" {
@@ -1073,8 +1019,7 @@ monster_type "piranha shark" {
 	damage = "1d4"
 	weight = 8
 	corpse = 10
-	ai_hostile
-	aquatic
+	ai_hostile aquatic all
 }
 
 //
@@ -1096,8 +1041,7 @@ monster_type "tiger" {
 	damage = "1d4"
 	weight = 140
 	corpse = 10
-	ai_neutral
-	land
+	ai_neutral land all
 }
 
 monster_type "dire wolf" {
@@ -1113,23 +1057,7 @@ monster_type "dire wolf" {
 	damage = "1d6"
 	weight = 90
 	corpse = 15
-	ai_hostile
-	land
-}
-
-monster_type "spider swarm" {
-	type = "insect"
-	unidentified_name = "insect swarm"
-	icon = "i"
-	icon_color = "0,128,128"
-	article = "a "
-	level = 7
-	attack_rating = 66
-	defense_rating = 61
-	health = "1d4"
-	damage = "1d4"
-	ai_hostile
-	land
+	ai_hostile land all
 }
 
 monster_type "komodo dragon" {
@@ -1145,8 +1073,7 @@ monster_type "komodo dragon" {
 	damage = "1d4"
 	weight = 50
 	corpse = 15
-	ai_hostile
-	land
+	ai_hostile land all
 }
 
 monster_type "troll" {
@@ -1162,8 +1089,21 @@ monster_type "troll" {
 	damage = "2d6+1"
 	weight = 215
 	corpse = 10
-	ai_hostile
-	land
+	ai_hostile land all
+}
+
+monster_type "stun jelly" {
+	type = "jelly"
+	unidentified_name = "jelly"
+	icon = "j"
+	icon_color = "255,140,0"
+	article = "a "
+	level = 7
+	attack_rating = 62
+	defense_rating = 70
+	health = "1d6"
+	damage = "1d6+1"
+	ai_hostile land underground
 }
 
 monster_type "mummy" {
@@ -1177,8 +1117,7 @@ monster_type "mummy" {
 	defense_rating = 64
 	health = "1d6"
 	damage = "1d6"
-	ai_hostile
-	land
+	ai_hostile land all
 }
 
 monster_type "spectral raven" {
@@ -1194,8 +1133,7 @@ monster_type "spectral raven" {
 	damage = "1d4"
 	weight = 6
 	corpse = 10
-	ai_hostile
-	flying
+	ai_hostile flying overworld
 }
 
 monster_type "merman shaman" {
@@ -1211,45 +1149,135 @@ monster_type "merman shaman" {
 	damage = "1d4"
 	weight = 80
 	corpse = 15
-	ai_hostile
-	aquatic
+	ai_hostile aquatic all
 }
 
 //
 //
-// level 8+ monsters
+// level 8 monsters
 //
 //
+
+monster_type "spider swarm" {
+	type = "insect"
+	unidentified_name = "insect swarm"
+	icon = "i"
+	icon_color = "0,128,128"
+	article = "a "
+	level = 8
+	attack_rating = 76
+	defense_rating = 71
+	health = "1d4"
+	damage = "1d4"
+	ai_hostile land overworld
+}
+
+monster_type "orc chieftain" {
+	type = "humanoid"
+	unidentified_name = "orc"
+	icon = "o"
+	icon_color = "192,192,48"
+	icon_color2 = "192,192,86"
+	icon_color3 = "128,128,0"
+	icon_color4 = "96,96,24"
+	icon_color5 = "83,83,0"
+	article = "an "
+	level = 8
+	attack_rating = 82
+	defense_rating = 78
+	health = "1d10"
+	damage = "1d6"
+	weight = 225
+	corpse = 15
+	ai_hostile land all
+}
+
+monster_type "ogre" {
+	type = "giant"
+	unidentified_name = "giant"
+	icon = "G"
+	icon_color = "85,107,47"
+	article = "an "
+	level = 8
+	attack_rating = 80
+	defense_rating = 75
+	health = "1d10"
+	damage = "2d6+1"
+	weight = 200
+	corpse = 10
+	ai_hostile land all
+}
+
+monster_type "imp" {
+	type = "devil"
+	unidentified_name = "lesser devil"
+	icon = "x"
+	icon_color = "178,34,34"
+	article = "an "
+	level = 8
+	attack_rating = 72
+	defense_rating = 82
+	health = "1d6"
+	damage = "2d6+1"
+	ai_hostile land underground
+}
+
+monster_type "basilisk" {
+	type = "beast"
+	unidentified_name = "magical beast"
+	icon = "q"
+	icon_color = "143,188,143"
+	article = "a "
+	level = 8
+	attack_rating = 75
+	defense_rating = 75
+	health = "1d8"
+	damage = "1d6+1"
+	weight = 60
+	corpse = 5
+	ai_neutral land all
+}
+
+monster_type "mustard jelly" {
+	type = "jelly"
+	unidentified_name = "jelly"
+	icon = "j"
+	icon_color = "255,255,0"
+	article = "a "
+	level = 8
+	attack_rating = 72
+	defense_rating = 80
+	health = "1d6"
+	damage = "1d6+1"
+	ai_hostile land dungeon
+}
+
+monster_type "skeletal warrior" {
+	type = "undead"
+	unidentified_name = "undead"
+	icon = "u"
+	icon_color = "238,232,170"
+	article = "a "
+	level = 8
+	attack_rating = 80
+	defense_rating = 72
+	health = "1d6"
+	damage = "1d6"
+	ai_hostile land all
+}
 
 monster_type "vampire bat" {
 	type = "bird"
 	unidentified_name = "bat"
 	icon = "b"
-	icon_color = "127,101,63"
+	icon_color = "128,0,0"
 	article = "a "
-	level = 6
-	attack_rating = 20
-	defense_rating = 25
+	level = 8
+	attack_rating = 72
+	defense_rating = 78
 	health = "1d6"
 	damage = "2d6+1"
-	weight = 2
+	weight = 8
 	corpse = 10
-	ai_hostile
-	flying
+	ai_hostile flying all
 }
-
-monster_type "stun jelly" {
-	type = "jelly"
-	unidentified_name = "jelly"
-	icon = "j"
-	icon_color = "0,191,0"
-	article = "a "
-	level = 7
-	attack_rating = 33
-	defense_rating = 40
-	health = "1d6"
-	damage = "1d6+1"
-	ai_hostile
-	land
-}
-

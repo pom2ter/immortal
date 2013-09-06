@@ -147,7 +147,7 @@ class World(object):
 					done = True
 				attempt += 1
 
-		starter_dungeon = libtcod.random_get_int(self.rnd, 0, 4)
+		starter_dungeon = libtcod.random_get_int(self.rnd, 1, 4)
 		if starter_dungeon == 1:
 			self.dungeons.append((len(self.dungeons) + 1, 'Starter Dungeon', 'SD', self.player_positionx, self.player_positiony - 1, 1, 'Dungeon'))
 		elif starter_dungeon == 2:

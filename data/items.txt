@@ -1,3 +1,9 @@
+//
+//
+//  Weapons
+//
+//
+
 item_type "dagger" {
 	type = "weapon"
 	plural = "daggers"
@@ -8,8 +14,7 @@ item_type "dagger" {
 	cost = 10
 	dices = "1d4"
 	article = "a "
-	equippable
-	weapon_dagger
+	equippable weapon_dagger
 }
 
 item_type "short sword" {
@@ -22,8 +27,7 @@ item_type "short sword" {
 	cost = 10
 	dices = "1d6"
 	article = "a "
-	equippable
-	weapon_sword
+	equippable weapon_sword
 }
 
 item_type "long sword" {
@@ -36,8 +40,7 @@ item_type "long sword" {
 	cost = 10
 	dices = "1d8"
 	article = "a "
-	equippable
-	weapon_sword
+	equippable weapon_sword
 }
 
 item_type "mace" {
@@ -50,8 +53,7 @@ item_type "mace" {
 	cost = 10
 	dices = "1d6+1"
 	article = "a "
-	equippable
-	weapon_mace
+	equippable weapon_mace
 }
 
 item_type "hand axe" {
@@ -64,8 +66,7 @@ item_type "hand axe" {
 	cost = 10
 	dices = "1d6"
 	article = "a "
-	equippable
-	weapon_axe
+	equippable weapon_axe
 }
 
 item_type "quarterstaff" {
@@ -78,8 +79,7 @@ item_type "quarterstaff" {
 	cost = 10
 	dices = "1d4"
 	article = "a "
-	equippable
-	weapon_staff
+	equippable weapon_staff
 }
 
 item_type "bow" {
@@ -92,8 +92,7 @@ item_type "bow" {
 	cost = 10
 	dices = "1d6"
 	article = "a "
-	equippable
-	weapon_bow
+	equippable weapon_bow
 }
 
 item_type "sling" {
@@ -106,8 +105,7 @@ item_type "sling" {
 	cost = 5
 	dices = "1d4"
 	article = "a "
-	equippable
-	weapon_bow
+	equippable weapon_bow
 }
 
 item_type "spear" {
@@ -120,9 +118,14 @@ item_type "spear" {
 	cost = 10
 	dices = "1d6"
 	article = "a "
-	equippable
-	weapon_polearm
+	equippable weapon_polearm
 }
+
+//
+//
+//  Armors
+//
+//
 
 item_type "shield" {
 	type = "shield"
@@ -133,8 +136,7 @@ item_type "shield" {
 	weight = 10.0
 	cost = 20
 	article = "a "
-	equippable
-	armor_shield
+	equippable armor_shield
 }
 
 item_type "helmet" {
@@ -146,8 +148,7 @@ item_type "helmet" {
 	weight = 6.0
 	cost = 10
 	article = "an "
-	equippable
-	armor_head
+	equippable armor_head
 }
 
 item_type "cape" {
@@ -159,8 +160,7 @@ item_type "cape" {
 	weight = 4.0
 	cost = 15
 	article = "a "
-	equippable
-	armor_cloak
+	equippable armor_cloak
 }
 
 item_type "robes" {
@@ -172,8 +172,7 @@ item_type "robes" {
 	weight = 5.0
 	cost = 10
 	article = "some "
-	equippable
-	armor_body
+	equippable armor_body
 }
 
 item_type "armor" {
@@ -185,8 +184,7 @@ item_type "armor" {
 	weight = 10.0
 	cost = 25
 	article = "a "
-	equippable
-	armor_body
+	equippable armor_body
 }
 
 item_type "boots" {
@@ -198,8 +196,7 @@ item_type "boots" {
 	weight = 2.5
 	cost = 5
 	article = "some "
-	equippable
-	armor_feet
+	equippable armor_feet
 }
 
 item_type "gloves" {
@@ -211,8 +208,7 @@ item_type "gloves" {
 	weight = 2.0
 	cost = 5
 	article = "some "
-	equippable
-	armor_hands
+	equippable armor_hands
 }
 
 item_type "ring" {
@@ -224,9 +220,33 @@ item_type "ring" {
 	weight = 0.5
 	cost = 50
 	article = "a "
-	equippable
-	armor_ring
+	equippable armor_ring
 }
+
+//
+//
+//  Tools
+//
+//
+
+item_type "torch" {
+	type = "tool"
+	plural = "torches"
+	icon = "]"
+	icon_color = "0,0,255"
+	level = 1
+	weight = 0.1
+	cost = 5
+	duration = 1000
+	article = "a "
+	usable torchlight
+}
+
+//
+//
+//  Consumables
+//
+//
 
 item_type "potion" {
 	type = "potion"
@@ -241,20 +261,6 @@ item_type "potion" {
 	usable
 }
 
-item_type "torch" {
-	type = "tool"
-	plural = "torches"
-	icon = "]"
-	icon_color = "0,0,255"
-	level = 1
-	weight = 0.1
-	cost = 5
-	duration = 1000
-	article = "a "
-	usable
-	torchlight
-}
-
 item_type "ration" {
 	type = "food"
 	plural = "rations"
@@ -267,8 +273,7 @@ item_type "ration" {
 	charge = 1
 	expiration = 5000
 	hunger = 500
-	usable
-	consumable
+	usable consumable
 }
 
 item_type "apple" {
@@ -283,9 +288,27 @@ item_type "apple" {
 	charge = 1
 	expiration = 1000
 	hunger = 100
-	usable
-	consumable
+	usable consumable
 }
+
+item_type "corpse" {
+	type = "corpse"
+	plural = "corpses"
+	icon = "%"
+	icon_color = "127,101,63"
+	level = 1
+	weight = 2.0
+	article = "a "
+	charge = 1
+	expiration = 500
+	consumable corpse usable
+}
+
+//
+//
+//  Coins
+//
+//
 
 item_type "copper" {
 	type = "money"
@@ -317,17 +340,3 @@ item_type "gold" {
 	identified
 }
 
-item_type "corpse" {
-	type = "corpse"
-	plural = "corpses"
-	icon = "%"
-	icon_color = "127,101,63"
-	level = 1
-	weight = 2.0
-	article = "a "
-	charge = 1
-	expiration = 500
-	consumable
-	corpse
-	usable
-}

@@ -42,13 +42,17 @@ class Monster(object):
 		self.flags[:] = (value for value in self.flags if value != 'ai_neutral' and value != 'ai_friendly')
 
 	# returns true if monster can move
-	def can_move(self, x, y):
+	def can_move(self, x, y, include_mob=False):
 		if 'stuck' in self.flags:
 			return False
 		if game.current_map.tile[x][y]['name'] in ['deep water', 'very deep water'] and 'land' in self.flags:
 			return False
 		if game.current_map.tile[x][y]['name'] not in ['deep water', 'very deep water'] and 'aquatic' in self.flags:
 			return False
+		if include_mob:
+			objects = []
+			objects[:] = (obj for obj in game.current_map.objects if obj.y == y and obj.x == x and obj.blocks)
+			return not objects
 		return True
 
 	# checks monster condition each turn
@@ -174,7 +178,7 @@ class Monster(object):
 			dx, dy = 0, 0
 			if self.distance_to_player(game.char, x, y) >= 2:
 				dx, dy = self.move_towards_player(game.char, x, y)
-				if not self.can_move(x + dx, y + dy):
+				if not self.can_move(x + dx, y + dy, True):
 					dx, dy = 0, 0
 			else:
 				self.attack()
@@ -184,7 +188,7 @@ class Monster(object):
 				dx = 0
 			if y + dy < 0 or y + dy >= game.current_map.map_height:
 				dy = 0
-			if not self.can_move(x + dx, y + dy):
+			if not self.can_move(x + dx, y + dy, True):
 				dx, dy = 0, 0
 			if all(i == 'ai_neutral' and i != 'ai_hostile' for i in self.flags):
 				if self.distance_to_player(game.char, x, y) <= 2:
@@ -236,6 +240,12 @@ class MonsterList(object):
 		libtcod.struct_add_flag(monster_type_struct, 'ai_neutral')
 		libtcod.struct_add_flag(monster_type_struct, 'ai_hostile')
 		libtcod.struct_add_flag(monster_type_struct, 'identified')
+		libtcod.struct_add_flag(monster_type_struct, 'all')
+		libtcod.struct_add_flag(monster_type_struct, 'overworld')
+		libtcod.struct_add_flag(monster_type_struct, 'underground')
+		libtcod.struct_add_flag(monster_type_struct, 'dungeon')
+		libtcod.struct_add_flag(monster_type_struct, 'cave')
+		libtcod.struct_add_flag(monster_type_struct, 'maze')
 		libtcod.struct_add_flag(monster_type_struct, 'land')
 		libtcod.struct_add_flag(monster_type_struct, 'flying')
 		libtcod.struct_add_flag(monster_type_struct, 'aquatic')
@@ -254,11 +264,20 @@ class MonsterList(object):
 		return None
 
 	# choose a random monster based on its level
-	def get_monster_by_level(self, level, tilename):
-		if tilename in ['deep water', 'very deep water']:
-			mob = [x for x in self.list if level - 6 <= x.level <= level and 'land' not in x.flags]
+	def get_monster_by_level(self, level, tilename, type):
+		if type == 'Dungeon':
+			mob = [x for x in self.list if any(i in x.flags for i in ['dungeon', 'underground', 'all'])]
+		elif type == 'Cave':
+			mob = [x for x in self.list if any(i in x.flags for i in ['cave', 'underground', 'all'])]
+		elif type == 'Maze':
+			mob = [x for x in self.list if any(i in x.flags for i in ['maze', 'underground', 'all'])]
 		else:
-			mob = [x for x in self.list if level - 6 <= x.level <= level and 'aquatic' not in x.flags]
+			mob = [x for x in self.list if any(i in x.flags for i in ['overworld', 'all'])]
+
+		if tilename in ['deep water', 'very deep water']:
+			mob = [x for x in mob if level - 6 <= x.level <= level and 'land' not in x.flags]
+		else:
+			mob = [x for x in mob if level - 6 <= x.level <= level and 'aquatic' not in x.flags]
 		if mob:
 			return mob[libtcod.random_get_int(game.rnd, 0, len(mob) - 1)]
 		return None

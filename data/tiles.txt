@@ -6,8 +6,7 @@ tile_type "wall" {
 	back_color_h = "180,180,180"
 	back_color_l = "120,120,120"
 	article = "a "
-	blocked
-	block_sight
+	blocked block_sight
 }
 
 tile_type "cavern wall" {
@@ -18,8 +17,7 @@ tile_type "cavern wall" {
 	back_color_h = "127,101,63"
 	back_color_l = "96,76,47"
 	article = "a "
-	blocked
-	block_sight
+	blocked block_sight
 }
 
 tile_type "floor" {
@@ -40,8 +38,7 @@ tile_type "door" {
 	back_color_h = "36,36,36"
 	back_color_l = "24,24,24"
 	article = "a "
-	blocked
-	block_sight
+	blocked block_sight
 }
 
 tile_type "opened door" {
@@ -216,8 +213,7 @@ tile_type "high mountains" {
 	back_color_h = "170,170,170"
 	back_color_l = "128,128,128"
 	article = ""
-	blocked
-	block_sight
+	blocked block_sight
 }
 
 tile_type "glacier" {
@@ -228,8 +224,7 @@ tile_type "glacier" {
 	back_color_h = "216,225,238"
 	back_color_l = "185,194,209"
 	article = "a "
-	blocked
-	block_sight
+	blocked block_sight
 }
 
 tile_type "stalagmite" {
@@ -251,8 +246,7 @@ tile_type "fireball trap" {
 	back_color_h = "24,24,24"
 	back_color_l = "24,24,24"
 	article = "a "
-	invisible
-	fx_fireball
+	invisible fx_fireball
 }
 
 tile_type "poison gas trap" {
@@ -263,8 +257,7 @@ tile_type "poison gas trap" {
 	back_color_h = "24,24,24"
 	back_color_l = "24,24,24"
 	article = "a "
-	invisible
-	fx_poison_gas
+	invisible fx_poison_gas
 }
 
 tile_type "sleeping gas trap" {
@@ -275,8 +268,7 @@ tile_type "sleeping gas trap" {
 	back_color_h = "24,24,24"
 	back_color_l = "24,24,24"
 	article = "a "
-	invisible
-	fx_sleep_gas
+	invisible fx_sleep_gas
 }
 
 tile_type "teleport trap" {
@@ -287,8 +279,7 @@ tile_type "teleport trap" {
 	back_color_h = "24,24,24"
 	back_color_l = "24,24,24"
 	article = "a "
-	invisible
-	fx_teleport
+	invisible fx_teleport
 }
 
 tile_type "bear trap" {
@@ -299,6 +290,5 @@ tile_type "bear trap" {
 	back_color_h = "24,24,24"
 	back_color_l = "24,24,24"
 	article = "a "
-	invisible
-	fx_stuck
+	invisible fx_stuck
 }

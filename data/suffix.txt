@@ -1,10 +1,15 @@
+//
+//
+//  Healing
+//
+//
+
 suffix_type " of minor healing" {
 	cost_multiplier = 3.0
 	icon_color = "255,0,0"
 	level = 1
 	dices = "1d8+1"
-	heal_health
-	potion
+	heal_health potion
 }
 
 suffix_type " of major healing" {
@@ -12,8 +17,7 @@ suffix_type " of major healing" {
 	icon_color = "255,115,115"
 	level = 3
 	dices = "2d12+1"
-	heal_health
-	potion
+	heal_health potion
 }
 
 suffix_type " of minor mana" {
@@ -21,8 +25,7 @@ suffix_type " of minor mana" {
 	icon_color = "0,0,255"
 	level = 1
 	dices = "1d8+1"
-	heal_mana
-	potion
+	heal_mana potion
 }
 
 suffix_type " of minor stamina" {
@@ -30,98 +33,83 @@ suffix_type " of minor stamina" {
 	icon_color = "255,255,0"
 	level = 1
 	dices = "1d8+1"
-	heal_stamina
-	potion
-}
-
-suffix_type " of protection" {
-	cost_multiplier = 5.0
-	icon_color = "115,255,255"
-	level = 3
-	protect
-	cloak
-	ring
+	heal_stamina potion
 }
 
 suffix_type " of regeneration" {
 	cost_multiplier = 5.0
 	icon_color = "255,0,0"
 	level = 3
-	regenerate
-	cloak
-	ring
-}
-
-suffix_type " of fire resistance" {
-	cost_multiplier = 6.0
-	icon_color = "255,0,0"
-	level = 5
-	resist_fire
-	cloak
-	ring
-}
-
-suffix_type " of ice resistance" {
-	cost_multiplier = 6.0
-	icon_color = "0,255,255"
-	level = 5
-	resist_ice
-	cloak
-	ring
-}
-
-suffix_type " of poison resistance" {
-	cost_multiplier = 6.0
-	icon_color = "0,255,0"
-	level = 5
-	resist_poison
-	cloak
-	ring
+	regenerate cloak ring potion
 }
 
 suffix_type " of health" {
 	cost_multiplier = 6.0
 	icon_color = "255,255,255"
 	level = 5
-	health_bonus1
-	armor
-	shield
-	weapon
-	ring
+	health_bonus1 armor shield weapon ring
 }
 
 suffix_type " of mana" {
 	cost_multiplier = 6.0
 	icon_color = "255,255,255"
-	level = 5
-	mana_bonus1
-	armor
-	shield
-	weapon
-	ring
+	level = 6
+	mana_bonus1 armor shield weapon ring
 }
 
 suffix_type " of stamina" {
 	cost_multiplier = 6.0
 	icon_color = "255,255,255"
-	level = 5
-	stamina_bonus1
-	armor
-	shield
-	weapon
-	ring
+	level = 7
+	stamina_bonus1 armor shield weapon ring
 }
+
+//
+//
+//  Resistances
+//
+//
+
+suffix_type " of fire resistance" {
+	cost_multiplier = 6.0
+	icon_color = "255,0,0"
+	level = 6
+	resist_fire cloak ring potion
+}
+
+suffix_type " of ice resistance" {
+	cost_multiplier = 6.0
+	icon_color = "0,255,255"
+	level = 5
+	resist_ice cloak ring potion
+}
+
+suffix_type " of poison resistance" {
+	cost_multiplier = 6.0
+	icon_color = "0,255,0"
+	level = 4
+	resist_poison cloak ring potion
+}
+
+suffix_type " of protection" {
+	cost_multiplier = 5.0
+	icon_color = "115,255,255"
+	level = 3
+	protect cloak ring potion
+}
+
+//
+//
+//  Attributes
+//
+//
 
 suffix_type " of strength" {
 	cost_multiplier = 5.0
 	icon_color = "255,255,255"
 	level = 3
 	bonus = 1
-	str_bonus
-	armor
-	shield
-	weapon
-	ring
+	str_bonus armor shield weapon ring
 }
 
 suffix_type " of the giant" {
@@ -129,11 +117,7 @@ suffix_type " of the giant" {
 	icon_color = "255,255,255"
 	level = 8
 	bonus = 2
-	str_bonus
-	armor
-	shield
-	weapon
-	ring
+	str_bonus armor shield weapon ring
 }
 
 suffix_type " of the titan" {
@@ -141,11 +125,7 @@ suffix_type " of the titan" {
 	icon_color = "255,255,255"
 	level = 13
 	bonus = 3
-	str_bonus
-	armor
-	shield
-	weapon
-	ring
+	str_bonus armor shield weapon ring
 }
 
 suffix_type " of dexterity" {
@@ -153,11 +133,7 @@ suffix_type " of dexterity" {
 	icon_color = "255,255,255"
 	level = 4
 	bonus = 1
-	dex_bonus
-	armor
-	shield
-	weapon
-	ring
+	dex_bonus armor shield weapon ring
 }
 
 suffix_type " of nimbleness" {
@@ -165,11 +141,7 @@ suffix_type " of nimbleness" {
 	icon_color = "255,255,255"
 	level = 9
 	bonus = 2
-	dex_bonus
-	armor
-	shield
-	weapon
-	ring
+	dex_bonus armor shield weapon ring
 }
 
 suffix_type " of quickness" {
@@ -177,11 +149,7 @@ suffix_type " of quickness" {
 	icon_color = "255,255,255"
 	level = 14
 	bonus = 3
-	dex_bonus
-	armor
-	shield
-	weapon
-	ring
+	dex_bonus armor shield weapon ring
 }
 
 suffix_type " of intelligence" {
@@ -189,12 +157,7 @@ suffix_type " of intelligence" {
 	icon_color = "255,255,255"
 	level = 5
 	bonus = 1
-	int_bonus
-	armor
-	robe
-	shield
-	weapon
-	ring
+	int_bonus armor robe shield weapon ring
 }
 
 suffix_type " of comprehension" {
@@ -202,12 +165,7 @@ suffix_type " of comprehension" {
 	icon_color = "255,255,255"
 	level = 10
 	bonus = 2
-	int_bonus
-	armor
-	robe
-	shield
-	weapon
-	ring
+	int_bonus armor robe shield weapon ring
 }
 
 suffix_type " of brilliance" {
@@ -215,12 +173,7 @@ suffix_type " of brilliance" {
 	icon_color = "255,255,255"
 	level = 15
 	bonus = 3
-	int_bonus
-	armor
-	robe
-	shield
-	weapon
-	ring
+	int_bonus armor robe shield weapon ring
 }
 
 suffix_type " of wisdom" {
@@ -228,11 +181,7 @@ suffix_type " of wisdom" {
 	icon_color = "255,255,255"
 	level = 6
 	bonus = 1
-	wis_bonus
-	armor
-	shield
-	weapon
-	ring
+	wis_bonus armor shield weapon ring
 }
 
 suffix_type " of knowledge" {
@@ -240,11 +189,7 @@ suffix_type " of knowledge" {
 	icon_color = "255,255,255"
 	level = 11
 	bonus = 2
-	wis_bonus
-	armor
-	shield
-	weapon
-	ring
+	wis_bonus armor shield weapon ring
 }
 
 suffix_type " of enlightenment" {
@@ -252,11 +197,7 @@ suffix_type " of enlightenment" {
 	icon_color = "255,255,255"
 	level = 16
 	bonus = 3
-	wis_bonus
-	armor
-	shield
-	weapon
-	ring
+	wis_bonus armor shield weapon ring
 }
 
 suffix_type " of endurance" {
@@ -264,11 +205,7 @@ suffix_type " of endurance" {
 	icon_color = "255,255,255"
 	level = 7
 	bonus = 1
-	end_bonus
-	armor
-	shield
-	weapon
-	ring
+	end_bonus armor shield weapon ring
 }
 
 suffix_type " of vitality" {
@@ -276,11 +213,7 @@ suffix_type " of vitality" {
 	icon_color = "255,255,255"
 	level = 12
 	bonus = 2
-	end_bonus
-	armor
-	shield
-	weapon
-	ring
+	end_bonus armor shield weapon ring
 }
 
 suffix_type " of fortitude" {
@@ -288,9 +221,5 @@ suffix_type " of fortitude" {
 	icon_color = "255,255,255"
 	level = 17
 	bonus = 3
-	end_bonus
-	armor
-	shield
-	weapon
-	ring
+	end_bonus armor shield weapon ring
 }

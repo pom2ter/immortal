@@ -83,7 +83,7 @@ class Debug(object):
 	def menu(self):
 		if self.enable:
 			contents = ['Edit strength stat', 'Edit dexterity stat', 'Edit intelligence stat', 'Edit wisdom stat', 'Edit endurance stat', 'Edit karma stat', 'Edit gold', 'Heal health', 'Heal stamina', 'Heal mana', 'Add player flag', 'Fully identify inventory', 'Set hunger level', 'Reset dungeon level', 'Show current map', 'Hide current map', 'Teleport (manual)']
-			choice = game.messages.box('Debug Menu', None, game.PLAYER_STATS_WIDTH + (((game.MAP_WIDTH + 3) - (len(max(contents, key=len)) + 4)) / 2), ((game.MAP_HEIGHT + 1) - (len(contents) + 2)) / 2, len(max(contents, key=len)) + 4, len(contents) + 2, contents, mouse_exit=True)
+			choice = game.messages.box('Debug Menu', None, 'center_mapx', 'center_mapy', 35, min(19, len(contents) + 4), contents, step=2, mouse_exit=True)
 			if choice == 0:
 				game.player.strength = self.edit_attribute('Strength: ')
 			if choice == 1:
