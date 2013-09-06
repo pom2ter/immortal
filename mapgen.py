@@ -121,8 +121,8 @@ class Map(object):
 			w = libtcod.random_get_int(game.rnd, game.ROOM_MIN_SIZE, game.ROOM_MAX_SIZE)
 			h = libtcod.random_get_int(game.rnd, game.ROOM_MIN_SIZE, game.ROOM_MAX_SIZE)
 			#random position without going out of the boundaries of the map
-			x = libtcod.random_get_int(game.rnd, 0, self.map_width - w - 1)
-			y = libtcod.random_get_int(game.rnd, 0, self.map_height - h - 1)
+			x = libtcod.random_get_int(game.rnd, 1, self.map_width - w - 1)
+			y = libtcod.random_get_int(game.rnd, 1, self.map_height - h - 1)
 
 			#'Rect' class makes rectangles easier to work with
 			new_room = Rect(x, y, w, h)

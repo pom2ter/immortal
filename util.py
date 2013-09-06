@@ -338,7 +338,7 @@ def set_full_explore_map(map):
 	set_map = libtcod.map_new(map.map_width, map.map_height)
 	for py in range(map.map_height):
 		for px in range(map.map_width):
-			libtcod.map_set_properties(set_map, px, py, not map.tile_is_sight_blocked(px, py), not map.tile_is_blocked(px, py, False))
+			libtcod.map_set_properties(set_map, px, py, not map.tile_is_sight_blocked(px, py), not map.tile_is_blocked(px, py))
 	path = libtcod.dijkstra_new(set_map)
 	return path
 
