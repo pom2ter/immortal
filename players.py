@@ -44,7 +44,7 @@ class Player(object):
 						Skill('Dagger', 'Combat', 0, 0), Skill('Polearm', 'Combat', 0, 0), Skill('Staff', 'Combat', 0, 0),
 						Skill('Bow', 'Combat', 0, 0), Skill('Missile', 'Combat', 0, 0), Skill('Hands', 'Combat', 0, 0),
 						Skill('Detect Traps', 'Physical', 0, 0, True, 'detect_trap'), Skill('Disarm Traps', 'Physical', 0, 0, True), Skill('Swimming', 'Physical', 0, 0),
-						Skill('Artifacts', 'Academic', 0, 0, True), Skill('Mythology', 'Academic', 0, 0)]
+						Skill('Lockpicking', 'Physical', 0, 0, True), Skill('Artifacts', 'Academic', 0, 0, True), Skill('Mythology', 'Academic', 0, 0)]
 		self.flags = ['normal']
 
 	# attack an enemy
@@ -207,9 +207,9 @@ class Player(object):
 			game.message.new('You drop ' + str(qty) + ' ' + obj.item.get_plural_name(), game.turns, libtcod.red)
 		if game.current_map.tile[game.char.x][game.char.y]['type'] == 'trap':
 			if self.is_above_ground():
-				util.spring_trap(game.char.x, game.char.y, obj.item.article.capitalize() + obj.item.get_name())
+				util.trigger_trap(game.char.x, game.char.y, obj.item.article.capitalize() + obj.item.get_name())
 			else:
-				util.spring_trap(game.char.x, game.char.y)
+				util.trigger_trap(game.char.x, game.char.y)
 		game.player_move = True
 
 	# equips an item

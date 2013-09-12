@@ -16,7 +16,7 @@ import effects
 import death
 import debug as dbg
 
-VERSION = '0.3.4.7'
+VERSION = '0.3.4.8'
 
 #size of the gui windows
 MAP_WIDTH = 71
@@ -161,16 +161,17 @@ fonts = {'small': {'file': 'font-small.png', 'width': 10, 'height': 16},
 		'large': {'file': 'font-large.png', 'width': 14, 'height': 22}}
 
 months = ['Phoenix', 'Manticore', 'Hydra', 'Golem', 'Centaur', 'Medusa', 'Dragon', 'Werewolf', 'Gargoyle', 'Kraken', 'Basilisk', 'Unicorn']
+chest_trap = ['fx_fireball', 'fx_poison_gas', 'fx_sleep_gas']
 
 # to-do's...
-# scrolling, lockpicks, chest
 # curse, bless
 # monsters powers
 # ranged combat, attack auto target
-# spells, scrolls, tomes, npcs, towns, quests...
+# spells, scrolls, tomes, npcs, towns, quests, biomes...
 # transitions, worldmap travel?
 # worldmap minmax each type
 # mouse support everywhere
+# change save system (sqlite?)
 
 
 class Game(object):
@@ -294,7 +295,7 @@ class Game(object):
 								obj.x, obj.y = obj.entity.take_turn(obj.x, obj.y)
 								if game.current_map.tile[obj.x][obj.y]['type'] == 'trap' and not obj.entity.is_above_ground() and obj.entity.can_move(obj.x, obj.y):
 									if game.current_map.tile_is_invisible(obj.x, obj.y):
-										util.spring_trap(obj.x, obj.y, obj.entity.article.capitalize() + obj.entity.get_name())
+										util.trigger_trap(obj.x, obj.y, obj.entity.article.capitalize() + obj.entity.get_name())
 									elif libtcod.map_is_in_fov(game.fov_map, obj.x, obj.y):
 										game.message.new('The ' + obj.entity.get_name() + ' sidestep the ' + game.current_map.tile[obj.x][obj.y]['name'], game.turns)
 							obj.entity.check_condition(obj.x, obj.y)

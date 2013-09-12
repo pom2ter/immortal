@@ -103,9 +103,17 @@ class Item(object):
 	# picks up the item
 	def pick_up(self, ts):
 		if self.type == 'money':
-			gold = util.roll_dice(1, 20)
-			game.message.new('You pick up ' + str(gold) + ' ' + self.name + ' pieces', game.turns, libtcod.gold)
-			game.player.money += gold
+			multiplier = 1
+			if self.name == 'gold pieces':
+				gold = util.roll_dice(2, 15 * (game.current_map.threat_level - 10))
+				multiplier = 10000
+			elif self.name == 'silver pieces':
+				gold = util.roll_dice(2, 15 * (game.current_map.threat_level - 5))
+				multiplier = 100
+			else:
+				gold = util.roll_dice(2, 15 * game.current_map.threat_level)
+			game.message.new('You pick up ' + str(gold) + ' ' + self.name, game.turns, libtcod.gold)
+			game.player.money += gold * multiplier
 		else:
 			self.quantity = 1
 			game.message.new('You pick up ' + self.get_name(True), game.turns, libtcod.green)

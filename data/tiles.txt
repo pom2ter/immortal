@@ -1,3 +1,9 @@
+//
+//
+//  Walls
+//
+//
+
 tile_type "wall" {
 	type = "wall"
 	icon = "#"
@@ -20,6 +26,34 @@ tile_type "cavern wall" {
 	blocked block_sight
 }
 
+tile_type "mountains" {
+	type = "mountains"
+	icon = "^"
+	icon_color_h = "96,96,96"
+	icon_color_l = "72,72,72"
+	back_color_h = "48,48,48"
+	back_color_l = "24,24,24"
+	article = ""
+	blocked
+}
+
+tile_type "high mountains" {
+	type = "mountains"
+	icon = "^"
+	icon_color_h = "255,255,255"
+	icon_color_l = "212,212,212"
+	back_color_h = "170,170,170"
+	back_color_l = "128,128,128"
+	article = ""
+	blocked block_sight
+}
+
+//
+//
+//  Ground tiles
+//
+//
+
 tile_type "floor" {
 	type = "floor"
 	icon = "."
@@ -30,76 +64,41 @@ tile_type "floor" {
 	article = "a "
 }
 
-tile_type "door" {
-	type = "door"
-	icon = "+"
-	icon_color_h = "191,95,0"
-	icon_color_l = "191,95,0"
-	back_color_h = "36,36,36"
-	back_color_l = "24,24,24"
+tile_type "rock" {
+	type = "rock"
+	icon = "*"
+	icon_color_h = "127,127,127"
+	icon_color_l = "96,96,96"
+	back_color_h = "64,64,64"
+	back_color_l = "32,32,32"
 	article = "a "
-	blocked block_sight
 }
 
-tile_type "opened door" {
-	type = "open_door"
-	icon = "/"
-	icon_color_h = "191,95,0"
-	icon_color_l = "191,95,0"
-	back_color_h = "36,36,36"
-	back_color_l = "24,24,24"
-	article = "an "
-}
-
-tile_type "stairs going up" {
-	type = "stairs"
-	icon = "<"
-	icon_color_h = "255,255,255"
-	icon_color_l = "255,255,255"
-	back_color_h = "36,36,36"
-	back_color_l = "24,24,24"
+tile_type "dirt" {
+	type = "dirt"
+	icon = "."
+	icon_color_h = "127,101,63"
+	icon_color_l = "96,76,47"
+	back_color_h = "64,51,32"
+	back_color_l = "32,25,16"
 	article = ""
 }
 
-tile_type "stairs going down" {
-	type = "stairs"
-	icon = ">"
-	icon_color_h = "255,255,255"
-	icon_color_l = "255,255,255"
-	back_color_h = "36,36,36"
-	back_color_l = "24,24,24"
+tile_type "sand" {
+	type = "sand"
+	icon = "."
+	icon_color_h = "255,255,0"
+	icon_color_l = "192,192,0"
+	back_color_h = "207,192,132"
+	back_color_l = "138,128,88"
 	article = ""
 }
 
-tile_type "shallow water" {
-	type = "water"
-	icon = "~"
-	icon_color_h = "206,206,255"
-	back_color_h = "172,172,255"
-	back_color_l = "104,104,255"
-	article = ""
-	animate
-}
-
-tile_type "deep water" {
-	type = "water"
-	icon = "~"
-	icon_color_h = "80,80,240"
-	back_color_h = "60,60,240"
-	back_color_l = "32,32,240"
-	article = ""
-	animate
-}
-
-tile_type "very deep water" {
-	type = "water"
-	icon = "~"
-	icon_color_h = "24,24,220"
-	back_color_h = "0,0,104"
-	back_color_l = "0,0,72"
-	article = ""
-	animate
-}
+//
+//
+//  Decor
+//
+//
 
 tile_type "grass" {
 	type = "grass"
@@ -153,36 +152,6 @@ tile_type "tree" {
 	block_sight
 }
 
-tile_type "rock" {
-	type = "rock"
-	icon = "*"
-	icon_color_h = "127,127,127"
-	icon_color_l = "96,96,96"
-	back_color_h = "64,64,64"
-	back_color_l = "32,32,32"
-	article = "a "
-}
-
-tile_type "dirt" {
-	type = "dirt"
-	icon = "."
-	icon_color_h = "127,101,63"
-	icon_color_l = "96,76,47"
-	back_color_h = "64,51,32"
-	back_color_l = "32,25,16"
-	article = ""
-}
-
-tile_type "sand" {
-	type = "sand"
-	icon = "."
-	icon_color_h = "255,255,0"
-	icon_color_l = "192,192,0"
-	back_color_h = "207,192,132"
-	back_color_l = "138,128,88"
-	article = ""
-}
-
 tile_type "hills" {
 	type = "hills"
 	icon = "~"
@@ -194,30 +163,114 @@ tile_type "hills" {
 	block_sight
 }
 
-tile_type "mountains" {
-	type = "mountains"
-	icon = "^"
-	icon_color_h = "96,96,96"
-	icon_color_l = "72,72,72"
-	back_color_h = "48,48,48"
-	back_color_l = "24,24,24"
-	article = ""
-	blocked
-}
+//
+//
+//  Doors
+//
+//
 
-tile_type "high mountains" {
-	type = "mountains"
-	icon = "^"
-	icon_color_h = "255,255,255"
-	icon_color_l = "212,212,212"
-	back_color_h = "170,170,170"
-	back_color_l = "128,128,128"
-	article = ""
+tile_type "door" {
+	type = "door"
+	icon = "+"
+	icon_color_h = "191,95,0"
+	icon_color_l = "128,64,0"
+	back_color_h = "36,36,36"
+	back_color_l = "24,24,24"
+	article = "a "
 	blocked block_sight
 }
 
+tile_type "opened door" {
+	type = "door"
+	icon = "/"
+	icon_color_h = "191,95,0"
+	icon_color_l = "128,64,0"
+	back_color_h = "36,36,36"
+	back_color_l = "24,24,24"
+	article = "an "
+}
+
+tile_type "locked door" {
+	type = "door"
+	icon = "+"
+	icon_color_h = "30,144,255"
+	icon_color_l = "20,48,170"
+	back_color_h = "36,36,36"
+	back_color_l = "24,24,24"
+	article = "a "
+	locked blocked block_sight
+}
+
+//
+//
+//  Stairs
+//
+//
+
+tile_type "stairs going up" {
+	type = "stairs"
+	icon = "<"
+	icon_color_h = "255,255,255"
+	icon_color_l = "255,255,255"
+	back_color_h = "36,36,36"
+	back_color_l = "24,24,24"
+	article = ""
+}
+
+tile_type "stairs going down" {
+	type = "stairs"
+	icon = ">"
+	icon_color_h = "255,255,255"
+	icon_color_l = "255,255,255"
+	back_color_h = "36,36,36"
+	back_color_l = "24,24,24"
+	article = ""
+}
+
+//
+//
+//  Animated tiles
+//
+//
+
+tile_type "shallow water" {
+	type = "water"
+	icon = "~"
+	icon_color_h = "206,206,255"
+	back_color_h = "172,172,255"
+	back_color_l = "104,104,255"
+	article = ""
+	animate
+}
+
+tile_type "deep water" {
+	type = "water"
+	icon = "~"
+	icon_color_h = "80,80,240"
+	back_color_h = "60,60,240"
+	back_color_l = "32,32,240"
+	article = ""
+	animate
+}
+
+tile_type "very deep water" {
+	type = "water"
+	icon = "~"
+	icon_color_h = "24,24,220"
+	back_color_h = "0,0,104"
+	back_color_l = "0,0,72"
+	article = ""
+	animate
+}
+
+//
+//
+//  Objects
+//
+//
+
 tile_type "glacier" {
-	type = "obstruction"
+	type = "object"
 	icon = "^"
 	icon_color_h = "192,208,219"
 	icon_color_l = "147,165,176"
@@ -228,7 +281,7 @@ tile_type "glacier" {
 }
 
 tile_type "stalagmite" {
-	type = "obstruction"
+	type = "object"
 	icon = "s"
 	icon_color_h = "127,101,63"
 	icon_color_l = "96,76,47"
@@ -238,6 +291,33 @@ tile_type "stalagmite" {
 	block_sight
 }
 
+tile_type "locked chest" {
+	type = "chest"
+	icon = "h"
+	icon_color_h = "30,144,255"
+	icon_color_l = "20,48,170"
+	back_color_h = "64,51,32"
+	back_color_l = "32,25,16"
+	article = "a "
+	locked trapped
+}
+
+tile_type "empty chest" {
+	type = "chest"
+	icon = "h"
+	icon_color_h = "127,101,63"
+	icon_color_l = "96,76,47"
+	back_color_h = "64,51,32"
+	back_color_l = "32,25,16"
+	article = "an "
+}
+
+//
+//
+//  Traps
+//
+//
+
 tile_type "fireball trap" {
 	type = "trap"
 	icon = "^"	
@@ -246,7 +326,7 @@ tile_type "fireball trap" {
 	back_color_h = "24,24,24"
 	back_color_l = "24,24,24"
 	article = "a "
-	invisible fx_fireball
+	trapped invisible fx_fireball
 }
 
 tile_type "poison gas trap" {
@@ -257,7 +337,7 @@ tile_type "poison gas trap" {
 	back_color_h = "24,24,24"
 	back_color_l = "24,24,24"
 	article = "a "
-	invisible fx_poison_gas
+	trapped invisible fx_poison_gas
 }
 
 tile_type "sleeping gas trap" {
@@ -268,7 +348,7 @@ tile_type "sleeping gas trap" {
 	back_color_h = "24,24,24"
 	back_color_l = "24,24,24"
 	article = "a "
-	invisible fx_sleep_gas
+	trapped invisible fx_sleep_gas
 }
 
 tile_type "teleport trap" {
@@ -279,7 +359,7 @@ tile_type "teleport trap" {
 	back_color_h = "24,24,24"
 	back_color_l = "24,24,24"
 	article = "a "
-	invisible fx_teleport
+	trapped invisible fx_teleport
 }
 
 tile_type "bear trap" {
@@ -290,5 +370,5 @@ tile_type "bear trap" {
 	back_color_h = "24,24,24"
 	back_color_l = "24,24,24"
 	article = "a "
-	invisible fx_stuck
+	trapped invisible fx_stuck
 }

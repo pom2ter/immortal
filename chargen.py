@@ -212,6 +212,7 @@ def starting_stats():
 		game.player.skills[game.player.find_skill('Hands')].set_level(5)
 		game.player.skills[game.player.find_skill('Detect Traps')].set_level(15)
 		game.player.skills[game.player.find_skill('Disarm Traps')].set_level(15)
+		game.player.skills[game.player.find_skill('Lockpicking')].set_level(15)
 
 	if game.player.profession == 'Priest':
 		game.player.base_health = libtcod.random_get_int(game.rnd, 2, game.PRIEST_HP_GAIN)

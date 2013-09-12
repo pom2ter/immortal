@@ -12,6 +12,7 @@ PAGE DOWN = Scroll down message log
 ? = Help screen
 
 a = Attack someone
+b = Bash
 c = Close door
 d = Drop item
 e = Equip item

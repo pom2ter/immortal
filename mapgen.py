@@ -335,7 +335,10 @@ class Map(object):
 			for x in range(1, self.map_width - 1):
 				if (self.tile[x + 1][y]['name'] == 'floor' and self.tile[x - 1][y]['name'] == 'floor' and self.tile[x][y - 1]['name'] == 'wall' and self.tile[x][y + 1]['name'] == 'wall') or (self.tile[x + 1][y]['name'] == 'wall' and self.tile[x - 1][y]['name'] == 'wall' and self.tile[x][y - 1]['name'] == 'floor' and self.tile[x][y + 1]['name'] == 'floor'):
 					if libtcod.random_get_int(game.rnd, 1, 50) == 50:
-						self.set_tile_values('door', x, y)
+						if libtcod.random_get_int(game.rnd, 1, 40) + self.threat_level >= 40:
+							self.set_tile_values('locked door', x, y)
+						else:
+							self.set_tile_values('door', x, y)
 
 	# place dungeon entrance on map if there is one
 	def place_dungeons(self):
@@ -493,8 +496,11 @@ class Map(object):
 			while self.tile_is_blocked(x, y) or self.tile[x][y]['name'] in ['high mountains', 'deep water', 'very deep water']:
 				x = libtcod.random_get_int(game.rnd, 0, self.map_width - 1)
 				y = libtcod.random_get_int(game.rnd, 0, self.map_height - 1)
-			loot = game.baseitems.loot_generation(x, y, self.threat_level)
-			self.objects.append(loot)
+			chest = util.roll_dice(1, 20)
+			if chest == 20:
+				self.set_tile_values('locked chest', x, y)
+			else:
+				self.objects.append(game.baseitems.loot_generation(x, y, self.threat_level))
 
 	# places up and down stairs on dungeon level
 	def place_stairs(self, rooms):
@@ -696,6 +702,8 @@ class TileList(object):
 		libtcod.struct_add_flag(tile_type_struct, 'block_sight')
 		libtcod.struct_add_flag(tile_type_struct, 'animate')
 		libtcod.struct_add_flag(tile_type_struct, 'invisible')
+		libtcod.struct_add_flag(tile_type_struct, 'locked')
+		libtcod.struct_add_flag(tile_type_struct, 'trapped')
 		libtcod.struct_add_flag(tile_type_struct, 'fx_teleport')
 		libtcod.struct_add_flag(tile_type_struct, 'fx_stuck')
 		libtcod.struct_add_flag(tile_type_struct, 'fx_poison_gas')

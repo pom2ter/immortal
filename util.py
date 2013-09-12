@@ -450,15 +450,16 @@ def showmap(box):
 
 
 # someone set off a trap :O
-def spring_trap(x, y, victim='You'):
-	explored = game.current_map.tile_is_explored(x, y)
-	game.current_map.set_tile_values(game.current_map.tile[x][y]['name'], x, y)
-	if game.current_map.tile_is_invisible(x, y):
-		game.current_map.tile[x][y].pop('invisible', None)
-	if explored:
-		game.current_map.tile[x][y].update({'explored': True})
+def trigger_trap(x, y, victim='You', chest=False):
+	if not chest:
+		explored = game.current_map.tile_is_explored(x, y)
+		game.current_map.set_tile_values(game.current_map.tile[x][y]['name'], x, y)
+		if game.current_map.tile_is_invisible(x, y):
+			game.current_map.tile[x][y].pop('invisible', None)
+		if explored:
+			game.current_map.tile[x][y].update({'explored': True})
 	if libtcod.map_is_in_fov(game.fov_map, x, y):
-		game.message.new(victim + ' sprung a trap!', game.turns)
+		game.message.new(victim + ' triggered a trap!', game.turns)
 	if 'fx_teleport' in game.current_map.tile[x][y]:
 		effects.teleportation(x, y, victim)
 	if 'fx_stuck' in game.current_map.tile[x][y]:
@@ -620,7 +621,7 @@ def render_player_stats_panel():
 
 	act_skill = ''
 	if 'detect_trap' in game.player.flags:
-		act_skill += 'DetTrap '
+		act_skill += 'DetectTrap '
 	if 'swimming' in game.player.flags:
 		act_skill += 'Swimming '
 	libtcod.console_print(game.ps, 0, 22, act_skill)

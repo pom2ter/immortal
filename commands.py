@@ -69,6 +69,8 @@ def keyboard_commands():
 		elif key.c != 0:
 			if key_char == 'a':
 				attack()
+			if key_char == 'b':
+				bash()
 			elif key_char == 'c':
 				close_door()
 			elif key_char == 'd':
@@ -146,13 +148,15 @@ def player_move(dx, dy):
 		game.message.new("You can't move!", game.turns)
 		game.player_move = True
 	else:
-		if game.current_map.tile[game.char.x + dx][game.char.y + dy]['type'] == 'door':
+		if game.current_map.tile[game.char.x + dx][game.char.y + dy]['name'] == 'door':
 			open_door(dx, dy)
+		elif game.current_map.tile[game.char.x + dx][game.char.y + dy]['name'] == 'locked door':
+			game.message.new('The door is locked!', game.turns)
 		else:
 			game.char.move(dx, dy, game.current_map)
 			if game.current_map.tile[game.char.x][game.char.y]['type'] == 'trap' and not game.player.is_above_ground():
 				if game.current_map.tile_is_invisible(game.char.x, game.char.y):
-					util.spring_trap(game.char.x, game.char.y)
+					util.trigger_trap(game.char.x, game.char.y)
 				else:
 					game.message.new('You sidestep the ' + game.current_map.tile[game.char.x][game.char.y]['name'], game.turns)
 			if game.current_map.tile[game.char.x][game.char.y]['name'] in ['deep water', 'very deep water']:
@@ -241,6 +245,37 @@ def attack():
 
 	if target is not None:
 		game.player.attack(target)
+
+
+# bash open something (only good against locked doors and chests)
+def bash():
+	attempt = False
+	for x in range(-1, 2):
+		for y in range(-1, 2):
+			if 'locked' in game.current_map.tile[game.char.x + x][game.char.y + y]:
+				dice = util.roll_dice(1, 40)
+				name = game.current_map.tile[game.char.x + x][game.char.y + y]['name']
+				if game.player.strength >= dice:
+					game.message.new('You bash open the ' + name + '.', game.turns)
+					if name == 'locked door':
+						game.current_map.set_tile_values('opened door', game.char.x + x, game.char.y + y)
+					if name == 'locked chest':
+						if 'trapped' in game.current_map.tile[game.char.x + x][game.char.y + y]:
+							game.current_map.tile[game.char.x + x][game.char.y + y].update({game.chest_trap[libtcod.random_get_int(game.rnd, 0, len(game.chest_trap) - 1)]: True})
+							game.current_map.tile[game.char.x + x][game.char.y + y].pop('trapped', None)
+							util.trigger_trap(game.char.x + x, game.char.y + y, chest=True)
+						game.current_map.set_tile_values('empty chest', game.char.x + x, game.char.y + y)
+						nb_items = libtcod.random_get_int(game.rnd, 2, 4)
+						for i in range(nb_items):
+							game.current_map.objects.append(game.baseitems.loot_generation(game.char.x + x, game.char.y + y, game.current_map.threat_level))
+				else:
+					game.message.new('You failed to bash open the ' + name + '.', game.turns)
+				game.player.take_damage(1, 'bashing a ' + name)
+				game.player.lose_stamina(1)
+				game.player_move = True
+				attempt = True
+	if not attempt:
+		game.message.new('You bash air. You find it strangely exhilarating.', game.turns)
 
 
 # climb down some stairs
@@ -366,7 +401,7 @@ def close_door():
 		game.message.new('You close the door.', game.turns)
 		game.fov_recompute = True
 		game.player_move = True
-	elif game.current_map.tile[game.char.x + dx][game.char.y + dy]['name'] == 'door':
+	elif game.current_map.tile[game.char.x + dx][game.char.y + dy]['name'] in ['door', 'locked door']:
 		game.message.new('That door is already closed!', game.turns)
 	elif dx != 0 or dy != 0:
 		game.message.new('There is no door in that direction!', game.turns)
@@ -537,6 +572,8 @@ def open_door(x=None, y=None):
 		game.player_move = True
 	elif game.current_map.tile[game.char.x + dx][game.char.y + dy]['name'] == 'opened door':
 		game.message.new('That door is already opened!', game.turns)
+	elif game.current_map.tile[game.char.x + dx][game.char.y + dy]['name'] == 'locked door':
+		game.message.new('The door is locked!', game.turns)
 	elif dx != 0 or dy != 0:
 		game.message.new('There is no door in that direction!', game.turns)
 
@@ -742,6 +779,9 @@ def use_skill():
 	output = [x.name for x in skills]
 	choice = game.messages.box('Use a skill', 'Up/down to select, ENTER to use, ESC to exit', 'center_mapx', 'center_mapy', 65, max(19, len(output) + 4), output, step=2, mouse_exit=True)
 	if choice != -1:
+		if output[choice] == 'Detect Traps':
+			skills[choice].active()
+
 		if output[choice] == 'Artifacts':
 			output2 = game.player.inventory + game.player.equipment
 			choice2 = game.messages.box('Use skill on which item', 'Up/down to select, ENTER to use, ESC to exit', 'center_mapx', 'center_mapy', 65, max(19, len(output) + 4), output2, inv=True, step=2, mouse_exit=True)
@@ -758,33 +798,66 @@ def use_skill():
 						skills[choice].gain_xp(5)
 					game.player_move = True
 
-		if output[choice] == 'Detect Traps':
-			skills[choice].active()
 		if output[choice] == 'Disarm Traps':
-			game.message.new('Disarm trap in which direction?', game.turns)
-			util.render_map()
-			libtcod.console_flush()
-			dx, dy = 0, 0
-			key = libtcod.Key()
-			libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, key, libtcod.Mouse(), True)
-			dx, dy = key_check(key, dx, dy)
+			attempt = False
+			for x in range(-1, 2):
+				for y in range(-1, 2):
+					if 'trapped' in game.current_map.tile[game.char.x + x][game.char.y + y]:
+						dice = libtcod.random_get_int(game.rnd, 0, 150)
+						if skills[choice].level >= dice:
+							if game.current_map.tile[game.char.x + x][game.char.y + y]['type'] == 'trap':
+								game.current_map.set_tile_values('floor', game.char.x + x, game.char.y + y)
+								game.message.new('You disarm the trap.', game.turns)
+							else:
+								game.message.new('You disarm the trap chest.', game.turns)
+								game.current_map.tile[game.char.x + x][game.char.y + y].pop('trapped', None)
+							skills[choice].gain_xp(5)
+						else:
+							game.message.new('You failed to disarm the trap.', game.turns)
+							dice = util.roll_dice(1, 50)
+							if dice > game.player.karma:
+								if game.player.dexterity and game.current_map.tile[game.char.x + x][game.char.y + y]['type'] == 'trap':
+									util.trigger_trap(game.char.x + x, game.char.y + y)
+								else:
+									game.current_map.tile[game.char.x + x][game.char.y + y].update({game.chest_trap[libtcod.random_get_int(game.rnd, 0, len(game.chest_trap) - 1)]: True})
+									game.current_map.tile[game.char.x + x][game.char.y + y].pop('trapped', None)
+									util.trigger_trap(game.char.x + x, game.char.y + y, chest=True)
+							skills[choice].gain_xp(1)
+						game.player_move = True
+						attempt = True
+			if not attempt:
+				game.message.new('There are no traps in your surroundings.', game.turns)
 
-			if game.current_map.tile[game.char.x + dx][game.char.y + dy]['type'] == 'trap':
-				dice = libtcod.random_get_int(game.rnd, 0, 200)
-				if skills[choice].level >= dice:
-					game.current_map.set_tile_values('floor', game.char.x + dx, game.char.y + dy)
-					game.message.new('You disarm the trap.', game.turns)
-					skills[choice].gain_xp(5)
-				else:
-					dice = libtcod.random_get_int(game.rnd, 1, 50)
-					if dice > game.player.karma + game.player.dexterity:
-						game.message.new('You inadvertently set off the trap!', game.turns)
-					else:
-						game.message.new('You failed to disarm the trap.', game.turns)
-					skills[choice].gain_xp(1)
-				game.player_move = True
-			elif dx != 0 or dy != 0:
-				game.message.new('You found no trap in that direction.', game.turns)
+		if output[choice] == 'Lockpicking':
+			attempt = False
+			for x in range(-1, 2):
+				for y in range(-1, 2):
+					if 'locked' in game.current_map.tile[game.char.x + x][game.char.y + y]:
+						dice = libtcod.random_get_int(game.rnd, 0, 150)
+						name = game.current_map.tile[game.char.x + x][game.char.y + y]['name']
+						if skills[choice].level >= dice:
+							game.message.new('You unlock the ' + name + '.', game.turns)
+							if name == 'locked door':
+								game.current_map.set_tile_values('opened door', game.char.x + x, game.char.y + y)
+							if name == 'locked chest':
+								game.current_map.set_tile_values('empty chest', game.char.x + x, game.char.y + y)
+								nb_items = util.roll_dice(2, 4)
+								for i in range(nb_items):
+									game.current_map.objects.append(game.baseitems.loot_generation(game.char.x + x, game.char.y + y, game.current_map.threat_level))
+							skills[choice].gain_xp(5)
+						else:
+							game.message.new('You failed to unlock the ' + name + '.', game.turns)
+							if 'trapped' in game.current_map.tile[game.char.x + x][game.char.y + y]:
+								dice = util.roll_dice(1, 30)
+								if game.player.karma < dice:
+									game.current_map.tile[game.char.x + x][game.char.y + y].update({game.chest_trap[libtcod.random_get_int(game.rnd, 0, len(game.chest_trap) - 1)]: True})
+									game.current_map.tile[game.char.x + x][game.char.y + y].pop('trapped', None)
+									util.trigger_trap(game.char.x + x, game.char.y + y, chest=True)
+							skills[choice].gain_xp(1)
+						game.player_move = True
+						attempt = True
+			if not attempt:
+				game.message.new('There is nothing to unlock in your surroundings.', game.turns)
 	game.draw_gui = True
 
 

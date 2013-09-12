@@ -310,9 +310,9 @@ item_type "corpse" {
 //
 //
 
-item_type "copper" {
+item_type "copper coins" {
 	type = "money"
-	plural = "copper"
+	plural = "copper coins"
 	icon = "$"
 	icon_color = "196,136,124"
 	level = 1
@@ -320,22 +320,22 @@ item_type "copper" {
 	identified
 }
 
-item_type "silver" {
+item_type "silver coins" {
 	type = "money"
-	plural = "silver"
+	plural = "silver coins"
 	icon = "$"
 	icon_color = "203,203,203"
-	level = 4
+	level = 6
 	article = "some "
 	identified
 }
 
-item_type "gold" {
+item_type "gold coins" {
 	type = "money"
-	plural = "gold"
+	plural = "gold coins"
 	icon = "$"
 	icon_color = "229,191,0"
-	level = 7
+	level = 11
 	article = "some "
 	identified
 }
