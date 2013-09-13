@@ -9,19 +9,19 @@
 //     (o) orcs           : orc (4), orc shaman (6), orc chieftain (8)
 //
 // mammal:
-//     (f) feline         : wild cat (1), jaguar (3), panther (5), tiger (7), lion -10-
-//     (r) rats           : giant rat (1), ratman (3), wererat -9-
-//     (B) bears          : black bear (5), grizzly -9-, cave bear -11-
+//     (f) feline         : wild cat (1), jaguar (3), panther (5), tiger (7), lion (10)
+//     (r) rats           : giant rat (1), ratman (3), wererat (9)
+//     (B) bears          : black bear (5), grizzly (9), cave bear -11-
 //
 // canine:
-//     (d) dogs           : wild dog (1), hound (2), war dog (5), hell hound -9-
+//     (d) dogs           : wild dog (1), hound (2), war dog (5), hell hound (9)
 //     (w) wolves         : grey wolf (2), worg (4), dire wolf (7)
 //
 // insects:
-//     (a) ants           : giant ant (1), giant soldier ant (4), ant queen -9-
+//     (a) ants           : giant ant (1), giant soldier ant (4), ant queen (9)
 //     (S) spiders        : giant spider (2), cave spider (3), fire spider (6)
 //     (v) vermin         : giant centipede (1), giant bee (2), giant mantis (3), giant wasp (4), carrion crawler (5)
-//     (i) insect swarms  : ant swarm (5), spider swarm (8), wasp swarm -10-
+//     (i) insect swarms  : ant swarm (5), spider swarm (8), wasp swarm (10)
 //
 // reptiles:
 //     (l) lizards        : giant lizard (1), rock lizard (4), komodo dragon (7)
@@ -30,22 +30,22 @@
 // aquatic:
 //     (p) fish           : piranha (1), red piranha (2), piranha shark (6)
 //     (m) merfolk        : merman (3), siren (5), merman shaman (7)
-//     (n) naga           : red naga -9-, spirit naga -10-, dark naga -11-
+//     (n) naga           : red naga (9), spirit naga (10), dark naga -11-
 //     (M) sea monster    : giant squid -13-, hydra -14-, leviathan -16-, kraken -17-
 //
 // flying:
-//     (b) bats, birds    : large bat (1), raven (2), blood bat (3), vulture (4), night hunter (6), spectral raven (7), vampire bat (8), fire crow -9-
+//     (b) bats, birds    : large bat (1), raven (2), blood bat (3), vulture (4), night hunter (6), spectral raven (7), vampire bat (8), fire crow (9)
 //     (D) dragons        : black -15-, blue -16-, green -17-, red -18-
 //
 // devils:
-//     (x) lesser devils  : imp (8), succubus -10-, fallen angel -12-
+//     (x) lesser devils  : imp (8), succubus (10), fallen angel -12-
 //     (X) greater devils : -15-, -16-, -17-, -18-
 //
-// (j) jellies       : green slime (5), gaseous slime (6), stun jelly (7), mustard jelly (8), fungus ooze -9-, puxic ooze -10-, gelatinous cube -11-
-// (q) magical beast : cockatrice (6), basilisk (8), medusa -10-, gorgon -12-
-// (u) undead        : skeleton (1), zombie (2), ghoul (4), wight (5), mummy (7), skeleton warrior (8), spectre -10-, ghost -11-, vampire -13-, lich -14-
+// (j) jellies       : green slime (5), gaseous slime (6), stun jelly (7), mustard jelly (8), fungus ooze (9), puxic ooze (10), gelatinous cube -11-
+// (q) magical beast : cockatrice (6), basilisk (8), medusa (10), gorgon -12-
+// (u) undead        : skeleton (1), zombie (2), ghoul (4), wight (5), mummy (7), skeleton warrior (8), spectre (10), ghost -11-, vampire -13-, lich -14-
 // (E) elementals    : earth -12-, water -13-, fire -15-, air -17-
-// (G) giants        : troll (7), ogre (8), ettin -9-, ogre magi -10-, hill giant -11-, mountain giant -12-, frost giant -13-, fire giant -14-
+// (G) giants        : troll (7), ogre (8), ettin (9), ogre magi (10), hill giant -11-, mountain giant -12-, frost giant -13-, fire giant -14-
 // (C) golems        : clay -12-, stone -14-, iron -16-, bone -18-
 // (R) robots        : droid -11-, cyborg -12-, -13-, -14-, -15-, -16-, -17-, -18-
 //
@@ -160,7 +160,7 @@ monster_type "kobold" {
 
 monster_type "skeleton" {
 	type = "undead"
-	unidentified_name = "skeleton"
+	unidentified_name = "undead"
 	icon = "u"
 	icon_color = "85,85,85"
 	article = "a "
@@ -1233,7 +1233,7 @@ monster_type "basilisk" {
 	defense_rating = 75
 	health = "1d8"
 	damage = "1d6+1"
-	weight = 60
+	weight = 250
 	corpse = 5
 	ai_neutral land all
 }
@@ -1280,4 +1280,260 @@ monster_type "vampire bat" {
 	weight = 8
 	corpse = 10
 	ai_hostile flying all
+}
+
+//
+//
+// level 9 monsters
+//
+//
+
+monster_type "wererat" {
+	type = "mammal"
+	unidentified_name = "rat"
+	icon = "r"
+	icon_color = "0,128,0"
+	article = "a "
+	level = 9
+	attack_rating = 82
+	defense_rating = 82
+	health = "1d6"
+	damage = "1d4"
+	weight = 40
+	corpse = 10
+	ai_hostile land all
+}
+
+monster_type "grizzly" {
+	type = "mammal"
+	unidentified_name = "bear"
+	icon = "B"
+	icon_color = "80,60,20"
+	article = "a "
+	level = 9
+	attack_rating = 90
+	defense_rating = 85
+	health = "1d10"
+	damage = "1d8"
+	weight = 300
+	corpse = 10
+	ai_neutral land all
+}
+
+monster_type "ant queen" {
+	type = "insect"
+	unidentified_name = "ant"
+	icon = "a"
+	icon_color = "255,0,0"
+	article = "an "
+	level = 9
+	attack_rating = 92
+	defense_rating = 82
+	health = "1d6"
+	damage = "1d4"
+	ai_hostile land underground
+}
+
+monster_type "hell hound" {
+	type = "canine"
+	unidentified_name = "dog"
+	icon = "d"
+	icon_color = "255,69,0"
+	article = "a "
+	level = 9
+	attack_rating = 86
+	defense_rating = 86
+	health = "1d6"
+	damage = "2d4"
+	weight = 120
+	corpse = 15
+	ai_hostile land all
+}
+
+monster_type "fungus ooze" {
+	type = "jelly"
+	unidentified_name = "ooze"
+	icon = "j"
+	icon_color = "199,21,133"
+	article = "a "
+	level = 9
+	attack_rating = 82
+	defense_rating = 90
+	health = "1d6"
+	damage = "1d6+1"
+	ai_hostile land dungeon
+}
+
+monster_type "ettin" {
+	type = "giant"
+	unidentified_name = "giant"
+	icon = "G"
+	icon_color = "154,205,50"
+	article = "an "
+	level = 9
+	attack_rating = 90
+	defense_rating = 84
+	health = "1d10"
+	damage = "2d6+1"
+	weight = 300
+	corpse = 10
+	ai_hostile land all
+}
+
+monster_type "fire crow" {
+	type = "bird"
+	unidentified_name = "bird"
+	icon = "b"
+	icon_color = "255,0,0"
+	article = "a "
+	level = 9
+	attack_rating = 85
+	defense_rating = 85
+	health = "1d4"
+	damage = "1d4"
+	weight = 8
+	corpse = 10
+	ai_hostile flying overworld
+}
+
+monster_type "red naga" {
+	type = "naga"
+	unidentified_name = "naga"
+	icon = "n"
+	icon_color = "255,0,0"
+	article = "a "
+	level = 9
+	attack_rating = 84
+	defense_rating = 87
+	health = "1d8"
+	damage = "1d4"
+	weight = 150
+	corpse = 15
+	ai_hostile aquatic all
+}
+
+//
+//
+// level 10 monsters
+//
+//
+
+monster_type "wasp swarm" {
+	type = "insect"
+	unidentified_name = "insect swarm"
+	icon = "i"
+	icon_color = "128,0,128"
+	article = "a "
+	level = 10
+	attack_rating = 92
+	defense_rating = 98
+	health = "1d4"
+	damage = "1d4"
+	ai_hostile land overworld
+}
+
+monster_type "succubus" {
+	type = "devil"
+	unidentified_name = "lesser devil"
+	icon = "x"
+	icon_color = "34,178,34"
+	article = "a "
+	level = 10
+	attack_rating = 95
+	defense_rating = 100
+	health = "1d6"
+	damage = "2d6+1"
+	ai_hostile land underground
+}
+
+monster_type "gorgon" {
+	type = "beast"
+	unidentified_name = "magical beast"
+	icon = "q"
+	icon_color = "176,196,222"
+	article = "a "
+	level = 10
+	attack_rating = 100
+	defense_rating = 96
+	health = "1d8"
+	damage = "1d6+1"
+	weight = 400
+	corpse = 5
+	ai_hostile land all
+}
+
+monster_type "spectre" {
+	type = "undead"
+	unidentified_name = "undead"
+	icon = "u"
+	icon_color = "230,230,250"
+	article = "a "
+	level = 10
+	attack_rating = 90
+	defense_rating = 96
+	health = "1d6"
+	damage = "1d6"
+	ai_hostile land all
+}
+
+monster_type "lion" {
+	type = "feline"
+	unidentified_name = "feline"
+	icon = "f"
+	icon_color = "238,232,170"
+	article = "a "
+	level = 10
+	attack_rating = 98
+	defense_rating = 98
+	health = "1d6"
+	damage = "1d4"
+	weight = 180
+	corpse = 10
+	ai_neutral land all
+}
+
+monster_type "puxic ooze" {
+	type = "jelly"
+	unidentified_name = "ooze"
+	icon = "j"
+	icon_color = "154,205,50"
+	article = "a "
+	level = 10
+	attack_rating = 93
+	defense_rating = 99
+	health = "1d6"
+	damage = "1d6+1"
+	ai_hostile land dungeon
+}
+
+monster_type "ogre magi" {
+	type = "giant"
+	unidentified_name = "giant"
+	icon = "G"
+	icon_color = "0,143,143"
+	article = "an "
+	level = 10
+	attack_rating = 80
+	defense_rating = 95
+	health = "1d8"
+	damage = "2d6+1"
+	weight = 175
+	corpse = 10
+	ai_hostile land all
+}
+
+monster_type "spirit naga" {
+	type = "naga"
+	unidentified_name = "naga"
+	icon = "n"
+	icon_color = "102,205,170"
+	article = "a "
+	level = 10
+	attack_rating = 94
+	defense_rating = 97
+	health = "1d6"
+	damage = "1d4"
+	weight = 125
+	corpse = 15
+	ai_hostile aquatic all
 }

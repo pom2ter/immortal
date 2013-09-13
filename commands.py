@@ -614,7 +614,7 @@ def pickup_item():
 		output = util.item_stacking(nb_items)
 		choice = game.messages.box('Get an item', 'Up/down to select, ENTER to get, ESC to exit', 'center_mapx', 'center_mapy', 65, max(19, len(output) + 4), output, inv=True, step=2, mouse_exit=True)
 		if choice != -1:
-			if output[choice].quantity > 1:
+			if output[choice].quantity > 1 and output[choice].type != 'money':
 				libtcod.console_print(0, game.PLAYER_STATS_WIDTH + 2, 1, 'Pickup how many: _')
 				libtcod.console_flush()
 				qty = game.messages.input('', 0, game.PLAYER_STATS_WIDTH + 19, 1)
@@ -622,6 +622,8 @@ def pickup_item():
 					choice = -1
 				elif int(qty) < 1 or int(qty) > output[choice].quantity:
 					choice = -1
+			if output[choice].quantity > 1 and output[choice].type == 'money':
+				qty = output[choice].quantity
 		if choice != -1:
 			x = 0
 			for i in range(len(nb_items) - 1, -1, -1):

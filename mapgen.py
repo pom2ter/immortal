@@ -787,6 +787,8 @@ class TileListener(object):
 			self.temp_tile.icon = chr(6)
 		if self.temp_tile.name == 'stalagmite':
 			self.temp_tile.icon = chr(24)
+		if self.temp_tile.type == 'chest':
+			self.temp_tile.icon = chr(20)
 		game.tiles.add_to_list(self.temp_tile)
 		return True
 

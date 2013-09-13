@@ -16,7 +16,7 @@ import effects
 import death
 import debug as dbg
 
-VERSION = '0.3.4.8'
+VERSION = '0.3.5'
 
 #size of the gui windows
 MAP_WIDTH = 71
