@@ -309,6 +309,19 @@ def loadgen_message():
 	libtcod.console_flush()
 
 
+# auto attack with mouse
+def mouse_auto_attack(x, y, target):
+	if abs(x - game.char.x) > 1 or abs(y - game.char.y) > 1:
+		if (abs(x - game.char.x) == 2 and abs(y - game.char.y) <= 2) or (abs(y - game.char.y) == 2 and abs(x - game.char.x) <= 2) and game.player.skills[game.player.find_weapon_type()].name == 'Polearm':
+			game.player.attack(target)
+		elif game.player.skills[game.player.find_weapon_type()].name in ['Bow', 'Missile']:
+			game.player.attack(target)
+		else:
+			game.message.new('Target is out of range.', game.turns)
+	else:
+		game.player.attack(target)
+
+
 # check to see if you can auto-move with mouse
 def mouse_auto_move():
 	for obj in game.current_map.objects:
@@ -792,7 +805,11 @@ def render_map():
 				game.path_dx = px
 				game.path_dy = py
 				if game.mouse.lbutton_pressed:
-					game.mouse_move = mouse_auto_move()
+					target = [obj for obj in game.current_map.objects if obj.y == py and obj.x == px and obj.entity]
+					if target:
+						mouse_auto_attack(px, py, target[0])
+					else:
+						game.mouse_move = mouse_auto_move()
 				if not game.current_map.tile_is_blocked(game.path_dx, game.path_dy):
 					libtcod.dijkstra_path_set(game.path_dijk, game.path_dx, game.path_dy)
 

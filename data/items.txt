@@ -82,7 +82,7 @@ item_type "quarterstaff" {
 	equippable weapon_staff
 }
 
-item_type "bow" {
+item_type "short bow" {
 	type = "weapon"
 	plural = "bows"
 	icon = "("
@@ -91,6 +91,19 @@ item_type "bow" {
 	weight = 2.0
 	cost = 10
 	dices = "1d6"
+	article = "a "
+	equippable weapon_bow
+}
+
+item_type "long bow" {
+	type = "weapon"
+	plural = "bows"
+	icon = "("
+	icon_color = "255,255,255"
+	level = 1
+	weight = 3.0
+	cost = 20
+	dices = "1d8"
 	article = "a "
 	equippable weapon_bow
 }

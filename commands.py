@@ -69,7 +69,7 @@ def keyboard_commands():
 		elif key.c != 0:
 			if key_char == 'a':
 				attack()
-			if key_char == 'b':
+			elif key_char == 'b':
 				bash()
 			elif key_char == 'c':
 				close_door()
@@ -194,21 +194,23 @@ def player_move(dx, dy):
 
 # attack someone (primarily use for ranged weapons)
 def attack():
-	game.message.new('Attack... (Arrow keys to move cursor, ENTER to attack, ESC to exit)', game.turns)
+	game.message.new('Attack... (Arrow keys to move cursor, TAB to cycle targets, ENTER to attack, ESC to exit)', game.turns)
 	util.render_map()
-	target = None
+	key = libtcod.Key()
 	dx = game.char.x - game.curx
 	dy = game.char.y - game.cury
-	key = libtcod.Key()
+	possible_targets = [obj for obj in game.current_map.objects if libtcod.map_is_in_fov(game.fov_map, obj.x, obj.y) and obj.entity]
+	target = None
+	pt = 0
 
 	while not libtcod.console_is_window_closed():
 		libtcod.console_set_default_background(0, libtcod.white)
 		libtcod.console_rect(0, game.MAP_X + dx, dy + 1, 1, 1, False, libtcod.BKGND_SET)
 		libtcod.console_flush()
-
 		libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, key, libtcod.Mouse(), True)
 		dx, dy = key_check(key, dx, dy)
 		if key.vk == libtcod.KEY_ESCAPE:
+			del game.message.log[len(game.message.log) - 1]
 			del game.message.log[len(game.message.log) - 1]
 			util.render_message_panel()
 			break
@@ -225,26 +227,34 @@ def attack():
 		py = dy + game.cury
 
 		if key.vk == libtcod.KEY_ENTER:
-			for obj in game.current_map.objects:
-				if obj.x == px and obj.y == py and obj.entity:
-					target = obj
 			if not game.current_map.tile_is_explored(px, py):
 				game.message.new("You can't fight darkness.", game.turns)
-			elif target is None:
-				game.message.new('There is no one here.', game.turns)
 			else:
-				if abs(px - game.char.x) > 1 or abs(py - game.char.y) > 1:
-					game.message.new('Target is out of range.', game.turns)
-					target = None
+				target = [obj for obj in game.current_map.objects if obj.y == py and obj.x == px and obj.entity]
+				if not target:
+					game.message.new('There is no one here.', game.turns)
+				elif abs(px - game.char.x) > 1 or abs(py - game.char.y) > 1:
+					if (abs(px - game.char.x) == 2 and abs(py - game.char.y) <= 2) or (abs(py - game.char.y) == 2 and abs(px - game.char.x) <= 2) and game.player.skills[game.player.find_weapon_type()].name == 'Polearm':
+						break
+					elif game.player.skills[game.player.find_weapon_type()].name not in ['Bow', 'Missile']:
+						game.message.new('Target is out of range.', game.turns)
+						target = []
 			break
+
+		if key.vk == libtcod.KEY_TAB:
+			if possible_targets:
+				pt += 1
+				if pt == len(possible_targets):
+					pt = 0
+				dx = possible_targets[pt].x - game.curx
+				dy = possible_targets[pt].y - game.cury
 
 		libtcod.console_set_default_foreground(game.con, libtcod.white)
 		libtcod.console_set_default_background(game.con, libtcod.black)
 		libtcod.console_rect(game.con, 0, 0, game.MAP_WIDTH, 1, True, libtcod.BKGND_SET)
 		libtcod.console_blit(game.con, 0, 0, game.MAP_WIDTH, game.MAP_HEIGHT, 0, game.MAP_X, game.MAP_Y)
-
-	if target is not None:
-		game.player.attack(target)
+	if target:
+		game.player.attack(target[0])
 
 
 # bash open something (only good against locked doors and chests)

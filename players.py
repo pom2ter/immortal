@@ -96,17 +96,17 @@ class Player(object):
 				modifier += util.roll_dice(1, 4, 2)
 			if 'ar_bonus3' in self.equipment[i].flags:
 				modifier += util.roll_dice(1, 4, 3)
-			if 'burdened' in self.player.flags:
+			if 'burdened' in self.flags:
 				modifier -= util.roll_dice(1, 4)
-			if 'strained' in self.player.flags:
+			if 'strained' in self.flags:
 				modifier -= util.roll_dice(1, 4, 2)
-			if 'overburdened' in self.player.flags:
+			if 'overburdened' in self.flags:
 				modifier -= util.roll_dice(1, 4, 3)
-			if 'hungry' in self.player.flags:
+			if 'hungry' in self.flags:
 				modifier -= util.roll_dice(1, 4)
-			if 'famished' in self.player.flags:
+			if 'famished' in self.flags:
 				modifier -= util.roll_dice(1, 4, 2)
-			if 'starving' in self.player.flags:
+			if 'starving' in self.flags:
 				modifier -= util.roll_dice(1, 4, 3)
 		return modifier
 
@@ -138,7 +138,7 @@ class Player(object):
 			if 'unconscious' in self.flags:
 				game.message.new('You regain consciousness.', game.turns)
 				self.flags.remove('unconscious')
-		game.player.check_hunger_level(hunger)
+		self.check_hunger_level(hunger)
 
 	# checks player condition each turn
 	def check_condition(self):

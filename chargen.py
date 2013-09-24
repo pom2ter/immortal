@@ -241,9 +241,8 @@ def starting_stats():
 		game.player.inventory.append(game.baseitems.create_item('uncursed ', 'leather ', 'armor', '', 'identified'))
 
 	game.player.inventory.append(game.baseitems.create_item('uncursed ', '', 'torch', '', 'identified'))
-	game.player.inventory.append(game.baseitems.create_item('uncursed ', '', 'torch', '', 'identified'))
 	game.player.inventory.append(game.baseitems.create_item('uncursed ', '', 'ration', '', 'identified'))
-	game.player.inventory.append(game.baseitems.create_item('uncursed ', 'exceptional ', 'quarterstaff', ' of minor healing'))
+	game.player.inventory.append(game.baseitems.create_item('uncursed ', '', 'short bow', '', 'identified'))
 
 	game.player.strength = game.player.base_strength
 	game.player.dexterity = game.player.base_dexterity
