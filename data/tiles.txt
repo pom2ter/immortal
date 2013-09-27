@@ -64,14 +64,14 @@ tile_type "floor" {
 	article = "a "
 }
 
-tile_type "rock" {
+tile_type "a pile of rocks" {
 	type = "rock"
 	icon = "*"
 	icon_color_h = "127,127,127"
 	icon_color_l = "96,96,96"
 	back_color_h = "64,64,64"
 	back_color_l = "32,32,32"
-	article = "a "
+	article = ""
 }
 
 tile_type "dirt" {

@@ -63,7 +63,7 @@ class Map(object):
 		rooms = [0] * 2
 		for x in range(1, self.map_width - 1):
 			for y in range(1, self.map_height - 1):
-				if libtcod.random_get_int(game.rnd, 1, 100) < prob:
+				if util.roll_dice(1, 100) < prob:
 					self.set_tile_values(floor, x, y)
 		for i in range(self.map_width * self.map_height * 5):
 			x = libtcod.random_get_int(game.rnd, 1, self.map_width - 2)
@@ -181,7 +181,7 @@ class Map(object):
 		trees_tiles = 8
 		hills_tiles = 9
 		tiles = [0] * 10
-		icons = ['deep water', 'shallow water', 'sand', 'grass', 'dirt', 'medium grass', 'rock', 'tall grass', 'tree', 'hills']
+		icons = ['deep water', 'shallow water', 'sand', 'grass', 'dirt', 'medium grass', 'a pile of rocks', 'tall grass', 'tree', 'hills']
 		map_size = self.map_width * self.map_height
 		heightmap = game.worldmap.hm_list[self.location_level]
 
@@ -266,7 +266,7 @@ class Map(object):
 					y = libtcod.random_get_int(game.rnd, 0, self.map_height - 1)
 				self.set_tile_values(icons[j], x, y)
 				if icons[j] == 'tree':
-					dice = libtcod.random_get_int(game.rnd, 1, 100)
+					dice = util.roll_dice(1, 100)
 					if dice % 2 == 0:
 						self.set_tile_values(icons[j], x, y, type='trees2')
 
@@ -276,7 +276,7 @@ class Map(object):
 					startx = x
 					starty = y
 					while length > 0:
-						nextstep = libtcod.random_get_int(game.rnd, 1, 3)
+						nextstep = util.roll_dice(1, 3)
 						stepx, stepy = 0, 0
 						if nextstep == 1:
 							if direction % 4 == 0:
@@ -329,13 +329,12 @@ class Map(object):
 			self.set_tile_values(tile, x, y)
 
 	# place doors in dungeon level
-	# stuff to do: add locked doors
 	def place_doors(self):
 		for y in range(1, self.map_height - 1):
 			for x in range(1, self.map_width - 1):
 				if (self.tile[x + 1][y]['name'] == 'floor' and self.tile[x - 1][y]['name'] == 'floor' and self.tile[x][y - 1]['name'] == 'wall' and self.tile[x][y + 1]['name'] == 'wall') or (self.tile[x + 1][y]['name'] == 'wall' and self.tile[x - 1][y]['name'] == 'wall' and self.tile[x][y - 1]['name'] == 'floor' and self.tile[x][y + 1]['name'] == 'floor'):
-					if libtcod.random_get_int(game.rnd, 1, 50) == 50:
-						if libtcod.random_get_int(game.rnd, 1, 40) + self.threat_level >= 40:
+					if util.roll_dice(1, 50) == 50:
+						if util.roll_dice(1, 40) + self.threat_level >= 40:
 							self.set_tile_values('locked door', x, y)
 						else:
 							self.set_tile_values('door', x, y)
@@ -527,7 +526,7 @@ class Map(object):
 
 	# place up to 3 traps in a dungeon level
 	def place_traps(self, ground):
-		traps = libtcod.random_get_int(game.rnd, 1, 3)
+		traps = util.roll_dice(1, 3)
 		for i in range(0, traps):
 			x = libtcod.random_get_int(game.rnd, 0, self.map_width - 1)
 			y = libtcod.random_get_int(game.rnd, 0, self.map_height - 1)

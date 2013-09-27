@@ -5,7 +5,6 @@ import game
 
 
 # death screens and final summaries for player
-# stuff to do: final inventory
 def death_screen(quit=False):
 	scrolli, scrollm = 0, 0
 	scrollx, scrolly = 0, 0

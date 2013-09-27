@@ -243,6 +243,8 @@ def starting_stats():
 	game.player.inventory.append(game.baseitems.create_item('uncursed ', '', 'torch', '', 'identified'))
 	game.player.inventory.append(game.baseitems.create_item('uncursed ', '', 'ration', '', 'identified'))
 	game.player.inventory.append(game.baseitems.create_item('uncursed ', '', 'short bow', '', 'identified'))
+	game.player.inventory.append(game.baseitems.create_item('uncursed ', '', 'arrow', '', 'identified'))
+	game.player.inventory.append(game.baseitems.create_item('uncursed ', '', 'stone', '', 'identified'))
 
 	game.player.strength = game.player.base_strength
 	game.player.dexterity = game.player.base_dexterity

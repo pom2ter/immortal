@@ -201,6 +201,7 @@ def attack():
 	dy = game.char.y - game.cury
 	possible_targets = [obj for obj in game.current_map.objects if libtcod.map_is_in_fov(game.fov_map, obj.x, obj.y) and obj.entity]
 	target = None
+	ranged = False
 	pt = 0
 
 	while not libtcod.console_is_window_closed():
@@ -239,6 +240,8 @@ def attack():
 					elif game.player.skills[game.player.find_weapon_type()].name not in ['Bow', 'Missile']:
 						game.message.new('Target is out of range.', game.turns)
 						target = []
+					else:
+						ranged = True
 			break
 
 		if key.vk == libtcod.KEY_TAB:
@@ -254,7 +257,7 @@ def attack():
 		libtcod.console_rect(game.con, 0, 0, game.MAP_WIDTH, 1, True, libtcod.BKGND_SET)
 		libtcod.console_blit(game.con, 0, 0, game.MAP_WIDTH, game.MAP_HEIGHT, 0, game.MAP_X, game.MAP_Y)
 	if target:
-		game.player.attack(target[0])
+		game.player.attack(target[0], ranged)
 
 
 # bash open something (only good against locked doors and chests)
@@ -614,8 +617,13 @@ def pickup_item():
 			nb_items.append(game.current_map.objects[i].item)
 			itempos.append(i)
 
-	if not nb_items:
+	if not nb_items and not game.current_map.tile[game.char.x][game.char.y]['type'] == 'rock':
 		game.message.new('There is nothing to pick up.', game.turns)
+	elif not nb_items and game.current_map.tile[game.char.x][game.char.y]['type'] == 'rock':
+		item = game.baseitems.create_item('uncursed ', '', 'stone', '', 'identified')
+		item.turns_created = game.turns
+		game.player.inventory.append(item)
+		game.message.new('You pick up a stone.', game.turns, libtcod.green)
 	elif len(nb_items) == 1:
 		nb_items[0].pick_up(nb_items[0].turn_created)
 		game.current_map.objects.pop(itempos[0])
@@ -976,6 +984,7 @@ def ztats_equipment(con, width, height):
 	libtcod.console_print(con, 2, 9, 'Ring       :')
 	libtcod.console_print(con, 2, 10, 'Gauntlets  :')
 	libtcod.console_print(con, 2, 11, 'Boots      :')
+	libtcod.console_print(con, 2, 12, 'Missile(s) :')
 	ring = 0
 	for i in range(len(game.player.equipment)):
 		if 'armor_head' in game.player.equipment[i].flags:
@@ -997,8 +1006,10 @@ def ztats_equipment(con, width, height):
 			y = 6
 		if game.player.equipment[i].type == 'shield':
 			y = 7
+		if game.player.equipment[i].type == 'missile':
+			y = 12
 		libtcod.console_print(con, 13, y, ': ' + game.player.equipment[i].get_name())
-		libtcod.console_print_ex(con, width - 3, y, libtcod.BKGND_SET, libtcod.RIGHT, str(game.player.equipment[i].weight) + ' lbs')
+		libtcod.console_print_ex(con, width - 3, y, libtcod.BKGND_SET, libtcod.RIGHT, str(round(game.player.equipment[i].weight * game.player.equipment[i].quantity, 1)) + ' lbs')
 
 
 # character sheet for inventory

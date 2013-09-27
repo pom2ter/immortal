@@ -2,6 +2,7 @@ import libtcodpy as libtcod
 import game
 import util
 import mapgen
+import effects
 
 
 class Player(object):
@@ -48,34 +49,64 @@ class Player(object):
 		self.flags = ['normal']
 
 	# attack an enemy
-	def attack(self, target):
-		if not target.entity.is_hostile():
-			target.entity.becomes_hostile()
+	def attack(self, target, ranged=False):
 		attacker = util.roll_dice(1, 50)
 		defender = util.roll_dice(1, 50)
-		if (attacker != 1 and defender != 50 and ((attacker + self.attack_rating()) >= (defender + target.entity.defense_rating) or attacker == 50 or defender == 1)) or target.entity.is_disabled():
-			damage = 0
-			for i in range(len(self.equipment)):
-				if self.equipment[i].type == 'weapon':
-					quality_bonus = 0.75 + (0.25 * self.equipment[i].quality)
-					damage = int(self.equipment[i].dice.roll_dice() * quality_bonus)
-					damage += self.damage_modifiers(self.equipment[i])
-			if damage == 0:
-				damage = util.roll_dice(1, 4)
-			game.message.new('You hit ' + target.entity.get_name(True) + ' for ' + str(damage) + ' pts of damage.', game.turns, libtcod.light_yellow)
-			target.entity.take_damage(target.x, target.y, damage, 'player')
-			if target.entity.is_dead():
-				game.message.new('The ' + target.entity.get_name() + ' dies!', game.turns, libtcod.light_orange)
-				self.gain_xp(target.entity.give_xp())
-				self.mks += 1
-				target.entity.loot(target.x, target.y)
-				target.delete()
-			self.skills[self.find_weapon_type()].gain_xp(2)
+		weapon = None
+		weapon_type = 'weapon'
+		missile = None
+		missile_slot_type = 'missile'
+
+		for i in range(len(self.equipment)):
+			if self.equipment[i].type == 'weapon':
+				weapon = self.equipment[i]
+				for j in range(len(self.equipment[i].flags)):
+					if 'missile_' in self.equipment[i].flags[j]:
+						weapon_type = self.equipment[i].flags[j]
+			if self.equipment[i].type == 'missile':
+				missile = self.equipment[i]
+				for j in range(len(self.equipment[i].flags)):
+					if 'missile_' in self.equipment[i].flags[j]:
+						missile_slot_type = self.equipment[i].flags[j]
+
+		if ranged and weapon_type != missile_slot_type:
+			game.message.new("You don't have any ammo for that weapon!", game.turns, libtcod.light_red)
 		else:
-			game.message.new('You missed the ' + target.entity.get_name() + '.', game.turns)
-			self.skills[self.find_weapon_type()].gain_xp(1)
-		self.lose_stamina(1)
-		game.player_move = True
+			if not target.entity.is_hostile():
+				target.entity.becomes_hostile()
+			if ranged:
+				effects.missile_attack(game.char.x, game.char.y, target.x, target.y)
+			if (attacker != 1 and defender != 50 and ((attacker + self.attack_rating()) >= (defender + target.entity.defense_rating) or attacker == 50 or defender == 1)) or target.entity.is_disabled():
+				damage = 0
+				if weapon is not None:
+					quality_bonus = 0.75 + (0.25 * weapon.quality)
+					damage = int(weapon.dice.roll_dice() * quality_bonus)
+					damage += self.damage_modifiers(weapon)
+				if damage == 0:
+					damage = util.roll_dice(1, 4)
+				game.message.new('You hit ' + target.entity.get_name(True) + ' for ' + str(damage) + ' pts of damage.', game.turns, libtcod.light_yellow)
+				target.entity.take_damage(target.x, target.y, damage, 'player')
+				if target.entity.is_dead():
+					game.message.new('The ' + target.entity.get_name() + ' dies!', game.turns, libtcod.light_orange)
+					self.gain_xp(target.entity.give_xp())
+					self.mks += 1
+					target.entity.loot(target.x, target.y)
+					target.delete()
+				self.skills[self.find_weapon_type()].gain_xp(2)
+
+			else:
+				if ranged:
+					item = game.baseitems.create_item(missile.status, missile.prefix, missile.name, missile.suffix, missile.flags)
+					obj = mapgen.Object(target.x, target.y, item.icon, item.name, item.color, True, item=item)
+					obj.first_appearance = game.turns
+					game.current_map.objects.append(obj)
+					obj.send_to_back()
+				game.message.new('You missed the ' + target.entity.get_name() + '.', game.turns)
+				self.skills[self.find_weapon_type()].gain_xp(1)
+			if ranged:
+				missile.lose_quantity()
+			self.lose_stamina(1)
+			game.player_move = True
 
 	# calculates your attack rating....
 	def attack_rating(self):
@@ -249,7 +280,10 @@ class Player(object):
 		self.equipment.append(self.inventory[item])
 		self.stats_bonus()
 		if switch:
-			game.message.new('You unequip the ' + old.get_name() + ' before equipping the ' + self.inventory[item].get_name(), game.turns, libtcod.green)
+			if self.inventory[item].type != 'missile':
+				game.message.new('You unequip the ' + old.get_name() + ' before equipping the ' + self.inventory[item].get_name(), game.turns, libtcod.green)
+			else:
+				game.message.new('You change missile types', game.turns, libtcod.green)
 		else:
 			game.message.new('You equip the ' + self.inventory[item].get_name(), game.turns, libtcod.green)
 		self.inventory.pop(item)

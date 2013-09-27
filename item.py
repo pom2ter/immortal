@@ -100,6 +100,20 @@ class Item(object):
 			return True
 		return False
 
+	# item lose one charge
+	def lose_charge(self):
+		if self.charges > 0:
+			self.charges -= 1
+			if self.charges == 0:
+				game.player.inventory.remove(self)
+
+	# item lose one quantity
+	def lose_quantity(self):
+		if self.quantity > 0:
+			self.quantity -= 1
+			if self.quantity == 0:
+				game.player.equipment.remove(self)
+
 	# picks up the item
 	def pick_up(self, ts):
 		if self.type == 'money':
@@ -162,11 +176,7 @@ class Item(object):
 			if self.type == 'food':
 				game.message.new('You eat the ' + self.name, game.turns, libtcod.light_blue)
 				game.player.check_hunger_level(-self.hunger)
-
-			if self.charges > 0:
-				self.charges -= 1
-				if self.charges == 0:
-					game.player.inventory.remove(self)
+			self.lose_charge()
 			game.player_move = True
 		else:
 			game.message.new("You can't use that item.", game.turns)
@@ -234,6 +244,7 @@ class BaseItemList(object):
 		libtcod.struct_add_flag(item_type_struct, 'consumable')
 		libtcod.struct_add_flag(item_type_struct, 'torchlight')
 		libtcod.struct_add_flag(item_type_struct, 'identified')
+		libtcod.struct_add_flag(item_type_struct, 'ranged')
 		libtcod.struct_add_flag(item_type_struct, 'weapon_dagger')
 		libtcod.struct_add_flag(item_type_struct, 'weapon_sword')
 		libtcod.struct_add_flag(item_type_struct, 'weapon_mace')
@@ -241,6 +252,7 @@ class BaseItemList(object):
 		libtcod.struct_add_flag(item_type_struct, 'weapon_staff')
 		libtcod.struct_add_flag(item_type_struct, 'weapon_polearm')
 		libtcod.struct_add_flag(item_type_struct, 'weapon_bow')
+		libtcod.struct_add_flag(item_type_struct, 'weapon_missile')
 		libtcod.struct_add_flag(item_type_struct, 'armor_shield')
 		libtcod.struct_add_flag(item_type_struct, 'armor_head')
 		libtcod.struct_add_flag(item_type_struct, 'armor_cloak')
@@ -248,6 +260,8 @@ class BaseItemList(object):
 		libtcod.struct_add_flag(item_type_struct, 'armor_hands')
 		libtcod.struct_add_flag(item_type_struct, 'armor_feet')
 		libtcod.struct_add_flag(item_type_struct, 'armor_ring')
+		libtcod.struct_add_flag(item_type_struct, 'missile_arrow')
+		libtcod.struct_add_flag(item_type_struct, 'missile_stone')
 		libtcod.struct_add_flag(item_type_struct, 'corpse')
 		libtcod.parser_run(parser, 'data/items.txt', BaseItemListener())
 

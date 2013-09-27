@@ -92,7 +92,7 @@ item_type "short bow" {
 	cost = 10
 	dices = "1d6"
 	article = "a "
-	equippable weapon_bow
+	equippable weapon_bow missile_arrow ranged
 }
 
 item_type "long bow" {
@@ -105,7 +105,7 @@ item_type "long bow" {
 	cost = 20
 	dices = "1d8"
 	article = "a "
-	equippable weapon_bow
+	equippable weapon_bow missile_arrow ranged
 }
 
 item_type "sling" {
@@ -118,7 +118,7 @@ item_type "sling" {
 	cost = 5
 	dices = "1d4"
 	article = "a "
-	equippable weapon_bow
+	equippable weapon_missile missile_stone ranged
 }
 
 item_type "spear" {
@@ -234,6 +234,36 @@ item_type "ring" {
 	cost = 50
 	article = "a "
 	equippable armor_ring
+}
+
+//
+//
+//  Missiles
+//
+//
+
+item_type "arrow" {
+	type = "missile"
+	plural = "arrows"
+	icon = ")"
+	icon_color = "255,255,255"
+	level = 1
+	weight = 0.1
+	cost = 5
+	article = "an "
+	equippable missile_arrow
+}
+
+item_type "stone" {
+	type = "missile"
+	plural = "stones"
+	icon = ")"
+	icon_color = "255,255,255"
+	level = 1
+	weight = 0.1
+	cost = 1
+	article = "a "
+	equippable missile_stone
 }
 
 //

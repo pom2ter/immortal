@@ -88,6 +88,27 @@ def fireball(x, y, radius):
 					game.message.new('You hear a scream.', game.turns)
 
 
+# missile attack animation
+def missile_attack(sx, sy, dx, dy):
+	cx, cy = sx, sy
+	if sx == dx:
+		char = '|'
+	if sy == dy:
+		char = chr(196)
+	if (sx < dx and sy > dy) or (sx > dx and sy < dy):
+		char = '/'
+	if (sx < dx and sy < dy) or (sx > dx and sy > dy):
+		char = '\\'
+	path = util.set_full_explore_map(game.current_map, False)
+	libtcod.path_compute(path, sx, sy, dx, dy)
+	while not libtcod.path_is_empty(path):
+		cx, cy = libtcod.path_walk(path, False)
+		libtcod.console_blit(game.con, 0, 0, game.MAP_WIDTH, game.MAP_HEIGHT, 0, game.MAP_X, game.MAP_Y)
+		libtcod.console_put_char_ex(0, game.MAP_X + cx - game.curx, game.MAP_Y + cy - game.cury, char, libtcod.light_gray, libtcod.black)
+		libtcod.console_flush()
+		time.sleep(0.05)
+
+
 # poison gas effect
 def poison_gas(x, y, radius, duration):
 	path_dijk = util.set_full_explore_map(game.current_map)

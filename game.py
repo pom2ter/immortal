@@ -16,7 +16,7 @@ import effects
 import death
 import debug as dbg
 
-VERSION = '0.3.5.1'
+VERSION = '0.3.5.2'
 
 #size of the gui windows
 MAP_WIDTH = 71
@@ -166,12 +166,12 @@ chest_trap = ['fx_fireball', 'fx_poison_gas', 'fx_sleep_gas']
 # to-do's...
 # curse, bless
 # monsters powers
-# ranged combat, attack auto target
 # spells, scrolls, tomes, npcs, towns, quests, biomes...
 # transitions, worldmap travel?
 # worldmap minmax each type
 # mouse support everywhere
 # change save system (sqlite?)
+# new traps (arrow, needle)
 
 
 class Game(object):
