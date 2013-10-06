@@ -708,6 +708,8 @@ class TileList(object):
 		libtcod.struct_add_flag(tile_type_struct, 'fx_poison_gas')
 		libtcod.struct_add_flag(tile_type_struct, 'fx_sleep_gas')
 		libtcod.struct_add_flag(tile_type_struct, 'fx_fireball')
+		libtcod.struct_add_flag(tile_type_struct, 'fx_arrow')
+		libtcod.struct_add_flag(tile_type_struct, 'fx_needle')
 		libtcod.parser_run(parser, 'data/tiles.txt', TileListener())
 
 	# add a tile to the list

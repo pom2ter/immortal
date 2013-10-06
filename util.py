@@ -467,6 +467,7 @@ def showmap(box):
 
 # someone set off a trap :O
 def trigger_trap(x, y, victim='You', chest=False):
+	flags = game.current_map.tile[x][y]
 	if not chest:
 		explored = game.current_map.tile_is_explored(x, y)
 		game.current_map.set_tile_values(game.current_map.tile[x][y]['name'], x, y)
@@ -474,18 +475,34 @@ def trigger_trap(x, y, victim='You', chest=False):
 			game.current_map.tile[x][y].pop('invisible', None)
 		if explored:
 			game.current_map.tile[x][y].update({'explored': True})
+	else:
+		x = game.char.x
+		y = game.char.y
+
 	if libtcod.map_is_in_fov(game.fov_map, x, y):
 		game.message.new(victim + ' triggered a trap!', game.turns)
-	if 'fx_teleport' in game.current_map.tile[x][y]:
+	if 'fx_teleport' in flags:
 		effects.teleportation(x, y, victim)
-	if 'fx_stuck' in game.current_map.tile[x][y]:
+	if 'fx_stuck' in flags:
 		effects.stuck(x, y, victim)
-	if 'fx_poison_gas' in game.current_map.tile[x][y]:
+	if 'fx_poison_gas' in flags:
 		effects.poison_gas(x, y, 3, 20)
-	if 'fx_sleep_gas' in game.current_map.tile[x][y]:
+	if 'fx_sleep_gas' in flags:
 		effects.sleeping_gas(x, y, 3, 20)
-	if 'fx_fireball' in game.current_map.tile[x][y]:
+	if 'fx_fireball' in flags:
 		effects.fireball(x, y, 3)
+	if 'fx_arrow' in flags:
+		direction = libtcod.random_get_int(game.rnd, 0, 3)
+		sx, sy = x - 2, y
+		if direction == 1:
+			sx, sy = x, y - 2
+		if direction == 2:
+			sx, sy = x + 2, y
+		if direction == 3:
+			sx, sy = x, y + 2
+		effects.missile_attack(sx, sy, x, y, True)
+	if 'fx_needle' in flags:
+		effects.poison_needle(x, y)
 
 
 #######################################

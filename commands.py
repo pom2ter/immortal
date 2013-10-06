@@ -836,7 +836,7 @@ def use_skill():
 							game.message.new('You failed to disarm the trap.', game.turns)
 							dice = util.roll_dice(1, 50)
 							if dice > game.player.karma:
-								if game.player.dexterity and game.current_map.tile[game.char.x + x][game.char.y + y]['type'] == 'trap':
+								if game.current_map.tile[game.char.x + x][game.char.y + y]['type'] == 'trap':
 									util.trigger_trap(game.char.x + x, game.char.y + y)
 								else:
 									game.current_map.tile[game.char.x + x][game.char.y + y].update({game.chest_trap[libtcod.random_get_int(game.rnd, 0, len(game.chest_trap) - 1)]: True})

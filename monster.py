@@ -161,7 +161,7 @@ class Monster(object):
 		return dx, dy
 
 	# monster takes damage
-	def take_damage(self, x, y, damage, source):
+	def take_damage(self, x, y, damage, source, show=False):
 		self.health -= damage
 		if libtcod.map_is_in_fov(game.fov_map, x, y):
 			game.hp_anim.append([x, y, str(-damage), libtcod.light_yellow, 0])
@@ -170,6 +170,11 @@ class Monster(object):
 				if libtcod.map_is_in_fov(game.fov_map, x, y):
 					game.message.new('The ' + self.get_name() + 'woke up.', game.turns)
 				self.flags.remove('sleep')
+		if show:
+			if libtcod.map_is_in_fov(game.fov_map, x, y):
+				game.message.new(self.article.capitalize() + self.get_name() + ' is hit by ' + source + ' for ' + str(damage) + ' pts of damage!', game.turns)
+			elif not self.is_dead():
+				game.message.new('You hear a scream.', game.turns)
 
 	# monster takes its turn
 	def take_turn(self, x, y):

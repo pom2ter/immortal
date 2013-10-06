@@ -73,23 +73,18 @@ def fireball(x, y, radius):
 			player_fov = False
 
 	for obj in game.current_map.objects:
+		damage = util.roll_dice(1, 10)
 		if obj.name == 'player':
 			if libtcod.dijkstra_get_distance(path_dijk, game.char.x, game.char.y) <= radius:
-				damage = util.roll_dice(1, 10)
 				game.message.new('You are hit by a fireball for ' + str(damage) + ' pts of damage!', game.turns, libtcod.Color(160, 0, 0))
 				game.player.take_damage(damage, 'a fireball')
 		elif obj.entity:
 			if libtcod.dijkstra_get_distance(path_dijk, obj.x, obj.y) <= radius:
-				damage = util.roll_dice(1, 10)
-				obj.entity.take_damage(obj.x, obj.y, damage, 'a fireball')
-				if libtcod.map_is_in_fov(game.fov_map, obj.x, obj.y):
-					game.message.new(obj.entity.article.capitalize() + obj.entity.get_name() + ' is hit by a fireball for ' + str(damage) + ' pts of damage!', game.turns)
-				elif not obj.entity.is_dead():
-					game.message.new('You hear a scream.', game.turns)
+				obj.entity.take_damage(obj.x, obj.y, damage, 'a fireball', True)
 
 
 # missile attack animation
-def missile_attack(sx, sy, dx, dy):
+def missile_attack(sx, sy, dx, dy, trap=False):
 	cx, cy = sx, sy
 	if sx == dx:
 		char = '|'
@@ -107,6 +102,16 @@ def missile_attack(sx, sy, dx, dy):
 		libtcod.console_put_char_ex(0, game.MAP_X + cx - game.curx, game.MAP_Y + cy - game.cury, char, libtcod.light_gray, libtcod.black)
 		libtcod.console_flush()
 		time.sleep(0.05)
+
+	if trap:
+		for obj in game.current_map.objects:
+			if obj.x == dx and obj.y == dy and not obj.item:
+				damage = util.roll_dice(1, 6)
+				if obj.name == 'player':
+					game.message.new('You are hit by an arrow for ' + str(damage) + ' pts of damage!', game.turns, libtcod.Color(160, 0, 0))
+					game.player.take_damage(damage, 'an arrow trap')
+				else:
+					obj.entity.take_damage(obj.x, obj.y, damage, 'an arrow', True)
 
 
 # poison gas effect
@@ -134,6 +139,27 @@ def poison_gas(x, y, radius, duration):
 									dice = util.roll_dice(1, 3)
 									if dice == 3:
 										obj.entity.flags.append('poison')
+
+
+# poison needle effect
+def poison_needle(x, y):
+	for obj in game.current_map.objects:
+		if obj.x == x and obj.y == y and not obj.item:
+			damage = util.roll_dice(1, 4)
+			if obj.name == 'player':
+				game.message.new('You are hit by a poison needle!', game.turns)
+				if 'poison' not in game.player.flags:
+					dice = util.roll_dice(1, 50)
+					if dice > game.player.endurance + (game.player.karma / 2):
+						game.message.new('You are poisoned!', game.turns, libtcod.Color(0, 112, 0))
+						game.player.flags.append('poison')
+				game.player.take_damage(damage, 'a poison needle')
+			else:
+				if 'poison' not in obj.entity.flags:
+					dice = util.roll_dice(1, 3)
+					if dice == 3:
+						obj.entity.flags.append('poison')
+				obj.entity.take_damage(obj.x, obj.y, damage, 'a poison needle')
 
 
 # sleeping gas effect
@@ -169,13 +195,13 @@ def sleeping_gas(x, y, radius, duration):
 def stuck(x, y, victim='You'):
 	for obj in game.current_map.objects:
 		if obj.x == x and obj.y == y and not obj.item:
+			dice = util.roll_dice(1, 10)
 			if victim == 'You':
-				if not 'stuck' in game.player.flags:
+				if 'stuck' not in game.player.flags:
 					game.player.flags.append('stuck')
 				game.message.new('You are stuck in a bear trap!', game.turns)
-				game.player.take_damage(util.roll_dice(1, 10), 'a bear trap')
+				game.player.take_damage(dice, 'a bear trap')
 			else:
-				dice = util.roll_dice(1, 10)
 				obj.entity.flags.append('stuck')
 				obj.entity.take_damage(obj.x, obj.y, dice, 'a bear trap')
 				if libtcod.map_is_in_fov(game.fov_map, x, y):

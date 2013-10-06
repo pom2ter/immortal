@@ -14,9 +14,10 @@ import chargen
 import messages
 import effects
 import death
+import test
 import debug as dbg
 
-VERSION = '0.3.5.2'
+VERSION = '0.3.5.3'
 
 #size of the gui windows
 MAP_WIDTH = 71
@@ -161,17 +162,15 @@ fonts = {'small': {'file': 'font-small.png', 'width': 10, 'height': 16},
 		'large': {'file': 'font-large.png', 'width': 14, 'height': 22}}
 
 months = ['Phoenix', 'Manticore', 'Hydra', 'Golem', 'Centaur', 'Medusa', 'Dragon', 'Werewolf', 'Gargoyle', 'Kraken', 'Basilisk', 'Unicorn']
-chest_trap = ['fx_fireball', 'fx_poison_gas', 'fx_sleep_gas']
+chest_trap = ['fx_fireball', 'fx_poison_gas', 'fx_sleep_gas', 'fx_teleport', 'fx_stuck', 'fx_arrow', 'fx_needle']
 
 # to-do's...
 # curse, bless
 # monsters powers
 # spells, scrolls, tomes, npcs, towns, quests, biomes...
 # transitions, worldmap travel?
-# worldmap minmax each type
 # mouse support everywhere
 # change save system (sqlite?)
-# new traps (arrow, needle)
 
 
 class Game(object):
@@ -484,6 +483,7 @@ class Game(object):
 			if choice == 0:  # start new game
 				self.new_game()
 				self.reset_game()
+#				test.worldgentest(50)
 			if choice == 1:  # load saved game
 				self.load_game()
 				self.reset_game()

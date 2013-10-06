@@ -343,8 +343,8 @@ tile_type "poison gas trap" {
 tile_type "sleeping gas trap" {
 	type = "trap"
 	icon = "^"	
-	icon_color_h = "255,255,255"
-	icon_color_l = "255,255,255"
+	icon_color_h = "115,220,255"
+	icon_color_l = "115,220,255"
 	back_color_h = "24,24,24"
 	back_color_l = "24,24,24"
 	article = "a "
@@ -353,9 +353,9 @@ tile_type "sleeping gas trap" {
 
 tile_type "teleport trap" {
 	type = "trap"
-	icon = "^"	
-	icon_color_h = "115,220,255"
-	icon_color_l = "115,220,255"
+	icon = "^"
+	icon_color_h = "255,255,255"
+	icon_color_l = "255,255,255"
 	back_color_h = "24,24,24"
 	back_color_l = "24,24,24"
 	article = "a "
@@ -364,11 +364,33 @@ tile_type "teleport trap" {
 
 tile_type "bear trap" {
 	type = "trap"
-	icon = "^"	
+	icon = "^"
 	icon_color_h = "159,159,159"
 	icon_color_l = "159,159,159"
 	back_color_h = "24,24,24"
 	back_color_l = "24,24,24"
 	article = "a "
 	trapped invisible fx_stuck
+}
+
+tile_type "arrow trap" {
+	type = "trap"
+	icon = "^"
+	icon_color_h = "106,90,205"
+	icon_color_l = "106,90,205"
+	back_color_h = "24,24,24"
+	back_color_l = "24,24,24"
+	article = "an "
+	trapped invisible fx_arrow
+}
+
+tile_type "poison needle trap" {
+	type = "trap"
+	icon = "^"
+	icon_color_h = "34,139,34"
+	icon_color_l = "34,139,34"
+	back_color_h = "24,24,24"
+	back_color_l = "24,24,24"
+	article = "a "
+	trapped invisible fx_needle
 }

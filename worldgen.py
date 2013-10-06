@@ -42,6 +42,60 @@ class World(object):
 		t1 = libtcod.sys_elapsed_seconds()
 		print '    done! (%.3f seconds)' % (t1 - t0)
 
+	# checks to see if everything is in order
+	def analyse_world(self):
+		print 'Analysing worldmap....'
+		t0 = libtcod.sys_elapsed_seconds()
+		mountain_peak = 0
+		mountains = 0
+		high_hills = 0
+		low_hills = 0
+		forest = 0
+		plains = 0
+		coast = 0
+		shore = 0
+		sea = 0
+		ocean = 0
+		accepted = True
+
+		for x in range(game.WORLDMAP_WIDTH):
+			for y in range(game.WORLDMAP_HEIGHT):
+				cellheight = libtcod.heightmap_get_value(game.heightmap, x, y)
+				if cellheight >= game.terrain['Mountain Peak']['elevation']:
+					mountain_peak += 1
+				elif cellheight >= game.terrain['Mountains']['elevation']:
+					mountains += 1
+				elif cellheight >= game.terrain['High Hills']['elevation']:
+					high_hills += 1
+				elif cellheight >= game.terrain['Low Hills']['elevation']:
+					low_hills += 1
+				elif cellheight >= game.terrain['Forest']['elevation']:
+					forest += 1
+				elif cellheight >= game.terrain['Plains']['elevation']:
+					plains += 1
+				elif cellheight >= game.terrain['Coast']['elevation']:
+					coast += 1
+				elif cellheight >= game.terrain['Shore']['elevation']:
+					shore += 1
+				elif cellheight >= game.terrain['Sea']['elevation']:
+					sea += 1
+				else:
+					ocean += 1
+
+		if mountain_peak < 15 or mountains < 150 or high_hills < 600 or low_hills < 1500 or coast < 2500:
+			accepted = False
+		if forest > 22000 or plains > 10000 or shore > 8000 or sea > 28000 or ocean > 30000:
+			accepted = False
+		t1 = libtcod.sys_elapsed_seconds()
+		if accepted:
+			print '    accepted! (%.3f seconds)' % (t1 - t0)
+		else:
+			self.player_positionx = 0
+			self.max_distance = 0
+			self.dungeons = []
+			print '    rejected! (%.3f seconds)' % (t1 - t0)
+		return accepted
+
 	# create and save worldmap image in different sizes
 	def create_map_images(self, mode=0):
 		if mode == 0:
@@ -252,18 +306,25 @@ class World(object):
 	def generate(self):
 		print 'Starting world map generation....'
 		t0 = libtcod.sys_elapsed_seconds()
-		self.noise = libtcod.noise_new(2, self.rnd)
-		libtcod.noise_set_type(self.noise, libtcod.NOISE_PERLIN)
-		game.heightmap = libtcod.heightmap_new(game.WORLDMAP_WIDTH, game.WORLDMAP_HEIGHT)
-		#game.precipitation = libtcod.heightmap_new(game.WORLDMAP_WIDTH, game.WORLDMAP_HEIGHT)
-		#game.temperature = libtcod.heightmap_new(game.WORLDMAP_WIDTH, game.WORLDMAP_HEIGHT)
-		#game.biome = libtcod.heightmap_new(game.WORLDMAP_WIDTH, game.WORLDMAP_HEIGHT)
+		accepted = False
+		world = 1
+		while not accepted:
+			print 'World #' + str(world) + '....'
+			self.noise = libtcod.noise_new(2, self.rnd)
+			libtcod.noise_set_type(self.noise, libtcod.NOISE_PERLIN)
+			game.heightmap = libtcod.heightmap_new(game.WORLDMAP_WIDTH, game.WORLDMAP_HEIGHT)
+			#game.precipitation = libtcod.heightmap_new(game.WORLDMAP_WIDTH, game.WORLDMAP_HEIGHT)
+			#game.temperature = libtcod.heightmap_new(game.WORLDMAP_WIDTH, game.WORLDMAP_HEIGHT)
+			#game.biome = libtcod.heightmap_new(game.WORLDMAP_WIDTH, game.WORLDMAP_HEIGHT)
 
-		self.add_landmass()
-		self.smooth_edges()
-		self.set_landmass(self.randomize('float', 0.30, 0.45, 3), self.sandheight)
-		self.add_rivers()
-		self.create_map_images()
-		self.place_dungeons()
+			self.add_landmass()
+			self.smooth_edges()
+			self.set_landmass(self.randomize('float', 0.30, 0.45, 3), self.sandheight)
+			self.add_rivers()
+			self.create_map_images()
+			self.place_dungeons()
+			accepted = self.analyse_world()
+			world += 1
+			print '-------------'
 		t1 = libtcod.sys_elapsed_seconds()
 		print 'World map generation finished.... (%.3f seconds)' % (t1 - t0)
