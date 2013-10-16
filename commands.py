@@ -808,9 +808,12 @@ def use_skill():
 			if choice2 != -1:
 				if output2[choice2].is_identified():
 					game.message.new('That item is already identified.', game.turns)
+				elif output2[choice2].assay == game.player.level:
+					game.message.new('You already tried to identify that item. You can do it once per item per level.', game.turns)
 				else:
 					if output2[choice2].level * 5 > skills[choice].level:
 						game.message.new('Your skill is not high enough to identity that item.', game.turns)
+						output2[choice2].assay = game.player.level
 						skills[choice].gain_xp(1)
 					else:
 						game.message.new('You identify the item!', game.turns)

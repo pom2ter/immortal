@@ -9,7 +9,7 @@ import util
 #########################################
 
 class Map(object):
-	def __init__(self, name, abbr, id, level, tlevel=1, mw=130, mh=60, type='Dungeon', empty=False):
+	def __init__(self, name, abbr, id, level, tlevel=1, mw=120, mh=58, type='Dungeon', empty=False):
 		self.location_name = name
 		self.location_abbr = abbr
 		self.location_id = id
@@ -310,6 +310,7 @@ class Map(object):
 						if startx < self.map_width and starty < self.map_height:
 							self.set_tile_values(icons[j], startx, starty)
 						length -= 1
+		self.transitions()
 		self.place_dungeons()
 
 	# go through the tiles in the rectangle and make them passable
@@ -608,6 +609,59 @@ class Map(object):
 		if 'block_sight' in self.tile[x][y]:
 			return True
 		return False
+
+	# generate transitions on map boundaries
+	def transitions(self):
+		coord = [self.location_level - game.WORLDMAP_WIDTH, self.location_level - 1, self.location_level + 1, self.location_level + game.WORLDMAP_WIDTH, self.location_level - game.WORLDMAP_WIDTH - 1, self.location_level - game.WORLDMAP_WIDTH + 1, self.location_level + game.WORLDMAP_WIDTH - 1, self.location_level + game.WORLDMAP_WIDTH + 1]
+		for i in range(len(coord)):
+			terrain = find_terrain_type(coord[i])
+			length = 5
+			aa = self.map_width
+			if i in [1, 2]:
+				aa = self.map_height
+
+			if game.terrain[terrain]['elevation'] > game.terrain[find_terrain_type(self.location_level)]['maxelev']:
+				if i < 4:
+					for x in range(aa):
+						for y in range(length):
+							if i == 0:
+								self.set_tile_values(game.terrain[terrain]['type'], x, y)
+							if i == 1:
+								self.set_tile_values(game.terrain[terrain]['type'], y, x)
+							if i == 2:
+								self.set_tile_values(game.terrain[terrain]['type'], self.map_width - y - 1, x)
+							if i == 3:
+								self.set_tile_values(game.terrain[terrain]['type'], x, self.map_height - y - 1)
+						dice = util.roll_dice(1, 100)
+						if dice < 50:
+							length -= 1
+						else:
+							length += 1
+						if length < 3:
+							length = 3
+						if length > 7:
+							length = 7
+
+				else:
+					for x in range(aa, 5):
+						for y in range(length):
+							if i == 4:
+								self.set_tile_values(game.terrain[terrain]['type'], x, y)
+							if i == 5:
+								self.set_tile_values(game.terrain[terrain]['type'], self.map_width - x - 1, y)
+							if i == 6:
+								self.set_tile_values(game.terrain[terrain]['type'], x, self.map_height - y - 1)
+							if i == 7:
+								self.set_tile_values(game.terrain[terrain]['type'], self.map_width - x - 1, self.map_height - y - 1)
+						dice = util.roll_dice(1, 100)
+						if dice < 50:
+							length -= 1
+						else:
+							length += 1
+						if length < 3:
+							length = 3
+						if length > 7:
+							length = 7
 
 	# main function for generating a map
 	def generate(self, empty=False):

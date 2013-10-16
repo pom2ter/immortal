@@ -34,6 +34,7 @@ class Item(object):
 		self.quality = quality
 		self.bonus = bonus
 		self.hunger = hunger
+		self.assay = 0
 		self.turn_created = 0
 		self.active = False
 		self.flags = flags

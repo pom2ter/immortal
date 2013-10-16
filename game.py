@@ -17,7 +17,7 @@ import death
 import test
 import debug as dbg
 
-VERSION = '0.3.5.3'
+VERSION = '0.3.5.4'
 
 #size of the gui windows
 MAP_WIDTH = 71
@@ -31,7 +31,7 @@ PLAYER_STATS_HEIGHT = SCREEN_HEIGHT - 2
 
 WORLDMAP_WIDTH = 400
 WORLDMAP_HEIGHT = 240
-OVERWORLD_MAP_WIDTH = 130
+OVERWORLD_MAP_WIDTH = 120
 OVERWORLD_MAP_HEIGHT = 60
 DUNGEON_MAP_WIDTH = 96
 DUNGEON_MAP_HEIGHT = 50
@@ -168,7 +168,7 @@ chest_trap = ['fx_fireball', 'fx_poison_gas', 'fx_sleep_gas', 'fx_teleport', 'fx
 # curse, bless
 # monsters powers
 # spells, scrolls, tomes, npcs, towns, quests, biomes...
-# transitions, worldmap travel?
+# worldmap travel?
 # mouse support everywhere
 # change save system (sqlite?)
 
