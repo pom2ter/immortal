@@ -9,7 +9,7 @@ import util
 #########################################
 
 class Map(object):
-	def __init__(self, name, abbr, id, level, tlevel=1, mw=120, mh=58, type='Dungeon', empty=False):
+	def __init__(self, name, abbr, id, level, tlevel=1, mw=112, mh=55, type='Dungeon', empty=False):
 		self.location_name = name
 		self.location_abbr = abbr
 		self.location_id = id
@@ -614,13 +614,13 @@ class Map(object):
 	def transitions(self):
 		coord = [self.location_level - game.WORLDMAP_WIDTH, self.location_level - 1, self.location_level + 1, self.location_level + game.WORLDMAP_WIDTH, self.location_level - game.WORLDMAP_WIDTH - 1, self.location_level - game.WORLDMAP_WIDTH + 1, self.location_level + game.WORLDMAP_WIDTH - 1, self.location_level + game.WORLDMAP_WIDTH + 1]
 		for i in range(len(coord)):
-			terrain = find_terrain_type(coord[i])
+			terrain = util.find_terrain_type(coord[i])
 			length = 5
 			aa = self.map_width
 			if i in [1, 2]:
 				aa = self.map_height
 
-			if game.terrain[terrain]['elevation'] > game.terrain[find_terrain_type(self.location_level)]['maxelev']:
+			if game.terrain[terrain]['elevation'] > game.terrain[util.find_terrain_type(self.location_level)]['maxelev']:
 				if i < 4:
 					for x in range(aa):
 						for y in range(length):
@@ -931,115 +931,3 @@ class Object(object):
 		elif self.can_be_pickup:
 			libtcod.console_set_default_foreground(con, self.item.dark_color)
 			libtcod.console_put_char(con, self.x - game.curx, self.y - game.cury, self.char, libtcod.BKGND_NONE)
-
-
-# main functions for building the overworld maps
-def change_maps(did, dlevel):
-	util.loadgen_message()
-	decombine_maps()
-	game.old_maps.append(game.current_map)
-	for i in range(len(game.border_maps)):
-		game.old_maps.append(game.border_maps[i])
-	load_old_maps(did, dlevel)
-	combine_maps()
-	util.initialize_fov()
-	game.fov_recompute = True
-
-
-# check to see if destination map already exist, if so fetch it, if not generate it
-def load_old_maps(did, dlevel):
-	coord = [dlevel - game.WORLDMAP_WIDTH - 1, dlevel - game.WORLDMAP_WIDTH, dlevel - game.WORLDMAP_WIDTH + 1, dlevel - 1, dlevel + 1, dlevel + game.WORLDMAP_WIDTH - 1, dlevel + game.WORLDMAP_WIDTH, dlevel + game.WORLDMAP_WIDTH + 1, dlevel]
-	game.rnd = libtcod.random_new()
-	for j in range(len(coord)):
-		generate = True
-		if j in [0, 3, 5]:
-			if coord[j] % game.WORLDMAP_WIDTH == game.WORLDMAP_WIDTH - 1:
-				coord[j] = coord[j] + game.WORLDMAP_WIDTH
-		if j in [2, 4, 7]:
-			if coord[j] % game.WORLDMAP_WIDTH == 0:
-				coord[j] = coord[j] - game.WORLDMAP_WIDTH
-		if coord[j] not in range(game.WORLDMAP_WIDTH * game.WORLDMAP_HEIGHT):
-			coord[j] = abs((game.WORLDMAP_WIDTH * game.WORLDMAP_HEIGHT) - abs(coord[j]))
-
-		for i in xrange(len(game.old_maps)):
-			if game.old_maps[i].location_id == did and game.old_maps[i].location_level == coord[j]:
-				temp_map = game.old_maps[i]
-				game.old_maps.pop(i)
-				generate = False
-				break
-		if generate:
-			temp_map = Map(game.current_map.location_name, game.current_map.location_abbr, did, coord[j], game.worldmap.set_threat_level(coord[j] % game.WORLDMAP_WIDTH, coord[j] / game.WORLDMAP_WIDTH), game.current_map.map_width, game.current_map.map_height, find_terrain_type(coord[j]))
-		if j == len(coord) - 1:
-			game.current_map = temp_map
-		else:
-			game.border_maps[j] = temp_map
-
-
-# combine some overworld maps into a super map
-def combine_maps():
-	mapid = [[0, 1, 2], [3, 0, 4], [5, 6, 7]]
-	super_map = Map(game.current_map.location_name, game.current_map.location_abbr, game.current_map.location_id, game.current_map.location_level, game.current_map.threat_level, game.current_map.map_width * 3, game.current_map.map_height * 3, game.current_map.type, True)
-	game.char.x += game.current_map.map_width
-	game.char.y += game.current_map.map_height
-	super_map.objects.append(game.char)
-	for i in range(3):
-		for j in range(3):
-			if i == 1 and j == 1:
-				current = game.current_map
-			else:
-				current = game.border_maps[mapid[i][j]]
-			for x in range(game.current_map.map_width):
-				for y in range(game.current_map.map_height):
-					super_map.tile[x + (j * game.current_map.map_width)][y + (i * game.current_map.map_height)] = current.tile[x][y]
-			for obj in current.objects:
-				if obj.name != 'player':
-					obj.x = obj.x + (j * game.current_map.map_width)
-					obj.y = obj.y + (i * game.current_map.map_height)
-					super_map.objects.append(obj)
-	game.current_backup = game.current_map
-	game.current_map = super_map
-
-
-# decombine the super map into their respective smaller chunks
-def decombine_maps():
-	mapid = [[0, 1, 2], [3, 0, 4], [5, 6, 7]]
-	super_map = game.current_map
-	for i in range(3):
-		for j in range(3):
-			if i == 1 and j == 1:
-				current = game.current_backup
-			else:
-				current = game.border_maps[mapid[i][j]]
-			for x in range(current.map_width):
-				for y in range(current.map_height):
-					current.tile[x][y] = super_map.tile[x + (j * current.map_width)][y + (i * current.map_height)]
-			current.objects = []
-			current.objects.append(game.char)
-			for obj in super_map.objects:
-				if obj.x / (super_map.map_width / 3) == j and obj.y / (super_map.map_height / 3) == i and obj.name != 'player':
-					obj.x = obj.x - (j * (super_map.map_width / 3))
-					obj.y = obj.y - (i * (super_map.map_height / 3))
-					current.objects.append(obj)
-			if i == 1 and j == 1:
-				game.current_map = current
-			else:
-				game.border_maps[mapid[i][j]] = current
-	if game.char.x >= game.current_map.map_width * 2:
-		game.char.x -= game.current_map.map_width * 2
-	elif game.char.x >= game.current_map.map_width:
-		game.char.x -= game.current_map.map_width
-	if game.char.y >= game.current_map.map_height * 2:
-		game.char.y -= game.current_map.map_height * 2
-	elif game.char.y >= game.current_map.map_height:
-		game.char.y -= game.current_map.map_height
-
-
-# find terrain type base on elevation
-def find_terrain_type(coord):
-	terrain = 'Forest'
-	heightmap = game.worldmap.hm_list[coord]
-	for key, value in game.terrain.items():
-		if value['elevation'] <= heightmap <= value['maxelev']:
-			terrain = key
-			break
-	return terrain

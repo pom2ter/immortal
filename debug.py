@@ -2,6 +2,7 @@ import libtcodpy as libtcod
 import game
 import util
 import mapgen
+import IO
 
 
 class Debug(object):
@@ -74,9 +75,10 @@ class Debug(object):
 				game.worldmap.player_positiony = int(coord[1])
 				if game.current_map.location_id > 0:
 					util.loadgen_message()
-					game.old_maps.append(game.current_map)
+					util.store_map(game.current_map)
+					IO.autosave(False)
 				else:
-					mapgen.change_maps(0, (game.worldmap.player_positiony * game.WORLDMAP_WIDTH + game.worldmap.player_positionx))
+					util.change_maps((game.worldmap.player_positiony * game.WORLDMAP_WIDTH + game.worldmap.player_positionx))
 			game.draw_map = True
 			libtcod.console_clear(game.con)
 

@@ -1,11 +1,12 @@
 import libtcodpy as libtcod
-import shelve
-import pickle
-import os
+import cPickle as pickle
 import ctypes
+import os
+from multiprocessing import Pool
 from players import *
 from item import *
 from monster import *
+import IO
 import util
 import commands
 import mapgen
@@ -17,7 +18,7 @@ import death
 import test
 import debug as dbg
 
-VERSION = '0.3.5.4'
+VERSION = '0.3.5.5 Alpha'
 
 #size of the gui windows
 MAP_WIDTH = 71
@@ -31,8 +32,8 @@ PLAYER_STATS_HEIGHT = SCREEN_HEIGHT - 2
 
 WORLDMAP_WIDTH = 400
 WORLDMAP_HEIGHT = 240
-OVERWORLD_MAP_WIDTH = 120
-OVERWORLD_MAP_HEIGHT = 60
+OVERWORLD_MAP_WIDTH = 112
+OVERWORLD_MAP_HEIGHT = 55
 DUNGEON_MAP_WIDTH = 96
 DUNGEON_MAP_HEIGHT = 50
 MAX_THREAT_LEVEL = 20
@@ -84,6 +85,7 @@ setting_history = 50
 setting_fullscreen = 'off'
 
 #miscellaneous variables
+PICKLE_PROTOCOL = pickle.HIGHEST_PROTOCOL
 char = None
 times_saved = 0
 player_move = False
@@ -175,8 +177,9 @@ chest_trap = ['fx_fireball', 'fx_poison_gas', 'fx_sleep_gas', 'fx_teleport', 'fx
 
 class Game(object):
 	def __init__(self):
-		global debug, font_width, font_height, rnd, con, panel, ps, fov_noise, savefiles, baseitems, prefix, suffix, tiles, monsters
-		self.load_settings()
+		global pool, debug, font_width, font_height, rnd, con, panel, ps, fov_noise, savefiles, baseitems, prefix, suffix, tiles, monsters
+		IO.load_settings()
+		pool = Pool(4)
 		debug = dbg.Debug()
 		debug.enable = True
 		for key, value in fonts.items():
@@ -192,8 +195,8 @@ class Game(object):
 		panel = libtcod.console_new(MESSAGE_WIDTH, MESSAGE_HEIGHT)
 		ps = libtcod.console_new(PLAYER_STATS_WIDTH, PLAYER_STATS_HEIGHT)
 		fov_noise = libtcod.noise_new(1, 1.0, 1.0)
-		savefiles = os.listdir('saves')
-		self.load_high_scores()
+		savefiles = [f for f in os.listdir('saves') if os.path.isfile(os.path.join('saves', f))]
+		IO.load_high_scores()
 		baseitems = BaseItemList()
 		baseitems.init_parser()
 		prefix = PrefixList()
@@ -233,7 +236,7 @@ class Game(object):
 
 	# new game setup
 	def new_game(self):
-		global message, player, char, game_state, worldmap, current_map, gametime
+		global message, player, char, game_state, gametime, worldmap, current_map, savefiles
 		cardinal = [-(WORLDMAP_WIDTH - 1), -(WORLDMAP_WIDTH), -(WORLDMAP_WIDTH + 1), -1, 1, WORLDMAP_WIDTH - 1, WORLDMAP_WIDTH, WORLDMAP_WIDTH + 1]
 		message = messages.Message()
 		player = Player()
@@ -242,13 +245,15 @@ class Game(object):
 		if game_state == 'playing':
 			contents = ['Generating world map...']
 			messages.box(None, None, 'center_screenx', 'center_screeny', len(max(contents, key=len)) + 16, len(contents) + 4, contents, input=False, align=libtcod.CENTER, nokeypress=True)
-			worldmap = worldgen.World()
-			current_map = mapgen.Map('Wilderness', 'WD', 0, (worldmap.player_positiony * WORLDMAP_WIDTH) + worldmap.player_positionx, type=mapgen.find_terrain_type((worldmap.player_positiony * WORLDMAP_WIDTH) + worldmap.player_positionx))
-			for i in range(len(border_maps)):
-				border_maps[i] = mapgen.Map('Wilderness', 'WD', 0, (worldmap.player_positiony * WORLDMAP_WIDTH) + worldmap.player_positionx + cardinal[i], type=mapgen.find_terrain_type((worldmap.player_positiony * WORLDMAP_WIDTH) + worldmap.player_positionx + cardinal[i]))
-			mapgen.combine_maps()
-			message.new('Welcome to Immortal, ' + player.name + '!', turns, libtcod.Color(96, 212, 238))
 			gametime = Time()
+			worldmap = worldgen.World()
+			current_map = mapgen.Map('Wilderness', 'WD', 0, (worldmap.player_positiony * WORLDMAP_WIDTH) + worldmap.player_positionx, type=util.find_terrain_type((worldmap.player_positiony * WORLDMAP_WIDTH) + worldmap.player_positionx))
+			for i in range(len(border_maps)):
+				border_maps[i] = mapgen.Map('Wilderness', 'WD', 0, (worldmap.player_positiony * WORLDMAP_WIDTH) + worldmap.player_positionx + cardinal[i], type=util.find_terrain_type((worldmap.player_positiony * WORLDMAP_WIDTH) + worldmap.player_positionx + cardinal[i]))
+			IO.save_game(True)
+			savefiles = [f for f in os.listdir('saves') if os.path.isfile(os.path.join('saves', f))]
+			util.combine_maps()
+			message.new('Welcome to Immortal, ' + player.name + '!', turns, libtcod.Color(96, 212, 238))
 			self.play_game()
 
 	# main game loop
@@ -267,12 +272,12 @@ class Game(object):
 			libtcod.console_flush()
 
 			# player movement
-			if not game.player.is_disabled() and not ('overburdened' in game.player.flags and game.turns % 3 == 0):
+			if not player.is_disabled() and not ('overburdened' in player.flags and turns % 3 == 0):
 				player_action = commands.keyboard_commands()
 			else:
 				player_move = True
 			if player_action == 'save':
-				self.save_game()
+				IO.save_game()
 				break
 			if player_action == 'quit':
 				death.death_screen(True)
@@ -322,76 +327,10 @@ class Game(object):
 				player_action = 'exit'
 				break
 
-	# save the game using the shelve module
-	def save_game(self):
-		global old_maps
-		contents = ['Saving.....']
-		messages.box(None, None, 'center_screenx', 'center_screeny', len(max(contents, key=len)) + 28, len(contents) + 4, contents, input=False, align=libtcod.CENTER, nokeypress=True)
-		if current_map.location_id == 0:
-			mapgen.decombine_maps()
-			old_maps.append(current_map)
-			for i in range(len(border_maps)):
-				old_maps.append(border_maps[i])
-
-		file = shelve.open('saves/' + player.name.lower(), 'n')
-		file['worldmap'] = worldmap
-		file['current_map'] = current_map
-		file['maps'] = old_maps
-		file['player'] = player
-		file['messages'] = message
-		file['turns'] = turns
-		file['gametime'] = gametime
-		file['fov_torch'] = fov_torch
-		file['game_state'] = game_state
-		file['times_saved'] = times_saved + 1
-		file.close()
-
-	# load the game using the shelve module
-	def load_game(self):
-		global worldmap, current_map, current_backup, border_maps, old_maps, player, message, turns, gametime, fov_torch, game_state, times_saved, char, draw_gui
-		if not savefiles:
-			contents = ['There are no saved games.']
-			messages.box('Saved games', None, 'center_screenx', 'center_screeny', len(max(contents, key=len)) + 16, len(contents) + 4, contents, input=False, align=libtcod.CENTER)
-		else:
-			desc = []
-			for i in range(len(savefiles)):
-				file = shelve.open('saves/' + savefiles[i], 'r')
-				pl = file['player']
-				desc.append(savefiles[i] + ', a level ' + str(pl.level) + ' ' + pl.gender + ' ' + pl.race + ' ' + pl.profession)
-				file.close()
-			choice = messages.box('Saved games', None, (SCREEN_WIDTH - (max(60, len(max(desc, key=len)) + 20))) / 2, ((SCREEN_HEIGHT + 1) - max(16, len(desc) + 4)) / 2, max(60, len(max(desc, key=len)) + 20), max(16, len(desc) + 4), desc, step=2, mouse_exit=True)
-			if choice != -1:
-				contents = ['Loading.....']
-				messages.box(None, None, 'center_screenx', 'center_screeny', len(max(contents, key=len)) + 16, len(contents) + 4, contents, input=False, align=libtcod.CENTER, nokeypress=True)
-				file = shelve.open('saves/' + savefiles[choice], 'r')
-				player = file['player']
-				worldmap = file['worldmap']
-				current_map = file['current_map']
-				old_maps = file['maps']
-				message = file['messages']
-				turns = file['turns']
-				gametime = file['gametime']
-				fov_torch = file['fov_torch']
-				game_state = file['game_state']
-				times_saved = file['times_saved']
-				file.close()
-				char = current_map.objects[0]
-				worldmap.create_map_images(1)
-				message.empty()
-				message.trim_history()
-				message.new('Welcome back, ' + player.name + '!', turns, libtcod.Color(96, 212, 238))
-				if current_map.location_id == 0:
-					mapgen.load_old_maps(0, current_map.location_level)
-					mapgen.combine_maps()
-				current_map.check_player_position()
-				#print worldmap.dungeons
-				self.play_game()
-
 	# basic help text
 	# stuff to do: change manual system
 	def help(self):
-		contents = open('data/help.txt', 'r').read()
-		contents = contents.split('\n')
+		contents = IO.load_manual()
 		messages.box('Help', None, 'center_screenx', 'center_screeny', len(max(contents, key=len)) + 16, len(contents) + 4, contents, input=False)
 
 	# brings up settings menu
@@ -405,36 +344,12 @@ class Game(object):
 		libtcod.console_set_default_foreground(box, libtcod.white)
 		util.change_settings(box, width, height, blitmap=False)
 		libtcod.console_delete(box)
-		self.load_settings()
+		IO.load_settings()
 
-	# load game settings
-	# stuff to do: add more options
-	def load_settings(self):
-		global setting_font, setting_history, setting_fullscreen
-		if os.path.exists('settings.ini'):
-			contents = open('settings.ini', 'r')
-			while 1:
-				line = contents.readline().rstrip()
-				if line == '[Font]':
-					setting_font = contents.readline().rstrip()
-				if line == '[History]':
-					setting_history = int(contents.readline().rstrip())
-				if line == '[Fullscreen]':
-					setting_fullscreen = contents.readline().rstrip()
-				if not line:
-					break
-			contents.close()
-			if not any(setting_font == i for i in ['small', 'medium', 'large']):
-				setting_font = 'small'
-			if not setting_history in range(50, 1000):
-				setting_history = 50
-			if not any(setting_fullscreen == i for i in ['on', 'off']):
-				setting_fullscreen = 'off'
-
-	# loading and showing the high scores screen
+	# shows the high scores screen
 	def show_high_scores(self):
 		if os.path.exists('highscores.dat'):
-			self.load_high_scores()
+			IO.load_high_scores()
 			contents = []
 			for (score, line1, line2) in highscore:
 				contents.append(str(score).ljust(6) + line1)
@@ -445,22 +360,21 @@ class Game(object):
 			contents = ['The high scores file is empty.']
 			messages.box('High scores', None, 'center_screenx', 'center_screeny', len(max(contents, key=len)) + 16, len(contents) + 4, contents, input=False, align=libtcod.CENTER)
 
-	def load_high_scores(self):
-		global highscore
-		if os.path.exists('highscores.dat'):
-			contents = open('highscores.dat', 'rb')
-			highscore = pickle.load(contents)
-			contents.close()
-
 	# reset some variables after saving or quitting current game
 	def reset_game(self):
-		global savefiles, turns, old_msg, draw_gui, fov_recompute, draw_map
-		savefiles = os.listdir('saves')
+		global savefiles, current_map, border_maps, old_maps, turns, old_msg, hp_anim, times_saved, draw_gui, draw_map, fov_recompute
+		savefiles = [f for f in os.listdir('saves') if os.path.isfile(os.path.join('saves', f))]
+		current_map = None
+		border_maps = [0] * 8
+		old_maps = []
 		turns = 0
 		old_msg = 0
+		hp_anim = []
+		times_saved = 0
 		draw_gui = True
 		draw_map = True
 		fov_recompute = True
+		libtcod.console_clear(con)
 
 	# brings up the main menu
 	def main_menu(self):
@@ -485,7 +399,9 @@ class Game(object):
 				self.reset_game()
 #				test.worldgentest(50)
 			if choice == 1:  # load saved game
-				self.load_game()
+				start = IO.load_game()
+				if start:
+					self.play_game()
 				self.reset_game()
 			if choice == 2:  # help
 				self.help()

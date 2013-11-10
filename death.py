@@ -1,7 +1,6 @@
 import libtcodpy as libtcod
-import pickle
-import os
 import game
+import IO
 
 
 # death screens and final summaries for player
@@ -73,9 +72,8 @@ def death_screen(quit=False):
 	game.highscore = sorted(game.highscore, reverse=True)
 	if len(game.highscore) > 10:
 		game.highscore.pop()
-	save_high_scores()
-	if game.player.name.lower() in game.savefiles:
-		os.remove('saves/' + game.player.name.lower())
+	IO.save_high_scores()
+	IO.delete_game()
 
 
 # death screen: show a fully indentified inventory
@@ -205,10 +203,3 @@ def death_tombstone(quit=False):
 	libtcod.console_print(0, 8, 23, line1)
 	libtcod.console_print(0, 8, 24, line2)
 	return 'tombstone', score, line1, line2
-
-
-# save changes to the highscores
-def save_high_scores():
-	f = open('highscores.dat', 'wb')
-	pickle.dump(game.highscore, f)
-	f.close()

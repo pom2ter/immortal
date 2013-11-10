@@ -1,13 +1,15 @@
 import libtcodpy as libtcod
 import math
 import game
+import IO
 import commands
+import mapgen
 import effects
 
 
-#######################################
+#########################################
 # miscellanous functions
-#######################################
+#########################################
 
 # add a turn and do checks for statuses and stuffies
 def add_turn():
@@ -178,14 +180,7 @@ def change_settings(box, width, height, blitmap=False):
 			libtcod.console_set_fullscreen(False)
 		if blitmap:
 			game.message.trim_history()
-		f = open('settings.ini', 'wb')
-		f.write('[Font]\n')
-		f.write(fonts[font] + '\n')
-		f.write('[History]\n')
-		f.write(str(history) + '\n')
-		f.write('[Fullscreen]\n')
-		f.write(fullscreen[fs] + '\n')
-		f.close()
+		IO.save_settings(fonts[font], str(history), fullscreen[fs])
 
 
 # color fading in/out
@@ -222,6 +217,17 @@ def find_map_position(mapposx, mapposy):
 		else:
 			char = chr(229)
 	return char
+
+
+# find terrain type base on elevation
+def find_terrain_type(coord):
+	terrain = 'Forest'
+	heightmap = game.worldmap.hm_list[coord]
+	for key, value in game.terrain.items():
+		if value['elevation'] <= heightmap <= value['maxelev']:
+			terrain = key
+			break
+	return terrain
 
 
 # return a string with the names of all objects under the mouse
@@ -505,9 +511,137 @@ def trigger_trap(x, y, victim='You', chest=False):
 		effects.poison_needle(x, y)
 
 
-#######################################
+#########################################
+# map utils functions
+#########################################
+
+# main functions for building the overworld maps
+def change_maps(level):
+	loadgen_message()
+	decombine_maps()
+	store_map(game.current_map)
+	for i in range(len(game.border_maps)):
+		store_map(game.border_maps[i])
+	IO.autosave()
+	game.current_map = fetch_map({'name': game.current_map.location_name, 'id': game.current_map.location_id, 'abbr': game.current_map.location_abbr, 'level': level, 'map_width': game.current_map.map_width, 'map_height': game.current_map.map_height})
+	fetch_border_maps()
+	IO.autosave_current_map()
+	combine_maps()
+	initialize_fov()
+	game.fov_recompute = True
+
+
+# combine some overworld maps into a super map
+def combine_maps():
+	mapid = [[0, 1, 2], [3, 0, 4], [5, 6, 7]]
+	super_map = mapgen.Map(game.current_map.location_name, game.current_map.location_abbr, game.current_map.location_id, game.current_map.location_level, game.current_map.threat_level, game.current_map.map_width * 3, game.current_map.map_height * 3, game.current_map.type, True)
+	game.char.x += game.current_map.map_width
+	game.char.y += game.current_map.map_height
+	super_map.objects.append(game.char)
+	for i in range(3):
+		for j in range(3):
+			if i == 1 and j == 1:
+				current = game.current_map
+			else:
+				current = game.border_maps[mapid[i][j]]
+			for x in range(game.current_map.map_width):
+				for y in range(game.current_map.map_height):
+					super_map.tile[x + (j * game.current_map.map_width)][y + (i * game.current_map.map_height)] = current.tile[x][y]
+			for obj in current.objects:
+				if obj.name != 'player':
+					obj.x = obj.x + (j * game.current_map.map_width)
+					obj.y = obj.y + (i * game.current_map.map_height)
+					super_map.objects.append(obj)
+	game.current_backup = game.current_map
+	game.current_map = super_map
+
+
+# decombine the super map into their respective smaller chunks
+def decombine_maps():
+	mapid = [[0, 1, 2], [3, 0, 4], [5, 6, 7]]
+	super_map = game.current_map
+	for i in range(3):
+		for j in range(3):
+			if i == 1 and j == 1:
+				current = game.current_backup
+			else:
+				current = game.border_maps[mapid[i][j]]
+			for x in range(current.map_width):
+				for y in range(current.map_height):
+					current.tile[x][y] = super_map.tile[x + (j * current.map_width)][y + (i * current.map_height)]
+			current.objects = []
+			current.objects.append(game.char)
+			for obj in super_map.objects:
+				if obj.x / (super_map.map_width / 3) == j and obj.y / (super_map.map_height / 3) == i and obj.name != 'player':
+					obj.x = obj.x - (j * (super_map.map_width / 3))
+					obj.y = obj.y - (i * (super_map.map_height / 3))
+					current.objects.append(obj)
+			if i == 1 and j == 1:
+				game.current_map = current
+			else:
+				game.border_maps[mapid[i][j]] = current
+	if game.char.x >= game.current_map.map_width * 2:
+		game.char.x -= game.current_map.map_width * 2
+	elif game.char.x >= game.current_map.map_width:
+		game.char.x -= game.current_map.map_width
+	if game.char.y >= game.current_map.map_height * 2:
+		game.char.y -= game.current_map.map_height * 2
+	elif game.char.y >= game.current_map.map_height:
+		game.char.y -= game.current_map.map_height
+
+
+# fetch border maps when in the overworld
+def fetch_border_maps():
+	level = game.current_map.location_level
+	coord = [level - game.WORLDMAP_WIDTH - 1, level - game.WORLDMAP_WIDTH, level - game.WORLDMAP_WIDTH + 1, level - 1, level + 1, level + game.WORLDMAP_WIDTH - 1, level + game.WORLDMAP_WIDTH, level + game.WORLDMAP_WIDTH + 1]
+	for i in range(len(coord)):
+		if i in [0, 3, 5]:
+			if coord[i] % game.WORLDMAP_WIDTH == game.WORLDMAP_WIDTH - 1:
+				coord[i] = coord[i] + game.WORLDMAP_WIDTH
+		if i in [2, 4, 7]:
+			if coord[i] % game.WORLDMAP_WIDTH == 0:
+				coord[i] = coord[i] - game.WORLDMAP_WIDTH
+		if coord[i] not in range(game.WORLDMAP_WIDTH * game.WORLDMAP_HEIGHT):
+			coord[i] = abs((game.WORLDMAP_WIDTH * game.WORLDMAP_HEIGHT) - abs(coord[i]))
+		game.border_maps[i] = fetch_map({'name': game.current_map.location_name, 'id': game.current_map.location_id, 'abbr': game.current_map.location_abbr, 'level': coord[i], 'map_width': game.current_map.map_width, 'map_height': game.current_map.map_height})
+
+
+# check to see if destination map already exist, if so fetch it, if not generate it
+def fetch_map(data, dir='up'):
+	generate = True
+	for i in xrange(len(game.old_maps)):
+		if game.old_maps[i].location_id == data['id'] and game.old_maps[i].location_level == data['level']:
+			temp_map = game.old_maps[i]
+			if temp_map.location_id > 0:
+				if dir == 'up':
+					(game.char.x, game.char.y) = temp_map.up_staircase
+				else:
+					(game.char.x, game.char.y) = temp_map.down_staircase
+			generate = False
+			break
+	if generate:
+		if data['id'] == 0:
+			temp_map = mapgen.Map(data['name'], data['abbr'], data['id'], data['level'], game.worldmap.set_threat_level(data['level'] % game.WORLDMAP_WIDTH, data['level'] / game.WORLDMAP_WIDTH), data['map_width'], data['map_height'], find_terrain_type(data['level']))
+		else:
+			temp_map = mapgen.Map(data['name'], data['abbr'], data['id'], data['level'], data['threat'], data['map_width'], data['map_height'], data['type'])
+	return temp_map
+
+
+# store old map on map change
+def store_map(data):
+	add = True
+	for i in xrange(len(game.old_maps)):
+		if game.old_maps[i].location_id == data.location_id and game.old_maps[i].location_level == data.location_level:
+			game.old_maps[i] = data
+			add = False
+			break
+	if add:
+		game.old_maps.append(data)
+
+
+#########################################
 # main screen functions
-#######################################
+#########################################
 
 # initialize the field of vision
 def initialize_fov(update=False):

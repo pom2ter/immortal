@@ -1,8 +1,7 @@
 import libtcodpy as libtcod
-import os
 import game
+import IO
 import util
-import mapgen
 
 
 # handles all the keyboard input commands
@@ -187,7 +186,7 @@ def player_move(dx, dy):
 					if game.worldmap.player_positiony not in range(game.WORLDMAP_HEIGHT):
 						game.worldmap.player_positiony = game.WORLDMAP_HEIGHT - abs(game.worldmap.player_positiony)
 					level = (game.worldmap.player_positiony * game.WORLDMAP_WIDTH) + game.worldmap.player_positionx
-					mapgen.change_maps(0, level)
+					util.change_maps(level)
 			util.items_at_feet()
 		game.fov_recompute = True
 
@@ -308,7 +307,8 @@ def climb_down_stairs():
 		if game.current_map.location_id > 0:
 			level = game.current_map.location_level + 1
 			game.message.new('You climb down the stairs.', game.turns)
-			game.old_maps.append(game.current_map)
+			util.store_map(game.current_map)
+			IO.autosave(False)
 			map_width = game.current_map.map_width
 			map_height = game.current_map.map_height
 			dice = util.roll_dice(1, 10)
@@ -327,25 +327,17 @@ def climb_down_stairs():
 						map_width = game.MAP_WIDTH
 						map_height = game.MAP_HEIGHT
 			game.message.new('You enter the ' + location_name + '.', game.turns)
-			mapgen.decombine_maps()
-			game.old_maps.append(game.current_map)
+			util.decombine_maps()
 			op = (game.current_map.location_level, game.char.x, game.char.y)
+			util.store_map(game.current_map)
 			for i in range(len(game.border_maps)):
-				game.old_maps.append(game.border_maps[i])
+				util.store_map(game.border_maps[i])
+			IO.autosave()
 
 		util.loadgen_message()
-		generate = True
-		for i in xrange(len(game.old_maps)):
-			if game.old_maps[i].location_id == location_id and game.old_maps[i].location_level == level:
-				game.current_map = game.old_maps[i]
-				(game.char.x, game.char.y) = game.current_map.up_staircase
-				game.old_maps.pop(i)
-				generate = False
-				break
-		if generate:
-			game.current_map = mapgen.Map(location_name, location_abbr, location_id, level, threat_level, map_width, map_height, dungeon_type)
-
+		game.current_map = util.fetch_map({'name': location_name, 'id': location_id, 'abbr': location_abbr, 'level': level, 'threat': threat_level, 'map_width': map_width, 'map_height': map_height, 'type': dungeon_type}, dir='up')
 		game.current_map.overworld_position = op
+		IO.autosave_current_map()
 		game.current_map.check_player_position()
 		util.initialize_fov()
 		game.fov_recompute = True
@@ -377,22 +369,17 @@ def climb_up_stairs():
 			location_abbr = 'WD'
 			game.message.new('You return to the ' + location_name + '.', game.turns)
 
-		game.old_maps.append(game.current_map)
+		util.store_map(game.current_map)
 		util.loadgen_message()
+		IO.autosave(False)
 		if not combine:
-			generate = True
-			for i in xrange(len(game.old_maps)):
-				if game.old_maps[i].location_id == location_id and game.old_maps[i].location_level == level:
-					game.current_map = game.old_maps[i]
-					(game.char.x, game.char.y) = game.current_map.down_staircase
-					game.old_maps.pop(i)
-					generate = False
-					break
-			if generate:
-				game.current_map = mapgen.Map(location_name, location_abbr, location_id, level, threat_level, map_width, map_height, dungeon_type)
+			game.current_map = util.fetch_map({'name': location_name, 'id': location_id, 'abbr': location_abbr, 'level': level, 'threat': threat_level, 'map_width': map_width, 'map_height': map_height, 'type': dungeon_type}, dir='down')
+			IO.autosave_current_map()
 		else:
-			mapgen.load_old_maps(location_id, level)
-			mapgen.combine_maps()
+			game.current_map = util.fetch_map({'name': location_name, 'id': location_id, 'abbr': location_abbr, 'level': level, 'map_width': game.current_map.map_width, 'map_height': game.current_map.map_height})
+			util.fetch_border_maps()
+			IO.autosave_current_map()
+			util.combine_maps()
 		game.current_map.check_player_position()
 		util.initialize_fov()
 		game.fov_recompute = True
@@ -460,15 +447,14 @@ def equip_item():
 # help screen
 # stuff to do: change manual screen
 def help():
-	contents = open('data/help.txt', 'r').read()
-	contents = contents.split('\n')
+	contents = IO.load_manual()
 	game.messages.box('Help', None, game.PLAYER_STATS_WIDTH + ((game.MAP_WIDTH - (len(max(contents, key=len)) + 20)) / 2), ((game.SCREEN_HEIGHT + 1) - max(16, len(contents) + 4)) / 2, len(max(contents, key=len)) + 20, len(contents) + 4, contents, input=False)
 	game.draw_gui = True
 
 
 # highscore screen
 def highscores():
-	if os.path.exists('highscores.dat'):
+	if game.highscore:
 		contents = []
 		for (score, line1, line2) in game.highscore:
 			contents.append(str(score).ljust(6) + line1)
