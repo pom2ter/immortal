@@ -413,8 +413,6 @@ def showmap(box):
 		starty = 0
 	if starty > game.WORLDMAP_HEIGHT - game.SCREEN_HEIGHT + 2:
 		starty = game.WORLDMAP_HEIGHT - game.SCREEN_HEIGHT + 2
-	con = libtcod.console_new(game.WORLDMAP_WIDTH, game.WORLDMAP_HEIGHT)
-	game.worldmap.create_map_legend(con, 3)
 
 	while not choice:
 		ev = libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS, key, libtcod.Mouse())
@@ -431,7 +429,7 @@ def showmap(box):
 				libtcod.console_print_ex(box, int(dmapposx) + 1, int(dmapposy) + 1, libtcod.BKGND_NONE, libtcod.LEFT, dchar)
 
 		if zoom:
-			libtcod.console_blit(con, startx, starty, game.SCREEN_WIDTH - 2, game.SCREEN_HEIGHT - 2, box, 1, 1, 1.0, 1.0)
+			libtcod.console_blit(game.wm, startx, starty, game.SCREEN_WIDTH - 2, game.SCREEN_HEIGHT - 2, box, 1, 1, 1.0, 1.0)
 			libtcod.console_set_default_foreground(box, libtcod.black)
 			for (id, name, abbr, x, y, tlevel, dtype) in game.worldmap.dungeons:
 				if y in range(starty, starty + game.SCREEN_HEIGHT - 2) and x in range(startx, startx + game.SCREEN_WIDTH - 2):
@@ -468,7 +466,6 @@ def showmap(box):
 					startx += 1
 			elif (key.vk == libtcod.KEY_TAB or key.vk == libtcod.KEY_ESCAPE) and ev == libtcod.EVENT_KEY_PRESS:
 				choice = True
-	libtcod.console_delete(con)
 
 
 # someone set off a trap :O
@@ -643,6 +640,12 @@ def store_map(data):
 # main screen functions
 #########################################
 
+def path_func(xFrom, yFrom, xTo, yTo, user_data):
+	if 'explored' in game.current_map.tile[xTo][yTo] and not 'blocked' in game.current_map.tile[xTo][yTo]:
+		return 1.0
+	return 0.0
+
+
 # initialize the field of vision
 def initialize_fov(update=False):
 #	print 'Loading/Generating map chunks...'
@@ -660,10 +663,9 @@ def initialize_fov(update=False):
 					libtcod.map_set_properties(game.fov_map, x, y, not 'block_sight' in game.current_map.tile[x][y], 'explored' in game.current_map.tile[x][y] and not 'blocked' in game.current_map.tile[x][y])
 					if 'invisible' in game.current_map.tile[x][y] and game.current_map.tile[x][y]['type'] == 'trap' and libtcod.map_is_in_fov(game.fov_map, x, y):
 						game.traps.append((x, y))
-	# compute paths using dijkstra algorithm
-	game.path_dijk = libtcod.dijkstra_new(game.fov_map)
-	libtcod.dijkstra_compute(game.path_dijk, game.char.x, game.char.y)
-	libtcod.dijkstra_path_set(game.path_dijk, game.path_dx, game.path_dy)
+	# compute paths using astar algorithm
+	game.path = libtcod.path_new_using_function(game.current_map.map_width, game.current_map.map_height, path_func)
+	libtcod.path_compute(game.path, game.char.x, game.char.y, game.path_dx, game.path_dy)
 #	t1 = libtcod.sys_elapsed_seconds()
 #	print '    done (%.3f seconds)' % (t1 - t0)
 
@@ -735,8 +737,8 @@ def render_player_stats_panel():
 	render_bar(game.ps, 0, 7, game.PLAYER_STATS_WIDTH, 'ST', game.player.stamina, game.player.max_stamina, libtcod.yellow, libtcod.darker_yellow)
 	render_bar(game.ps, 0, 8, game.PLAYER_STATS_WIDTH, 'MP', game.player.mana, game.player.max_mana, libtcod.blue, libtcod.darker_blue)
 	libtcod.console_print(game.ps, 0, 0, game.player.name)
-	libtcod.console_print(game.ps, 0, 1, 'Level ' + str(game.player.level))
-	libtcod.console_print(game.ps, 0, 2, game.player.race + ' ' + game.player.profession)
+	libtcod.console_print(game.ps, 0, 1, game.player.race + ' ' + game.player.profession)
+	libtcod.console_print(game.ps, 0, 2, 'Level ' + str(game.player.level))
 	libtcod.console_print(game.ps, 0, 4, game.current_map.location_abbr + '-' + str(game.current_map.location_level) + '     ')
 	libtcod.console_print(game.ps, 0, 10, 'XP: ' + str(game.player.xp))
 
@@ -929,17 +931,10 @@ def render_map():
 	libtcod.console_blit(game.con, 0, 0, game.MAP_WIDTH, game.MAP_HEIGHT, 0, game.MAP_X, game.MAP_Y)
 	game.draw_map = False
 
-	# draw a line between the player and the mouse cursor
-	if game.path_dy in range(game.current_map.map_height) and game.path_dx in range(game.current_map.map_width) and game.current_map.tile_is_explored(game.path_dx, game.path_dy) and not game.current_map.tile_is_blocked(game.path_dx, game.path_dy):
-		for i in range(libtcod.dijkstra_size(game.path_dijk)):
-			x, y = libtcod.dijkstra_get(game.path_dijk, i)
-			if (y - game.cury) in range(game.MAP_HEIGHT) and (x - game.curx) in range(game.MAP_WIDTH):
-				libtcod.console_set_char_background(0, game.MAP_X + x - game.curx, game.MAP_Y + y - game.cury, libtcod.desaturated_yellow, libtcod.BKGND_SET)
-
 	# move the player if using mouse
 	if game.mouse_move:
-		if mouse_auto_move() and not libtcod.dijkstra_is_empty(game.path_dijk):
-			game.char.x, game.char.y = libtcod.dijkstra_path_walk(game.path_dijk)
+		if mouse_auto_move() and not libtcod.path_is_empty(game.path):
+			game.char.x, game.char.y = libtcod.path_walk(game.path, True)
 			game.fov_recompute = True
 			game.player_move = True
 		else:
@@ -964,8 +959,13 @@ def render_map():
 						mouse_auto_attack(px, py, target[0])
 					else:
 						game.mouse_move = mouse_auto_move()
+				# draw a line between the player and the mouse cursor
 				if not game.current_map.tile_is_blocked(game.path_dx, game.path_dy):
-					libtcod.dijkstra_path_set(game.path_dijk, game.path_dx, game.path_dy)
+					libtcod.path_compute(game.path, game.char.x, game.char.y, game.path_dx, game.path_dy)
+					for i in range(libtcod.path_size(game.path)):
+						x, y = libtcod.path_get(game.path, i)
+						if (y - game.cury) in range(game.MAP_HEIGHT) and (x - game.curx) in range(game.MAP_WIDTH):
+							libtcod.console_set_char_background(0, game.MAP_X + x - game.curx, game.MAP_Y + y - game.cury, libtcod.desaturated_yellow, libtcod.BKGND_SET)
 
 	libtcod.console_set_default_foreground(0, libtcod.light_yellow)
 	libtcod.console_print_rect(0, game.MAP_X, game.MAP_Y, game.MAP_WIDTH - 18, game.MAP_HEIGHT, get_names_under_mouse())

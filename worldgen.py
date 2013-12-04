@@ -115,10 +115,10 @@ class World(object):
 					self.originx = self.player_positionx
 					self.originy = self.player_positiony
 
-					path_dijk = self.set_dijkstra_map()
+					path = self.set_dijkstra_map()
 					for y in range(game.WORLDMAP_HEIGHT):
 						for x in range(game.WORLDMAP_WIDTH):
-							dist = libtcod.dijkstra_get_distance(path_dijk, x, y)
+							dist = libtcod.dijkstra_get_distance(path, x, y)
 							if dist > self.max_distance:
 								self.max_distance = int(round(dist))
 					#libtcod.image_put_pixel(self.map_image_small, self.player_positionx, self.player_positiony, libtcod.white)
@@ -180,7 +180,7 @@ class World(object):
 	def place_dungeons(self):
 		print 'Placing dungeons....'
 		t0 = libtcod.sys_elapsed_seconds()
-		path_dijk = self.set_dijkstra_map()
+		path = self.set_dijkstra_map()
 		for i in range(game.MAX_THREAT_LEVEL):
 			done = False
 			attempt = 0
@@ -188,7 +188,7 @@ class World(object):
 				x = libtcod.random_get_int(self.rnd, 0, game.WORLDMAP_WIDTH - 1)
 				y = libtcod.random_get_int(self.rnd, 0, game.WORLDMAP_HEIGHT - 1)
 				cellheight = int(libtcod.heightmap_get_value(game.heightmap, x, y) * 1000)
-				threat = self.set_threat_level(x, y, path_dijk)
+				threat = self.set_threat_level(x, y, path)
 				dice = libtcod.random_get_int(self.rnd, 1, 100)
 				if dice <= 65:
 					dtype = 'Dungeon'
@@ -226,13 +226,13 @@ class World(object):
 
 	# set dijkstra map base on point of origin
 	def set_dijkstra_map(self):
-		dijk_map = libtcod.map_new(game.WORLDMAP_WIDTH, game.WORLDMAP_HEIGHT)
+		fov_map = libtcod.map_new(game.WORLDMAP_WIDTH, game.WORLDMAP_HEIGHT)
 		for y in range(game.WORLDMAP_HEIGHT):
 			for x in range(game.WORLDMAP_WIDTH):
-				libtcod.map_set_properties(dijk_map, x, y, True, True)
-		path_dijk = libtcod.dijkstra_new(dijk_map)
-		libtcod.dijkstra_compute(path_dijk, self.originx, self.originy)
-		return path_dijk
+				libtcod.map_set_properties(fov_map, x, y, True, True)
+		path = libtcod.dijkstra_new(fov_map)
+		libtcod.dijkstra_compute(path, self.originx, self.originy)
+		return path
 
 	# reduce landmass to the appropriate level
 	def set_landmass(self, landmass, waterlevel):

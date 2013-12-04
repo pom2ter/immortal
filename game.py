@@ -2,7 +2,6 @@ import libtcodpy as libtcod
 import cPickle as pickle
 import ctypes
 import os
-from multiprocessing import Pool
 from players import *
 from item import *
 from monster import *
@@ -18,7 +17,7 @@ import death
 import test
 import debug as dbg
 
-VERSION = '0.3.5.5 Alpha'
+VERSION = '0.3.5.6 Alpha'
 
 #size of the gui windows
 MAP_WIDTH = 71
@@ -61,8 +60,8 @@ fov_torch = False
 fov_map = None
 fov_torchx = 0.0
 
-#dijkstra
-path_dijk = None
+#pathfinding
+path = None
 path_dx = -1
 path_dy = -1
 
@@ -117,10 +116,19 @@ CLASS_DESC = ["Fighters are master of arms especially melee weapons but their ma
 			"Priests are decent fighters that can use defensive and curative magic. Their primary attribute is wisdom. They start with some knowledge in both combat and magic skills.",
 			"Mages are the opposite of fighters; great with magic, weak with weapons (except staves). Their primary attribute is intelligence. This is a good class for elves. They start with moderate knowledge in all magic skills.",
 			"An explorer is basically a classless character so he doesnt have any specialties but gains more skill points per level to compensate. This 'class' is for those who likes to fine-tune their character from the very beginning."]
-BASE_STATS = [[9, 9, 9, 9, 9], [12, 9, 7, 8, 11], [10, 12, 8, 9, 8], [10, 8, 9, 12, 8], [7, 9, 13, 10, 8], [9, 9, 9, 9, 9],
-				[7, 9, 11, 10, 8], [10, 9, 9, 9, 10], [8, 12, 10, 10, 7], [8, 8, 11, 13, 7], [5, 9, 15, 11, 7], [7, 9, 11, 10, 8],
-				[11, 7, 7, 8, 12], [14, 7, 5, 7, 14], [12, 10, 6, 8, 11], [12, 6, 7, 11, 11], [9, 7, 11, 9, 11], [11, 7, 7, 8, 12],
-				[8, 10, 10, 8, 9], [11, 10, 8, 7, 11], [9, 13, 9, 8, 8], [9, 9, 10, 11, 8], [6, 10, 14, 9, 8], [8, 10, 10, 8, 9]]
+BASE_STATS = {'Human': {'stats': [9, 9, 9, 9, 9]}, 'HumanFighter': {'stats': [12, 9, 7, 8, 11]},
+			'HumanRogue': {'stats': [10, 12, 8, 9, 8]}, 'HumanPriest': {'stats': [10, 8, 9, 12, 8]},
+			'HumanMage': {'stats': [7, 9, 13, 10, 8]}, 'HumanExplorer': {'stats': [9, 9, 9, 9, 9]},
+			'Elf': {'stats': [7, 9, 11, 10, 8]}, 'ElfFighter': {'stats': [10, 9, 9, 9, 10]},
+			'ElfRogue': {'stats': [8, 12, 10, 10, 7]}, 'ElfPriest': {'stats': [8, 8, 11, 13, 7]},
+			'ElfMage': {'stats': [5, 9, 15, 11, 7]}, 'ElfExplorer': {'stats': [7, 9, 11, 10, 8]},
+			'Dwarf': {'stats': [11, 7, 7, 8, 12]}, 'DwarfFighter': {'stats': [14, 7, 5, 7, 14]},
+			'DwarfRogue': {'stats': [12, 10, 6, 8, 11]}, 'DwarfPriest': {'stats': [12, 6, 7, 11, 11]},
+			'DwarfMage': {'stats': [9, 7, 11, 9, 11]}, 'DwarfExplorer': {'stats': [11, 7, 7, 8, 12]},
+			'Halfling': {'stats': [8, 10, 10, 8, 9]}, 'HalflingFighter': {'stats': [11, 10, 8, 7, 11]},
+			'HalflingRogue': {'stats': [9, 13, 9, 8, 8]}, 'HalflingPriest': {'stats': [9, 9, 10, 11, 8]},
+			'HalflingMage': {'stats': [6, 10, 14, 9, 8]}, 'HalflingExplorer': {'stats': [8, 10, 10, 8, 9]}}
+
 EXPERIENCE_TABLES = [0, 100, 250, 500, 800, 1250, 1750, 2450, 3250, 4150, 5200, 6400, 7800, 9400, 11200, 13200, 16400, 18800, 21400, 24200, 27000]
 FIGHTER_HP_GAIN = 10
 FIGHTER_MP_GAIN = 2
@@ -170,16 +178,15 @@ chest_trap = ['fx_fireball', 'fx_poison_gas', 'fx_sleep_gas', 'fx_teleport', 'fx
 # curse, bless
 # monsters powers
 # spells, scrolls, tomes, npcs, towns, quests, biomes...
-# worldmap travel?
 # mouse support everywhere
 # change save system (sqlite?)
+# level up skill distribution
 
 
 class Game(object):
 	def __init__(self):
-		global pool, debug, font_width, font_height, rnd, con, panel, ps, fov_noise, savefiles, baseitems, prefix, suffix, tiles, monsters
+		global debug, font_width, font_height, con, panel, ps, fov_noise, savefiles, baseitems, prefix, suffix, tiles, monsters
 		IO.load_settings()
-		pool = Pool(4)
 		debug = dbg.Debug()
 		debug.enable = True
 		for key, value in fonts.items():
@@ -190,7 +197,6 @@ class Game(object):
 		self.init_root_console()
 		#libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, 'Immortal ' + VERSION, False)
 
-		rnd = libtcod.random_new()
 		con = libtcod.console_new(MAP_WIDTH, MAP_HEIGHT)
 		panel = libtcod.console_new(MESSAGE_WIDTH, MESSAGE_HEIGHT)
 		ps = libtcod.console_new(PLAYER_STATS_WIDTH, PLAYER_STATS_HEIGHT)
@@ -235,13 +241,17 @@ class Game(object):
 			libtcod.console_set_fullscreen(True)
 
 	# new game setup
-	def new_game(self):
-		global message, player, char, game_state, gametime, worldmap, current_map, savefiles
+	def new_game(self, chargeneration=True):
+		global rnd, message, player, char, game_state, gametime, worldmap, current_map, savefiles
 		cardinal = [-(WORLDMAP_WIDTH - 1), -(WORLDMAP_WIDTH), -(WORLDMAP_WIDTH + 1), -1, 1, WORLDMAP_WIDTH - 1, WORLDMAP_WIDTH, WORLDMAP_WIDTH + 1]
+		rnd = libtcod.random_new()
 		message = messages.Message()
 		player = Player()
 		char = mapgen.Object(libtcod.random_get_int(rnd, 40, 80), libtcod.random_get_int(rnd, 26, 46), player.icon, 'player', player.icon_color, blocks=True)
-		game_state = chargen.create_character()
+		if chargeneration:
+			game_state = chargen.create_character()
+		else:
+			game_state = chargen.quick_start()
 		if game_state == 'playing':
 			contents = ['Generating world map...']
 			messages.box(None, None, 'center_screenx', 'center_screeny', len(max(contents, key=len)) + 16, len(contents) + 4, contents, input=False, align=libtcod.CENTER, nokeypress=True)
@@ -258,7 +268,9 @@ class Game(object):
 
 	# main game loop
 	def play_game(self):
-		global player_action, draw_gui, player_move
+		global wm, player_action, draw_gui, player_move
+		wm = libtcod.console_new(game.WORLDMAP_WIDTH, game.WORLDMAP_HEIGHT)
+		game.worldmap.create_map_legend(wm, 3)
 		libtcod.console_clear(0)
 		util.initialize_fov()
 		player_action = ''
@@ -297,17 +309,17 @@ class Game(object):
 						if obj.entity:
 							if not obj.entity.is_disabled():
 								obj.x, obj.y = obj.entity.take_turn(obj.x, obj.y)
-								if game.current_map.tile[obj.x][obj.y]['type'] == 'trap' and not obj.entity.is_above_ground() and obj.entity.can_move(obj.x, obj.y):
-									if game.current_map.tile_is_invisible(obj.x, obj.y):
+								if current_map.tile[obj.x][obj.y]['type'] == 'trap' and not obj.entity.is_above_ground() and obj.entity.can_move(obj.x, obj.y):
+									if current_map.tile_is_invisible(obj.x, obj.y):
 										util.trigger_trap(obj.x, obj.y, obj.entity.article.capitalize() + obj.entity.get_name())
-									elif libtcod.map_is_in_fov(game.fov_map, obj.x, obj.y):
-										game.message.new('The ' + obj.entity.get_name() + ' sidestep the ' + game.current_map.tile[obj.x][obj.y]['name'], game.turns)
+									elif libtcod.map_is_in_fov(fov_map, obj.x, obj.y):
+										message.new('The ' + obj.entity.get_name() + ' sidestep the ' + current_map.tile[obj.x][obj.y]['name'], turns)
 							obj.entity.check_condition(obj.x, obj.y)
 							if obj.entity.is_dead():
-								if libtcod.map_is_in_fov(game.fov_map, obj.x, obj.y):
-									game.message.new('The ' + obj.entity.get_name() + ' dies!', game.turns, libtcod.light_orange)
+								if libtcod.map_is_in_fov(fov_map, obj.x, obj.y):
+									message.new('The ' + obj.entity.get_name() + ' dies!', turns, libtcod.light_orange)
 								else:
-									game.message.new('You hear a dying scream.', game.turns)
+									message.new('You hear a dying scream.', turns)
 								obj.entity.loot(obj.x, obj.y)
 								obj.delete()
 				if game_state != 'death':
@@ -362,7 +374,7 @@ class Game(object):
 
 	# reset some variables after saving or quitting current game
 	def reset_game(self):
-		global savefiles, current_map, border_maps, old_maps, turns, old_msg, hp_anim, times_saved, draw_gui, draw_map, fov_recompute
+		global savefiles, current_map, border_maps, old_maps, turns, old_msg, hp_anim, times_saved, draw_gui, draw_map, fov_recompute, wm
 		savefiles = [f for f in os.listdir('saves') if os.path.isfile(os.path.join('saves', f))]
 		current_map = None
 		border_maps = [0] * 8
@@ -374,11 +386,13 @@ class Game(object):
 		draw_gui = True
 		draw_map = True
 		fov_recompute = True
+		if 'wm' in globals():
+			libtcod.console_delete(wm)
 		libtcod.console_clear(con)
 
 	# brings up the main menu
 	def main_menu(self):
-		contents = ['Start a new game  ', 'Load a saved game  ', 'Read the manual  ', 'Change settings  ', 'View high scores  ', 'Quit game  ']
+		contents = ['Quick Start', 'Start a new game', 'Load a saved game', 'Read the manual', 'Change settings', 'View high scores', 'Quit game']
 		img = libtcod.image_load('title.png')
 		libtcod.image_scale(img, int(SCREEN_WIDTH * 2.2), SCREEN_HEIGHT * 2)
 		choice = 0
@@ -394,22 +408,25 @@ class Game(object):
 				choice = 0
 			choice = messages.box(None, None, (SCREEN_WIDTH - len(max(contents, key=len)) - 6), ((SCREEN_HEIGHT + 4) - len(contents)) / 2, len(max(contents, key=len)) + 5, len(contents) + 2, contents, choice, color=None, align=libtcod.RIGHT, scrollbar=False)
 
-			if choice == 0:  # start new game
+			if choice == 0:  # quick start
+				self.new_game(False)
+				self.reset_game()
+			if choice == 1:  # start new game
 				self.new_game()
 				self.reset_game()
 #				test.worldgentest(50)
-			if choice == 1:  # load saved game
+			if choice == 2:  # load saved game
 				start = IO.load_game()
 				if start:
 					self.play_game()
 				self.reset_game()
-			if choice == 2:  # help
+			if choice == 3:  # help
 				self.help()
-			if choice == 3:  # settings
+			if choice == 4:  # settings
 				self.settings()
-			if choice == 4:  # high scores
+			if choice == 5:  # high scores
 				self.show_high_scores()
-			if choice == 5:  # quit
+			if choice == 6:  # quit
 				for fade in range(255, 0, -8):
 					libtcod.console_set_fade(fade, libtcod.black)
 					libtcod.console_flush()

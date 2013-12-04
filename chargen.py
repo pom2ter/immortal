@@ -76,14 +76,14 @@ def create_character():
 		libtcod.console_print(0, 2, 4, 'Enter a name for your character: _')
 		libtcod.console_flush()
 
-		game.player.name = game.messages.input('chargen', 0, 35, 4, min=3, max=17)
+		game.player.name = game.messages.input('chargen', 0, 35, 4, min=3, max=21)
 		show_stats_panel(stats)
 		libtcod.console_clear(cs)
 		libtcod.console_print(cs, 1, 1, 'Select a gender:')
 		libtcod.console_blit(cs, 0, 0, cs_width, cs_height, 0, 1, 3)
 		game.player.gender = game.GENDER[chargen_options(2, 6, 10, game.GENDER, None)]
 
-		show_stats_panel(stats, 0)
+		show_stats_panel(stats)
 		libtcod.console_clear(cs)
 		libtcod.console_print(cs, 1, 1, 'Select a race:')
 		libtcod.console_print(cs, 16, 2, 'Modifiers')
@@ -92,10 +92,9 @@ def create_character():
 		libtcod.console_print(cs, 16, 5, '+2 Str, +3 End, -2 Dex, -2 Int, -1 Wis')
 		libtcod.console_print(cs, 16, 6, '+1 Dex, +1 Int, -1 Str, -1 Wis')
 		libtcod.console_blit(cs, 0, 0, cs_width, cs_height, 0, 1, 3)
-		index = chargen_options(2, 6, 12, game.RACES, 'race')
-		game.player.race = game.RACES[index]
+		game.player.race = game.RACES[chargen_options(2, 6, 12, game.RACES, 'race')]
 
-		show_stats_panel(stats, index * 6)
+		show_stats_panel(stats, 0)
 		libtcod.console_clear(cs)
 		libtcod.console_print(cs, 1, 1, 'Select a class:')
 		libtcod.console_print(cs, 16, 2, 'Modifiers')
@@ -105,10 +104,9 @@ def create_character():
 		libtcod.console_print(cs, 16, 6, '+4 Int, +1 Wis, -2 Str, -1 End')
 		libtcod.console_print(cs, 16, 7, 'None')
 		libtcod.console_blit(cs, 0, 0, cs_width, cs_height, 0, 1, 3)
-		indexr = chargen_options(2, 6, 12, game.CLASSES, 'class')
-		game.player.profession = game.CLASSES[indexr]
+		game.player.profession = game.CLASSES[chargen_options(2, 6, 12, game.CLASSES, 'class')]
 
-		show_stats_panel(stats, (index * 6) + indexr + 1, 0)
+		show_stats_panel(stats, 0, 0)
 		libtcod.console_clear(cs)
 		libtcod.console_print(cs, 1, 1, 'Options:')
 		libtcod.console_blit(cs, 0, 0, cs_width, cs_height, 0, 1, 3)
@@ -116,7 +114,7 @@ def create_character():
 		while not final_choice:
 			choice = chargen_options(2, 6, 33, ['Reroll stats', 'Keep character and start game', 'Cancel and restart', 'Return to main menu'], None)
 			if choice == 0:
-				show_stats_panel(stats, (index * 6) + indexr + 1, 0)
+				show_stats_panel(stats, 0, 0)
 			if choice == 1:
 				final_choice = True
 				libtcod.console_delete(cs)
@@ -133,6 +131,26 @@ def create_character():
 				libtcod.console_delete(cs)
 				libtcod.console_delete(stats)
 				return 'quit'
+
+
+# quick start game by creating a random character
+def quick_start():
+	libtcod.namegen_parse('data/names.txt')
+	game.player.gender = game.GENDER[libtcod.random_get_int(game.rnd, 0, len(game.GENDER) - 1)]
+	game.player.race = game.RACES[libtcod.random_get_int(game.rnd, 0, len(game.RACES) - 1)]
+	game.player.profession = game.CLASSES[libtcod.random_get_int(game.rnd, 0, len(game.CLASSES) - 1)]
+	game.player.name = libtcod.namegen_generate(game.player.gender.lower())
+	while game.player.name.lower() in game.savefiles:
+		game.player.name = libtcod.namegen_generate(game.player.gender.lower())
+
+	game.player.base_strength = game.BASE_STATS[game.player.race + game.player.profession]['stats'][0] + libtcod.random_get_int(game.rnd, 0, 6)
+	game.player.base_dexterity = game.BASE_STATS[game.player.race + game.player.profession]['stats'][1] + libtcod.random_get_int(game.rnd, 0, 6)
+	game.player.base_intelligence = game.BASE_STATS[game.player.race + game.player.profession]['stats'][2] + libtcod.random_get_int(game.rnd, 0, 6)
+	game.player.base_wisdom = game.BASE_STATS[game.player.race + game.player.profession]['stats'][3] + libtcod.random_get_int(game.rnd, 0, 6)
+	game.player.base_endurance = game.BASE_STATS[game.player.race + game.player.profession]['stats'][4] + libtcod.random_get_int(game.rnd, 0, 6)
+	game.player.base_karma = libtcod.random_get_int(game.rnd, 0, 20)
+	starting_stats()
+	return 'playing'
 
 
 # output the stats panel during character generation
@@ -158,7 +176,7 @@ def show_stats_panel(stats, attr=-1, roll=-1):
 
 	if not attr == -1:
 		for i in range(5):
-			libtcod.console_print_ex(stats, 17, i + 8, libtcod.BKGND_SET, libtcod.RIGHT, str(game.BASE_STATS[attr][i]))
+			libtcod.console_print_ex(stats, 17, i + 8, libtcod.BKGND_SET, libtcod.RIGHT, str(game.BASE_STATS[game.player.race + game.player.profession]['stats'][i]))
 
 	if not roll == -1:
 		stat = []
@@ -170,12 +188,12 @@ def show_stats_panel(stats, attr=-1, roll=-1):
 		stat.append(libtcod.random_get_int(game.rnd, 0, 20))
 		for i in range(5):
 			libtcod.console_print(stats, 23, i + 8, str(stat[i]))
-			libtcod.console_print_ex(stats, 30, i + 8, libtcod.BKGND_SET, libtcod.RIGHT, ' ' + str(game.BASE_STATS[attr][i] + stat[i]))
-		game.player.base_strength = game.BASE_STATS[attr][0] + stat[0]
-		game.player.base_dexterity = game.BASE_STATS[attr][1] + stat[1]
-		game.player.base_intelligence = game.BASE_STATS[attr][2] + stat[2]
-		game.player.base_wisdom = game.BASE_STATS[attr][3] + stat[3]
-		game.player.base_endurance = game.BASE_STATS[attr][4] + stat[4]
+			libtcod.console_print_ex(stats, 30, i + 8, libtcod.BKGND_SET, libtcod.RIGHT, ' ' + str(game.BASE_STATS[game.player.race + game.player.profession]['stats'][i] + stat[i]))
+		game.player.base_strength = game.BASE_STATS[game.player.race + game.player.profession]['stats'][0] + stat[0]
+		game.player.base_dexterity = game.BASE_STATS[game.player.race + game.player.profession]['stats'][1] + stat[1]
+		game.player.base_intelligence = game.BASE_STATS[game.player.race + game.player.profession]['stats'][2] + stat[2]
+		game.player.base_wisdom = game.BASE_STATS[game.player.race + game.player.profession]['stats'][3] + stat[3]
+		game.player.base_endurance = game.BASE_STATS[game.player.race + game.player.profession]['stats'][4] + stat[4]
 		game.player.base_karma = stat[5]
 		starting_stats()
 

@@ -1033,7 +1033,7 @@ def ztats_box(con, width, height, header):
 # character sheet
 def ztats():
 	width = 60
-	height = 20
+	height = 21
 	screen = 0
 	exit = False
 	key = libtcod.Key()
@@ -1052,7 +1052,7 @@ def ztats():
 		libtcod.console_set_default_foreground(stats, libtcod.black)
 		libtcod.console_set_default_background(stats, libtcod.green)
 		libtcod.console_print_ex(stats, width / 2, height - 1, libtcod.BKGND_SET, libtcod.CENTER, ' [ Arrow Left/Right = Change Pages ] ')
-		libtcod.console_blit(stats, 0, 0, width, height, 0, ((game.MAP_WIDTH - width) / 2) + game.MAP_X, (game.MAP_HEIGHT - height) / 2, 1.0, 1.0)
+		libtcod.console_blit(stats, 0, 0, width, height, 0, ((game.MAP_WIDTH - width) / 2) + game.MAP_X, ((game.MAP_HEIGHT - height) / 2) + 1, 1.0, 1.0)
 		libtcod.console_flush()
 		libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, key, game.mouse, True)
 		if key.vk == libtcod.KEY_LEFT:

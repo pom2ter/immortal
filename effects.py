@@ -57,13 +57,13 @@ def check_active_effects():
 
 # fireball effect
 def fireball(x, y, radius):
-	path_dijk = util.set_full_explore_map(game.current_map)
-	libtcod.dijkstra_compute(path_dijk, x, y)
+	path = util.set_full_explore_map(game.current_map)
+	libtcod.dijkstra_compute(path, x, y)
 	for step in range(0, radius + 1):
 		player_fov = False
 		for i in range(-radius, radius + 1):
 			for j in range(-radius, radius + 1):
-				if libtcod.map_is_in_fov(game.fov_map, x + i, y + j) and libtcod.dijkstra_get_distance(path_dijk, x + i, y + j) <= step and libtcod.dijkstra_get_distance(path_dijk, x + i, y + j) >= 0:
+				if libtcod.map_is_in_fov(game.fov_map, x + i, y + j) and libtcod.dijkstra_get_distance(path, x + i, y + j) <= step and libtcod.dijkstra_get_distance(path, x + i, y + j) >= 0:
 					(front, back, lerp) = util.render_tiles_animations(x + i, y + j, libtcod.Color(160, 0, 0), libtcod.Color(64, 0, 0), libtcod.Color(0, 0, 0), round(libtcod.random_get_float(game.rnd, 0, 1), 1))
 					libtcod.console_put_char_ex(0, game.MAP_X + x - game.curx + i, game.MAP_Y + y - game.cury + j, '*', front, back)
 					player_fov = True
@@ -75,11 +75,11 @@ def fireball(x, y, radius):
 	for obj in game.current_map.objects:
 		damage = util.roll_dice(1, 10)
 		if obj.name == 'player':
-			if libtcod.dijkstra_get_distance(path_dijk, game.char.x, game.char.y) <= radius:
+			if libtcod.dijkstra_get_distance(path, game.char.x, game.char.y) <= radius:
 				game.message.new('You are hit by a fireball for ' + str(damage) + ' pts of damage!', game.turns, libtcod.Color(160, 0, 0))
 				game.player.take_damage(damage, 'a fireball')
 		elif obj.entity:
-			if libtcod.dijkstra_get_distance(path_dijk, obj.x, obj.y) <= radius:
+			if libtcod.dijkstra_get_distance(path, obj.x, obj.y) <= radius:
 				obj.entity.take_damage(obj.x, obj.y, damage, 'a fireball', True)
 
 
@@ -116,11 +116,11 @@ def missile_attack(sx, sy, dx, dy, trap=False):
 
 # poison gas effect
 def poison_gas(x, y, radius, duration):
-	path_dijk = util.set_full_explore_map(game.current_map)
-	libtcod.dijkstra_compute(path_dijk, x, y)
+	path = util.set_full_explore_map(game.current_map)
+	libtcod.dijkstra_compute(path, x, y)
 	for i in range(-radius, radius + 1):
 		for j in range(-radius, radius + 1):
-			if libtcod.dijkstra_get_distance(path_dijk, x + i, y + j) <= radius and libtcod.dijkstra_get_distance(path_dijk, x + i, y + j) >= 0:
+			if libtcod.dijkstra_get_distance(path, x + i, y + j) <= radius and libtcod.dijkstra_get_distance(path, x + i, y + j) >= 0:
 				game.current_map.tile[x + i][y + j].update({'icon': game.current_map.tile[x + i][y + j]['icon'], 'back_light_color': libtcod.Color(0, 224, 0), 'back_dark_color': libtcod.Color(0, 112, 0), 'lerp': round(libtcod.random_get_float(game.rnd, 0, 1), 1), 'duration': game.turns + duration, 'type': 'poison_gas'})
 				for obj in game.current_map.objects:
 					if obj.item is None:
@@ -164,11 +164,11 @@ def poison_needle(x, y):
 
 # sleeping gas effect
 def sleeping_gas(x, y, radius, duration):
-	path_dijk = util.set_full_explore_map(game.current_map)
-	libtcod.dijkstra_compute(path_dijk, x, y)
+	path = util.set_full_explore_map(game.current_map)
+	libtcod.dijkstra_compute(path, x, y)
 	for i in range(-radius, radius + 1):
 		for j in range(-radius, radius + 1):
-			if libtcod.dijkstra_get_distance(path_dijk, x + i, y + j) <= radius and libtcod.dijkstra_get_distance(path_dijk, x + i, y + j) >= 0:
+			if libtcod.dijkstra_get_distance(path, x + i, y + j) <= radius and libtcod.dijkstra_get_distance(path, x + i, y + j) >= 0:
 				game.current_map.tile[x + i][y + j].update({'icon': game.current_map.tile[x + i][y + j]['icon'], 'back_light_color': libtcod.Color(115, 220, 225), 'back_dark_color': libtcod.Color(0, 143, 189), 'lerp': round(libtcod.random_get_float(game.rnd, 0, 1), 1), 'duration': game.turns + duration, 'type': 'sleep_gas'})
 				for obj in game.current_map.objects:
 					if obj.item is None:

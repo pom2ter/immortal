@@ -100,9 +100,8 @@ class Map(object):
 		(new_x2, new_y2) = rooms[1].center()
 
 		# check if path to stairs is blocked if yes dig a tunnel
-		path_dijk = util.set_full_explore_map(self)
-		libtcod.dijkstra_compute(path_dijk, game.char.x, game.char.y)
-		if libtcod.dijkstra_get_distance(path_dijk, new_x2, new_y2) < 0:
+		path = util.set_full_explore_map(self, False)
+		if not libtcod.path_compute(path, game.char.x, game.char.y, new_x2, new_y2):
 			return False
 
 		self.set_tile_values('stairs going up', game.char.x, game.char.y)

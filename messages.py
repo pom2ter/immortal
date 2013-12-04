@@ -233,7 +233,7 @@ def input(typ, con, posx, posy, min=0, max=100):
 					done = True
 			else:
 				done = True
-		elif key.c in range(32, 127) and len(command) < 16:
+		elif key.c in range(32, 127) and len(command) < 20:
 			libtcod.console_set_char(con, x + posx, posy, chr(key.c))  # print new character at appropriate position on screen
 			libtcod.console_set_char_foreground(con, x + posx, posy, libtcod.light_red)
 			libtcod.console_set_char(con, x + posx + 1, posy, chr(95))
