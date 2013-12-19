@@ -41,6 +41,7 @@ class Player(object):
 		self.hunger = 500
 		self.money = 0
 		self.mks = 0
+		self.skill_points = 0
 		self.skills = [Skill('Sword', 'Combat', 0, 0), Skill('Axe', 'Combat', 0, 0), Skill('Mace', 'Combat', 0, 0),
 						Skill('Dagger', 'Combat', 0, 0), Skill('Polearm', 'Combat', 0, 0), Skill('Staff', 'Combat', 0, 0),
 						Skill('Bow', 'Combat', 0, 0), Skill('Missile', 'Combat', 0, 0), Skill('Hands', 'Combat', 0, 0),
@@ -176,7 +177,7 @@ class Player(object):
 		if 'stuck' in self.flags:
 			dice = util.roll_dice(1, 120)
 			if self.strength + (self.karma / 2) >= dice:
-				game.message.new('You can move freely again!', game.turns)
+				game.message.new('You can move freely again.', game.turns)
 				self.flags.remove('stuck')
 		if 'poison' in self.flags:
 			dice = util.roll_dice(1, 120)
@@ -233,9 +234,9 @@ class Player(object):
 			self.inventory.pop(pos)
 
 		if qty == 1:
-			game.message.new('You drop ' + obj.item.get_name(True), game.turns, libtcod.red)
+			game.message.new('You drop ' + obj.item.get_name(True) + '.', game.turns, libtcod.red)
 		else:
-			game.message.new('You drop ' + str(qty) + ' ' + obj.item.get_plural_name(), game.turns, libtcod.red)
+			game.message.new('You drop ' + str(qty) + ' ' + obj.item.get_plural_name() + '.', game.turns, libtcod.red)
 		if game.current_map.tile[game.char.x][game.char.y]['type'] == 'trap':
 			if self.is_above_ground():
 				util.trigger_trap(game.char.x, game.char.y, obj.item.article.capitalize() + obj.item.get_name())
@@ -281,11 +282,11 @@ class Player(object):
 		self.stats_bonus()
 		if switch:
 			if self.inventory[item].type != 'missile':
-				game.message.new('You unequip the ' + old.get_name() + ' before equipping the ' + self.inventory[item].get_name(), game.turns, libtcod.green)
+				game.message.new('You unequip the ' + old.get_name() + ' before equipping the ' + self.inventory[item].get_name() + '.', game.turns, libtcod.green)
 			else:
-				game.message.new('You change missile types', game.turns, libtcod.green)
+				game.message.new('You change missile types.', game.turns, libtcod.green)
 		else:
-			game.message.new('You equip the ' + self.inventory[item].get_name(), game.turns, libtcod.green)
+			game.message.new('You equip the ' + self.inventory[item].get_name() + '.', game.turns, libtcod.green)
 		self.inventory.pop(item)
 		game.player_move = True
 
@@ -317,6 +318,7 @@ class Player(object):
 	# stuff to do when you gain a level
 	def gain_level(self):
 		self.level += 1
+		game.message.new('You are now level ' + str(self.level) + '!', game.turns, libtcod.green)
 		if self.profession == 'Fighter':
 			hp_increase = libtcod.random_get_int(game.rnd, 2, game.FIGHTER_HP_GAIN)
 			mp_increase = libtcod.random_get_int(game.rnd, 2, game.FIGHTER_MP_GAIN)
@@ -342,6 +344,13 @@ class Player(object):
 			mp_increase = libtcod.random_get_int(game.rnd, 2, game.EXPLORER_MP_GAIN)
 			stamina_increase = libtcod.random_get_int(game.rnd, 2, game.EXPLORER_STAMINA_GAIN)
 			self.stat_gain(20, 20, 20, 20, 20)
+			self.skill_points += 2
+		self.skill_points += libtcod.random_get_int(game.rnd, 8, 15)
+		if self.wisdom > 9:
+			self.skill_points += (self.wisdom - 10) / 3
+		else:
+			self.skill_points += (self.wisdom - 12) / 3
+		game.message.new('You have ' + str(self.skill_points) + ' skill points to spend.', game.turns, libtcod.light_fuchsia)
 		self.base_health += hp_increase
 		self.base_mana += mp_increase
 		self.base_stamina += stamina_increase
@@ -357,7 +366,6 @@ class Player(object):
 		self.xp += xp
 		if self.xp >= game.EXPERIENCE_TABLES[self.level]:
 			self.gain_level()
-			game.message.new('You are now level ' + str(self.level) + '!', game.turns, libtcod.green)
 
 	# heals the amount of health
 	def heal_health(self, hp):
@@ -366,7 +374,7 @@ class Player(object):
 		if self.health > self.max_health:
 			self.health = self.max_health
 		if old_health < self.health:
-			game.hp_anim.append([game.char.x, game.char.y, str(self.health - old_health), libtcod.green, 0])
+			game.hp_anim.append({'x': game.char.x, 'y': game.char.y, 'damage': str(self.health - old_health), 'color': libtcod.green, 'turns': 0, 'icon': game.char.char, 'icon_color': libtcod.green, 'player': True})
 
 	# heals the amount of mana
 	def heal_mana(self, mp):
@@ -493,21 +501,28 @@ class Player(object):
 	# stat gain when you raise a level
 	def stat_gain(self, st, dx, iq, wi, en):
 		fate = util.roll_dice(1, 100)
+		msg = 'You gain '
 		if fate <= st:
 			self.strength += 1
 			self.base_strength += 1
+			msg += 'strength!'
 		elif fate <= st + dx:
 			self.dexterity += 1
 			self.base_dexterity += 1
+			msg += 'dexterity!'
 		elif fate <= st + dx + iq:
 			self.intelligence += 1
 			self.base_intelligence += 1
+			msg += 'intelligence!'
 		elif fate <= st + dx + iq + wi:
 			self.wisdom += 1
 			self.base_wisdom += 1
+			msg += 'wisdom!'
 		elif fate <= st + dx + iq + wi + en:
 			self.endurance += 1
 			self.base_endurance += 1
+			msg += 'endurance!'
+		game.message.new(msg, game.turns, libtcod.light_fuchsia)
 
 	# calculates stats bonuses
 	def stats_bonus(self):
@@ -549,7 +564,7 @@ class Player(object):
 	# reduce your health
 	def take_damage(self, damage, source):
 		self.health -= damage
-		game.hp_anim.append([game.char.x, game.char.y, str(damage), libtcod.red, 0])
+		game.hp_anim.append({'x': game.char.x, 'y': game.char.y, 'damage': str(damage), 'color': libtcod.red, 'turns': 0, 'icon': game.char.char, 'icon_color': libtcod.red, 'player': True})
 		if self.is_dead():
 			game.message.new('You die...', game.turns, libtcod.light_orange)
 			game.message.new('*** Press space ***', game.turns)
@@ -563,7 +578,7 @@ class Player(object):
 	# unequip an item
 	def unequip(self, item):
 		self.inventory.append(self.equipment[item])
-		game.message.new('You unequip the ' + self.equipment[item].get_name(), game.turns, libtcod.red)
+		game.message.new('You unequip the ' + self.equipment[item].get_name() + '.', game.turns, libtcod.red)
 		self.equipment.pop(item)
 		self.stats_bonus()
 		game.player_move = True
@@ -580,9 +595,11 @@ class Skill(object):
 		self.name = name
 		self.category = cat
 		self.level = level
+		self.base_level = level
 		self.xp = xp
 		self.can_use = can_use
 		self.flag = flag
+		self.temp = 0
 
 	# set a skill active
 	def active(self):
@@ -590,15 +607,16 @@ class Skill(object):
 			game.message.new("You can't use this skill that way.", game.turns)
 		elif self.flag in game.player.flags:
 			game.player.flags.remove(self.flag)
-			game.message.new('The ' + self.name + ' skill is now inactive', game.turns)
+			game.message.new('The ' + self.name + ' skill is now inactive.', game.turns)
 		else:
 			game.player.flags.append(self.flag)
-			game.message.new('The ' + self.name + ' skill is now active', game.turns)
+			game.message.new('The ' + self.name + ' skill is now active.', game.turns)
 
 	# raises your skill level
 	def gain_level(self):
 		if self.level < 100:
 			self.level += 1
+			self.base_level += 1
 			self.xp = 0
 			game.message.new('Your ' + self.name + ' skill increased to ' + str(self.level) + '!', game.turns, libtcod.light_green)
 
@@ -609,11 +627,13 @@ class Skill(object):
 			if self.xp >= (self.level + 1) * 5:
 				self.xp = 0
 				self.level += 1
+				self.base_level += 1
 				game.message.new('Your ' + self.name + ' skill increased to ' + str(self.level) + '!', game.turns, libtcod.light_green)
 
 	# set skill level
 	def set_level(self, level):
 		self.level = level
+		self.base_level = level
 
 
 class Time(object):

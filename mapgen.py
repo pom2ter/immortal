@@ -56,7 +56,7 @@ class Map(object):
 				y = libtcod.random_get_int(game.rnd, 0, self.map_height - 1)
 			game.char.x = x
 			game.char.y = y
-			game.message.new('You suddenly feel disoriented', game.turns)
+			game.message.new('You suddenly feel disoriented.', game.turns)
 
 	# create a cavern of maze type map
 	def create_cave_maze(self, type, floor, wall, prob, oper):

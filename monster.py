@@ -31,7 +31,7 @@ class Monster(object):
 		defender = util.roll_dice(1, 50)
 		if (attacker != 1 and defender != 50 and ((attacker + self.attack_rating) >= (defender + game.player.defense_rating()) or attacker == 50 or defender == 1)) or game.player.is_disabled():
 			damage = self.damage.roll_dice()
-			game.message.new(self.article.capitalize() + self.get_name() + ' hits you for ' + str(damage) + ' pts of damage', game.turns, libtcod.light_red)
+			game.message.new(self.article.capitalize() + self.get_name() + ' hits you for ' + str(damage) + ' pts of damage.', game.turns, libtcod.light_red)
 			game.player.take_damage(damage, self.article + self.name)
 		else:
 			game.message.new(self.article.capitalize() + self.get_name() + ' attacks you but misses.', game.turns)
@@ -164,7 +164,7 @@ class Monster(object):
 	def take_damage(self, x, y, damage, source, show=False):
 		self.health -= damage
 		if libtcod.map_is_in_fov(game.fov_map, x, y):
-			game.hp_anim.append([x, y, str(-damage), libtcod.light_yellow, 0])
+			game.hp_anim.append({'x': x, 'y': y, 'damage': str(-damage), 'color': libtcod.light_yellow, 'turns': 0, 'icon': self.icon, 'icon_color': libtcod.red})
 		if source == 'player':
 			if "sleep" in self.flags:
 				if libtcod.map_is_in_fov(game.fov_map, x, y):

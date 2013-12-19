@@ -306,7 +306,7 @@ def items_at_feet():
 		if objects[0].item.type == 'money':
 			commands.pickup_item()
 		else:
-			game.message.new('You see ' + objects[0].item.get_name(True), game.turns)
+			game.message.new('You see ' + objects[0].item.get_name(True) + '.', game.turns)
 
 
 # print loading maps message
@@ -332,7 +332,7 @@ def mouse_auto_attack(x, y, target):
 def mouse_auto_move():
 	for obj in game.current_map.objects:
 		if libtcod.map_is_in_fov(game.fov_map, obj.x, obj.y) and obj.entity is not None:
-			game.message.new('Auto-move aborted: Monster is near', game.turns)
+			game.message.new('Auto-move aborted: Monster is near.', game.turns)
 			game.mouse_move = False
 			return False
 	return True
@@ -663,7 +663,7 @@ def initialize_fov(update=False):
 					libtcod.map_set_properties(game.fov_map, x, y, not 'block_sight' in game.current_map.tile[x][y], 'explored' in game.current_map.tile[x][y] and not 'blocked' in game.current_map.tile[x][y])
 					if 'invisible' in game.current_map.tile[x][y] and game.current_map.tile[x][y]['type'] == 'trap' and libtcod.map_is_in_fov(game.fov_map, x, y):
 						game.traps.append((x, y))
-	# compute paths using astar algorithm
+	# compute paths using a*star algorithm
 	game.path = libtcod.path_new_using_function(game.current_map.map_width, game.current_map.map_height, path_func)
 	libtcod.path_compute(game.path, game.char.x, game.char.y, game.path_dx, game.path_dy)
 #	t1 = libtcod.sys_elapsed_seconds()
@@ -804,15 +804,28 @@ def render_player_stats_panel():
 
 
 # floating text animations for damage and healing
-# stuff to do: anim should start and end before next anim
 def render_floating_text_animations():
-	for i, (x, y, line, color, turn) in enumerate(reversed(game.hp_anim)):
-		libtcod.console_set_default_foreground(0, libtcod.color_lerp(libtcod.black, color, 1 - ((turn / 14) * 0.2)))
-		if game.MAP_Y + y - game.cury - (turn / 14) > 0:
-			libtcod.console_print_ex(0, game.MAP_X + x - game.curx, game.MAP_Y + y - game.cury - (turn / 14), libtcod.BKGND_NONE, libtcod.CENTER, line)
-		game.hp_anim[len(game.hp_anim) - i - 1] = (x, y, line, color, turn + 1)
-		if turn > 56:
-			game.hp_anim.pop(len(game.hp_anim) - i - 1)
+	fps = 8
+	try:
+		for i, value in enumerate(reversed(game.hp_anim)):
+			if game.MAP_Y + value['y'] - game.cury - (value['turns'] / fps) > 0:
+				libtcod.console_set_default_foreground(0, libtcod.color_lerp(libtcod.black, value['color'], 1 - ((value['turns'] / fps) * 0.2)))
+				if 'player' in value:
+					libtcod.console_print_ex(0, game.MAP_X + game.char.x - game.curx, game.MAP_Y + game.char.y - game.cury - (value['turns'] / fps), libtcod.BKGND_NONE, libtcod.CENTER, value['damage'])
+				else:
+					libtcod.console_print_ex(0, game.MAP_X + value['x'] - game.curx, game.MAP_Y + value['y'] - game.cury - (value['turns'] / fps), libtcod.BKGND_NONE, libtcod.CENTER, value['damage'])
+				if value['turns'] <= fps * 1.5:
+					libtcod.console_set_default_foreground(0, value['icon_color'])
+					if 'player' in value:
+						libtcod.console_print_ex(0, game.MAP_X + game.char.x - game.curx, game.MAP_Y + game.char.y - game.cury, libtcod.BKGND_NONE, libtcod.CENTER, value['icon'])
+					else:
+						libtcod.console_print_ex(0, game.MAP_X + value['x'] - game.curx, game.MAP_Y + value['y'] - game.cury, libtcod.BKGND_NONE, libtcod.CENTER, value['icon'])
+			value.update({'turns': value['turns'] + 1})
+			if value['turns'] > fps * 4:
+				game.hp_anim.pop(len(game.hp_anim) - i - 1)
+	except IndexError:
+		print "Error in render floating text animations function"
+		print game.hp_anim
 
 
 # return new colors for tiles animations
@@ -921,7 +934,7 @@ def render_map():
 					skill = game.player.find_skill('Mythology')
 					if (game.player.skills[skill].level * 0.8) + 20 >= roll_dice(1, 100):
 						obj.entity.flags.append('identified')
-						game.message.new('You properly identify the ' + obj.entity.unidentified_name + ' as ' + obj.entity.get_name(True), game.turns)
+						game.message.new('You properly identify the ' + obj.entity.unidentified_name + ' as ' + obj.entity.get_name(True) + '.', game.turns)
 						game.player.skills[skill].gain_xp(3)
 			if obj.entity is not None and not obj.entity.is_identified():
 				obj.draw(game.con, libtcod.white)
@@ -971,4 +984,5 @@ def render_map():
 	libtcod.console_print_rect(0, game.MAP_X, game.MAP_Y, game.MAP_WIDTH - 18, game.MAP_HEIGHT, get_names_under_mouse())
 	if game.debug.enable:
 		libtcod.console_print_ex(0, game.MAP_X + game.MAP_WIDTH - 1, game.MAP_Y, libtcod.BKGND_NONE, libtcod.RIGHT, str(game.gametime.hour) + ':' + str(game.gametime.minute).rjust(2, '0') + ' (%3d fps)' % libtcod.sys_get_fps())
-	render_floating_text_animations()
+	if game.hp_anim:
+		render_floating_text_animations()

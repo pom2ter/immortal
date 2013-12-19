@@ -127,11 +127,11 @@ class Item(object):
 				multiplier = 100
 			else:
 				gold = util.roll_dice(2, 15 * game.current_map.threat_level)
-			game.message.new('You pick up ' + str(gold) + ' ' + self.name, game.turns, libtcod.gold)
+			game.message.new('You pick up ' + str(gold) + ' ' + self.name + '.', game.turns, libtcod.gold)
 			game.player.money += gold * multiplier
 		else:
 			self.quantity = 1
-			game.message.new('You pick up ' + self.get_name(True), game.turns, libtcod.green)
+			game.message.new('You pick up ' + self.get_name(True) + '.', game.turns, libtcod.green)
 			self.turn_created = ts
 			game.player.inventory.append(self)
 		game.player_move = True
@@ -167,15 +167,15 @@ class Item(object):
 				if self.active:
 					self.active = False
 					game.fov_torch = any('torchlight' in x.flags and x.active for x in game.player.inventory)
-					game.message.new('You extenguish the ' + self.name, game.turns, libtcod.gold)
+					game.message.new('You extenguish the ' + self.name + '.', game.turns, libtcod.gold)
 				else:
 					game.fov_torch = True
 					self.active = True
-					game.message.new('You light the ' + self.name, game.turns, libtcod.gold)
+					game.message.new('You light the ' + self.name + '.', game.turns, libtcod.gold)
 				game.fov_recompute = True
 
 			if self.type == 'food':
-				game.message.new('You eat the ' + self.name, game.turns, libtcod.light_blue)
+				game.message.new('You eat the ' + self.name + '.', game.turns, libtcod.light_blue)
 				game.player.check_hunger_level(-self.hunger)
 			self.lose_charge()
 			game.player_move = True

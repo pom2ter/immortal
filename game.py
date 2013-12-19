@@ -17,7 +17,7 @@ import death
 import test
 import debug as dbg
 
-VERSION = '0.3.5.6 Alpha'
+VERSION = '0.3.6 Alpha'
 
 #size of the gui windows
 MAP_WIDTH = 71
@@ -102,6 +102,7 @@ traps = []
 old_msg = 0
 draw_gui = True
 draw_map = True
+rnd = 0
 
 #character generation stuff
 RACES = ['Human', 'Elf', 'Dwarf', 'Halfling']
@@ -116,18 +117,14 @@ CLASS_DESC = ["Fighters are master of arms especially melee weapons but their ma
 			"Priests are decent fighters that can use defensive and curative magic. Their primary attribute is wisdom. They start with some knowledge in both combat and magic skills.",
 			"Mages are the opposite of fighters; great with magic, weak with weapons (except staves). Their primary attribute is intelligence. This is a good class for elves. They start with moderate knowledge in all magic skills.",
 			"An explorer is basically a classless character so he doesnt have any specialties but gains more skill points per level to compensate. This 'class' is for those who likes to fine-tune their character from the very beginning."]
-BASE_STATS = {'Human': {'stats': [9, 9, 9, 9, 9]}, 'HumanFighter': {'stats': [12, 9, 7, 8, 11]},
-			'HumanRogue': {'stats': [10, 12, 8, 9, 8]}, 'HumanPriest': {'stats': [10, 8, 9, 12, 8]},
-			'HumanMage': {'stats': [7, 9, 13, 10, 8]}, 'HumanExplorer': {'stats': [9, 9, 9, 9, 9]},
-			'Elf': {'stats': [7, 9, 11, 10, 8]}, 'ElfFighter': {'stats': [10, 9, 9, 9, 10]},
-			'ElfRogue': {'stats': [8, 12, 10, 10, 7]}, 'ElfPriest': {'stats': [8, 8, 11, 13, 7]},
-			'ElfMage': {'stats': [5, 9, 15, 11, 7]}, 'ElfExplorer': {'stats': [7, 9, 11, 10, 8]},
-			'Dwarf': {'stats': [11, 7, 7, 8, 12]}, 'DwarfFighter': {'stats': [14, 7, 5, 7, 14]},
-			'DwarfRogue': {'stats': [12, 10, 6, 8, 11]}, 'DwarfPriest': {'stats': [12, 6, 7, 11, 11]},
-			'DwarfMage': {'stats': [9, 7, 11, 9, 11]}, 'DwarfExplorer': {'stats': [11, 7, 7, 8, 12]},
-			'Halfling': {'stats': [8, 10, 10, 8, 9]}, 'HalflingFighter': {'stats': [11, 10, 8, 7, 11]},
-			'HalflingRogue': {'stats': [9, 13, 9, 8, 8]}, 'HalflingPriest': {'stats': [9, 9, 10, 11, 8]},
-			'HalflingMage': {'stats': [6, 10, 14, 9, 8]}, 'HalflingExplorer': {'stats': [8, 10, 10, 8, 9]}}
+BASE_STATS = {'Human': [9, 9, 9, 9, 9], 'HumanFighter': [12, 9, 7, 8, 11], 'HumanRogue': [10, 12, 8, 9, 8],
+			'HumanPriest': [10, 8, 9, 12, 8], 'HumanMage': [7, 9, 13, 10, 8], 'HumanExplorer': [9, 9, 9, 9, 9],
+			'Elf': [7, 9, 11, 10, 8], 'ElfFighter': [10, 9, 9, 9, 10], 'ElfRogue': [8, 12, 10, 10, 7],
+			'ElfPriest': [8, 8, 11, 13, 7], 'ElfMage': [5, 9, 15, 11, 7], 'ElfExplorer': [7, 9, 11, 10, 8],
+			'Dwarf': [11, 7, 7, 8, 12], 'DwarfFighter': [14, 7, 5, 7, 14], 'DwarfRogue': [12, 10, 6, 8, 11],
+			'DwarfPriest': [12, 6, 7, 11, 11], 'DwarfMage': [9, 7, 11, 9, 11], 'DwarfExplorer': [11, 7, 7, 8, 12],
+			'Halfling': [8, 10, 10, 8, 9], 'HalflingFighter': [11, 10, 8, 7, 11], 'HalflingRogue': [9, 13, 9, 8, 8],
+			'HalflingPriest': [9, 9, 10, 11, 8], 'HalflingMage': [6, 10, 14, 9, 8], 'HalflingExplorer': [8, 10, 10, 8, 9]}
 
 EXPERIENCE_TABLES = [0, 100, 250, 500, 800, 1250, 1750, 2450, 3250, 4150, 5200, 6400, 7800, 9400, 11200, 13200, 16400, 18800, 21400, 24200, 27000]
 FIGHTER_HP_GAIN = 10
@@ -180,7 +177,6 @@ chest_trap = ['fx_fireball', 'fx_poison_gas', 'fx_sleep_gas', 'fx_teleport', 'fx
 # spells, scrolls, tomes, npcs, towns, quests, biomes...
 # mouse support everywhere
 # change save system (sqlite?)
-# level up skill distribution
 
 
 class Game(object):
@@ -313,7 +309,7 @@ class Game(object):
 									if current_map.tile_is_invisible(obj.x, obj.y):
 										util.trigger_trap(obj.x, obj.y, obj.entity.article.capitalize() + obj.entity.get_name())
 									elif libtcod.map_is_in_fov(fov_map, obj.x, obj.y):
-										message.new('The ' + obj.entity.get_name() + ' sidestep the ' + current_map.tile[obj.x][obj.y]['name'], turns)
+										message.new('The ' + obj.entity.get_name() + ' sidestep the ' + current_map.tile[obj.x][obj.y]['name'] + '.', turns)
 							obj.entity.check_condition(obj.x, obj.y)
 							if obj.entity.is_dead():
 								if libtcod.map_is_in_fov(fov_map, obj.x, obj.y):
@@ -392,7 +388,7 @@ class Game(object):
 
 	# brings up the main menu
 	def main_menu(self):
-		contents = ['Quick Start', 'Start a new game', 'Load a saved game', 'Read the manual', 'Change settings', 'View high scores', 'Quit game']
+		contents = ['Quick start', 'Start a new game', 'Load a saved game', 'Read the manual', 'Change settings', 'View high scores', 'Quit game']
 		img = libtcod.image_load('title.png')
 		libtcod.image_scale(img, int(SCREEN_WIDTH * 2.2), SCREEN_HEIGHT * 2)
 		choice = 0

@@ -143,11 +143,11 @@ def quick_start():
 	while game.player.name.lower() in game.savefiles:
 		game.player.name = libtcod.namegen_generate(game.player.gender.lower())
 
-	game.player.base_strength = game.BASE_STATS[game.player.race + game.player.profession]['stats'][0] + libtcod.random_get_int(game.rnd, 0, 6)
-	game.player.base_dexterity = game.BASE_STATS[game.player.race + game.player.profession]['stats'][1] + libtcod.random_get_int(game.rnd, 0, 6)
-	game.player.base_intelligence = game.BASE_STATS[game.player.race + game.player.profession]['stats'][2] + libtcod.random_get_int(game.rnd, 0, 6)
-	game.player.base_wisdom = game.BASE_STATS[game.player.race + game.player.profession]['stats'][3] + libtcod.random_get_int(game.rnd, 0, 6)
-	game.player.base_endurance = game.BASE_STATS[game.player.race + game.player.profession]['stats'][4] + libtcod.random_get_int(game.rnd, 0, 6)
+	game.player.base_strength = game.BASE_STATS[game.player.race + game.player.profession][0] + libtcod.random_get_int(game.rnd, 0, 6)
+	game.player.base_dexterity = game.BASE_STATS[game.player.race + game.player.profession][1] + libtcod.random_get_int(game.rnd, 0, 6)
+	game.player.base_intelligence = game.BASE_STATS[game.player.race + game.player.profession][2] + libtcod.random_get_int(game.rnd, 0, 6)
+	game.player.base_wisdom = game.BASE_STATS[game.player.race + game.player.profession][3] + libtcod.random_get_int(game.rnd, 0, 6)
+	game.player.base_endurance = game.BASE_STATS[game.player.race + game.player.profession][4] + libtcod.random_get_int(game.rnd, 0, 6)
 	game.player.base_karma = libtcod.random_get_int(game.rnd, 0, 20)
 	starting_stats()
 	return 'playing'
@@ -176,7 +176,7 @@ def show_stats_panel(stats, attr=-1, roll=-1):
 
 	if not attr == -1:
 		for i in range(5):
-			libtcod.console_print_ex(stats, 17, i + 8, libtcod.BKGND_SET, libtcod.RIGHT, str(game.BASE_STATS[game.player.race + game.player.profession]['stats'][i]))
+			libtcod.console_print_ex(stats, 17, i + 8, libtcod.BKGND_SET, libtcod.RIGHT, str(game.BASE_STATS[game.player.race + game.player.profession][i]))
 
 	if not roll == -1:
 		stat = []
@@ -188,12 +188,12 @@ def show_stats_panel(stats, attr=-1, roll=-1):
 		stat.append(libtcod.random_get_int(game.rnd, 0, 20))
 		for i in range(5):
 			libtcod.console_print(stats, 23, i + 8, str(stat[i]))
-			libtcod.console_print_ex(stats, 30, i + 8, libtcod.BKGND_SET, libtcod.RIGHT, ' ' + str(game.BASE_STATS[game.player.race + game.player.profession]['stats'][i] + stat[i]))
-		game.player.base_strength = game.BASE_STATS[game.player.race + game.player.profession]['stats'][0] + stat[0]
-		game.player.base_dexterity = game.BASE_STATS[game.player.race + game.player.profession]['stats'][1] + stat[1]
-		game.player.base_intelligence = game.BASE_STATS[game.player.race + game.player.profession]['stats'][2] + stat[2]
-		game.player.base_wisdom = game.BASE_STATS[game.player.race + game.player.profession]['stats'][3] + stat[3]
-		game.player.base_endurance = game.BASE_STATS[game.player.race + game.player.profession]['stats'][4] + stat[4]
+			libtcod.console_print_ex(stats, 30, i + 8, libtcod.BKGND_SET, libtcod.RIGHT, ' ' + str(game.BASE_STATS[game.player.race + game.player.profession][i] + stat[i]))
+		game.player.base_strength = game.BASE_STATS[game.player.race + game.player.profession][0] + stat[0]
+		game.player.base_dexterity = game.BASE_STATS[game.player.race + game.player.profession][1] + stat[1]
+		game.player.base_intelligence = game.BASE_STATS[game.player.race + game.player.profession][2] + stat[2]
+		game.player.base_wisdom = game.BASE_STATS[game.player.race + game.player.profession][3] + stat[3]
+		game.player.base_endurance = game.BASE_STATS[game.player.race + game.player.profession][4] + stat[4]
 		game.player.base_karma = stat[5]
 		starting_stats()
 

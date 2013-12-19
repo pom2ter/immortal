@@ -126,6 +126,7 @@ def load_game():
 			game.times_saved = pickle.load(f)
 			f.close()
 			fetch_autosave()
+			game.rnd = libtcod.random_new_from_seed(game.rnd)
 			game.char = game.current_map.objects[0]
 			game.worldmap.create_map_images(1)
 			game.message.empty()

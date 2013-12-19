@@ -1,6 +1,7 @@
 import libtcodpy as libtcod
 import game
 import IO
+import sheet
 import util
 
 
@@ -90,12 +91,12 @@ def keyboard_commands():
 				remove_item()
 			elif key_char == 'u':
 				use_item()
-			elif key_char == 'z':
-				ztats()
 			elif key_char == '<':
 				climb_up_stairs()
 			elif key_char == '>':
 				climb_down_stairs()
+			elif key_char == 'z':
+				sheet.character_sheet()
 			elif key_char == '?':
 				help()
 			else:
@@ -157,7 +158,7 @@ def player_move(dx, dy):
 				if game.current_map.tile_is_invisible(game.char.x, game.char.y):
 					util.trigger_trap(game.char.x, game.char.y)
 				else:
-					game.message.new('You sidestep the ' + game.current_map.tile[game.char.x][game.char.y]['name'], game.turns)
+					game.message.new('You sidestep the ' + game.current_map.tile[game.char.x][game.char.y]['name'] + '.', game.turns)
 			if game.current_map.tile[game.char.x][game.char.y]['name'] in ['deep water', 'very deep water']:
 				if 'swimming' not in game.player.flags:
 					game.player.flags.append('swimming')
@@ -875,195 +876,3 @@ def wait_turn():
 	game.message.new('Time passes...', game.turns)
 	game.fov_recompute = True
 	game.player_move = True
-
-
-# character sheet for stats
-def ztats_attributes(con, width, height):
-	ztats_box(con, width, height, ' Player stats ')
-	libtcod.console_set_color_control(libtcod.COLCTRL_1, libtcod.green, libtcod.black)
-	libtcod.console_set_color_control(libtcod.COLCTRL_2, libtcod.red, libtcod.black)
-	libtcod.console_set_color_control(libtcod.COLCTRL_3, libtcod.gold, libtcod.black)
-	libtcod.console_set_color_control(libtcod.COLCTRL_4, libtcod.silver, libtcod.black)
-	libtcod.console_set_color_control(libtcod.COLCTRL_5, libtcod.copper, libtcod.black)
-	libtcod.console_print(con, 2, 2, game.player.name + ', a level ' + str(game.player.level) + ' ' + game.player.gender + ' ' + game.player.race + ' ' + game.player.profession)
-	g, s, c = util.convert_coins(game.player.money)
-
-	if game.player.strength > game.player.base_strength:
-		libtcod.console_print(con, 2, 4, 'Strength     : %c%i%c' % (libtcod.COLCTRL_1, game.player.strength, libtcod.COLCTRL_STOP))
-	elif game.player.strength < game.player.base_strength:
-		libtcod.console_print(con, 2, 4, 'Strength     : %c%i%c' % (libtcod.COLCTRL_2, game.player.strength, libtcod.COLCTRL_STOP))
-	else:
-		libtcod.console_print(con, 2, 4, 'Strength     : ' + str(game.player.strength))
-
-	if game.player.dexterity > game.player.base_dexterity:
-		libtcod.console_print(con, 2, 5, 'Dexterity    : %c%i%c' % (libtcod.COLCTRL_1, game.player.dexterity, libtcod.COLCTRL_STOP))
-	elif game.player.dexterity < game.player.base_dexterity:
-		libtcod.console_print(con, 2, 5, 'Dexterity    : %c%i%c' % (libtcod.COLCTRL_2, game.player.dexterity, libtcod.COLCTRL_STOP))
-	else:
-		libtcod.console_print(con, 2, 5, 'Dexterity    : ' + str(game.player.dexterity))
-
-	if game.player.intelligence > game.player.intelligence:
-		libtcod.console_print(con, 2, 6, 'Intelligence : %c%i%c' % (libtcod.COLCTRL_1, game.player.intelligence, libtcod.COLCTRL_STOP))
-	elif game.player.intelligence < game.player.intelligence:
-		libtcod.console_print(con, 2, 6, 'Intelligence : %c%i%c' % (libtcod.COLCTRL_2, game.player.intelligence, libtcod.COLCTRL_STOP))
-	else:
-		libtcod.console_print(con, 2, 6, 'Intelligence : ' + str(game.player.intelligence))
-
-	if game.player.wisdom > game.player.wisdom:
-		libtcod.console_print(con, 2, 7, 'Wisdom       : %c%i%c' % (libtcod.COLCTRL_1, game.player.wisdom, libtcod.COLCTRL_STOP))
-	elif game.player.wisdom < game.player.wisdom:
-		libtcod.console_print(con, 2, 7, 'Wisdom       : %c%i%c' % (libtcod.COLCTRL_2, game.player.wisdom, libtcod.COLCTRL_STOP))
-	else:
-		libtcod.console_print(con, 2, 7, 'Wisdom       : ' + str(game.player.wisdom))
-
-	if game.player.endurance > game.player.endurance:
-		libtcod.console_print(con, 2, 8, 'Endurance    : %c%i%c' % (libtcod.COLCTRL_1, game.player.endurance, libtcod.COLCTRL_STOP))
-	elif game.player.endurance < game.player.endurance:
-		libtcod.console_print(con, 2, 8, 'Endurance    : %c%i%c' % (libtcod.COLCTRL_2, game.player.endurance, libtcod.COLCTRL_STOP))
-	else:
-		libtcod.console_print(con, 2, 8, 'Endurance    : ' + str(game.player.endurance))
-	libtcod.console_print(con, 2, 9, 'Karma        : ' + str(game.player.karma))
-
-	libtcod.console_print(con, 30, 4, 'Health     : ' + str(game.player.health) + '/' + str(game.player.max_health))
-	libtcod.console_print(con, 30, 5, 'Stamina    : ' + str(game.player.stamina) + '/' + str(game.player.max_stamina))
-	libtcod.console_print(con, 30, 6, 'Mana       : ' + str(game.player.mana) + '/' + str(game.player.max_mana))
-	libtcod.console_print(con, 30, 7, 'Experience : ' + str(game.player.xp))
-	libtcod.console_print(con, 30, 8, 'Coins      : %c%s%c%c%c%c%i %c%s%c%c%c%c%i %c%s%c%c%c%c%i%c' % (libtcod.COLCTRL_3, chr(23), libtcod.COLCTRL_FORE_RGB, 255, 255, 255, g, libtcod.COLCTRL_4, chr(23), libtcod.COLCTRL_FORE_RGB, 255, 255, 255, s, libtcod.COLCTRL_5, chr(23), libtcod.COLCTRL_FORE_RGB, 255, 255, 255, c, libtcod.COLCTRL_STOP))
-
-	libtcod.console_print(con, 2, 11, 'Attack Rating     : ' + str(game.player.attack_rating()))
-	libtcod.console_print(con, 2, 12, 'Defense Rating    : ' + str(game.player.defense_rating()))
-	libtcod.console_print(con, 2, 13, 'Carrying Capacity : ' + str(game.player.weight_carried()) + ' / ' + str(game.player.max_carrying_capacity()) + ' lbs')
-
-
-# character sheet for skills
-def ztats_skills(con, width, height):
-	ztats_box(con, width, height, ' Skills ')
-	skills_c, skills_p, skills_a = [], [], []
-	for i in game.player.skills:
-		if i.category == 'Combat':
-			skills_c.append(i)
-		if i.category == 'Physical':
-			skills_p.append(i)
-		if i.category == 'Academic':
-			skills_a.append(i)
-	libtcod.console_print(con, 2, 2, 'Combat')
-	for i in range(len(skills_c)):
-		libtcod.console_print(con, 2, i + 4, skills_c[i].name)
-		libtcod.console_print(con, 13, i + 4, str(skills_c[i].level))
-	libtcod.console_print(con, 20, 2, 'Physical')
-	for i in range(len(skills_p)):
-		libtcod.console_print(con, 20, i + 4, skills_p[i].name)
-		libtcod.console_print(con, 34, i + 4, str(skills_p[i].level))
-	libtcod.console_print(con, 40, 2, 'Academic')
-	for i in range(len(skills_a)):
-		libtcod.console_print(con, 40, i + 4, skills_a[i].name)
-		libtcod.console_print(con, 54, i + 4, str(skills_a[i].level))
-
-
-# character sheet for equipment
-def ztats_equipment(con, width, height):
-	ztats_box(con, width, height, ' Equipment ')
-	libtcod.console_print(con, 2, 2, 'Head       :')
-	libtcod.console_print(con, 2, 3, 'Cloak      :')
-	libtcod.console_print(con, 2, 4, 'Neck       :')
-	libtcod.console_print(con, 2, 5, 'Body       :')
-	libtcod.console_print(con, 2, 6, 'Right Hand :')
-	libtcod.console_print(con, 2, 7, 'Left Hand  :')
-	libtcod.console_print(con, 2, 8, 'Ring       :')
-	libtcod.console_print(con, 2, 9, 'Ring       :')
-	libtcod.console_print(con, 2, 10, 'Gauntlets  :')
-	libtcod.console_print(con, 2, 11, 'Boots      :')
-	libtcod.console_print(con, 2, 12, 'Missile(s) :')
-	ring = 0
-	for i in range(len(game.player.equipment)):
-		if 'armor_head' in game.player.equipment[i].flags:
-			y = 2
-		if 'armor_cloak' in game.player.equipment[i].flags:
-			y = 3
-		if 'armor_neck' in game.player.equipment[i].flags:
-			y = 4
-		if 'armor_body' in game.player.equipment[i].flags:
-			y = 5
-		if 'armor_ring' in game.player.equipment[i].flags:
-			ring += 1
-			y = 7 + ring
-		if 'armor_hands' in game.player.equipment[i].flags:
-			y = 10
-		if 'armor_feet' in game.player.equipment[i].flags:
-			y = 11
-		if game.player.equipment[i].type == 'weapon':
-			y = 6
-		if game.player.equipment[i].type == 'shield':
-			y = 7
-		if game.player.equipment[i].type == 'missile':
-			y = 12
-		libtcod.console_print(con, 13, y, ': ' + game.player.equipment[i].get_name())
-		libtcod.console_print_ex(con, width - 3, y, libtcod.BKGND_SET, libtcod.RIGHT, str(round(game.player.equipment[i].weight * game.player.equipment[i].quantity, 1)) + ' lbs')
-
-
-# character sheet for inventory
-def ztats_inventory(con, width, height):
-	ztats_box(con, width, height, ' Inventory ')
-	libtcod.console_set_color_control(libtcod.COLCTRL_1, libtcod.gray, libtcod.black)
-	output = util.item_stacking(game.player.inventory)
-	for i in range(len(output)):
-		text_left = output[i].get_name()
-		if output[i].duration > 0:
-			text_left += ' (' + str(output[i].duration) + ' turns left)'
-		text_right = str(round(output[i].weight * output[i].quantity, 1)) + ' lbs'
-		if output[i].is_identified() and output[i].quality == 0:
-			libtcod.console_print(con, 2, i + 2, '%c%s%c' % (libtcod.COLCTRL_1, text_left, libtcod.COLCTRL_STOP))
-			libtcod.console_print_ex(con, width - 3, i + 2, libtcod.BKGND_SET, libtcod.RIGHT, '%c%s%c' % (libtcod.COLCTRL_1, text_right, libtcod.COLCTRL_STOP))
-		else:
-			libtcod.console_print(con, 2, i + 2, text_left)
-			libtcod.console_print_ex(con, width - 3, i + 2, libtcod.BKGND_SET, libtcod.RIGHT, text_right)
-	util.reset_quantity(game.player.inventory)
-
-
-# character sheet box gui
-def ztats_box(con, width, height, header):
-	game.messages.box_gui(con, 0, 0, width, height)
-	libtcod.console_set_default_foreground(con, libtcod.black)
-	libtcod.console_set_default_background(con, libtcod.green)
-	libtcod.console_print_ex(con, width / 2, 0, libtcod.BKGND_SET, libtcod.CENTER, header)
-	libtcod.console_set_default_foreground(con, libtcod.white)
-	libtcod.console_set_default_background(con, libtcod.black)
-
-
-# character sheet
-def ztats():
-	width = 60
-	height = 21
-	screen = 0
-	exit = False
-	key = libtcod.Key()
-	stats = libtcod.console_new(width, height)
-
-	while exit is False:
-		if screen == 0:
-			ztats_attributes(stats, width, height)
-		elif screen == 1:
-			ztats_skills(stats, width, height)
-		elif screen == 2:
-			ztats_equipment(stats, width, height)
-		elif screen == 3:
-			ztats_inventory(stats, width, height)
-
-		libtcod.console_set_default_foreground(stats, libtcod.black)
-		libtcod.console_set_default_background(stats, libtcod.green)
-		libtcod.console_print_ex(stats, width / 2, height - 1, libtcod.BKGND_SET, libtcod.CENTER, ' [ Arrow Left/Right = Change Pages ] ')
-		libtcod.console_blit(stats, 0, 0, width, height, 0, ((game.MAP_WIDTH - width) / 2) + game.MAP_X, ((game.MAP_HEIGHT - height) / 2) + 1, 1.0, 1.0)
-		libtcod.console_flush()
-		libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, key, game.mouse, True)
-		if key.vk == libtcod.KEY_LEFT:
-			screen -= 1
-			if screen < 0:
-				screen = 3
-		elif key.vk == libtcod.KEY_RIGHT:
-			screen += 1
-			if screen > 3:
-				screen = 0
-		elif key.vk == libtcod.KEY_ESCAPE:
-			exit = True
-	libtcod.console_delete(stats)
-	game.draw_gui = True

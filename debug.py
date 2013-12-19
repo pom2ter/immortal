@@ -38,6 +38,15 @@ class Debug(object):
 		if choice.isdigit():
 			return int(choice)
 
+	def set_time(self):
+		libtcod.console_print(0, game.MAP_X, 1, 'Set time: ')
+		libtcod.console_flush()
+		choice = game.messages.input('', 0, game.MAP_X + 10, 1)
+		split = choice.split(':')
+		game.fov_recompute = True
+		game.draw_map = True
+		return int(split[0]), int(split[1])
+
 	def reset_dungeon_level(self):
 		temp_map = game.current_map
 		game.current_map = mapgen.Map(temp_map.location_name, temp_map.location_abbr, temp_map.location_id, temp_map.location_level, temp_map.threat_level, temp_map.map_width, temp_map.map_height, temp_map.type)
@@ -84,7 +93,7 @@ class Debug(object):
 
 	def menu(self):
 		if self.enable:
-			contents = ['Edit strength stat', 'Edit dexterity stat', 'Edit intelligence stat', 'Edit wisdom stat', 'Edit endurance stat', 'Edit karma stat', 'Edit gold', 'Heal health', 'Heal stamina', 'Heal mana', 'Add player flag', 'Fully identify inventory', 'Set hunger level', 'Reset dungeon level', 'Show current map', 'Hide current map', 'Teleport (manual)']
+			contents = ['Edit strength stat', 'Edit dexterity stat', 'Edit intelligence stat', 'Edit wisdom stat', 'Edit endurance stat', 'Edit karma stat', 'Edit gold', 'Heal health', 'Heal stamina', 'Heal mana', 'Add player flag', 'Fully identify inventory', 'Set hunger level', 'Set time', 'Reset dungeon level', 'Show current map', 'Hide current map', 'Teleport (manual)']
 			choice = game.messages.box('Debug Menu', None, 'center_mapx', 'center_mapy', 35, min(19, len(contents) + 4), contents, step=2, mouse_exit=True)
 			if choice == 0:
 				game.player.strength = self.edit_attribute('Strength: ')
@@ -113,11 +122,13 @@ class Debug(object):
 			if choice == 12:
 				game.player.hunger = self.set_hunger_level()
 			if choice == 13:
-				self.reset_dungeon_level()
+				(game.gametime.hour, game.gametime.minute) = self.set_time()
 			if choice == 14:
-				self.show_current_map()
+				self.reset_dungeon_level()
 			if choice == 15:
-				self.hide_current_map()
+				self.show_current_map()
 			if choice == 16:
+				self.hide_current_map()
+			if choice == 17:
 				self.teleport_anywhere_manual()
 			game.draw_gui = True
