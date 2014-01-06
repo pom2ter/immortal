@@ -128,6 +128,7 @@ def load_game():
 			fetch_autosave()
 			game.rnd = libtcod.random_new_from_seed(game.rnd)
 			game.char = game.current_map.objects[0]
+			game.mouse.lbutton_pressed = False
 			game.worldmap.create_map_images(1)
 			game.message.empty()
 			game.message.trim_history()
@@ -161,7 +162,7 @@ def load_manual():
 def load_settings():
 	if os.path.exists('settings.ini'):
 		contents = open('settings.ini', 'r')
-		while 1:
+		while True:
 			line = contents.readline().rstrip()
 			if line == '[Font]':
 				game.setting_font = contents.readline().rstrip()

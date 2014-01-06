@@ -85,7 +85,10 @@ def box(header, footer, startx, starty, width, height, contents, default=0, inpu
 		libtcod.console_blit(box, 0, 0, width, height, 0, startx, starty, 1.0, 0.9)
 		libtcod.console_flush()
 		if not nokeypress:
-			libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, libtcod.Key(), libtcod.Mouse(), True)
+			while True:
+				ev = libtcod.sys_check_for_event(libtcod.EVENT_ANY, game.kb, game.mouse)
+				if ev == libtcod.EVENT_KEY_PRESS or ev == libtcod.EVENT_MOUSE_RELEASE:
+					break
 		choice = default
 	libtcod.console_delete(box)
 	return choice
@@ -123,10 +126,7 @@ def box_gui(con, x1, y1, x2, y2, color=libtcod.green, lines=None):
 
 # output options in the text box
 def box_options(con, posx, posy, width, height, options, default, inv, step, mouse_exit, align, scrollbar):
-	choice = False
 	current, up, down = default, 0, height
-	key = libtcod.Key()
-	mouse = libtcod.Mouse()
 	lerp = 1.0
 	descending = True
 	scroll = 0
@@ -134,8 +134,8 @@ def box_options(con, posx, posy, width, height, options, default, inv, step, mou
 		scroll = 1
 		down -= 2
 
-	while not choice:
-		ev = libtcod.sys_check_for_event(libtcod.EVENT_ANY, key, mouse)
+	while True:
+		ev = libtcod.sys_check_for_event(libtcod.EVENT_ANY, game.kb, game.mouse)
 		libtcod.console_set_default_foreground(con, libtcod.grey)
 		libtcod.console_set_default_background(con, libtcod.black)
 		libtcod.console_rect(con, 1, 1, width, height, True, libtcod.BKGND_SET)
@@ -166,43 +166,66 @@ def box_options(con, posx, posy, width, height, options, default, inv, step, mou
 		libtcod.console_blit(con, 0, 0, width + 2, height + 2, 0, posx, posy, 1.0, 0.9)
 		libtcod.console_flush()
 
+		(mx, my) = (game.mouse.cx, game.mouse.cy)
 		if ev == libtcod.EVENT_MOUSE_MOVE:
-			(mx, my) = (mouse.cx, mouse.cy)
 			if my in range(posy + step, height + posy + step) and mx in range(posx + step, width + posx + 2 - step):
 				mpos = my - posy - step + up
 				if mpos <= len(options) - 1:
 					current = mpos
 
-		if key.vk == libtcod.KEY_DOWN and ev == libtcod.EVENT_KEY_PRESS:
-			current = (current + 1) % len(options)
-			if current == down:
-				down += 1
-				up += 1
-			if current == 0:
-				down = height
-				up = 0
-				if scrollbar:
-					down -= 2
-			lerp = 1.0
-			descending = True
-		elif key.vk == libtcod.KEY_UP and ev == libtcod.EVENT_KEY_PRESS:
-			current = (current - 1) % len(options)
-			if current < up:
+		if ev == libtcod.EVENT_MOUSE_RELEASE:
+			if mouse_exit and game.mouse.lbutton_pressed and mx == width + posx - 2 and my == posy:
+				current = -1
+				break
+			elif game.mouse.wheel_up and scrollbar:
 				up -= 1
-				down -= 1
-			if current == len(options) - 1:
-				if current > height - 3:
-					up = len(options) - height
+				if up == -1:
+					down = height - 2
+					up = 0
+				else:
+					down -= 1
+					current -= 1
+			elif game.mouse.wheel_down and scrollbar:
+				down += 1
+				if down > len(options):
 					down = len(options)
+				else:
+					current += 1
+					up += 1
+			elif game.mouse.lbutton_pressed and my in range(posy + step, height + posy + step) and mx in range(posx + step, width + posx + 2 - step) and (my - posy - step + up) <= len(options) - 1:
+				break
+
+		if ev == libtcod.EVENT_KEY_PRESS:
+			if game.kb.vk == libtcod.KEY_DOWN:
+				current = (current + 1) % len(options)
+				if current == down:
+					down += 1
+					up += 1
+				if current == 0:
+					down = height
+					up = 0
 					if scrollbar:
-						up += 2
-			lerp = 1.0
-			descending = True
-		elif (key.vk == libtcod.KEY_ESCAPE and ev == libtcod.EVENT_KEY_PRESS) or (mouse_exit and mouse.lbutton_pressed and mx == width + posx - 2 and my == posy):
-			current = -1
-			choice = -1
-		elif (key.vk == libtcod.KEY_ENTER and ev == libtcod.EVENT_KEY_PRESS) or (mouse.lbutton_pressed and my in range(posy + step, height + posy + step) and mx in range(posx + step, width + posx + 2 - step) and (my - posy - step + up) <= len(options) - 1):
-			choice = True
+						down -= 2
+				lerp = 1.0
+				descending = True
+			elif game.kb.vk == libtcod.KEY_UP:
+				current = (current - 1) % len(options)
+				if current < up:
+					up -= 1
+					down -= 1
+				if current == len(options) - 1:
+					if current > height - 3:
+						up = len(options) - height
+						down = len(options)
+						if scrollbar:
+							up += 2
+				lerp = 1.0
+				descending = True
+			elif game.kb.vk == libtcod.KEY_ESCAPE:
+				current = -1
+				break
+			elif game.kb.vk == libtcod.KEY_ENTER:
+				break
 	return current
 
 
@@ -210,17 +233,15 @@ def box_options(con, posx, posy, width, height, options, default, inv, step, mou
 def input(typ, con, posx, posy, min=0, max=100):
 	command = ''
 	x = 0
-	done = False
-	key = libtcod.Key()
-	while done is False:
-		libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, key, libtcod.Mouse(), True)
-		if key.vk == libtcod.KEY_BACKSPACE and x > 0:
+	while True:
+		libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, game.kb, game.mouse, True)
+		if game.kb.vk == libtcod.KEY_BACKSPACE and x > 0:
 			libtcod.console_set_char(con, x + posx - 1, posy, chr(95))
 			libtcod.console_set_char_foreground(con, x + posx - 1, posy, libtcod.white)
 			libtcod.console_set_char(con, x + posx, posy, ' ')
 			command = command[:-1]
 			x -= 1
-		elif key.vk == libtcod.KEY_ENTER:
+		elif game.kb.vk == libtcod.KEY_ENTER:
 			if not len(command) in range(min, max):
 				libtcod.console_set_default_foreground(0, libtcod.dark_red)
 				libtcod.console_print(con, 2, posy + 2, 'Player name must be between ' + str(min) + ' to ' + str(max - 1) + ' characters!')
@@ -230,15 +251,15 @@ def input(typ, con, posx, posy, min=0, max=100):
 					libtcod.console_rect(con, 2, posy + 2, 50, 1, True)
 					libtcod.console_print(con, 2, posy + 2, 'That name already exist!')
 				else:
-					done = True
+					break
 			else:
-				done = True
-		elif key.c in range(32, 127) and len(command) < 20:
-			libtcod.console_set_char(con, x + posx, posy, chr(key.c))  # print new character at appropriate position on screen
+				break
+		elif game.kb.c in range(32, 127) and len(command) < 20:
+			libtcod.console_set_char(con, x + posx, posy, chr(game.kb.c))  # print new character at appropriate position on screen
 			libtcod.console_set_char_foreground(con, x + posx, posy, libtcod.light_red)
 			libtcod.console_set_char(con, x + posx + 1, posy, chr(95))
 			libtcod.console_set_char_foreground(con, x + posx + 1, posy, libtcod.white)
-			command += chr(key.c)  # add to the string
+			command += chr(game.kb.c)  # add to the string
 			x += 1
 
 		libtcod.console_blit(con, 0, 0, game.SCREEN_WIDTH, game.SCREEN_HEIGHT, 0, 0, 0)

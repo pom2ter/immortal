@@ -17,7 +17,7 @@ import death
 import test
 import debug as dbg
 
-VERSION = '0.3.6 Alpha'
+VERSION = '0.3.6.1'
 
 #size of the gui windows
 MAP_WIDTH = 71
@@ -89,6 +89,7 @@ char = None
 times_saved = 0
 player_move = False
 mouse_move = False
+kb = libtcod.Key()
 mouse = libtcod.Mouse()
 killer = None
 highscore = []
@@ -177,6 +178,8 @@ chest_trap = ['fx_fireball', 'fx_poison_gas', 'fx_sleep_gas', 'fx_teleport', 'fx
 # spells, scrolls, tomes, npcs, towns, quests, biomes...
 # mouse support everywhere
 # change save system (sqlite?)
+# blood
+# remains
 
 
 class Game(object):
@@ -265,8 +268,8 @@ class Game(object):
 	# main game loop
 	def play_game(self):
 		global wm, player_action, draw_gui, player_move
-		wm = libtcod.console_new(game.WORLDMAP_WIDTH, game.WORLDMAP_HEIGHT)
-		game.worldmap.create_map_legend(wm, 3)
+		wm = libtcod.console_new(WORLDMAP_WIDTH, WORLDMAP_HEIGHT)
+		worldmap.create_map_legend(wm, 3)
 		libtcod.console_clear(0)
 		util.initialize_fov()
 		player_action = ''
@@ -326,11 +329,10 @@ class Game(object):
 
 			# death screen summary
 			if game_state == 'death':
-				key = libtcod.Key()
 				util.render_map()
 				libtcod.console_flush()
-				while not key.vk == libtcod.KEY_SPACE:
-					libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, key, libtcod.Mouse(), True)
+				while not kb.vk == libtcod.KEY_SPACE:
+					libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, kb, mouse, True)
 				death.death_screen()
 				player_action = 'exit'
 				break
@@ -348,11 +350,13 @@ class Game(object):
 		messages.box_gui(box, 0, 0, width, height, libtcod.green)
 		libtcod.console_set_default_foreground(box, libtcod.black)
 		libtcod.console_set_default_background(box, libtcod.green)
-		libtcod.console_print_ex(box, 20, 0, libtcod.BKGND_SET, libtcod.CENTER, ' Settings ')
+		libtcod.console_print_ex(box, width / 2, 0, libtcod.BKGND_SET, libtcod.CENTER, ' Settings ')
+		libtcod.console_set_default_foreground(box, libtcod.green)
+		libtcod.console_set_default_background(box, libtcod.black)
+		libtcod.console_print_ex(box, width - 5, 0, libtcod.BKGND_SET, libtcod.LEFT, '[x]')
 		libtcod.console_set_default_foreground(box, libtcod.white)
 		util.change_settings(box, width, height, blitmap=False)
 		libtcod.console_delete(box)
-		IO.load_settings()
 
 	# shows the high scores screen
 	def show_high_scores(self):

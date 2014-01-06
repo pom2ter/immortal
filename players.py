@@ -664,14 +664,14 @@ class Time(object):
 	# returns a formatted string of the game time
 	def time_to_text(self):
 		if self.hour > 11:
-			hour = self.hour - 12
-			if hour == 0:
-				hour = 12
-			time = str(hour) + ':' + str(self.minute).rjust(2, '0') + ' pm'
+			self.hour = self.hour - 12
+			if self.hour == 0:
+				self.hour = 12
+			time = str(self.hour) + ':' + str(self.minute).rjust(2, '0') + ' pm'
 		else:
-			if hour == 0:
-				hour = 12
-			time = str(hour) + ':' + str(self.minute).rjust(2, '0') + ' am'
+			if self.hour == 0:
+				self.hour = 12
+			time = str(self.hour) + ':' + str(self.minute).rjust(2, '0') + ' am'
 		if self.day == 1:
 			suffix = 'st'
 		elif self.day == 2:

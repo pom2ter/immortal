@@ -7,20 +7,18 @@ import IO
 def death_screen(quit=False):
 	scrolli, scrollm = 0, 0
 	scrollx, scrolly = 0, 0
-	exit = False
-	key = libtcod.Key()
 	(screen, score, line1, line2) = death_tombstone(quit)
 
-	while exit is False:
+	while True:
 		libtcod.console_set_default_foreground(0, libtcod.white)
 		libtcod.console_set_default_background(0, libtcod.black)
 		libtcod.console_print(0, 4, game.SCREEN_HEIGHT - 3, '[T] - Tombstone and final score       [M] - Fully explored last map')
 		libtcod.console_print(0, 4, game.SCREEN_HEIGHT - 2, '[I] - Fully identified inventory      [L] - Show message log            [X] - Exit')
 		libtcod.console_flush()
-		libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, key, game.mouse, True)
-		key_char = chr(key.c)
+		libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, game.kb, game.mouse, True)
+		key_char = chr(game.kb.c)
 
-		if key.vk == libtcod.KEY_UP or key.vk == libtcod.KEY_KP8:
+		if game.kb.vk == libtcod.KEY_UP or game.kb.vk == libtcod.KEY_KP8:
 			if screen == 'inventory':
 				if scrolli > 0:
 					scrolli -= 1
@@ -33,7 +31,7 @@ def death_screen(quit=False):
 				if scrolly > 0:
 					scrolly -= 1
 					death_showmap(scrollx, scrolly)
-		elif key.vk == libtcod.KEY_DOWN or key.vk == libtcod.KEY_KP2:
+		elif game.kb.vk == libtcod.KEY_DOWN or game.kb.vk == libtcod.KEY_KP2:
 			if screen == 'inventory':
 				if game.SCREEN_HEIGHT - 10 + scrolli < len(game.player.inventory + game.player.equipment):
 					scrolli += 1
@@ -46,12 +44,12 @@ def death_screen(quit=False):
 				if game.SCREEN_HEIGHT - 14 + scrolly < game.current_map.map_height:
 					scrolly += 1
 					death_showmap(scrollx, scrolly)
-		elif key.vk == libtcod.KEY_LEFT or key.vk == libtcod.KEY_KP4:
+		elif game.kb.vk == libtcod.KEY_LEFT or game.kb.vk == libtcod.KEY_KP4:
 			if screen == 'map':
 				if scrollx > 0:
 					scrollx -= 1
 					death_showmap(scrollx, scrolly)
-		elif key.vk == libtcod.KEY_RIGHT or key.vk == libtcod.KEY_KP6:
+		elif game.kb.vk == libtcod.KEY_RIGHT or game.kb.vk == libtcod.KEY_KP6:
 			if screen == 'map':
 				if game.SCREEN_WIDTH - 8 + scrollx < game.current_map.map_width:
 					scrollx += 1
@@ -66,7 +64,7 @@ def death_screen(quit=False):
 		elif key_char == 't':
 			(screen, score, line1, line2) = death_tombstone(quit)
 		elif key_char == 'x':
-			exit = True
+			break
 
 	game.highscore.append((score, line1, line2))
 	game.highscore = sorted(game.highscore, reverse=True)

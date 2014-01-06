@@ -64,9 +64,9 @@ def change_settings(box, width, height, blitmap=False):
 	lerp = 1.0
 	descending = True
 	current = 0
-
 	fonts = sorted(game.fonts, reverse=True)
 	font = 0
+
 	if game.setting_font == 'large':
 		font = 2
 	elif game.setting_font == 'medium':
@@ -77,7 +77,6 @@ def change_settings(box, width, height, blitmap=False):
 	if game.setting_fullscreen == 'off':
 		fs = 1
 
-	key = libtcod.Key()
 	libtcod.console_print_rect(box, 2, 2, width - 4, 2, '(You may need to restart the game for the changes to take effect)')
 	libtcod.console_print(box, 2, 5, 'Font size: ')
 	libtcod.console_print(box, 2, 6, 'Message history size: ')
@@ -121,55 +120,63 @@ def change_settings(box, width, height, blitmap=False):
 			libtcod.console_print_ex(box, 39, i, libtcod.BKGND_NONE, libtcod.LEFT, chr(26))
 
 		if blitmap:
+			posx = ((game.MAP_WIDTH - width) / 2) + game.MAP_X
+			posy = (game.MAP_HEIGHT - height) / 2
 			libtcod.console_blit(box, 0, 0, width, height, 0, ((game.MAP_WIDTH - width) / 2) + game.MAP_X, (game.MAP_HEIGHT - height) / 2, 1.0, 1.0)
 		else:
-			libtcod.console_blit(box, 0, 0, width, height, 0, (game.SCREEN_WIDTH - width) / 2, (game.SCREEN_HEIGHT - height) / 2, 1.0, 1.0)
+			posx = (game.SCREEN_WIDTH - width) / 2
+			posy = (game.SCREEN_HEIGHT - height) / 2
+			libtcod.console_blit(box, 0, 0, width, height, 0, posx, posy, 1.0, 1.0)
 		libtcod.console_flush()
-		libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS, key, libtcod.Mouse())
+		ev = libtcod.sys_check_for_event(libtcod.EVENT_ANY, game.kb, game.mouse)
+		(mx, my) = (game.mouse.cx, game.mouse.cy)
+		if mx in range (posx + 2, posx + width - 2) and my in range(posy + 5, posy + 8) and ev == libtcod.EVENT_MOUSE_MOVE:
+			current = my - (posy + 5)
 
-		if key.vk == libtcod.KEY_LEFT or key.vk == libtcod.KEY_RIGHT or key.vk == libtcod.KEY_UP or key.vk == libtcod.KEY_DOWN:
-			lerp = 1.0
-			descending = True
-		if key.vk == libtcod.KEY_LEFT:
-			if current == 0:
-				font -= 1
-				if font == -1:
-					font = len(fonts) - 1
-			if current == 1:
-				history -= 50
-				if history == 0:
-					history = 1000
-			if current == 2:
-				if fs == 0:
-					fs = 1
-				else:
-					fs = 0
-		elif key.vk == libtcod.KEY_RIGHT:
-			if current == 0:
-				font += 1
-				if font == len(fonts):
-					font = 0
-			if current == 1:
-				history += 50
-				if history > 1000:
-					history = 50
-			if current == 2:
-				if fs == 0:
-					fs = 1
-				else:
-					fs = 0
-		elif key.vk == libtcod.KEY_UP:
-			current -= 1
-			if current == -1:
-				current = 2
-		elif key.vk == libtcod.KEY_DOWN:
-			current += 1
-			if current == 3:
-				current = 0
-		elif key.vk == libtcod.KEY_ESCAPE:
-			cancel = True
-		elif key.vk == libtcod.KEY_ENTER:
-			confirm = True
+		if ev == libtcod.EVENT_KEY_PRESS or ev == libtcod.EVENT_MOUSE_RELEASE:
+			if game.kb.vk == libtcod.KEY_LEFT or game.kb.vk == libtcod.KEY_RIGHT or game.kb.vk == libtcod.KEY_UP or game.kb.vk == libtcod.KEY_DOWN:
+				lerp = 1.0
+				descending = True
+			if game.kb.vk == libtcod.KEY_LEFT or (mx == posx + width - 19 and my in range(posy + 5, posy + 8) and ev == libtcod.EVENT_MOUSE_RELEASE and game.mouse.lbutton_pressed):
+				if current == 0:
+					font -= 1
+					if font == -1:
+						font = len(fonts) - 1
+				if current == 1:
+					history -= 50
+					if history == 0:
+						history = 1000
+				if current == 2:
+					if fs == 0:
+						fs = 1
+					else:
+						fs = 0
+			elif game.kb.vk == libtcod.KEY_RIGHT or (mx == posx + width - 5 and my in range(posy + 5, posy + 8) and ev == libtcod.EVENT_MOUSE_RELEASE and game.mouse.lbutton_pressed):
+				if current == 0:
+					font += 1
+					if font == len(fonts):
+						font = 0
+				if current == 1:
+					history += 50
+					if history > 1000:
+						history = 50
+				if current == 2:
+					if fs == 0:
+						fs = 1
+					else:
+						fs = 0
+			elif game.kb.vk == libtcod.KEY_UP:
+				current -= 1
+				if current == -1:
+					current = 2
+			elif game.kb.vk == libtcod.KEY_DOWN:
+				current += 1
+				if current == 3:
+					current = 0
+			elif game.kb.vk == libtcod.KEY_ESCAPE:
+				cancel = True
+			elif game.kb.vk == libtcod.KEY_ENTER or (mx == posx + width - 4 and my == posy and ev == libtcod.EVENT_MOUSE_RELEASE and game.mouse.lbutton_pressed):
+				confirm = True
 
 	if confirm:
 		game.setting_history = history
@@ -181,6 +188,7 @@ def change_settings(box, width, height, blitmap=False):
 		if blitmap:
 			game.message.trim_history()
 		IO.save_settings(fonts[font], str(history), fullscreen[fs])
+		IO.load_settings()
 
 
 # color fading in/out
@@ -399,10 +407,9 @@ def scrollbar(con, x, y, start, size, length, reverse=False):
 # show the worldmap
 # stuff to do: add towns
 def showmap(box):
-	lerp, choice = 1.0, -1
+	lerp = 1.0
 	descending, keypress = True, False
-	choice, zoom = False, False
-	key = libtcod.Key()
+	zoom = False
 	startx = game.worldmap.player_positionx - (game.SCREEN_WIDTH / 2)
 	starty = game.worldmap.player_positiony - (game.SCREEN_HEIGHT / 2)
 	if startx < 0:
@@ -414,8 +421,8 @@ def showmap(box):
 	if starty > game.WORLDMAP_HEIGHT - game.SCREEN_HEIGHT + 2:
 		starty = game.WORLDMAP_HEIGHT - game.SCREEN_HEIGHT + 2
 
-	while not choice:
-		ev = libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS, key, libtcod.Mouse())
+	while True:
+		ev = libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS, game.kb, game.mouse)
 		if not zoom:
 			libtcod.image_blit_2x(game.worldmap.map_image_small, box, 1, 1)
 			mapposx = game.worldmap.player_positionx * (float(game.SCREEN_WIDTH - 2) / float(game.WORLDMAP_WIDTH))
@@ -445,27 +452,27 @@ def showmap(box):
 		libtcod.console_flush()
 
 		if ev == libtcod.EVENT_KEY_PRESS:
-			key_char = chr(key.c)
+			key_char = chr(game.kb.c)
 			if key_char == 's':
 				libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, game.SCREEN_HEIGHT / 2, libtcod.BKGND_DARKEN, libtcod.CENTER, ' Saving map... ')
 				libtcod.console_flush()
 				game.worldmap.create_map_images(2)
 			elif key_char == 'z':
 				zoom = not zoom
-			elif key.vk == libtcod.KEY_UP and zoom:
+			elif game.kb.vk == libtcod.KEY_UP and zoom:
 				if starty > 0:
 					starty -= 1
-			elif key.vk == libtcod.KEY_DOWN and zoom:
+			elif game.kb.vk == libtcod.KEY_DOWN and zoom:
 				if starty < game.WORLDMAP_HEIGHT - game.SCREEN_HEIGHT + 2:
 					starty += 1
-			elif key.vk == libtcod.KEY_LEFT and zoom:
+			elif game.kb.vk == libtcod.KEY_LEFT and zoom:
 				if startx > 0:
 					startx -= 1
-			elif key.vk == libtcod.KEY_RIGHT and zoom:
+			elif game.kb.vk == libtcod.KEY_RIGHT and zoom:
 				if startx < game.WORLDMAP_WIDTH - game.SCREEN_WIDTH + 2:
 					startx += 1
-			elif (key.vk == libtcod.KEY_TAB or key.vk == libtcod.KEY_ESCAPE) and ev == libtcod.EVENT_KEY_PRESS:
-				choice = True
+			elif (game.kb.vk == libtcod.KEY_TAB or game.kb.vk == libtcod.KEY_ESCAPE) and ev == libtcod.EVENT_KEY_PRESS:
+				break
 
 
 # someone set off a trap :O
@@ -698,7 +705,6 @@ def render_gui(color):
 	for i in range(game.SCREEN_WIDTH):
 		buffer.set_fore(i, 0, color.r, color.g, color.b, chr(205))
 		buffer.set_fore(i, game.SCREEN_HEIGHT - 1, color.r, color.g, color.b, chr(205))
-	for i in range(game.MAP_X, game.SCREEN_WIDTH):
 		buffer.set_fore(i, game.MESSAGE_Y - 1, color.r, color.g, color.b, chr(205))
 	for i in range(game.SCREEN_HEIGHT):
 		buffer.set_fore(0, i, color.r, color.g, color.b, chr(186))
@@ -713,6 +719,12 @@ def render_gui(color):
 	buffer.set_back(game.SCREEN_WIDTH - 1, game.MESSAGE_Y - 1, color.r, color.g, color.b)
 	buffer.set_back(game.SCREEN_WIDTH - 1, game.SCREEN_HEIGHT - 1, color.r, color.g, color.b)
 	buffer.blit(0, fill_fore=True, fill_back=True)
+	libtcod.console_set_default_foreground(0, libtcod.Color(140, 160, 180))
+	libtcod.console_print(0, game.SCREEN_WIDTH - 8, 0, '[ ? ]')
+	libtcod.console_print(0, game.MAP_X + 2, 0, '[ Menu ]')
+	libtcod.console_print(0, game.MAP_X + 12, 0, '[ Map ]')
+	libtcod.console_print(0, game.PLAYER_STATS_X + 8, 0, '[ @ ]')
+	libtcod.console_print_ex(0, game.SCREEN_WIDTH - 11, 0, libtcod.BKGND_NONE, libtcod.RIGHT, '[ ' + str(game.gametime.hour).rjust(2, ' ') + ':' + str(game.gametime.minute).rjust(2, '0') + ' ]')
 
 
 # print the game messages, one line at a time
@@ -778,10 +790,10 @@ def render_player_stats_panel():
 		libtcod.console_print(game.ps, 0, 15, 'End: ' + str(game.player.endurance) + ' ')
 
 	libtcod.console_print(game.ps, 0, 16, 'Karma: ' + str(game.player.karma) + ' ')
-	libtcod.console_print(game.ps, 0, game.PLAYER_STATS_HEIGHT - 2, 'Turns: ' + str(game.turns) + ' ')
 	libtcod.console_print(game.ps, 0, 18, 'Hunger level: ')
 	libtcod.console_print(game.ps, 0, 21, 'Active skills: ')
 	libtcod.console_print(game.ps, 0, 24, 'Condition: ')
+	libtcod.console_print(game.ps, 0, game.PLAYER_STATS_HEIGHT - 1, 'Turns: ' + str(game.turns) + ' ')
 	libtcod.console_set_default_foreground(game.ps, libtcod.light_sepia)
 
 	for flags in game.player.flags:
@@ -983,6 +995,6 @@ def render_map():
 	libtcod.console_set_default_foreground(0, libtcod.light_yellow)
 	libtcod.console_print_rect(0, game.MAP_X, game.MAP_Y, game.MAP_WIDTH - 18, game.MAP_HEIGHT, get_names_under_mouse())
 	if game.debug.enable:
-		libtcod.console_print_ex(0, game.MAP_X + game.MAP_WIDTH - 1, game.MAP_Y, libtcod.BKGND_NONE, libtcod.RIGHT, str(game.gametime.hour) + ':' + str(game.gametime.minute).rjust(2, '0') + ' (%3d fps)' % libtcod.sys_get_fps())
+		libtcod.console_print_ex(0, game.PLAYER_STATS_WIDTH, game.SCREEN_HEIGHT - 2, libtcod.BKGND_NONE, libtcod.RIGHT, '(%3d fps)' % libtcod.sys_get_fps())
 	if game.hp_anim:
 		render_floating_text_animations()

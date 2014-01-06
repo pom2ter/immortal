@@ -121,6 +121,7 @@ class Debug(object):
 				self.fully_identify_inventory()
 			if choice == 12:
 				game.player.hunger = self.set_hunger_level()
+				game.player.check_hunger_level()
 			if choice == 13:
 				(game.gametime.hour, game.gametime.minute) = self.set_time()
 			if choice == 14:

@@ -723,7 +723,7 @@ class Tile(object):
 		self.block_sight = block_sight
 
 	# returns true if this tile animates
-	def is_animate(self):
+	def is_animated(self):
 		if 'animate' in self.flags:
 			return True
 		return False
@@ -833,8 +833,8 @@ class TileListener(object):
 		return True
 
 	def end_struct(self, struct, name):
-		self.temp_tile.dark_color = libtcod.color_lerp(libtcod.black, self.temp_tile.color, 0.2)
-		self.temp_tile.dark_back_color = libtcod.color_lerp(libtcod.black, self.temp_tile.back_color_low, 0.2)
+		self.temp_tile.dark_color = libtcod.color_lerp(libtcod.black, self.temp_tile.color, 0.3)
+		self.temp_tile.dark_back_color = libtcod.color_lerp(libtcod.black, self.temp_tile.back_color_low, 0.3)
 		if self.temp_tile.type == 'trees1':
 			self.temp_tile.icon = chr(5)
 		if self.temp_tile.type == 'trees2':

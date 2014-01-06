@@ -3,6 +3,7 @@ KEYBOARD COMMANDS
 Arrow keys = Move character
 SPACE = Wait 1 turn
 TAB = World map
+CTRL-E = Show time of day
 CTRL-M = Message history
 CTRL-S = Save game
 CTRL-X = Quit game

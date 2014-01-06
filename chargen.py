@@ -20,19 +20,17 @@ def character_description(typ, id):
 
 # output all options during character generation
 def chargen_options(posx, posy, width, options, typ):
-	choice = False
 	current = 0
-	key = libtcod.Key()
-	mouse = libtcod.Mouse()
 	lerp = 1.0
 	descending = True
 
-	while not choice:
+	while True:
 		if typ == 'race':
 			character_description('race', current)
 		if typ == 'class':
 			character_description('class', current)
-		ev = libtcod.sys_check_for_event(libtcod.EVENT_ANY, key, mouse)
+		ev = libtcod.sys_check_for_event(libtcod.EVENT_ANY, game.kb, game.mouse)
+		(mx, my) = (game.mouse.cx, game.mouse.cy)
 		libtcod.console_set_default_foreground(0, libtcod.grey)
 		libtcod.console_set_default_background(0, libtcod.black)
 
@@ -48,27 +46,30 @@ def chargen_options(posx, posy, width, options, typ):
 			libtcod.console_print_ex(0, posx + 2, y + posy, libtcod.BKGND_SET, libtcod.LEFT, options[y])
 		libtcod.console_flush()
 
-		if key.vk == libtcod.KEY_DOWN and ev == libtcod.EVENT_KEY_PRESS:
+		if ev == libtcod.EVENT_MOUSE_MOVE:
+			if mx in range(posx, posx + width) and my in range (posy, posy + len(options)):
+				current = my - posy
+
+		if game.kb.vk == libtcod.KEY_DOWN and ev == libtcod.EVENT_KEY_PRESS:
 			current = (current + 1) % len(options)
 			lerp = 1.0
 			descending = True
-		elif key.vk == libtcod.KEY_UP and ev == libtcod.EVENT_KEY_PRESS:
+		elif game.kb.vk == libtcod.KEY_UP and ev == libtcod.EVENT_KEY_PRESS:
 			current = (current - 1) % len(options)
 			lerp = 1.0
 			descending = True
-		elif key.vk == libtcod.KEY_ENTER and ev == libtcod.EVENT_KEY_PRESS:
-			choice = True
+		elif (game.kb.vk == libtcod.KEY_ENTER and ev == libtcod.EVENT_KEY_PRESS) or (game.mouse.lbutton_pressed and mx in range(posx, posx + width) and my in range (posy, posy + len(options)) and ev == libtcod.EVENT_MOUSE_RELEASE):
+			break
 	return current
 
 
 # main function for character generation
 def create_character():
-	cancel = False
 	cs_width = 55
 	cs_height = game.SCREEN_HEIGHT - 4
 	cs = libtcod.console_new(cs_width, cs_height)
 	stats = libtcod.console_new(34, cs_height)
-	while not cancel:
+	while True:
 		game.messages.box_gui(0, 0, 0, game.SCREEN_WIDTH, game.SCREEN_HEIGHT, color=libtcod.Color(245, 222, 179), lines=[{'dir': 'h', 'x': 0, 'y': 2}, {'dir': 'v', 'x': game.SCREEN_WIDTH - 36, 'y': 2}])
 		libtcod.console_set_default_foreground(0, libtcod.white)
 		libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 1, libtcod.BKGND_NONE, libtcod.CENTER, 'CHARACTER GENERATION')

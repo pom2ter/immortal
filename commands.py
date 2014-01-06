@@ -8,15 +8,37 @@ import util
 # handles all the keyboard input commands
 # stuff to do: add more commands
 def keyboard_commands():
-	key = libtcod.Key()
-	ev = libtcod.sys_check_for_event(libtcod.EVENT_ANY, key, game.mouse)
-	if ev == libtcod.EVENT_KEY_PRESS:
-		key_char = chr(key.c)
-		if key.vk == libtcod.KEY_ENTER and key.lalt:
-			libtcod.console_set_fullscreen(not libtcod.console_is_fullscreen())
-		elif key.vk == libtcod.KEY_TAB:
+	ev = libtcod.sys_check_for_event(libtcod.EVENT_ANY, game.kb, game.mouse)
+	(mx, my) = (game.mouse.cx, game.mouse.cy)
+	if ev == libtcod.EVENT_MOUSE_RELEASE:
+		if mx in range(game.MESSAGE_X, game.MESSAGE_X + game.MESSAGE_WIDTH) and my in range(game.MESSAGE_Y, game.MESSAGE_Y + game.MESSAGE_HEIGHT) and game.mouse.wheel_up:
+			see_message_log(up=True)
+		elif mx in range(game.MESSAGE_X, game.MESSAGE_X + game.MESSAGE_WIDTH) and my in range(game.MESSAGE_Y, game.MESSAGE_Y + game.MESSAGE_HEIGHT) and game.mouse.wheel_down:
+			see_message_log(down=True)
+		elif mx in range(game.MAP_X + 3, game.MAP_X + 9) and my == 0 and game.mouse.lbutton_pressed:
+			state = options_menu()
+			if state == 'save':
+				if save_game():
+					return state
+			if state == 'quit':
+				if quit_game():
+					return state
+		elif mx in range(game.PLAYER_STATS_X + 9, game.PLAYER_STATS_X + 12) and my == 0 and game.mouse.lbutton_pressed:
+			sheet.character_sheet()
+		elif mx in range(game.MAP_X + 13, game.MAP_X + 18) and my == 0 and game.mouse.lbutton_pressed:
 			show_worldmap()
-		elif key.vk == libtcod.KEY_ESCAPE:
+		elif mx in range(game.SCREEN_WIDTH - 18, game.SCREEN_WIDTH - 11) and my == 0 and game.mouse.lbutton_pressed:
+			show_time()
+		elif mx in range(game.SCREEN_WIDTH - 7, game.SCREEN_WIDTH - 4) and my == 0 and game.mouse.lbutton_pressed:
+			help()
+
+	if ev == libtcod.EVENT_KEY_PRESS:
+		key_char = chr(game.kb.c)
+		if game.kb.vk == libtcod.KEY_ENTER and game.kb.lalt:
+			libtcod.console_set_fullscreen(not libtcod.console_is_fullscreen())
+		elif game.kb.vk == libtcod.KEY_TAB:
+			show_worldmap()
+		elif game.kb.vk == libtcod.KEY_ESCAPE:
 			state = options_menu()
 			if state == 'save':
 				if save_game():
@@ -25,30 +47,30 @@ def keyboard_commands():
 				if quit_game():
 					return state
 
-		elif key.vk == libtcod.KEY_UP or key.vk == libtcod.KEY_KP8:
+		elif game.kb.vk == libtcod.KEY_UP or game.kb.vk == libtcod.KEY_KP8:
 			player_move(0, -1)
-		elif key.vk == libtcod.KEY_DOWN or key.vk == libtcod.KEY_KP2:
+		elif game.kb.vk == libtcod.KEY_DOWN or game.kb.vk == libtcod.KEY_KP2:
 			player_move(0, 1)
-		elif key.vk == libtcod.KEY_LEFT or key.vk == libtcod.KEY_KP4:
+		elif game.kb.vk == libtcod.KEY_LEFT or game.kb.vk == libtcod.KEY_KP4:
 			player_move(-1, 0)
-		elif key.vk == libtcod.KEY_RIGHT or key.vk == libtcod.KEY_KP6:
+		elif game.kb.vk == libtcod.KEY_RIGHT or game.kb.vk == libtcod.KEY_KP6:
 			player_move(1, 0)
-		elif key.vk == libtcod.KEY_KP7:
+		elif game.kb.vk == libtcod.KEY_KP7:
 			player_move(-1, -1)
-		elif key.vk == libtcod.KEY_KP9:
+		elif game.kb.vk == libtcod.KEY_KP9:
 			player_move(1, -1)
-		elif key.vk == libtcod.KEY_KP1:
+		elif game.kb.vk == libtcod.KEY_KP1:
 			player_move(-1, 1)
-		elif key.vk == libtcod.KEY_KP3:
+		elif game.kb.vk == libtcod.KEY_KP3:
 			player_move(1, 1)
-		elif key.vk == libtcod.KEY_SPACE or key.vk == libtcod.KEY_KP5:
+		elif game.kb.vk == libtcod.KEY_SPACE or game.kb.vk == libtcod.KEY_KP5:
 			wait_turn()
-		elif key.vk == libtcod.KEY_PAGEUP:
+		elif game.kb.vk == libtcod.KEY_PAGEUP:
 			see_message_log(up=True)
-		elif key.vk == libtcod.KEY_PAGEDOWN:
+		elif game.kb.vk == libtcod.KEY_PAGEDOWN:
 			see_message_log(down=True)
 
-		elif (key.lctrl or key.rctrl) and key.c != 0:
+		elif (game.kb.lctrl or game.kb.rctrl) and game.kb.c != 0:
 			if key_char == 'd':
 				game.debug.menu()
 			elif key_char == 'e':
@@ -63,10 +85,10 @@ def keyboard_commands():
 					return 'quit'
 			else:
 				game.message.new('Invalid command', game.turns)
-		elif (key.lalt or key.ralt) and key.c != 0:
+		elif (game.kb.lalt or game.kb.ralt) and game.kb.c != 0:
 			game.message.new('Invalid command', game.turns)
 
-		elif key.c != 0:
+		elif game.kb.c != 0:
 			if key_char == 'a':
 				attack()
 			elif key_char == 'b':
@@ -101,6 +123,7 @@ def keyboard_commands():
 				help()
 			else:
 				game.message.new('Invalid command', game.turns)
+	game.mouse.lbutton_pressed = False
 
 
 # function that returns some coordinates when player needs to input a direction
@@ -196,7 +219,6 @@ def player_move(dx, dy):
 def attack():
 	game.message.new('Attack... (Arrow keys to move cursor, TAB to cycle targets, ENTER to attack, ESC to exit)', game.turns)
 	util.render_map()
-	key = libtcod.Key()
 	dx = game.char.x - game.curx
 	dy = game.char.y - game.cury
 	possible_targets = [obj for obj in game.current_map.objects if libtcod.map_is_in_fov(game.fov_map, obj.x, obj.y) and obj.entity]
@@ -204,13 +226,13 @@ def attack():
 	ranged = False
 	pt = 0
 
-	while not libtcod.console_is_window_closed():
+	while True:
 		libtcod.console_set_default_background(0, libtcod.white)
 		libtcod.console_rect(0, game.MAP_X + dx, dy + 1, 1, 1, False, libtcod.BKGND_SET)
 		libtcod.console_flush()
-		libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, key, libtcod.Mouse(), True)
-		dx, dy = key_check(key, dx, dy)
-		if key.vk == libtcod.KEY_ESCAPE:
+		libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, game.kb, game.mouse, True)
+		dx, dy = key_check(game.kb, dx, dy)
+		if game.kb.vk == libtcod.KEY_ESCAPE:
 			del game.message.log[len(game.message.log) - 1]
 			del game.message.log[len(game.message.log) - 1]
 			util.render_message_panel()
@@ -227,7 +249,7 @@ def attack():
 		px = dx + game.curx
 		py = dy + game.cury
 
-		if key.vk == libtcod.KEY_ENTER:
+		if game.kb.vk == libtcod.KEY_ENTER:
 			if not game.current_map.tile_is_explored(px, py):
 				game.message.new("You can't fight darkness.", game.turns)
 			else:
@@ -244,7 +266,7 @@ def attack():
 						ranged = True
 			break
 
-		if key.vk == libtcod.KEY_TAB:
+		if game.kb.vk == libtcod.KEY_TAB:
 			if possible_targets:
 				pt += 1
 				if pt == len(possible_targets):
@@ -389,13 +411,11 @@ def climb_up_stairs():
 
 # close door
 def close_door():
+	dx, dy = 0, 0
 	game.message.new('Close door in which direction?', game.turns)
 	libtcod.console_flush()
-	dx, dy = 0, 0
-	key = libtcod.Key()
-
-	libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, key, libtcod.Mouse(), True)
-	dx, dy = key_check(key, dx, dy)
+	libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, game.kb, game.mouse, True)
+	dx, dy = key_check(game.kb, dx, dy)
 
 	if game.current_map.tile[game.char.x + dx][game.char.y + dy]['name'] == 'opened door':
 		game.current_map.set_tile_values('door', game.char.x + dx, game.char.y + dy)
@@ -487,17 +507,16 @@ def look():
 	util.render_map()
 	dx = game.char.x - game.curx
 	dy = game.char.y - game.cury
-	key = libtcod.Key()
 
-	while not libtcod.console_is_window_closed():
+	while True:
 		libtcod.console_set_default_background(0, libtcod.white)
 		libtcod.console_rect(0, game.MAP_X + dx, dy + 1, 1, 1, False, libtcod.BKGND_SET)
 		libtcod.console_flush()
 		text = ""
 
-		libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, key, libtcod.Mouse(), True)
-		dx, dy = key_check(key, dx, dy)
-		if key.vk == libtcod.KEY_ESCAPE:
+		libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, game.kb, game.mouse, True)
+		dx, dy = key_check(game.kb, dx, dy)
+		if game.kb.vk == libtcod.KEY_ESCAPE:
 			del game.message.log[len(game.message.log) - 1]
 			util.render_message_panel()
 			break
@@ -559,9 +578,8 @@ def open_door(x=None, y=None):
 	if x is None:
 		game.message.new('Open door in which direction?', game.turns)
 		libtcod.console_flush()
-		key = libtcod.Key()
-		libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, key, libtcod.Mouse(), True)
-		dx, dy = key_check(key, dx, dy)
+		libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, game.kb, game.mouse, True)
+		dx, dy = key_check(game.kb, dx, dy)
 	else:
 		dx, dy = x, y
 
@@ -580,8 +598,8 @@ def open_door(x=None, y=None):
 
 # ingame options menu
 def options_menu():
-	contents = ['Read the manual', 'Change settings', 'View high scores', 'Save and quit game', 'Quit without saving']
-	choice = game.messages.box('Menu', None, game.PLAYER_STATS_WIDTH + (((game.MAP_WIDTH + 3) - (len(max(contents, key=len)) + 4)) / 2), ((game.MAP_HEIGHT + 1) - (len(contents) + 2)) / 2, len(max(contents, key=len)) + 4, len(contents) + 2, contents, mouse_exit=True, scrollbar=False)
+	contents = ['Read the manual', 'Change settings', 'View high scores', 'View message log', 'Save and quit game', 'Quit without saving']
+	choice = game.messages.box('Menu', None, 'center_mapx', 'center_mapy', len(max(contents, key=len)) + 6, len(contents) + 4, contents, mouse_exit=True, step=2, scrollbar=False)
 	if choice == 0:
 		help()
 	if choice == 1:
@@ -589,8 +607,10 @@ def options_menu():
 	if choice == 2:
 		highscores()
 	if choice == 3:
-		return 'save'
+		see_message_history()
 	if choice == 4:
+		return 'save'
+	if choice == 5:
 		return 'quit'
 	return
 
@@ -645,10 +665,8 @@ def quit_game():
 	util.render_map()
 	libtcod.console_print(0, game.MAP_X, game.MAP_Y, 'Are you sure you want to quit the game? (y/n)')
 	libtcod.console_flush()
-	key = libtcod.Key()
-
-	libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, key, libtcod.Mouse(), True)
-	if chr(key.c) == 'y' or chr(key.c) == 'Y':
+	libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, game.kb, game.mouse, True)
+	if chr(game.kb.c) == 'y' or chr(game.kb.c) == 'Y':
 		return True
 	return False
 
@@ -669,10 +687,8 @@ def save_game():
 	util.render_map()
 	libtcod.console_print(0, game.MAP_X, game.MAP_Y, 'Do you want to save (and quit) the game? (y/n)')
 	libtcod.console_flush()
-	key = libtcod.Key()
-
-	libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, key, libtcod.Mouse(), True)
-	if chr(key.c) == 'y' or chr(key.c) == 'Y':
+	libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, game.kb, game.mouse, True)
+	if chr(game.kb.c) == 'y' or chr(game.kb.c) == 'Y':
 		return True
 	return False
 
@@ -689,12 +705,11 @@ def see_message_history():
 	libtcod.console_set_default_foreground(box, libtcod.green)
 	libtcod.console_set_default_background(box, libtcod.black)
 	libtcod.console_print_ex(box, box_width / 2, box_height - 1, libtcod.BKGND_SET, libtcod.CENTER, ' Arrow keys - Scroll up/down, ESC - exit ')
+	libtcod.console_print_ex(box, box_width - 5, 0, libtcod.BKGND_SET, libtcod.LEFT, '[x]')
 	libtcod.console_set_default_foreground(box, libtcod.white)
 
 	scroll = 0
-	exit = False
-	key = libtcod.Key()
-	while exit is False:
+	while True:
 		libtcod.console_rect(box, 1, 1, box_width - 2, box_height - 2, True, libtcod.BKGND_SET)
 		for i in range(min(box_height - 4, len(game.message.history))):
 			libtcod.console_set_default_foreground(box, game.message.history[i + scroll][1])
@@ -702,16 +717,18 @@ def see_message_history():
 		util.scrollbar(box, box_width - 2, 2, scroll, box_height - 4, len(game.message.history))
 		libtcod.console_blit(box, 0, 0, box_width, box_height, 0, (game.SCREEN_WIDTH - box_width) / 2, (game.MAP_HEIGHT - box_height + 2) / 2, 1.0, 1.0)
 		libtcod.console_flush()
-		ev = libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS, key, libtcod.Mouse())
-		if ev == libtcod.EVENT_KEY_PRESS:
-			if key.vk == libtcod.KEY_ESCAPE:
-				exit = True
-			elif key.vk == libtcod.KEY_UP or key.vk == libtcod.KEY_KP8:
-				if scroll > 0:
-					scroll -= 1
-			elif key.vk == libtcod.KEY_DOWN or key.vk == libtcod.KEY_KP2:
-				if box_height - 4 + scroll < len(game.message.history):
-					scroll += 1
+		ev = libtcod.sys_check_for_event(libtcod.EVENT_ANY, game.kb, game.mouse)
+		(mx, my) = (game.mouse.cx, game.mouse.cy)
+		if ((game.kb.vk == libtcod.KEY_UP or game.kb.vk == libtcod.KEY_KP8) and ev == libtcod.EVENT_KEY_PRESS) or (ev == libtcod.EVENT_MOUSE_RELEASE and game.mouse.wheel_up):
+			if scroll > 0:
+				scroll -= 1
+		elif ((game.kb.vk == libtcod.KEY_DOWN or game.kb.vk == libtcod.KEY_KP2) and ev == libtcod.EVENT_KEY_PRESS) or (ev == libtcod.EVENT_MOUSE_RELEASE and game.mouse.wheel_down):
+			if box_height - 4 + scroll < len(game.message.history):
+				scroll += 1
+		elif game.kb.vk == libtcod.KEY_ESCAPE and ev == libtcod.EVENT_KEY_PRESS:
+			break
+		elif (mx == ((game.SCREEN_WIDTH - box_width) / 2) + box_width - 4 and my == (game.MAP_HEIGHT - box_height + 2) / 2) and (ev == libtcod.EVENT_MOUSE_RELEASE) and game.mouse.lbutton_pressed:
+			break
 	libtcod.console_delete(box)
 	game.draw_gui = True
 
@@ -736,6 +753,9 @@ def settings():
 	libtcod.console_set_default_foreground(box, libtcod.black)
 	libtcod.console_set_default_background(box, libtcod.green)
 	libtcod.console_print_ex(box, width / 2, 0, libtcod.BKGND_SET, libtcod.CENTER, ' Settings ')
+	libtcod.console_set_default_foreground(box, libtcod.green)
+	libtcod.console_set_default_background(box, libtcod.black)
+	libtcod.console_print_ex(box, width - 5, 0, libtcod.BKGND_SET, libtcod.LEFT, '[x]')
 	libtcod.console_set_default_foreground(box, libtcod.white)
 	util.change_settings(box, width, height, blitmap=True)
 	libtcod.console_delete(box)

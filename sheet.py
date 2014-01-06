@@ -5,7 +5,7 @@ import util
 
 # character sheet for stats
 def character_sheet_attributes(con, width, height):
-	character_sheet_ui(con, width, height, ' Player stats ')
+	character_sheet_ui(con, width, height, ' Character Sheet ')
 	libtcod.console_set_color_control(libtcod.COLCTRL_1, libtcod.green, libtcod.black)
 	libtcod.console_set_color_control(libtcod.COLCTRL_2, libtcod.red, libtcod.black)
 	libtcod.console_set_color_control(libtcod.COLCTRL_3, libtcod.gold, libtcod.black)
@@ -76,7 +76,7 @@ def character_sheet_skills(con, width, height, pick_skill, modify_skill, pool):
 	libtcod.console_print(con, 2, 2, 'Combat')
 	libtcod.console_print(con, 19, 2, 'Physical')
 	libtcod.console_print(con, 41, 2, 'Academic')
-	libtcod.console_print(con, 2, height - 3, 'Skill points: ' + str(pool))
+	libtcod.console_print(con, 2, height - 5, 'Skill points: ' + str(pool))
 	for i in range(len(skills_c)):
 		if pick_skill == count:
 			libtcod.console_set_default_foreground(con, libtcod.light_blue)
@@ -127,8 +127,8 @@ def character_sheet_skills(con, width, height, pick_skill, modify_skill, pool):
 		libtcod.console_print(con, 41, i + 4, skills_a[i].name)
 		libtcod.console_print_ex(con, 55, i + 4, libtcod.BKGND_SET, libtcod.RIGHT, str(skills_a[i].level + skills_a[i].temp))
 		count += 1
-	libtcod.console_set_default_foreground(con, libtcod.white)
-	libtcod.console_print(con, 2, height - 3, 'Skill points: ' + str(pool) + ' ')
+#	libtcod.console_set_default_foreground(con, libtcod.white)
+#	libtcod.console_print(con, 2, height - 5, 'Skill points: ' + str(pool) + ' ')
 	return pool
 
 
@@ -204,14 +204,14 @@ def character_sheet_ui(con, width, height, header):
 
 # character sheet
 def character_sheet(screen=0):
-	width, height = 62, 21
+	width, height = 62, 23
 	pick_skill, modify_skill = 0, 0
-	exit = False
-	key = libtcod.Key()
 	stats = libtcod.console_new(width, height)
 	pool = game.player.skill_points
+	posx = ((game.MAP_WIDTH - width) / 2) + game.MAP_X
+	posy = ((game.MAP_HEIGHT - height) / 2) + 1
 
-	while exit is False:
+	while True:
 		if screen == 0:
 			character_sheet_attributes(stats, width, height)
 		elif screen == 1:
@@ -222,19 +222,25 @@ def character_sheet(screen=0):
 			character_sheet_inventory(stats, width, height)
 		modify_skill = 0
 
+		libtcod.console_set_default_foreground(stats, libtcod.green)
+		libtcod.console_print_ex(stats, width - 5, 0, libtcod.BKGND_SET, libtcod.LEFT, '[x]')
+		libtcod.console_print(stats, 2, height - 3, '<<<')
+		libtcod.console_print(stats, width - 5, height - 3, '>>>')
 		libtcod.console_set_default_foreground(stats, libtcod.black)
 		libtcod.console_set_default_background(stats, libtcod.green)
 		libtcod.console_print_ex(stats, width / 2, height - 1, libtcod.BKGND_SET, libtcod.CENTER, ' [ Arrow keys to change page, +/- to change skill pts ] ')
-		libtcod.console_blit(stats, 0, 0, width, height, 0, ((game.MAP_WIDTH - width) / 2) + game.MAP_X, ((game.MAP_HEIGHT - height) / 2) + 1, 1.0, 1.0)
+		libtcod.console_blit(stats, 0, 0, width, height, 0, posx, posy, 1.0, 1.0)
 		libtcod.console_flush()
-		libtcod.sys_wait_for_event(libtcod.EVENT_KEY_PRESS, key, game.mouse, True)
-		key_char = chr(key.c)
-		if screen == 1:
-			if key.vk == libtcod.KEY_UP:
+		ev = libtcod.sys_check_for_event(libtcod.EVENT_ANY, game.kb, game.mouse)
+		(mx, my) = (game.mouse.cx, game.mouse.cy)
+		key_char = chr(game.kb.c)
+
+		if screen == 1 and ev == libtcod.EVENT_KEY_PRESS:
+			if game.kb.vk == libtcod.KEY_UP:
 				pick_skill -= 1
 				if pick_skill < 1:
 					pick_skill = 1
-			elif key.vk == libtcod.KEY_DOWN:
+			elif game.kb.vk == libtcod.KEY_DOWN:
 				pick_skill += 1
 				if pick_skill > len(game.player.skills):
 					pick_skill = len(game.player.skills)
@@ -245,16 +251,16 @@ def character_sheet(screen=0):
 				if pick_skill in range(1, len(game.player.skills)) and (pool > 0 or (pool == 0 and game.player.skill_points > 0)):
 					modify_skill = -1
 
-		if key.vk == libtcod.KEY_LEFT:
+		if (game.kb.vk == libtcod.KEY_LEFT and ev == libtcod.EVENT_KEY_PRESS) or (game.mouse.lbutton_pressed and mx in range(posx + 2, posx + 5) and my == posy + height - 3 and ev == libtcod.EVENT_MOUSE_RELEASE):
 			screen -= 1
 			if screen < 0:
 				screen = 3
-		elif key.vk == libtcod.KEY_RIGHT:
+		elif (game.kb.vk == libtcod.KEY_RIGHT and ev == libtcod.EVENT_KEY_PRESS) or (game.mouse.lbutton_pressed and mx in range(posx + width - 5, posx + width - 2) and my == posy + height - 3 and ev == libtcod.EVENT_MOUSE_RELEASE):
 			screen += 1
 			if screen > 3:
 				screen = 0
-		elif key.vk == libtcod.KEY_ESCAPE:
-			exit = True
+		elif (game.kb.vk == libtcod.KEY_ESCAPE and ev == libtcod.EVENT_KEY_PRESS) or (game.mouse.lbutton_pressed and mx == posx + width - 4 and my == posy and ev == libtcod.EVENT_MOUSE_RELEASE):
+			break
 
 	for i in range(len(game.player.skills)):
 		if game.player.skills[i].temp > 0:
