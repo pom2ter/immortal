@@ -123,7 +123,7 @@ class Debug(object):
 				game.player.hunger = self.set_hunger_level()
 				game.player.check_hunger_level()
 			if choice == 13:
-				(game.gametime.hour, game.gametime.minute) = self.set_time()
+				(game.time.hours, game.time.minutes) = self.set_time()
 			if choice == 14:
 				self.reset_dungeon_level()
 			if choice == 15:

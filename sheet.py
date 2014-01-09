@@ -12,7 +12,7 @@ def character_sheet_attributes(con, width, height):
 	libtcod.console_set_color_control(libtcod.COLCTRL_4, libtcod.silver, libtcod.black)
 	libtcod.console_set_color_control(libtcod.COLCTRL_5, libtcod.copper, libtcod.black)
 	libtcod.console_print(con, 2, 2, game.player.name + ', a level ' + str(game.player.level) + ' ' + game.player.gender + ' ' + game.player.race + ' ' + game.player.profession)
-	g, s, c = util.convert_coins(game.player.money)
+	g, s, c = util.money_converter(game.player.money)
 
 	if game.player.strength > game.player.base_strength:
 		libtcod.console_print(con, 2, 4, 'Strength     : %c%i%c' % (libtcod.COLCTRL_1, game.player.strength, libtcod.COLCTRL_STOP))
@@ -127,8 +127,6 @@ def character_sheet_skills(con, width, height, pick_skill, modify_skill, pool):
 		libtcod.console_print(con, 41, i + 4, skills_a[i].name)
 		libtcod.console_print_ex(con, 55, i + 4, libtcod.BKGND_SET, libtcod.RIGHT, str(skills_a[i].level + skills_a[i].temp))
 		count += 1
-#	libtcod.console_set_default_foreground(con, libtcod.white)
-#	libtcod.console_print(con, 2, height - 5, 'Skill points: ' + str(pool) + ' ')
 	return pool
 
 
@@ -198,8 +196,13 @@ def character_sheet_ui(con, width, height, header):
 	libtcod.console_set_default_foreground(con, libtcod.black)
 	libtcod.console_set_default_background(con, libtcod.green)
 	libtcod.console_print_ex(con, width / 2, 0, libtcod.BKGND_SET, libtcod.CENTER, header)
-	libtcod.console_set_default_foreground(con, libtcod.white)
+	libtcod.console_print_ex(con, width / 2, height - 1, libtcod.BKGND_SET, libtcod.CENTER, ' [ Arrow keys to change page, +/- to change skill pts ] ')
+	libtcod.console_set_default_foreground(con, libtcod.green)
 	libtcod.console_set_default_background(con, libtcod.black)
+	libtcod.console_print_ex(con, width - 5, 0, libtcod.BKGND_SET, libtcod.LEFT, '[x]')
+	libtcod.console_print(con, 2, height - 3, '<<<')
+	libtcod.console_print(con, width - 5, height - 3, '>>>')
+	libtcod.console_set_default_foreground(con, libtcod.white)
 
 
 # character sheet
@@ -222,13 +225,6 @@ def character_sheet(screen=0):
 			character_sheet_inventory(stats, width, height)
 		modify_skill = 0
 
-		libtcod.console_set_default_foreground(stats, libtcod.green)
-		libtcod.console_print_ex(stats, width - 5, 0, libtcod.BKGND_SET, libtcod.LEFT, '[x]')
-		libtcod.console_print(stats, 2, height - 3, '<<<')
-		libtcod.console_print(stats, width - 5, height - 3, '>>>')
-		libtcod.console_set_default_foreground(stats, libtcod.black)
-		libtcod.console_set_default_background(stats, libtcod.green)
-		libtcod.console_print_ex(stats, width / 2, height - 1, libtcod.BKGND_SET, libtcod.CENTER, ' [ Arrow keys to change page, +/- to change skill pts ] ')
 		libtcod.console_blit(stats, 0, 0, width, height, 0, posx, posy, 1.0, 1.0)
 		libtcod.console_flush()
 		ev = libtcod.sys_check_for_event(libtcod.EVENT_ANY, game.kb, game.mouse)

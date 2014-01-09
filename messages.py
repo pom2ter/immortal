@@ -144,7 +144,7 @@ def box_options(con, posx, posy, width, height, options, default, inv, step, mou
 			if y < len(options):
 				if y == current:
 					libtcod.console_set_default_foreground(con, libtcod.white)
-					color, lerp, descending = util.color_lerp(lerp, descending)
+					color, lerp, descending = util.color_fade_anim(lerp, descending)
 					libtcod.console_set_default_background(con, color)
 				else:
 					libtcod.console_set_default_foreground(con, libtcod.grey)

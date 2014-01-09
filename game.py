@@ -17,7 +17,7 @@ import death
 import test
 import debug as dbg
 
-VERSION = '0.3.6.1'
+VERSION = '0.3.6.2'
 
 #size of the gui windows
 MAP_WIDTH = 71
@@ -180,6 +180,7 @@ chest_trap = ['fx_fireball', 'fx_poison_gas', 'fx_sleep_gas', 'fx_teleport', 'fx
 # change save system (sqlite?)
 # blood
 # remains
+# fov transitions
 
 
 class Game(object):
@@ -241,7 +242,7 @@ class Game(object):
 
 	# new game setup
 	def new_game(self, chargeneration=True):
-		global rnd, message, player, char, game_state, gametime, worldmap, current_map, savefiles
+		global rnd, message, player, char, game_state, time, worldmap, current_map, savefiles
 		cardinal = [-(WORLDMAP_WIDTH - 1), -(WORLDMAP_WIDTH), -(WORLDMAP_WIDTH + 1), -1, 1, WORLDMAP_WIDTH - 1, WORLDMAP_WIDTH, WORLDMAP_WIDTH + 1]
 		rnd = libtcod.random_new()
 		message = messages.Message()
@@ -254,7 +255,7 @@ class Game(object):
 		if game_state == 'playing':
 			contents = ['Generating world map...']
 			messages.box(None, None, 'center_screenx', 'center_screeny', len(max(contents, key=len)) + 16, len(contents) + 4, contents, input=False, align=libtcod.CENTER, nokeypress=True)
-			gametime = Time()
+			time = Time()
 			worldmap = worldgen.World()
 			current_map = mapgen.Map('Wilderness', 'WD', 0, (worldmap.player_positiony * WORLDMAP_WIDTH) + worldmap.player_positionx, type=util.find_terrain_type((worldmap.player_positiony * WORLDMAP_WIDTH) + worldmap.player_positionx))
 			for i in range(len(border_maps)):
@@ -394,7 +395,7 @@ class Game(object):
 	def main_menu(self):
 		contents = ['Quick start', 'Start a new game', 'Load a saved game', 'Read the manual', 'Change settings', 'View high scores', 'Quit game']
 		img = libtcod.image_load('title.png')
-		libtcod.image_scale(img, int(SCREEN_WIDTH * 2.2), SCREEN_HEIGHT * 2)
+		libtcod.image_scale(img, int(SCREEN_WIDTH * 2.25), SCREEN_HEIGHT * 2)
 		choice = 0
 
 		while not libtcod.console_is_window_closed():

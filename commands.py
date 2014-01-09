@@ -23,14 +23,17 @@ def keyboard_commands():
 			if state == 'quit':
 				if quit_game():
 					return state
+			game.mouse.lbutton_pressed = False
 		elif mx in range(game.PLAYER_STATS_X + 9, game.PLAYER_STATS_X + 12) and my == 0 and game.mouse.lbutton_pressed:
 			sheet.character_sheet()
+			game.mouse.lbutton_pressed = False
 		elif mx in range(game.MAP_X + 13, game.MAP_X + 18) and my == 0 and game.mouse.lbutton_pressed:
 			show_worldmap()
 		elif mx in range(game.SCREEN_WIDTH - 18, game.SCREEN_WIDTH - 11) and my == 0 and game.mouse.lbutton_pressed:
 			show_time()
 		elif mx in range(game.SCREEN_WIDTH - 7, game.SCREEN_WIDTH - 4) and my == 0 and game.mouse.lbutton_pressed:
 			help()
+			game.mouse.lbutton_pressed = False
 
 	if ev == libtcod.EVENT_KEY_PRESS:
 		key_char = chr(game.kb.c)
@@ -123,7 +126,7 @@ def keyboard_commands():
 				help()
 			else:
 				game.message.new('Invalid command', game.turns)
-	game.mouse.lbutton_pressed = False
+		game.mouse.lbutton_pressed = False
 
 
 # function that returns some coordinates when player needs to input a direction
@@ -158,22 +161,18 @@ def player_move(dx, dy):
 	y = game.char.y + dy
 
 	#try to find an attackable object there
-	target = None
-	for object in game.current_map.objects:
-		if object.y == y and object.x == x and object.entity:
-			target = object
-			break
+	target = [obj for obj in game.current_map.objects if obj.y == y and obj.x == x and obj.entity]
 
 	#attack if target found, move otherwise
-	if target is not None:
-		game.player.attack(target)
+	if target:
+		game.player.attack(target[0])
 	elif not game.player.can_move():
 		game.message.new("You can't move!", game.turns)
 		game.player_move = True
 	else:
-		if game.current_map.tile[game.char.x + dx][game.char.y + dy]['name'] == 'door':
+		if game.current_map.tile[x][y]['name'] == 'door':
 			open_door(dx, dy)
-		elif game.current_map.tile[game.char.x + dx][game.char.y + dy]['name'] == 'locked door':
+		elif game.current_map.tile[x][y]['name'] == 'locked door':
 			game.message.new('The door is locked!', game.turns)
 		else:
 			game.char.move(dx, dy, game.current_map)
@@ -288,9 +287,8 @@ def bash():
 	for x in range(-1, 2):
 		for y in range(-1, 2):
 			if 'locked' in game.current_map.tile[game.char.x + x][game.char.y + y]:
-				dice = util.roll_dice(1, 40)
 				name = game.current_map.tile[game.char.x + x][game.char.y + y]['name']
-				if game.player.strength >= dice:
+				if game.player.strength >= util.roll_dice(1, 40):
 					game.message.new('You bash open the ' + name + '.', game.turns)
 					if name == 'locked door':
 						game.current_map.set_tile_values('opened door', game.char.x + x, game.char.y + y)
@@ -334,8 +332,7 @@ def climb_down_stairs():
 			IO.autosave(False)
 			map_width = game.current_map.map_width
 			map_height = game.current_map.map_height
-			dice = util.roll_dice(1, 10)
-			if dice == 10:
+			if util.roll_dice(1, 10) == 10:
 				threat_level += 1
 		else:
 			level = 1
@@ -469,7 +466,7 @@ def equip_item():
 # stuff to do: change manual screen
 def help():
 	contents = IO.load_manual()
-	game.messages.box('Help', None, game.PLAYER_STATS_WIDTH + ((game.MAP_WIDTH - (len(max(contents, key=len)) + 20)) / 2), ((game.SCREEN_HEIGHT + 1) - max(16, len(contents) + 4)) / 2, len(max(contents, key=len)) + 20, len(contents) + 4, contents, input=False)
+	game.messages.box('Help', None, 'center_mapx', 'center_screeny', len(max(contents, key=len)) + 20, len(contents) + 4, contents, input=False)
 	game.draw_gui = True
 
 
@@ -764,7 +761,7 @@ def settings():
 
 # print current time/date
 def show_time():
-	game.message.new(game.gametime.time_to_text(), game.turns)
+	game.message.new(game.time.time_to_text(), game.turns)
 
 
 # show a miniature world map
@@ -799,10 +796,7 @@ def use_item():
 
 # use a skill
 def use_skill():
-	skills = []
-	for x in game.player.skills:
-		if x.can_use:
-			skills.append(x)
+	skills = [x for x in game.player.skills if x.can_use]
 	output = [x.name for x in skills]
 	choice = game.messages.box('Use a skill', 'Up/down to select, ENTER to use, ESC to exit', 'center_mapx', 'center_mapy', 65, max(19, len(output) + 4), output, step=2, mouse_exit=True)
 	if choice != -1:
@@ -833,8 +827,7 @@ def use_skill():
 			for x in range(-1, 2):
 				for y in range(-1, 2):
 					if 'trapped' in game.current_map.tile[game.char.x + x][game.char.y + y]:
-						dice = libtcod.random_get_int(game.rnd, 0, 150)
-						if skills[choice].level >= dice:
+						if skills[choice].level >= libtcod.random_get_int(game.rnd, 0, 150):
 							if game.current_map.tile[game.char.x + x][game.char.y + y]['type'] == 'trap':
 								game.current_map.set_tile_values('floor', game.char.x + x, game.char.y + y)
 								game.message.new('You disarm the trap.', game.turns)
@@ -844,8 +837,7 @@ def use_skill():
 							skills[choice].gain_xp(5)
 						else:
 							game.message.new('You failed to disarm the trap.', game.turns)
-							dice = util.roll_dice(1, 50)
-							if dice > game.player.karma:
+							if util.roll_dice(1, 50) > game.player.karma:
 								if game.current_map.tile[game.char.x + x][game.char.y + y]['type'] == 'trap':
 									util.trigger_trap(game.char.x + x, game.char.y + y)
 								else:
@@ -863,9 +855,8 @@ def use_skill():
 			for x in range(-1, 2):
 				for y in range(-1, 2):
 					if 'locked' in game.current_map.tile[game.char.x + x][game.char.y + y]:
-						dice = libtcod.random_get_int(game.rnd, 0, 150)
 						name = game.current_map.tile[game.char.x + x][game.char.y + y]['name']
-						if skills[choice].level >= dice:
+						if skills[choice].level >= libtcod.random_get_int(game.rnd, 0, 150):
 							game.message.new('You unlock the ' + name + '.', game.turns)
 							if name == 'locked door':
 								game.current_map.set_tile_values('opened door', game.char.x + x, game.char.y + y)
@@ -878,8 +869,7 @@ def use_skill():
 						else:
 							game.message.new('You failed to unlock the ' + name + '.', game.turns)
 							if 'trapped' in game.current_map.tile[game.char.x + x][game.char.y + y]:
-								dice = util.roll_dice(1, 30)
-								if game.player.karma < dice:
+								if game.player.karma < util.roll_dice(1, 30):
 									game.current_map.tile[game.char.x + x][game.char.y + y].update({game.chest_trap[libtcod.random_get_int(game.rnd, 0, len(game.chest_trap) - 1)]: True})
 									game.current_map.tile[game.char.x + x][game.char.y + y].pop('trapped', None)
 									util.trigger_trap(game.char.x + x, game.char.y + y, chest=True)

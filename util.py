@@ -14,7 +14,7 @@ import effects
 # add a turn and do checks for statuses and stuffies
 def add_turn():
 	game.turns += 1
-	game.gametime.update(1)
+	game.time.update(1)
 	game.draw_gui = True
 	game.draw_map = True
 	libtcod.console_clear(game.con)
@@ -39,13 +39,12 @@ def add_turn():
 		game.player.heal_mana(1)
 
 	if 'detect_trap' in game.player.flags:
-		game.gametime.update(1)
+		game.time.update(1)
 		skill = game.player.find_skill('Detect Traps')
 		if game.player.skills[skill].level >= libtcod.random_get_int(game.rnd, 0, 200):
 			if game.traps:
-				dice = libtcod.random_get_int(game.rnd, 0, len(game.traps) - 1)
 				for i, (x, y) in enumerate(game.traps):
-					if i == dice:
+					if i == libtcod.random_get_int(game.rnd, 0, len(game.traps) - 1):
 						game.current_map.set_tile_values(game.current_map.tile[x][y]['name'], x, y)
 						if game.current_map.tile_is_invisible(x, y):
 							game.current_map.tile[x][y].pop('invisible', None)
@@ -82,7 +81,7 @@ def change_settings(box, width, height, blitmap=False):
 	libtcod.console_print(box, 2, 6, 'Message history size: ')
 	libtcod.console_print(box, 2, 7, 'Fullscreen: ')
 	while not confirm and not cancel:
-		color, lerp, descending = color_lerp(lerp, descending)
+		color, lerp, descending = color_fade_anim(lerp, descending)
 
 		# font size setting
 		if current == 0:
@@ -130,7 +129,7 @@ def change_settings(box, width, height, blitmap=False):
 		libtcod.console_flush()
 		ev = libtcod.sys_check_for_event(libtcod.EVENT_ANY, game.kb, game.mouse)
 		(mx, my) = (game.mouse.cx, game.mouse.cy)
-		if mx in range (posx + 2, posx + width - 2) and my in range(posy + 5, posy + 8) and ev == libtcod.EVENT_MOUSE_MOVE:
+		if mx in range(posx + 2, posx + width - 2) and my in range(posy + 5, posy + 8) and ev == libtcod.EVENT_MOUSE_MOVE:
 			current = my - (posy + 5)
 
 		if ev == libtcod.EVENT_KEY_PRESS or ev == libtcod.EVENT_MOUSE_RELEASE:
@@ -191,8 +190,8 @@ def change_settings(box, width, height, blitmap=False):
 		IO.load_settings()
 
 
-# color fading in/out
-def color_lerp(lerp, descending, base=libtcod.black, light=libtcod.light_blue):
+# highlight active choice by fading in/out
+def color_fade_anim(lerp, descending, base=libtcod.black, light=libtcod.light_blue):
 	if descending:
 		lerp -= 0.001
 		if lerp < 0.4:
@@ -205,11 +204,6 @@ def color_lerp(lerp, descending, base=libtcod.black, light=libtcod.light_blue):
 			descending = True
 	color = libtcod.color_lerp(base, light, lerp)
 	return color, lerp, descending
-
-
-# returns currency in gold, silver and copper
-def convert_coins(coins):
-	return coins / 10000, (coins / 100) % 100, coins % 100
 
 
 # returns a particular point on the map (when you see the worldmap)
@@ -321,6 +315,11 @@ def items_at_feet():
 def loadgen_message():
 	libtcod.console_print(0, game.MAP_X, game.MAP_Y, 'Loading/Generating map chunks...')
 	libtcod.console_flush()
+
+
+# returns currency in gold, silver and copper
+def money_converter(coins):
+	return coins / 10000, (coins / 100) % 100, coins % 100
 
 
 # auto attack with mouse
@@ -442,7 +441,7 @@ def showmap(box):
 				if y in range(starty, starty + game.SCREEN_HEIGHT - 2) and x in range(startx, startx + game.SCREEN_WIDTH - 2):
 					libtcod.console_print_ex(box, x - startx + 1, y - starty + 1, libtcod.BKGND_NONE, libtcod.LEFT, chr(23))
 
-		color, lerp, descending = color_lerp(lerp, descending, light=libtcod.red)
+		color, lerp, descending = color_fade_anim(lerp, descending, light=libtcod.red)
 		libtcod.console_set_default_foreground(box, color)
 		if not zoom:
 			libtcod.console_print_ex(box, int(mapposx) + 1, int(mapposy) + 1, libtcod.BKGND_NONE, libtcod.LEFT, char)
@@ -724,7 +723,7 @@ def render_gui(color):
 	libtcod.console_print(0, game.MAP_X + 2, 0, '[ Menu ]')
 	libtcod.console_print(0, game.MAP_X + 12, 0, '[ Map ]')
 	libtcod.console_print(0, game.PLAYER_STATS_X + 8, 0, '[ @ ]')
-	libtcod.console_print_ex(0, game.SCREEN_WIDTH - 11, 0, libtcod.BKGND_NONE, libtcod.RIGHT, '[ ' + str(game.gametime.hour).rjust(2, ' ') + ':' + str(game.gametime.minute).rjust(2, '0') + ' ]')
+	libtcod.console_print_ex(0, game.SCREEN_WIDTH - 11, 0, libtcod.BKGND_NONE, libtcod.RIGHT, '[ ' + str(game.time.hours).rjust(2, ' ') + ':' + str(game.time.minutes).rjust(2, '0') + ' ]')
 
 
 # print the game messages, one line at a time
@@ -876,11 +875,11 @@ def find_map_viewport():
 # change fov radius base on time of day
 def fov_radius():
 	game.FOV_RADIUS = 9
-	if game.gametime.hour == 20:
-		game.FOV_RADIUS = 9 - (game.gametime.minute / 10)
-	if game.gametime.hour == 6:
-		game.FOV_RADIUS = 3 + (game.gametime.minute / 10)
-	if game.gametime.hour < 6 or game.gametime.hour >= 21 or game.current_map.location_id != 0:
+	if game.time.hours == 20:
+		game.FOV_RADIUS = 9 - (game.time.minutes / 10)
+	if game.time.hours == 6:
+		game.FOV_RADIUS = 3 + (game.time.minutes / 10)
+	if game.time.hours < 6 or game.time.hours >= 21 or game.current_map.location_id != 0:
 		game.FOV_RADIUS = 3
 	if game.fov_torch and game.FOV_RADIUS < game.TORCH_RADIUS:
 		game.FOV_RADIUS = game.TORCH_RADIUS
@@ -907,25 +906,35 @@ def render_map():
 		di = 0.4 * libtcod.noise_get(game.fov_noise, [game.fov_torchx], libtcod.NOISE_SIMPLEX)
 
 	# go through all tiles, and set their background color according to the FOV
-	for y in range(game.MAP_HEIGHT):
-		for x in range(game.MAP_WIDTH):
+	if game.draw_map:
+		startx, starty = 0, 0
+		endx, endy = game.MAP_WIDTH, game.MAP_HEIGHT
+	else:
+		startx = game.MAP_WIDTH / 2 - game.FOV_RADIUS
+		starty = game.MAP_HEIGHT / 2 - game.FOV_RADIUS
+		endx = game.MAP_WIDTH / 2 + game.FOV_RADIUS
+		endy = game.MAP_HEIGHT / 2 + game.FOV_RADIUS
+
+	for y in range(starty, endy):
+		for x in range(startx, endx):
 			px = x + game.curx
 			py = y + game.cury
+			tile = game.current_map.tile[px][py]
 			if not libtcod.map_is_in_fov(game.fov_map, px, py):
 				if game.draw_map and game.current_map.tile_is_explored(px, py):
 					if game.current_map.tile_is_animated(px, py):
-						libtcod.console_put_char_ex(game.con, x, y, game.current_map.tile[px][py]['icon'], game.current_map.tile[px][py]['dark_color'], game.current_map.tile[px][py]['dark_back_color'])
+						libtcod.console_put_char_ex(game.con, x, y, tile['icon'], tile['dark_color'], tile['dark_back_color'])
 					else:
-						libtcod.console_put_char_ex(game.con, x, y, game.current_map.tile[px][py]['icon'], game.current_map.tile[px][py]['dark_color'], game.current_map.tile[px][py]['back_dark_color'])
+						libtcod.console_put_char_ex(game.con, x, y, tile['icon'], tile['dark_color'], tile['back_dark_color'])
 			else:
 				if not game.fov_torch:
-					if 'animate' in game.current_map.tile[px][py] or 'duration' in game.current_map.tile[px][py]:
-						(front, back, game.current_map.tile[px][py]['lerp']) = render_tiles_animations(px, py, game.current_map.tile[px][py]['color'], game.current_map.tile[px][py]['back_light_color'], game.current_map.tile[px][py]['back_dark_color'], game.current_map.tile[px][py]['lerp'])
-						libtcod.console_put_char_ex(game.con, x, y, game.current_map.tile[px][py]['icon'], front, back)
+					if 'animate' in tile or 'duration' in tile:
+						(front, back, tile['lerp']) = render_tiles_animations(px, py, tile['color'], tile['back_light_color'], tile['back_dark_color'], tile['lerp'])
+						libtcod.console_put_char_ex(game.con, x, y, tile['icon'], front, back)
 					elif game.draw_map:
-						libtcod.console_put_char_ex(game.con, x, y, game.current_map.tile[px][py]['icon'], game.current_map.tile[px][py]['color'], game.current_map.tile[px][py]['back_light_color'])
+						libtcod.console_put_char_ex(game.con, x, y, tile['icon'], tile['color'], tile['back_light_color'])
 				else:
-					base = game.current_map.tile[px][py]['back_light_color']
+					base = tile['back_light_color']
 					r = float(px - game.char.x + dx) * (px - game.char.x + dx) + (py - game.char.y + dy) * (py - game.char.y + dy)
 					if r < game.SQUARED_TORCH_RADIUS:
 						l = (game.SQUARED_TORCH_RADIUS - r) / game.SQUARED_TORCH_RADIUS + di
@@ -934,7 +943,7 @@ def render_map():
 						elif l > 1.0:
 							l = 1.0
 						base = libtcod.color_lerp(base, libtcod.gold, l)
-					libtcod.console_put_char_ex(game.con, x, y, game.current_map.tile[px][py]['icon'], game.current_map.tile[px][py]['color'], base)
+					libtcod.console_put_char_ex(game.con, x, y, tile['icon'], tile['color'], base)
 				if not game.current_map.tile_is_explored(px, py):
 					game.current_map.tile[px][py].update({'explored': True})
 

@@ -43,10 +43,10 @@ class Player(object):
 		self.mks = 0
 		self.skill_points = 0
 		self.skills = [Skill('Sword', 'Combat', 0, 0), Skill('Axe', 'Combat', 0, 0), Skill('Mace', 'Combat', 0, 0),
-						Skill('Dagger', 'Combat', 0, 0), Skill('Polearm', 'Combat', 0, 0), Skill('Staff', 'Combat', 0, 0),
-						Skill('Bow', 'Combat', 0, 0), Skill('Missile', 'Combat', 0, 0), Skill('Hands', 'Combat', 0, 0),
-						Skill('Detect Traps', 'Physical', 0, 0, True, 'detect_trap'), Skill('Disarm Traps', 'Physical', 0, 0, True), Skill('Swimming', 'Physical', 0, 0),
-						Skill('Lockpicking', 'Physical', 0, 0, True), Skill('Artifacts', 'Academic', 0, 0, True), Skill('Mythology', 'Academic', 0, 0)]
+			Skill('Dagger', 'Combat', 0, 0), Skill('Polearm', 'Combat', 0, 0), Skill('Staff', 'Combat', 0, 0),
+			Skill('Bow', 'Combat', 0, 0), Skill('Missile', 'Combat', 0, 0), Skill('Hands', 'Combat', 0, 0),
+			Skill('Detect Traps', 'Physical', 0, 0, True, 'detect_trap'), Skill('Disarm Traps', 'Physical', 0, 0, True), Skill('Swimming', 'Physical', 0, 0),
+			Skill('Lockpicking', 'Physical', 0, 0, True), Skill('Artifacts', 'Academic', 0, 0, True), Skill('Mythology', 'Academic', 0, 0)]
 		self.flags = ['normal']
 
 	# attack an enemy
@@ -641,17 +641,17 @@ class Time(object):
 		self.day = libtcod.random_get_int(game.rnd, 1, 30)
 		self.month = libtcod.random_get_int(game.rnd, 1, 12)
 		self.year = libtcod.random_get_int(game.rnd, 500, 1000)
-		self.hour = 12
-		self.minute = 0
+		self.hours = 12
+		self.minutes = 0
 
 	# update the game time
 	def update(self, min=1):
-		self.minute += min
-		if self.minute >= 60:
-			self.minute -= 60
-			self.hour += 1
-		if self.hour >= 24:
-			self.hour -= 24
+		self.minutes += min
+		if self.minutes >= 60:
+			self.minutes -= 60
+			self.hours += 1
+		if self.hours >= 24:
+			self.hours -= 24
 			self.day += 1
 		if self.day > 30:
 			self.day -= 30
@@ -663,15 +663,15 @@ class Time(object):
 
 	# returns a formatted string of the game time
 	def time_to_text(self):
-		if self.hour > 11:
-			self.hour = self.hour - 12
-			if self.hour == 0:
-				self.hour = 12
-			time = str(self.hour) + ':' + str(self.minute).rjust(2, '0') + ' pm'
+		if self.hours > 11:
+			self.hours = self.hours - 12
+			if self.hours == 0:
+				self.hours = 12
+			time = str(self.hours) + ':' + str(self.minutes).rjust(2, '0') + ' pm'
 		else:
-			if self.hour == 0:
-				self.hour = 12
-			time = str(self.hour) + ':' + str(self.minute).rjust(2, '0') + ' am'
+			if self.hours == 0:
+				self.hours = 12
+			time = str(self.hours) + ':' + str(self.minutes).rjust(2, '0') + ' am'
 		if self.day == 1:
 			suffix = 'st'
 		elif self.day == 2:

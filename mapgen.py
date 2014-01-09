@@ -167,7 +167,6 @@ class Map(object):
 		return rooms
 
 	# create any outdoor map
-	# stuff to do: transitions
 	def create_outdoor_map(self, default_tile):
 		deep_water_tiles = 0
 		shallow_water_tiles = 1
@@ -722,15 +721,33 @@ class Tile(object):
 			block_sight = blocked
 		self.block_sight = block_sight
 
-	# returns true if this tile animates
+	# returns true if tile is animated
 	def is_animated(self):
 		if 'animate' in self.flags:
 			return True
 		return False
 
-	# returns true if this tile is invisible
+	# returns true if tile is blocked
+	def is_blocked(self, x, y):
+		if 'blocked' in self.flags:
+			return True
+		return False
+
+	# returns true if tile is explored
+	def is_explored(self, x, y):
+		if 'explored' in self.flags:
+			return True
+		return False
+
+	# returns true if tile is invisible
 	def is_invisible(self):
 		if 'invisible' in self.flags:
+			return True
+		return False
+
+	# returns true if tile blocks your view
+	def is_blocking_sight(self, x, y):
+		if 'block_sight' in self.flags:
 			return True
 		return False
 

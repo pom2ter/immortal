@@ -37,7 +37,7 @@ def chargen_options(posx, posy, width, options, typ):
 		for y in range(len(options)):
 			if y == current:
 				libtcod.console_set_default_foreground(0, libtcod.white)
-				color, lerp, descending = util.color_lerp(lerp, descending)
+				color, lerp, descending = util.color_fade_anim(lerp, descending)
 				libtcod.console_set_default_background(0, color)
 			else:
 				libtcod.console_set_default_foreground(0, libtcod.grey)
@@ -47,7 +47,7 @@ def chargen_options(posx, posy, width, options, typ):
 		libtcod.console_flush()
 
 		if ev == libtcod.EVENT_MOUSE_MOVE:
-			if mx in range(posx, posx + width) and my in range (posy, posy + len(options)):
+			if mx in range(posx, posx + width) and my in range(posy, posy + len(options)):
 				current = my - posy
 
 		if game.kb.vk == libtcod.KEY_DOWN and ev == libtcod.EVENT_KEY_PRESS:
@@ -58,7 +58,7 @@ def chargen_options(posx, posy, width, options, typ):
 			current = (current - 1) % len(options)
 			lerp = 1.0
 			descending = True
-		elif (game.kb.vk == libtcod.KEY_ENTER and ev == libtcod.EVENT_KEY_PRESS) or (game.mouse.lbutton_pressed and mx in range(posx, posx + width) and my in range (posy, posy + len(options)) and ev == libtcod.EVENT_MOUSE_RELEASE):
+		elif (game.kb.vk == libtcod.KEY_ENTER and ev == libtcod.EVENT_KEY_PRESS) or (game.mouse.lbutton_pressed and mx in range(posx, posx + width) and my in range(posy, posy + len(options)) and ev == libtcod.EVENT_MOUSE_RELEASE):
 			break
 	return current
 
