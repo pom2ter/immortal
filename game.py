@@ -2,7 +2,7 @@ import libtcodpy as libtcod
 import cPickle as pickle
 import ctypes
 import os
-from players import *
+from pc import *
 from item import *
 from monster import *
 import IO
@@ -17,7 +17,7 @@ import death
 import test
 import debug as dbg
 
-VERSION = '0.3.6.2'
+VERSION = '0.3.6.3'
 
 #size of the gui windows
 MAP_WIDTH = 71
@@ -52,8 +52,8 @@ ROOM_MIN_SIZE = 6
 #fov
 FOV_ALGO = 0
 FOV_LIGHT_WALLS = True
-TORCH_RADIUS = 5
-FOV_RADIUS = 9
+TORCH_RADIUS = 6
+FOV_RADIUS = 10
 SQUARED_TORCH_RADIUS = TORCH_RADIUS * TORCH_RADIUS
 fov_recompute = True
 fov_torch = False
@@ -87,11 +87,11 @@ setting_fullscreen = 'off'
 PICKLE_PROTOCOL = pickle.HIGHEST_PROTOCOL
 char = None
 times_saved = 0
-player_move = False
+player_took_turn = False
 mouse_move = False
 kb = libtcod.Key()
 mouse = libtcod.Mouse()
-killer = None
+cause_of_death = None
 highscore = []
 hp_anim = []
 font_width = 10
@@ -99,7 +99,6 @@ font_height = 16
 curx = 0
 cury = 0
 turns = 0
-traps = []
 old_msg = 0
 draw_gui = True
 draw_map = True
@@ -180,7 +179,6 @@ chest_trap = ['fx_fireball', 'fx_poison_gas', 'fx_sleep_gas', 'fx_teleport', 'fx
 # change save system (sqlite?)
 # blood
 # remains
-# fov transitions
 
 
 class Game(object):
@@ -268,7 +266,7 @@ class Game(object):
 
 	# main game loop
 	def play_game(self):
-		global wm, player_action, draw_gui, player_move
+		global wm, player_action, draw_gui, player_took_turn
 		wm = libtcod.console_new(WORLDMAP_WIDTH, WORLDMAP_HEIGHT)
 		worldmap.create_map_legend(wm, 3)
 		libtcod.console_clear(0)
@@ -287,7 +285,7 @@ class Game(object):
 			if not player.is_disabled() and not ('overburdened' in player.flags and turns % 3 == 0):
 				player_action = commands.keyboard_commands()
 			else:
-				player_move = True
+				player_took_turn = True
 			if player_action == 'save':
 				IO.save_game()
 				break
@@ -297,8 +295,8 @@ class Game(object):
 			if player_action == 'exit':
 				break
 
-			# let monsters take their turn
-			if player_move:
+			# let everyone else take their turn
+			if player_took_turn:
 				for obj in reversed(current_map.objects):
 					if game_state != 'death':
 						if obj.item:
@@ -326,7 +324,7 @@ class Game(object):
 					monsters.spawn()
 					effects.check_active_effects()
 					util.add_turn()
-				player_move = False
+				player_took_turn = False
 
 			# death screen summary
 			if game_state == 'death':

@@ -168,7 +168,7 @@ def player_move(dx, dy):
 		game.player.attack(target[0])
 	elif not game.player.can_move():
 		game.message.new("You can't move!", game.turns)
-		game.player_move = True
+		game.player_took_turn = True
 	else:
 		if game.current_map.tile[x][y]['name'] == 'door':
 			open_door(dx, dy)
@@ -191,7 +191,7 @@ def player_move(dx, dy):
 				if game.player.no_stamina():
 					game.message.new('You drown!', game.turns, libtcod.light_orange)
 					game.message.new('*** Press space ***', game.turns)
-					game.killer = 'drowning'
+					game.cause_of_death = 'drowning'
 					game.game_state = 'death'
 				else:
 					game.player.skills[game.player.find_skill('Swimming')].gain_xp(2)
@@ -305,7 +305,7 @@ def bash():
 					game.message.new('You failed to bash open the ' + name + '.', game.turns)
 				game.player.take_damage(1, 'bashing a ' + name)
 				game.player.lose_stamina(1)
-				game.player_move = True
+				game.player_took_turn = True
 				attempt = True
 	if not attempt:
 		game.message.new('You bash air. You find it strangely exhilarating.', game.turns)
@@ -361,7 +361,7 @@ def climb_down_stairs():
 		game.current_map.check_player_position()
 		util.initialize_fov()
 		game.fov_recompute = True
-		game.player_move = True
+		game.player_took_turn = True
 
 
 # climb up some stairs
@@ -403,7 +403,7 @@ def climb_up_stairs():
 		game.current_map.check_player_position()
 		util.initialize_fov()
 		game.fov_recompute = True
-		game.player_move = True
+		game.player_took_turn = True
 
 
 # close door
@@ -418,7 +418,7 @@ def close_door():
 		game.current_map.set_tile_values('door', game.char.x + dx, game.char.y + dy)
 		game.message.new('You close the door.', game.turns)
 		game.fov_recompute = True
-		game.player_move = True
+		game.player_took_turn = True
 	elif game.current_map.tile[game.char.x + dx][game.char.y + dy]['name'] in ['door', 'locked door']:
 		game.message.new('That door is already closed!', game.turns)
 	elif dx != 0 or dy != 0:
@@ -584,7 +584,7 @@ def open_door(x=None, y=None):
 		game.current_map.set_tile_values('opened door', game.char.x + dx, game.char.y + dy)
 		game.message.new('You open the door.', game.turns)
 		game.fov_recompute = True
-		game.player_move = True
+		game.player_took_turn = True
 	elif game.current_map.tile[game.char.x + dx][game.char.y + dy]['name'] == 'opened door':
 		game.message.new('That door is already opened!', game.turns)
 	elif game.current_map.tile[game.char.x + dx][game.char.y + dy]['name'] == 'locked door':
@@ -820,7 +820,7 @@ def use_skill():
 						game.message.new('You identify the item!', game.turns)
 						output2[choice2].flags.append('identified')
 						skills[choice].gain_xp(5)
-					game.player_move = True
+					game.player_took_turn = True
 
 		if output[choice] == 'Disarm Traps':
 			attempt = False
@@ -845,7 +845,7 @@ def use_skill():
 									game.current_map.tile[game.char.x + x][game.char.y + y].pop('trapped', None)
 									util.trigger_trap(game.char.x + x, game.char.y + y, chest=True)
 							skills[choice].gain_xp(1)
-						game.player_move = True
+						game.player_took_turn = True
 						attempt = True
 			if not attempt:
 				game.message.new('There are no traps in your surroundings.', game.turns)
@@ -874,7 +874,7 @@ def use_skill():
 									game.current_map.tile[game.char.x + x][game.char.y + y].pop('trapped', None)
 									util.trigger_trap(game.char.x + x, game.char.y + y, chest=True)
 							skills[choice].gain_xp(1)
-						game.player_move = True
+						game.player_took_turn = True
 						attempt = True
 			if not attempt:
 				game.message.new('There is nothing to unlock in your surroundings.', game.turns)
@@ -885,4 +885,4 @@ def use_skill():
 def wait_turn():
 	game.message.new('Time passes...', game.turns)
 	game.fov_recompute = True
-	game.player_move = True
+	game.player_took_turn = True

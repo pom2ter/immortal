@@ -107,7 +107,7 @@ class Player(object):
 			if ranged:
 				missile.lose_quantity()
 			self.lose_stamina(1)
-			game.player_move = True
+			game.player_took_turn = True
 
 	# calculates your attack rating....
 	def attack_rating(self):
@@ -175,20 +175,17 @@ class Player(object):
 	# checks player condition each turn
 	def check_condition(self):
 		if 'stuck' in self.flags:
-			dice = util.roll_dice(1, 120)
-			if self.strength + (self.karma / 2) >= dice:
+			if self.strength + (self.karma / 2) >= util.roll_dice(1, 120):
 				game.message.new('You can move freely again.', game.turns)
 				self.flags.remove('stuck')
 		if 'poison' in self.flags:
-			dice = util.roll_dice(1, 120)
-			if self.endurance + (self.karma / 2) >= dice:
+			if self.endurance + (self.karma / 2) >= util.roll_dice(1, 120):
 				game.message.new('You are no longer poisoned.', game.turns)
 				self.flags.remove('poison')
 			else:
 				self.take_damage(1, 'poison')
 		if 'sleep' in self.flags:
-			dice = util.roll_dice(1, 120)
-			if self.wisdom + (self.karma / 2) >= dice:
+			if self.wisdom + (self.karma / 2) >= util.roll_dice(1, 120):
 				game.message.new('You wake up.', game.turns)
 				self.flags.remove('sleep')
 
@@ -242,7 +239,7 @@ class Player(object):
 				util.trigger_trap(game.char.x, game.char.y, obj.item.article.capitalize() + obj.item.get_name())
 			else:
 				util.trigger_trap(game.char.x, game.char.y)
-		game.player_move = True
+		game.player_took_turn = True
 
 	# equips an item
 	def equip_item(self, item):
@@ -288,7 +285,7 @@ class Player(object):
 		else:
 			game.message.new('You equip the ' + self.inventory[item].get_name() + '.', game.turns, libtcod.green)
 		self.inventory.pop(item)
-		game.player_move = True
+		game.player_took_turn = True
 
 	# return skill index
 	def find_skill(self, skill):
@@ -568,7 +565,7 @@ class Player(object):
 		if self.is_dead():
 			game.message.new('You die...', game.turns, libtcod.light_orange)
 			game.message.new('*** Press space ***', game.turns)
-			game.killer = source
+			game.cause_of_death = source
 			game.game_state = 'death'
 		elif source != 'poison':
 			if "sleep" in self.flags:
@@ -581,7 +578,7 @@ class Player(object):
 		game.message.new('You unequip the ' + self.equipment[item].get_name() + '.', game.turns, libtcod.red)
 		self.equipment.pop(item)
 		self.stats_bonus()
-		game.player_move = True
+		game.player_took_turn = True
 
 	# return carried weight
 	def weight_carried(self):

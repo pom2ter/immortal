@@ -921,7 +921,7 @@ class Object(object):
 		if not map.tile_is_blocked(self.x + dx, self.y + dy):
 			self.x += dx
 			self.y += dy
-			game.player_move = True
+			game.player_took_turn = True
 		elif map.tile[self.x + dx][self.y + dy]['type'] == 'wall':
 			game.message.new('The wall laughs at your attempt to pass through it.', game.turns)
 		elif map.tile[self.x + dx][self.y + dy]['type'] in ['mountains', 'high mountains']:

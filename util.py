@@ -42,9 +42,15 @@ def add_turn():
 		game.time.update(1)
 		skill = game.player.find_skill('Detect Traps')
 		if game.player.skills[skill].level >= libtcod.random_get_int(game.rnd, 0, 200):
-			if game.traps:
-				for i, (x, y) in enumerate(game.traps):
-					if i == libtcod.random_get_int(game.rnd, 0, len(game.traps) - 1):
+			traps = []
+			for y in range(game.char.y - game.FOV_RADIUS, game.char.y + game.FOV_RADIUS):
+				for x in range(game.char.x - game.FOV_RADIUS, game.char.x + game.FOV_RADIUS):
+					if y < game.current_map.map_height and x < game.current_map.map_width:
+						if 'invisible' in game.current_map.tile[x][y] and game.current_map.tile[x][y]['type'] == 'trap' and libtcod.map_is_in_fov(game.fov_map, x, y):
+							traps.append((x, y))			
+			if traps:
+				for i, (x, y) in enumerate(traps):
+					if i == libtcod.random_get_int(game.rnd, 0, len(traps) - 1):
 						game.current_map.set_tile_values(game.current_map.tile[x][y]['name'], x, y)
 						if game.current_map.tile_is_invisible(x, y):
 							game.current_map.tile[x][y].pop('invisible', None)
@@ -338,8 +344,8 @@ def mouse_auto_attack(x, y, target):
 # check to see if you can auto-move with mouse
 def mouse_auto_move():
 	for obj in game.current_map.objects:
-		if libtcod.map_is_in_fov(game.fov_map, obj.x, obj.y) and obj.entity is not None:
-			game.message.new('Auto-move aborted: Monster is near.', game.turns)
+		if libtcod.map_is_in_fov(game.fov_map, obj.x, obj.y) and obj.entity is not None and obj.entity.is_hostile():
+			game.message.new('Auto-move aborted: An hostile enemy is near.', game.turns)
 			game.mouse_move = False
 			return False
 	return True
@@ -648,6 +654,10 @@ def store_map(data):
 
 def path_func(xFrom, yFrom, xTo, yTo, user_data):
 	if 'explored' in game.current_map.tile[xTo][yTo] and not 'blocked' in game.current_map.tile[xTo][yTo]:
+		if game.mouse_move:
+			block = [obj for obj in game.current_map.objects if obj.y == yTo and obj.x == xTo and obj.entity]
+			if block:
+				return 0.0 
 		return 1.0
 	return 0.0
 
@@ -656,7 +666,6 @@ def path_func(xFrom, yFrom, xTo, yTo, user_data):
 def initialize_fov(update=False):
 #	print 'Loading/Generating map chunks...'
 #	t0 = libtcod.sys_elapsed_seconds()
-	game.traps = []
 	if not update:
 		game.fov_map = libtcod.map_new(game.current_map.map_width, game.current_map.map_height)
 		for y in range(game.current_map.map_height):
@@ -667,8 +676,6 @@ def initialize_fov(update=False):
 			for x in range(game.char.x - game.FOV_RADIUS, game.char.x + game.FOV_RADIUS):
 				if y < game.current_map.map_height and x < game.current_map.map_width:
 					libtcod.map_set_properties(game.fov_map, x, y, not 'block_sight' in game.current_map.tile[x][y], 'explored' in game.current_map.tile[x][y] and not 'blocked' in game.current_map.tile[x][y])
-					if 'invisible' in game.current_map.tile[x][y] and game.current_map.tile[x][y]['type'] == 'trap' and libtcod.map_is_in_fov(game.fov_map, x, y):
-						game.traps.append((x, y))
 	# compute paths using a*star algorithm
 	game.path = libtcod.path_new_using_function(game.current_map.map_width, game.current_map.map_height, path_func)
 	libtcod.path_compute(game.path, game.char.x, game.char.y, game.path_dx, game.path_dy)
@@ -874,11 +881,11 @@ def find_map_viewport():
 
 # change fov radius base on time of day
 def fov_radius():
-	game.FOV_RADIUS = 9
+	game.FOV_RADIUS = 10
 	if game.time.hours == 20:
-		game.FOV_RADIUS = 9 - (game.time.minutes / 10)
+		game.FOV_RADIUS = 10 - (game.time.minutes / 8)
 	if game.time.hours == 6:
-		game.FOV_RADIUS = 3 + (game.time.minutes / 10)
+		game.FOV_RADIUS = 3 + (game.time.minutes / 8)
 	if game.time.hours < 6 or game.time.hours >= 21 or game.current_map.location_id != 0:
 		game.FOV_RADIUS = 3
 	if game.fov_torch and game.FOV_RADIUS < game.TORCH_RADIUS:
@@ -912,8 +919,8 @@ def render_map():
 	else:
 		startx = game.MAP_WIDTH / 2 - game.FOV_RADIUS
 		starty = game.MAP_HEIGHT / 2 - game.FOV_RADIUS
-		endx = game.MAP_WIDTH / 2 + game.FOV_RADIUS
-		endy = game.MAP_HEIGHT / 2 + game.FOV_RADIUS
+		endx = game.MAP_WIDTH / 2 + game.FOV_RADIUS + 1
+		endy = game.MAP_HEIGHT / 2 + game.FOV_RADIUS + 1
 
 	for y in range(starty, endy):
 		for x in range(startx, endx):
@@ -970,7 +977,7 @@ def render_map():
 		if mouse_auto_move() and not libtcod.path_is_empty(game.path):
 			game.char.x, game.char.y = libtcod.path_walk(game.path, True)
 			game.fov_recompute = True
-			game.player_move = True
+			game.player_took_turn = True
 		else:
 			items_at_feet()
 			game.mouse_move = False
@@ -989,7 +996,7 @@ def render_map():
 				game.path_dy = py
 				if game.mouse.lbutton_pressed:
 					target = [obj for obj in game.current_map.objects if obj.y == py and obj.x == px and obj.entity]
-					if target:
+					if target and libtcod.map_is_in_fov(game.fov_map, px, py):
 						mouse_auto_attack(px, py, target[0])
 					else:
 						game.mouse_move = mouse_auto_move()

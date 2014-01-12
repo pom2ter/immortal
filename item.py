@@ -134,7 +134,7 @@ class Item(object):
 			game.message.new('You pick up ' + self.get_name(True) + '.', game.turns, libtcod.green)
 			self.turn_created = ts
 			game.player.inventory.append(self)
-		game.player_move = True
+		game.player_took_turn = True
 
 	# use the item
 	def use(self):
@@ -178,7 +178,7 @@ class Item(object):
 				game.message.new('You eat the ' + self.name + '.', game.turns, libtcod.light_blue)
 				game.player.check_hunger_level(-self.hunger)
 			self.lose_charge()
-			game.player_move = True
+			game.player_took_turn = True
 		else:
 			game.message.new("You can't use that item.", game.turns)
 
@@ -188,8 +188,8 @@ class Item(object):
 #########################################
 
 class BaseItem(object):
-	def __init__(self, typ, name, plural, icon, color, dark_color, level, weight, cost, dice, article, charge, duration, expiration, hunger, flags):
-		self.type = typ
+	def __init__(self, type, name, plural, icon, color, dark_color, level, weight, cost, dice, article, charge, duration, expiration, hunger, flags):
+		self.type = type
 		self.name = name
 		self.plural = plural
 		self.icon = icon
@@ -403,7 +403,7 @@ class BaseItemListener(object):
 		self.temp_item.flags.append(name)
 		return True
 
-	def new_property(self, name, typ, value):
+	def new_property(self, name, type, value):
 		if name == 'icon_color':
 			self.temp_item.color.r = value.r
 			self.temp_item.color.g = value.g
@@ -532,7 +532,7 @@ class PrefixListener(object):
 		self.temp_prefix.flags.append(name)
 		return True
 
-	def new_property(self, name, typ, value):
+	def new_property(self, name, type, value):
 		if name == 'type':
 			self.temp_prefix.type = value
 		if name == 'cost_multiplier':
@@ -636,7 +636,7 @@ class SuffixListener(object):
 		self.temp_suffix.flags.append(name)
 		return True
 
-	def new_property(self, name, typ, value):
+	def new_property(self, name, type, value):
 		if name == 'icon_color':
 			self.temp_suffix.color.r = value.r
 			self.temp_suffix.color.g = value.g

@@ -174,16 +174,16 @@ def death_tombstone(quit=False):
 	if quit:
 		line2 = 'quitted the game'
 		libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 11, libtcod.BKGND_SET, libtcod.CENTER, line2)
-	elif game.killer == 'drowning':
+	elif game.cause_of_death == 'drowning':
 		line2 = 'drowned'
 		libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 11, libtcod.BKGND_SET, libtcod.CENTER, line2)
-	elif game.killer == 'starvation':
+	elif game.cause_of_death == 'starvation':
 		line2 = 'starved to death'
 		libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 11, libtcod.BKGND_SET, libtcod.CENTER, line2)
 	else:
 		libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 11, libtcod.BKGND_SET, libtcod.CENTER, 'Killed by')
-		libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 12, libtcod.BKGND_SET, libtcod.CENTER, game.killer)
-		line2 = 'was killed by ' + game.killer
+		libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 12, libtcod.BKGND_SET, libtcod.CENTER, game.cause_of_death)
+		line2 = 'was killed by ' + game.cause_of_death
 	if game.current_map.location_id == 0:
 		libtcod.console_print_ex(0, game.SCREEN_WIDTH / 2, 13, libtcod.BKGND_SET, libtcod.CENTER, 'in the')
 	else:
